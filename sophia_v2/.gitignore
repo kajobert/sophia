@@ -14,3 +14,7 @@ venv/
 
 # Other
 .DS_Store
+
+# Ignore environment variables files
+.env
+*.env
