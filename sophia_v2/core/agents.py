@@ -1,11 +1,14 @@
 from crewai import Agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
+from crewai_tools import DuckDuckGoSearchRunTool
 
 # Inicializujeme LLM, který budou agenti používat
-# Poznámka: Později toto přesuneme do centrálního konfiguračního modulu
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",
                              google_api_key=os.getenv("GEMINI_API_KEY"))
+
+# Inicializace nástroje
+search_tool = DuckDuckGoSearchRunTool()
 
 # Definice našeho prvního agenta: ResearchAgent
 researcher = Agent(
@@ -17,5 +20,6 @@ researcher = Agent(
     actionable insights.""",
     verbose=True,
     allow_delegation=False,
-    llm=llm
+    llm=llm,
+    tools=[search_tool]
 )
