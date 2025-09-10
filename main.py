@@ -4,22 +4,18 @@ from crewai import Crew, Process
 # Načtení environmentálních proměnných
 load_dotenv()
 
-
 # Import agenta a nového úkolu
 from core.agents import developer_agent
-from core.tasks import directory_analysis_task
+from core.tasks import tool_practice_task
 
 def main():
     """Hlavní funkce pro sestavení a spuštění Crew."""
-    print("🚀 Initializing the Sophia v2 Crew for a directory analysis task...")
-
+    print("🚀 Initializing the Sophia v2 Crew for a tool practice task...")
 
     # Sestavení posádky
     sophia_crew = Crew(
         agents=[developer_agent],
-
-        tasks=[directory_analysis_task],
-
+        tasks=[tool_practice_task],
         process=Process.sequential,
         verbose=2
     )
