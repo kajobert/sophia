@@ -1,80 +1,77 @@
 
+
+
 import os
+import json
+import requests
 from crewai.tools import BaseTool
-from crewai_tools import SerperDevTool as CrewaiSerperDevTool, FileReadTool as CrewaiFileReadTool
 
-# Wrapper pro SerperDevTool
-class SerperDevTool(BaseTool):
+# --- Helper Function to read config ---
+def get_tool_config():
+    with open('tool_config.json', 'r') as f:
+        return json.load(f)
+
+# --- Nástroje upravené pro čtení z configu ---
+
+
+class WebSearchTool(BaseTool):
     name: str = "Web Search Tool"
-    description: str = "Performs a web search using the Serper.dev service."
+    description: str = "Performs a web search using the Serper.dev API based on the query in tool_config.json."
 
-    def _run(self, **kwargs) -> str:
-        # Accept both 'search_query' and 'query' for compatibility
-        search_query = kwargs.get('search_query') or kwargs.get('query')
-        if not search_query:
-            return "Error: 'search_query' or 'query' argument is required."
-        return CrewaiSerperDevTool().run(search_query)
+    def __init__(self):
+        super().__init__(name="Web Search Tool", description="Performs a web search using the Serper.dev API based on the query in tool_config.json.")
 
-# Wrapper pro FileReadTool
-class FileReadTool(BaseTool):
-    name: str = "File Read Tool"
-    description: str = "Reads the content of a specified file."
-
-    def _run(self, **kwargs) -> str:
-        # Accept both 'file_path' and 'path' for compatibility
-        file_path = kwargs.get('file_path') or kwargs.get('path')
-        if not file_path:
-            return "Error: 'file_path' or 'path' argument is required."
-        return CrewaiFileReadTool().run(file_path)
-
-# Naše existující custom nástroje
-class CustomFileWriteTool(BaseTool):
-    name: str = "Create File Tool"
-    description: str = "Creates a new file with specified content."
-
-    def _run(self, **kwargs) -> str:
-        # Accept both 'file_path' and 'path' for compatibility
-        file_path = kwargs.get('file_path') or kwargs.get('path')
-        content = kwargs.get('content')
-        if not file_path or content is None:
-            return "Error: 'file_path'/'path' and 'content' arguments are required."
+    def _run(self, *args, **kwargs) -> str:
         try:
-            directory = os.path.dirname(file_path)
-            if directory and not os.path.exists(directory):
-                os.makedirs(directory)
+            config = get_tool_config()
+            search_query = config.get('search_query')
+            api_key = os.getenv("SERPER_API_KEY")
+
+            if not search_query:
+                return "Error: 'search_query' not found in tool_config.json."
+            if not api_key:
+                return "Error: SERPER_API_KEY not found in environment variables."
+
+            url = "https://google.serper.dev/search"
+            payload = json.dumps({"q": search_query})
+            headers = {'X-API-KEY': api_key, 'Content-Type': 'application/json'}
+            
+            response = requests.post(url, headers=headers, data=payload)
+            response.raise_for_status() # Raise an exception for bad status codes
+            
+            results = response.json()
+            # Zpracujeme a vrátíme jen nejdůležitější informace
+            snippets = [item.get('snippet', '') for item in results.get('organic', [])]
+            return "Search results: " + " | ".join(snippets[:5])
+
+        except Exception as e:
+            return f"Error during web search: {e}"
+
+
+class CreateReportTool(BaseTool):
+    def __init__(self):
+        super().__init__(name="Create Report Tool", description="Creates a new report file with specified content.")
+
+    def _run(self, *args, **kwargs) -> str:
+        content_to_write = ""
+        if 'content' in kwargs:
+            content_to_write = kwargs['content']
+        elif args:
+            content_to_write = args[0]
+        else:
+            return "Error: No content provided to write."
+
+        if isinstance(content_to_write, dict):
+            content_to_write = content_to_write.get('content') or content_to_write.get('text') or str(content_to_write)
+        
+        config = get_tool_config()
+        file_path = config.get('report_file_path')
+        if not file_path:
+            return "Error: 'report_file_path' not found in tool_config.json."
+        
+        try:
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            return f"Successfully created file {file_path}."
+                f.write(str(content_to_write))
+            return f"Successfully created report file: {file_path}."
         except Exception as e:
             return f"Error creating file {file_path}: {e}"
-
-class CustomDirectoryListTool(BaseTool):
-    name: str = "List Directory Contents Tool"
-    description: str = "Lists contents of a directory."
-
-    def _run(self, **kwargs) -> str:
-        # Accept both 'directory_path' and 'path' for compatibility
-        directory_path = kwargs.get('directory_path') or kwargs.get('path')
-        if not directory_path:
-            return "Error: 'directory_path' or 'path' argument is required."
-        try:
-            return f"Contents of '{directory_path}': {', '.join(os.listdir(directory_path))}"
-        except Exception as e:
-            return f"Error listing directory {directory_path}: {e}"
-
-class CustomFilePatchTool(BaseTool):
-    name: str = "Append to File Tool"
-    description: str = "Appends content to the end of a file."
-
-    def _run(self, **kwargs) -> str:
-        # Accept both 'file_path' and 'path' for compatibility
-        file_path = kwargs.get('file_path') or kwargs.get('path')
-        content = kwargs.get('content')
-        if not file_path or content is None:
-            return "Error: 'file_path'/'path' and 'content' arguments are required."
-        try:
-            with open(file_path, 'a', encoding='utf-8') as f:
-                f.write('\n' + content)
-            return f"Successfully appended content to {file_path}."
-        except Exception as e:
-            return f"Error appending to file {file_path}: {e}"

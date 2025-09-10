@@ -1,3 +1,12 @@
+[//]: # (Cognitive Memory System section)
+
+## Cognitive Memory System
+
+The `memory/` directory contains the modules for the agent's multi-layered memory system.
+
+-   **`memory_manager.py`**: The main interface for interacting with the agent's memory. It will orchestrate calls to both short-term and long-term memory modules.
+-   **`short_term_memory.py`**: Manages the agent's episodic memory, keeping a chronological log of recent events and conversations.
+-   **`long_term_memory.py`**: Manages the agent's semantic memory. It will store processed insights and learned knowledge in a vector database for efficient retrieval.
 # Sophia
 
 Lightweight project to demo autonomous agents built with CrewAI.
