@@ -6,18 +6,18 @@ load_dotenv()
 
 # Import agenta a nového úkolu
 from core.agents import developer_agent
-from core.tasks import tool_practice_task
+from core.tasks import final_integration_task
 
 def main():
     """Hlavní funkce pro sestavení a spuštění Crew."""
-    print("🚀 Initializing the Sophia v2 Crew for a tool practice task...")
+    print("🚀 Initializing the Sophia v2 Crew for a file editing task...")
 
     # Sestavení posádky
     sophia_crew = Crew(
         agents=[developer_agent],
-        tasks=[tool_practice_task],
+        tasks=[final_integration_task],
         process=Process.sequential,
-        verbose=2
+        verbose=True
     )
 
     print("🏁 Crew assembled. Kicking off the task...")
