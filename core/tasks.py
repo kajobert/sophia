@@ -1,4 +1,16 @@
 from crewai import Task
+# Úkol pro konsolidaci paměti
+from .agents import memory_agent
+
+# Úkol pro konsolidaci paměti
+memory_consolidation_task = Task(
+    description="""1. Read the entire content of the short-term memory log located at 'logs/episodic_memory.log'.
+    2. Analyze the log and identify 3 to 5 key events, learnings, or facts from the recent activities. For example, 'The agent learned that the CEO of NVIDIA is Jensen Huang.' or 'A file named ceo_report.txt was created.'
+    3. For EACH of these key insights, use the 'Long-Term Memory Storage Tool' to save it as a distinct memory.""",
+    expected_output="A confirmation that key insights from the short-term log have been identified and stored in long-term memory.",
+    agent=memory_agent
+)
+from crewai import Task
 from .agents import developer_agent
 
 # Úkol č. 1: Pouze vyhledávání informací

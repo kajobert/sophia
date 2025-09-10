@@ -1,3 +1,19 @@
+from crewai.tools import BaseTool
+# Nástroj pro ukládání do Dlouhodobé Paměti
+from memory.long_term_memory import LongTermMemory
+
+# Nástroj pro ukládání do Dlouhodobé Paměti
+class LTMemoryTool(BaseTool):
+    name: str = "Long-Term Memory Storage Tool"
+    description: str = "Stores a piece of text as a long-term semantic memory."
+
+    def _run(self, memory_text: str) -> str:
+        try:
+            ltm = LongTermMemory()
+            ltm.add_memory(memory_text)
+            return f"Successfully stored memory: {memory_text}"
+        except Exception as e:
+            return f"Error storing memory: {e}"
 
 
 
