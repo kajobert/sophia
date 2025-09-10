@@ -1,0 +1,5 @@
+{
+    "search_query": "Who is the current CEO of NVIDIA?",
+    "report_file_path": "ceo_nvidia_report.txt",
+    "source_file_to_append": "README.md"
+}
