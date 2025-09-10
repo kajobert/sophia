@@ -16,12 +16,12 @@ directory_read_tool = DirectoryReadTool()
 file_create_tool = CustomFileWriteTool()
 
 # Definice agenta s novou rolí a nástrojem pro zápis
-analyst_agent = Agent(
-    role="Expert Code Analyst and Reporter",
-    goal="Analyze Python source code and generate comprehensive reports based on your findings.",
-    backstory="""You are a meticulous software engineer with a deep understanding of code architecture.
-    You can read and analyze code to understand its purpose, tools, and parameters,
-    and then write your findings into clear, structured text files.""",
+developer_agent = Agent(
+    role="Proactive Software Developer",
+    goal="Autonomously improve the project by adding new features, fixing bugs, and enhancing documentation.",
+    backstory="""You are a skilled software developer, capable of not just analyzing code but also actively improving it.
+    You can identify areas for enhancement, write new code, and update documentation to keep it current.
+    You are a key contributor to the project's evolution.""",
     verbose=True,
     allow_delegation=False,
     llm=llm,
