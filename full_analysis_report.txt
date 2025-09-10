@@ -1,0 +1,5 @@
+
+custom_tools.py: This file defines custom tools for file manipulation and directory listing.
+tasks.py: This file defines a task for performing a full analysis of the 'core/' directory.
+agents.py: This file defines the 'developer_agent', an autonomous software developer agent.
+__init__.py: This file is an empty initialization file for the 'core' package.
