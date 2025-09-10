@@ -1,24 +1,23 @@
 from dotenv import load_dotenv
 from crewai import Crew, Process
 
-# Načteme API klíč hned na začátku
+# Načtení environmentálních proměnných
 load_dotenv()
 
-# Importujeme agenta a úkol z našich 'core' modulů
-from core.agents import analyst_agent
-from core.tasks import reporting_task
-
+# Import agenta a nového úkolu
+from core.agents import developer_agent
+from core.tasks import tool_practice_task
 
 def main():
     """Hlavní funkce pro sestavení a spuštění Crew."""
-    print("🚀 Initializing the Sophia v2 Crew for a reporting task...")
+    print("🚀 Initializing the Sophia v2 Crew for a tool practice task...")
 
     # Sestavení posádky
     sophia_crew = Crew(
-        agents=[analyst_agent],
-        tasks=[reporting_task],
+        agents=[developer_agent],
+        tasks=[tool_practice_task],
         process=Process.sequential,
-        verbose=2,
+        verbose=2
     )
 
     print("🏁 Crew assembled. Kicking off the task...")
@@ -29,7 +28,6 @@ def main():
     print("## Here is the result:")
     print("########################\n")
     print(result)
-
 
 if __name__ == "__main__":
     main()
