@@ -29,3 +29,20 @@ Notes
 - The project includes tools for web search (`SerperDevTool`) and local file reading (`FileReadTool`, `DirectoryReadTool`).
 
 Optional: If you prefer pinned versions and the `sophia_v2` layout, a copy of the original `requirements.txt` is available in `sophia_v2/requirements.txt`.
+
+## Custom Tools
+
+### CustomFileWriteTool
+
+This tool provides a way to write text content to a specified file.  It handles file creation, overwriting, and directory creation as needed.
+
+**Purpose:**
+Writes text to a file, creating directories and handling potential errors.
+
+**How to Use:**
+The tool takes two arguments:
+
+* `file_path` (str): The relative path to the file where the text should be written.
+* `text` (str): The text content to be written to the file.
+
+It returns a confirmation message indicating success or failure, including any error messages.

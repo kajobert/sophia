@@ -1,6 +1,6 @@
 import os
 from crewai import Agent
-from crewai_tools import SerperDevTool, FileReadTool, DirectoryReadTool
+from crewai_tools import SerperDevTool, FileReadTool
 from .custom_tools import CustomFileWriteTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -12,7 +12,6 @@ llm = ChatGoogleGenerativeAI(
 # Inicializace nástrojů
 search_tool = SerperDevTool()
 file_read_tool = FileReadTool()
-directory_read_tool = DirectoryReadTool()
 file_create_tool = CustomFileWriteTool()
 
 # Definice agenta s novou rolí a nástrojem pro zápis
@@ -25,5 +24,8 @@ developer_agent = Agent(
     verbose=True,
     allow_delegation=False,
     llm=llm,
-    tools=[search_tool, file_read_tool, directory_read_tool, file_create_tool],
+    # Note: DirectoryReadTool was removed to avoid sending very large repository
+    # contents to the LLM (caused token-limit errors). Keep tools limited so the
+    # agent only reads requested files explicitly.
+    tools=[search_tool, file_read_tool, file_create_tool],
 )
