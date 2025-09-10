@@ -1,8 +1,10 @@
 import os
 from crewai import Agent
+
 # Importujeme naše vlastní nástroje
 from core.custom_tools import CustomFileWriteTool, CustomDirectoryListTool
 from crewai_tools import SerperDevTool, FileReadTool
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Inicializace LLM
@@ -12,6 +14,7 @@ llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",
 # Inicializace nástrojů - nyní používáme náš vlastní
 search_tool = SerperDevTool()
 file_read_tool = FileReadTool()
+
 directory_list_tool = CustomDirectoryListTool() # <-- ZMĚNA ZDE
 file_write_tool = CustomFileWriteTool()
 
@@ -27,4 +30,5 @@ developer_agent = Agent(
     llm=llm,
     # Nahrazení nástroje v seznamu
     tools=[search_tool, file_read_tool, directory_list_tool, file_write_tool] # <-- ZMĚNA ZDE
+
 )
