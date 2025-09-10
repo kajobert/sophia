@@ -1,29 +1,30 @@
 import os
 from crewai import Agent
-from crewai_tools import SerperDevTool, FileReadTool, DirectoryReadTool
-from .custom_tools import CustomFileWriteTool
+# Importujeme naše vlastní nástroje
+from core.custom_tools import CustomFileWriteTool, CustomDirectoryListTool
+from crewai_tools import SerperDevTool, FileReadTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Inicializace LLM
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash-latest", google_api_key=os.getenv("GEMINI_API_KEY")
-)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest",
+                             google_api_key=os.getenv("GEMINI_API_KEY"))
 
-# Inicializace nástrojů
+# Inicializace nástrojů - nyní používáme náš vlastní
 search_tool = SerperDevTool()
 file_read_tool = FileReadTool()
-directory_read_tool = DirectoryReadTool()
-file_create_tool = CustomFileWriteTool()
+directory_list_tool = CustomDirectoryListTool() # <-- ZMĚNA ZDE
+file_write_tool = CustomFileWriteTool()
 
-# Definice agenta s novou rolí a nástrojem pro zápis
-analyst_agent = Agent(
-    role="Expert Code Analyst and Reporter",
-    goal="Analyze Python source code and generate comprehensive reports based on your findings.",
-    backstory="""You are a meticulous software engineer with a deep understanding of code architecture.
-    You can read and analyze code to understand its purpose, tools, and parameters,
-    and then write your findings into clear, structured text files.""",
+# Definice agenta
+developer_agent = Agent(
+    role='Autonomous Software Developer',
+    goal='Read, analyze, and improve the project codebase and documentation.',
+    backstory="""You are a skilled software developer agent.
+    Your purpose is to autonomously maintain and enhance the project you are a part of.
+    You can read existing files, understand their purpose, and write new content or code to improve them.""",
     verbose=True,
     allow_delegation=False,
     llm=llm,
-    tools=[search_tool, file_read_tool, directory_read_tool, file_create_tool],
+    # Nahrazení nástroje v seznamu
+    tools=[search_tool, file_read_tool, directory_list_tool, file_write_tool] # <-- ZMĚNA ZDE
 )
