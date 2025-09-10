@@ -5,18 +5,18 @@ from crewai import Crew, Process
 load_dotenv()
 
 # Importujeme agenta a úkol z našich 'core' modulů
-from core.agents import analyst_agent
-from core.tasks import reporting_task
+from core.agents import developer_agent
+from core.tasks import documentation_task
 
 
 def main():
     """Hlavní funkce pro sestavení a spuštění Crew."""
-    print("🚀 Initializing the Sophia v2 Crew for a reporting task...")
+    print("🚀 Initializing the Sophia v2 Crew for a documentation task...")
 
     # Sestavení posádky
     sophia_crew = Crew(
-        agents=[analyst_agent],
-        tasks=[reporting_task],
+        agents=[developer_agent],
+        tasks=[documentation_task],
         process=Process.sequential,
         verbose=2,
     )

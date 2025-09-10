@@ -1,13 +1,12 @@
 from crewai import Task
-from .agents import analyst_agent
+from .agents import developer_agent
 
-# Nový úkol, který vyžaduje čtení a následný zápis do souboru
-reporting_task = Task(
-    description="""1. Read the content of the 'core/agents.py' file.
-    2. Identify the 'role' and 'goal' of the agent defined in that file.
-    3. Create a new file named 'analysis_report.txt'.
-    4. Write a report into this new file containing the identified role and goal.
-    The report should be a simple text: 'Agent Role: [role]\\nAgent Goal: [goal]'.""",
-    expected_output="Confirmation that the 'analysis_report.txt' file was created, with a brief summary of its content.",
-    agent=analyst_agent,
+# Definice úkolu pro aktualizaci dokumentace
+documentation_task = Task(
+    description="""Read the project's `README.md` file to understand its current content.
+    Then, read the `core/custom_tools.py` file to learn about the `CustomFileWriteTool`.
+    Finally, update the `README.md` file by adding a new section that describes the `CustomFileWriteTool`,
+    including its purpose and how to use it. The new section should be clearly titled 'Custom Tools'.""",
+    expected_output="The `README.md` file is updated with a new 'Custom Tools' section describing the `CustomFileWriteTool`.",
+    agent=developer_agent,
 )
