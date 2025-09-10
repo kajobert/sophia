@@ -23,3 +23,7 @@ langchain-community
 python-dotenv
 pyyaml
 duckduckgo-search
+
+# Vector Database and Embeddings
+chromadb
+langchain-google-genai
