@@ -16,8 +16,8 @@ def main():
     sophia_crew = Crew(
         agents=[researcher],
         tasks=[code_analysis_task],
-        process=Process.sequential,
-        verbose=2
+    process=Process.sequential,
+    verbose=True
     )
 
     print("🏁 Crew assembled. Kicking off the task...")
