@@ -27,3 +27,5 @@ Notes
 
 - Do not commit `.env` to the repo.
 - The project includes tools for web search (`SerperDevTool`) and local file reading (`FileReadTool`, `DirectoryReadTool`).
+
+Optional: If you prefer pinned versions and the `sophia_v2` layout, a copy of the original `requirements.txt` is available in `sophia_v2/requirements.txt`.
