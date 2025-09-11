@@ -1,93 +1,60 @@
-from crewai.tools import BaseTool
-# Nástroj pro ukládání do Dlouhodobé Paměti
-from memory.long_term_memory import LongTermMemory
-
-# Nástroj pro ukládání do Dlouhodobé Paměti
-class LTMemoryTool(BaseTool):
-    name: str = "Long-Term Memory Storage Tool"
-    description: str = "Stores a piece of text as a long-term semantic memory."
-
-    def _run(self, memory_text: str) -> str:
-        try:
-            ltm = LongTermMemory()
-            ltm.add_memory(memory_text)
-            return f"Successfully stored memory: {memory_text}"
-        except Exception as e:
-            return f"Error storing memory: {e}"
-
-
 
 import os
-import json
-import requests
 from crewai.tools import BaseTool
 
-# --- Helper Function to read config ---
-def get_tool_config():
-    with open('tool_config.json', 'r') as f:
-        return json.load(f)
+class FileEditTool(BaseTool):
+    name: str = "File Edit Tool"
+    description: str = "Appends content to a specified file, always starting on a new line."
 
-# --- Nástroje upravené pro čtení z configu ---
+    def _run(self, file_path: str, content: str) -> str:
+        try:
+            # Read last line to prevent duplicate appends
+            last_line = None
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    if lines:
+                        last_line = lines[-1].rstrip('\n')
+            if last_line == content:
+                return f"Skipped append: last line already matches content in {file_path}."
+            with open(file_path, 'a', encoding='utf-8') as f:
+                f.write('\n' + content)
+            return f"Successfully appended to file: {file_path}."
+        except Exception as e:
+            return f"Error appending to file {file_path}: {e}"
+class FileReadTool(BaseTool):
+    name: str = "File Read Tool"
+    description: str = "Reads content from a specified file."
 
+    def _run(self, file_path: str) -> str:
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            return f"Error reading file {file_path}: {e}"
+from crewai_tools import SerperDevTool as CrewaiSerperDevTool
 
 class WebSearchTool(BaseTool):
     name: str = "Web Search Tool"
-    description: str = "Performs a web search using the Serper.dev API based on the query in tool_config.json."
-
-    def __init__(self):
-        super().__init__(name="Web Search Tool", description="Performs a web search using the Serper.dev API based on the query in tool_config.json.")
-
-    def _run(self, *args, **kwargs) -> str:
+    description: str = "Performs a web search for a given query."
+    
+    def _run(self, search_query: str) -> str:
         try:
-            config = get_tool_config()
-            search_query = config.get('search_query')
-            api_key = os.getenv("SERPER_API_KEY")
-
-            if not search_query:
-                return "Error: 'search_query' not found in tool_config.json."
-            if not api_key:
-                return "Error: SERPER_API_KEY not found in environment variables."
-
-            url = "https://google.serper.dev/search"
-            payload = json.dumps({"q": search_query})
-            headers = {'X-API-KEY': api_key, 'Content-Type': 'application/json'}
-            
-            response = requests.post(url, headers=headers, data=payload)
-            response.raise_for_status() # Raise an exception for bad status codes
-            
-            results = response.json()
-            # Zpracujeme a vrátíme jen nejdůležitější informace
-            snippets = [item.get('snippet', '') for item in results.get('organic', [])]
-            return "Search results: " + " | ".join(snippets[:5])
-
+            # Správné volání s klíčovým argumentem
+            results = CrewaiSerperDevTool().run(search_query=search_query)
+            # Vrátíme výsledek jako text (může být JSON nebo string)
+            return str(results)
         except Exception as e:
-            return f"Error during web search: {e}"
+            return f"Web search failed: {e}"
 
+class FileWriteTool(BaseTool):
+    name: str = "File Write Tool"
+    description: str = "Writes content to a specified file."
 
-class CreateReportTool(BaseTool):
-    def __init__(self):
-        super().__init__(name="Create Report Tool", description="Creates a new report file with specified content.")
-
-    def _run(self, *args, **kwargs) -> str:
-        content_to_write = ""
-        if 'content' in kwargs:
-            content_to_write = kwargs['content']
-        elif args:
-            content_to_write = args[0]
-        else:
-            return "Error: No content provided to write."
-
-        if isinstance(content_to_write, dict):
-            content_to_write = content_to_write.get('content') or content_to_write.get('text') or str(content_to_write)
-        
-        config = get_tool_config()
-        file_path = config.get('report_file_path')
-        if not file_path:
-            return "Error: 'report_file_path' not found in tool_config.json."
-        
+    def _run(self, file_path: str, content: str) -> str:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(str(content_to_write))
-            return f"Successfully created report file: {file_path}."
+                f.write(content)
+            return f"Successfully wrote to file: {file_path}."
         except Exception as e:
-            return f"Error creating file {file_path}: {e}"
+            return f"Error writing to file {file_path}: {e}"
