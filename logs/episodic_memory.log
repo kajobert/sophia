@@ -14,3 +14,9 @@
 [2025-09-11 11:23:19] User: Jaké máš k dispozici nástroje?
 [2025-09-11 11:23:19] Sophia: Mám k dispozici následující nástroje: Web Search Tool, File Write Tool, File Read Tool, File Edit Tool.
 [2025-09-11 11:23:25] Session ended.
+[2025-09-11 11:27:37] Session started.
+[2025-09-11 11:27:43] AgentAction: thought=Action: File Write Tool, tool=File Write Tool
+[2025-09-11 11:27:43] AgentFinish: output=Soubor 'test_sophia.txt' byl vytvořen s obsahem: 'Toto je testovací zpráva pro ověření funkce paměti.'.
+[2025-09-11 11:27:43] User: Vytvoř soubor s názvem test_sophia.txt a napiš do něj: 'Toto je testovací zpráva pro ověření funkce paměti.'
+[2025-09-11 11:27:43] Sophia: Soubor 'test_sophia.txt' byl vytvořen s obsahem: 'Toto je testovací zpráva pro ověření funkce paměti.'.
+[2025-09-11 11:28:07] Session ended.

@@ -1,118 +1,27 @@
-# TASK: Finální refaktoring na architekturu řetězených úkolů
+# ZADÁNÍ: Integrace Dlouhodobé Paměti a "Procesu Snění"
 
-## Cíl
-Definitivně vyřešit problém s předáváním dat mezi nástroji tím, že refaktorujeme naši logiku do dvou oddělených, na sebe navazujících úkolů (`Task`). Tím zajistíme, že výstup z jednoho úkolu bude spolehlivě sloužit jako vstup pro další.
+## CÍL
+Upravit `main.py` tak, aby po každé interakci s uživatelem došlo k automatickému spuštění procesu "konsolidace paměti", ve kterém si `MemoryAgent` uloží klíčové poznatky do dlouhodobé paměti.
 
-## Analýza
-Diagnostika je kompletní. Problém není v nástrojích samotných, ale v nespolehlivém předávání argumentů v rámci jednoho komplexního úkolu. Řešením je rozdělit logiku na dva jednodušší, specializované úkoly a využít vestavěný mechanismus `context` pro předávání dat mezi nimi.
+## KONTEXT
+Máme funkční interaktivní smyčku s krátkodobou pamětí. Dlouhodobá paměť je také implementována, ale není zatím využívána. Tímto krokem oba systémy propojíme a vytvoříme plnohodnotný kognitivní cyklus.
 
-## Plán Krok za Krokem
+## PLÁN KROK ZA KROKEM
 
-### Krok 1: Zjednodušení `core/custom_tools.py`
-Upravíme naše nástroje tak, aby byly co nejjednodušší a dělaly jen jednu věc.
+### Krok 1: Aktualizace importů v `main.py`
+Do souboru `main.py` přidej importy pro `MemoryAgenta` a jeho úkol.
 
-**Nahraď celý obsah souboru `core/custom_tools.py` tímto kódem:**
-```python
-from crewai.tools import BaseTool
-from crewai_tools import SerperDevTool as CrewaiSerperDevTool
+### Krok 2: Vytvoření funkce pro "Snění"
+Vytvoř v `main.py` novou funkci `run_memory_consolidation()`. Uvnitř této funkce:
+1.  Vytvoř novou instanci `Crew` s `memory_agent` a `memory_consolidation_task`.
+2.  Spusť tuto posádku pomocí `kickoff()`.
+3.  Vypiš na obrazovku zprávu, že proces konsolidace paměti proběhl.
 
-class WebSearchTool(BaseTool):
-    name: str = "Web Search Tool"
-    description: str = "Performs a web search for a given query."
-    
-    def _run(self, search_query: str) -> str:
-        # Tento nástroj nyní vrací jen stručný výsledek
-        results = CrewaiSerperDevTool().run(search_query)
-        # Zpracujeme výsledek, abychom vrátili jen čistou informaci
-        # Zde by mohla být pokročilejší logika, pro teď stačí toto:
-        return results.split('Snippet:')[0]
+### Krok 3: Volání "Snění" v hlavní smyčce
+Uvnitř `while` smyčky v `main()` přidej na konec volání naší nové funkce `run_memory_consolidation()`. Tím zajistíš, že po každé odpovědi od Sophie dojde k "zamyšlení" a uložení do paměti.
 
-class FileWriteTool(BaseTool):
-    name: str = "File Write Tool"
-    description: str = "Writes content to a specified file."
+### Krok 4: Zajištění dostupnosti všech modulů
+Ověř, že soubory `core/agents.py` a `core/tasks.py` obsahují definice pro všechny potřebné agenty a úkoly (`developer_agent`, `memory_agent`, `memory_consolidation_task`). Pokud chybí, doplň je podle naší předchozí práce.
 
-    def _run(self, file_path: str, content: str) -> str:
-        try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-            return f"Successfully wrote to file: {file_path}."
-        except Exception as e:
-            return f"Error writing to file {file_path}: {e}"
-Krok 2: Úprava core/agents.py
-Agent bude mít k dispozici jen tyto dva jednoduché nástroje.
-
-Nahraď celý obsah core/agents.py tímto kódem:
-
-Python
-
-from crewai import Agent
-from core.custom_tools import WebSearchTool, FileWriteTool
-
-developer_agent = Agent(
-    role='Autonomous Task Executor',
-    goal='Execute multi-step tasks by sequentially using the available tools based on instructions.',
-    backstory="A reliable agent that follows instructions perfectly.",
-    verbose=True,
-    allow_delegation=False,
-    llm='gemini/gemini-1.5-flash-latest',
-    tools=[
-        WebSearchTool(),
-        FileWriteTool()
-    ]
-)
-Krok 3: Vytvoření řetězených úkolů v core/tasks.py
-Toto je klíčová změna, která implementuje naši "montážní linku".
-
-Nahraď celý obsah core/tasks.py tímto kódem:
-
-Python
-
-from crewai import Task
-from .agents import developer_agent
-
-# Úkol č. 1: Pouze vyhledávání informací
-search_task = Task(
-    description="Perform a web search to find out who the current CEO of NVIDIA is. Focus only on finding the name.",
-    expected_output="The full name of the current CEO of NVIDIA.",
-    agent=developer_agent
-)
-
-# Úkol č. 2: Vytvoření reportu na základě výsledků z PŘEDCHOZÍHO úkolu
-report_task = Task(
-    description="""Create a new report file named 'ceo_nvidia_report.txt'.
-    Write the name of the CEO you found in the previous task into this file.
-    The content should be a simple sentence, e.g., 'The current CEO of NVIDIA is [Name]'.""",
-    expected_output="A confirmation that the file 'ceo_nvidia_report.txt' was created with the correct sentence.",
-    agent=developer_agent,
-    # Tento klíčový parametr říká, že tento úkol potřebuje výstup z předchozích úkolů
-    context=[search_task]
-)
-Krok 4: Finální main.py
-Upravíme main.py pro spuštění celé sekvence.
-
-Nahraď celý obsah main.py tímto kódem:
-
-Python
-
-from dotenv import load_dotenv
-from crewai import Crew, Process
-load_dotenv()
-
-from core.agents import developer_agent
-from core.tasks import search_task, report_task
-
-def main():
-    print("🚀 Initializing the Sophia v2 Crew for a chained task...")
-    sophia_crew = Crew(
-        agents=[developer_agent],
-        tasks=[search_task, report_task],
-        process=Process.sequential,
-        verbose=True
-    )
-    print("🏁 Crew assembled. Kicking off the task...")
-    result = sophia_crew.kickoff()
-    print("\\n--- FINAL RESULT ---")
-    print(result)
-
-if __name__ == "__main__":
-    main()
+## OČEKÁVANÝ VÝSLEDEK
+Upravený `main.py`, který po každé interakci s uživatelem automaticky spustí druhý `Crew` pro konsolidaci paměti. Po každé odpovědi od Sophie by se v terminálu měla objevit zpráva o tom, že probíhá a dokončil se proces "snění".
