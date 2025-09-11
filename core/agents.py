@@ -1,6 +1,7 @@
 from crewai import Agent
 from core.custom_tools import WebSearchTool, FileWriteTool, FileReadTool, FileEditTool
-from core.greeting_tool import GreetingTool
+from core.directory_listing_tool import DirectoryListingTool
+from core.directory_creation_tool import DirectoryCreationTool # Nový import
 
 def get_sophia_essence():
     """Načte esenci Sophie ze souboru."""
@@ -22,6 +23,7 @@ developer_agent = Agent(
         FileWriteTool(),
         FileReadTool(),
         FileEditTool(),
-        GreetingTool()
+        DirectoryListingTool(),
+        DirectoryCreationTool() # Nový nástroj
     ]
 )

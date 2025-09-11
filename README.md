@@ -48,3 +48,5 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 - `.env` nikdy necommitujte.
 - Logy a vektorová DB se generují automaticky.
 - Projekt je připraven pro týmové předání a další rozvoj. Kognitivní cyklus (interakce + snění) je plně funkční.
+
+Toto je můj první zápis do README.md, Sophia.
