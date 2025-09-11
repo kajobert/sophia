@@ -10,7 +10,7 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 ### Aktuální stav
 - **Kód je vyčištěn od testovacích a dočasných souborů.**
 - **main.py**: Interaktivní smyčka, loguje každý vstup a odpověď do krátkodobé paměti.
-- **Paměť**: Krátkodobá (episodická) paměť je aktivní, dlouhodobá (vektorová, ChromaDB) připravena k integraci.
+- **Paměť**: Krátkodobá (episodická) paměť je aktivní, dlouhodobá (vektorová, ChromaDB) je plně propojena – po každé interakci probíhá automatická konsolidace ("snění") pomocí memory agenta.
 - **Nástroje**: WebSearchTool (Serper), FileWriteTool, FileReadTool, FileEditTool – všechny robustní, testované, bez duplikací a chyb.
 - **Agent**: developer_agent má registrovány všechny nástroje, je připraven na další rozšiřování.
 - **Dokumentace**: README.md, AGENTS.md a requirements.txt jsou aktuální a reflektují skutečný stav projektu.
@@ -27,7 +27,7 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 ---
 
 ### Doporučení pro další vývoj
-- **Integrace long-term memory**: Doplnit využití vektorové paměti v hlavní smyčce (např. ukládání odpovědí, vyhledávání relevantních vzpomínek).
+- **Konsolidace paměti**: Po každé odpovědi Sophie probíhá proces "snění" – memory agent analyzuje krátkodobou paměť a ukládá klíčové poznatky do dlouhodobé (ChromaDB).
 - **Pokrytí testy**: Doplnit/rozšířit unit a integrační testy, případně CI pipeline.
 - **Role a více agentů**: Připravit scénáře pro více agentů a specializované role.
 - **Bezpečnost a audit**: Zvážit auditní logování a bezpečnostní review před nasazením do produkce.
@@ -44,7 +44,9 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
   - tasks.py
 - memory/
   - short_term_memory.py
-  - long_term_memory.py
+  - long_term_memory.py (využívána memory agentem)
+  - memory_agent.py
+  - memory_tasks.py
   - memory_manager.py
 - tools/
 - logs/

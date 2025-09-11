@@ -1,7 +1,8 @@
 
+
 # Sophia
 
-Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, auditovatelné a rozšiřitelné zpracování úloh s podporou webového vyhledávání, práce se soubory a duální paměti (krátkodobá i dlouhodobá).
+Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, auditovatelné a rozšiřitelné zpracování úloh s podporou webového vyhledávání, práce se soubory a duální paměti (krátkodobá i dlouhodobá). Po každé interakci probíhá automaticky proces "snění" (konsolidace paměti), kdy specializovaný agent ukládá klíčové poznatky do dlouhodobé paměti.
 
 ## Rychlý start
 
@@ -21,10 +22,12 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 
 ## Architektura
 
-- **main.py** – Interaktivní smyčka, loguje každý vstup a odpověď do krátkodobé paměti.
+- **main.py** – Interaktivní smyčka, loguje každý vstup a odpověď do krátkodobé paměti. Po každé odpovědi se automaticky spouští proces konsolidace paměti ("snění").
 - **Paměť**
 	- `memory/short_term_memory.py` – krátkodobá (episodická) paměť, loguje události.
-	- `memory/long_term_memory.py` – dlouhodobá (vektorová, ChromaDB), připravena k integraci.
+	- `memory/long_term_memory.py` – dlouhodobá (vektorová, ChromaDB), využívána memory agentem pro ukládání znalostí.
+	- `core/memory_agent.py` – specializovaný agent pro konsolidaci paměti.
+	- `core/memory_tasks.py` – úkol pro konsolidaci paměti.
 - **Nástroje** (core/custom_tools.py):
 	- WebSearchTool (Serper)
 	- FileWriteTool
@@ -37,11 +40,11 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 
 - Kód je PEP8, typované signatury, komentáře a docstringy.
 - Pro testování použijte pytest.
-- Pro rozšíření paměti viz memory/long_term_memory.py.
+- Po každé interakci probíhá konsolidace paměti: memory agent analyzuje krátkodobou paměť a ukládá klíčové poznatky do dlouhodobé (ChromaDB).
 - Pro přidání nástrojů editujte core/custom_tools.py a core/agents.py.
 
 ## Poznámky
 
 - `.env` nikdy necommitujte.
 - Logy a vektorová DB se generují automaticky.
-- Projekt je připraven pro týmové předání a další rozvoj.
+- Projekt je připraven pro týmové předání a další rozvoj. Kognitivní cyklus (interakce + snění) je plně funkční.

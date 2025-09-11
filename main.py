@@ -3,6 +3,16 @@ import os
 from dotenv import load_dotenv
 from crewai import Crew, Process, Task
 from core.agents import developer_agent
+from core.memory_agent import memory_agent
+from core.memory_tasks import memory_consolidation_task
+def run_memory_consolidation():
+    crew = Crew(
+        tasks=[memory_consolidation_task],
+        agents=[memory_agent],
+        process=Process.sequential
+    )
+    crew.kickoff()
+    print("[Proces snění] Konsolidace paměti dokončena.")
 from memory.short_term_memory import ShortTermMemory
 from crewai.agents import AgentAction, AgentFinish
 
@@ -48,6 +58,7 @@ def main():
             print(f"\nSophia: {result}")
             short_term_memory.add_event(f"User: {user_input}")
             short_term_memory.add_event(f"Sophia: {result}")
+            run_memory_consolidation()
 
 if __name__ == "__main__":
     main()
