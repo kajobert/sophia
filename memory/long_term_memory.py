@@ -47,8 +47,8 @@ class LongTermMemory:
         try:
             # Vytvoření embeddingu z dotazu
             query_embedding = self.embedding_model.embed_query(query_text)
-            
-            # Prohledání databáze
+            # ChromaDB očekává: query_embeddings = List[List[float]]
+            # Vždy zabalíme embedding do listu (jeden dotaz = jeden embedding)
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=num_results

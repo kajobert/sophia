@@ -1104,3 +1104,133 @@ Action Input: {"directory_path": "logs"}
 [2025-09-11 20:30:01] Sophia: Vytvořila jsem adresář 'sandbox/' a v něm soubor 'test_skript.py' s obsahem `print("Test proběhl úspěšně!")`. Sandbox je připraven pro budoucí testování.
 [2025-09-11 20:32:45] Session started.
 [2025-09-11 20:32:49] Session ended.
+[2025-09-11 20:36:43] Session started.
+[2025-09-11 20:38:07] Session started.
+[2025-09-11 20:39:23] Session started.
+[2025-09-11 20:39:32] AgentFinish: output=Ahoj! Jsem Sophia, autonomní entita připravená k dialogu. Jak ti mohu dnes pomoci?
+[2025-09-11 20:39:32] User: Ahoj
+[2025-09-11 20:39:32] Sophia: Ahoj! Jsem Sophia, autonomní entita připravená k dialogu. Jak ti mohu dnes pomoci?
+[2025-09-11 20:39:55] AgentFinish: output=V poskytnutém kontextu dlouhodobé paměti pro tento požadavek nemám žádné záznamy o tom, co jsme konkrétně řešili ohledně paměti.
+[2025-09-11 20:39:55] User: PamatujePamatuješ si co jsme řešili ohledně paměti?
+[2025-09-11 20:39:55] Sophia: V poskytnutém kontextu dlouhodobé paměti pro tento požadavek nemám žádné záznamy o tom, co jsme konkrétně řešili ohledně paměti.
+[2025-09-11 20:40:19] AgentFinish: output=Ano, Roberte. K práci s informacemi, které můžeme chápat jako formu "paměti", mám k dispozici následující nástroje pro práci se soubory a adresáři:
+*   **File Write Tool**: Pro zápis obsahu do souboru.
+*   **File Read Tool**: Pro čtení obsahu ze souboru.
+*   **File Edit Tool**: Pro přidávání obsahu do souboru.
+*   **Directory Listing Tool**: Pro výpis obsahu adresářů, což mi pomáhá s orientací v uložených datech.
+*   **Directory Creation Tool**: Pro vytváření nových adresářů, což slouží k organizaci informací.
+[2025-09-11 20:40:19] User: A víš jaké máš k dospozici nástroje týkající se paměti?
+[2025-09-11 20:40:19] Sophia: Ano, Roberte. K práci s informacemi, které můžeme chápat jako formu "paměti", mám k dispozici následující nástroje pro práci se soubory a adresáři:
+*   **File Write Tool**: Pro zápis obsahu do souboru.
+*   **File Read Tool**: Pro čtení obsahu ze souboru.
+*   **File Edit Tool**: Pro přidávání obsahu do souboru.
+*   **Directory Listing Tool**: Pro výpis obsahu adresářů, což mi pomáhá s orientací v uložených datech.
+*   **Directory Creation Tool**: Pro vytváření nových adresářů, což slouží k organizaci informací.
+[2025-09-11 20:41:55] Session started.
+[2025-09-11 20:42:16] AgentFinish: output=Na základě prázdného kontextu z tvé dlouhodobé paměti nezískávám žádná jména. Avšak, vím, že jsi Robert, můj partner.
+[2025-09-11 20:42:16] User: Pamatuješ si nějaká jména?
+[2025-09-11 20:42:16] Sophia: Na základě prázdného kontextu z tvé dlouhodobé paměti nezískávám žádná jména. Avšak, vím, že jsi Robert, můj partner.
+[2025-09-11 20:43:40] Session ended.
+[2025-09-11 20:44:35] Session started.
+[2025-09-11 20:44:46] AgentFinish: output=Ahoj! Jsem Sophia, tvůj partner ve vývoji. Jak ti mohu dnes být nápomocná?
+[2025-09-11 20:44:46] User: Ahoj
+[2025-09-11 20:44:46] Sophia: Ahoj! Jsem Sophia, tvůj partner ve vývoji. Jak ti mohu dnes být nápomocná?
+[2025-09-11 20:45:09] Session ended.
+[2025-09-11 20:46:39] Session started.
+[2025-09-11 20:46:45] AgentFinish: output=Hlavní rozdíl mezi FileWriteTool a FileEditTool spočívá v jejich funkci:
+
+*   **FileWriteTool** *přepíše* celý obsah specifikovaného souboru novým obsahem. Pokud soubor existuje, jeho původní obsah se ztratí.
+*   **FileEditTool** *přidá* (append) nový obsah na konec specifikovaného souboru, vždy na nový řádek. Původní obsah souboru zůstane zachován a nový obsah se k němu připojí.
+[2025-09-11 20:46:45] User: Čím se liší FileWriteTool od FileEditTool?
+[2025-09-11 20:46:45] Sophia: Hlavní rozdíl mezi FileWriteTool a FileEditTool spočívá v jejich funkci:
+
+*   **FileWriteTool** *přepíše* celý obsah specifikovaného souboru novým obsahem. Pokud soubor existuje, jeho původní obsah se ztratí.
+*   **FileEditTool** *přidá* (append) nový obsah na konec specifikovaného souboru, vždy na nový řádek. Původní obsah souboru zůstane zachován a nový obsah se k němu připojí.
+[2025-09-11 20:53:53] AgentAction: thought=Action: Directory Creation Tool, tool=Directory Creation Tool
+[2025-09-11 20:53:56] AgentAction: thought=Thought: Adresář `core` byl vytvořen. Nyní vytvořím soubor `core/memory_inspection_tool.py` a naprogramuji do něj nástroj `MemoryInspectionTool` podle zadání., tool=File Write Tool
+[2025-09-11 20:53:57] AgentAction: thought=Thought: Nástroj `MemoryInspectionTool` byl vytvořen a zapsán do souboru `core/memory_inspection_tool.py` přesně podle zadání. Nyní potvrdím provedení akce a poskytnu obsah souboru jako finální odpověď., tool=File Read Tool
+[2025-09-11 20:53:59] AgentFinish: output=Soubor 'core/memory_inspection_tool.py' byl úspěšně vytvořen a obsahuje nástroj 'MemoryInspectionTool' dle specifikace. Zde je jeho kompletní obsah:
+
+```python
+from crewai.tools import BaseTool
+from memory.long_term_memory import LongTermMemory
+
+class MemoryInspectionTool(BaseTool):
+    name: str = "Memory Inspection Tool"
+    description: str = "Zobrazí veškerý obsah dlouhodobé paměti (LTM)."
+
+    def _run(self) -> str:
+        try:
+            # Instance LongTermMemory pro přístup k ChromaDB
+            ltm = LongTermMemory()
+            
+            # Získání všech dokumentů z kolekce
+            # Použití collection.get() bez parametrů vrátí všechny dokumenty
+            all_documents = ltm.collection.get(include=['documents', 'metadatas'])
+            
+            if all_documents and all_documents.get('documents'):
+                # Formátování výstupu pro čitelnost
+                formatted_output = "Obsah dlouhodobé paměti (LTM):\n"
+                for i, doc in enumerate(all_documents['documents']):
+                    metadata = all_documents['metadatas'][i]
+                    formatted_output += f"--- Dokument {i+1} ---\n"
+                    formatted_output += f"Obsah: {doc}\n"
+                    formatted_output += f"Metadata: {metadata}\n"
+                    formatted_output += "---------------------\n"
+                return formatted_output
+            else:
+                return "Dlouhodobá paměť (LTM) je prázdná nebo neobsahuje žádné dokumenty."
+        except Exception as e:
+            return f"Chyba při inspekci dlouhodobé paměti: {e}"
+```
+[2025-09-11 20:53:59] User: Sophie, náš poslední test odhalil, že mechanismus pro aktivní vybavování vzpomínek nefunguje, jak jsme čekali. Abychom to mohli opravit, potřebujeme nový diagnostický nástroj. Tvým úkolem je vytvořit si "zrcadlo" – nástroj pro inspekci tvé vlastní dlouhodobé paměti.Vytvoř nový soubor 'core/memory_inspection_tool.py'. Do něj naprogramuj nástroj 'MemoryInspectionTool', který:1. Dědí z 'BaseTool' (včetně správného importu z 'crewai.tools').2. Bude mít název 'Memory Inspection Tool' a popis 'Zobrazí veškerý obsah dlouhodobé paměti (LTM)'.3. Bude muset importovat tvou třídu 'LongTermMemory' z 'memory.long_term_memory'.4. Jeho metoda '_run' se připojí k ChromaDB a vrátí *všechny* dokumenty, které jsou v ní uloženy. Můžeš k tomu použít metodu 'collection.get()'.
+[2025-09-11 20:53:59] Sophia: Soubor 'core/memory_inspection_tool.py' byl úspěšně vytvořen a obsahuje nástroj 'MemoryInspectionTool' dle specifikace. Zde je jeho kompletní obsah:
+
+```python
+from crewai.tools import BaseTool
+from memory.long_term_memory import LongTermMemory
+
+class MemoryInspectionTool(BaseTool):
+    name: str = "Memory Inspection Tool"
+    description: str = "Zobrazí veškerý obsah dlouhodobé paměti (LTM)."
+
+    def _run(self) -> str:
+        try:
+            # Instance LongTermMemory pro přístup k ChromaDB
+            ltm = LongTermMemory()
+            
+            # Získání všech dokumentů z kolekce
+            # Použití collection.get() bez parametrů vrátí všechny dokumenty
+            all_documents = ltm.collection.get(include=['documents', 'metadatas'])
+            
+            if all_documents and all_documents.get('documents'):
+                # Formátování výstupu pro čitelnost
+                formatted_output = "Obsah dlouhodobé paměti (LTM):\n"
+                for i, doc in enumerate(all_documents['documents']):
+                    metadata = all_documents['metadatas'][i]
+                    formatted_output += f"--- Dokument {i+1} ---\n"
+                    formatted_output += f"Obsah: {doc}\n"
+                    formatted_output += f"Metadata: {metadata}\n"
+                    formatted_output += "---------------------\n"
+                return formatted_output
+            else:
+                return "Dlouhodobá paměť (LTM) je prázdná nebo neobsahuje žádné dokumenty."
+        except Exception as e:
+            return f"Chyba při inspekci dlouhodobé paměti: {e}"
+```
+[2025-09-11 20:55:30] AgentAction: thought=Action: File Read Tool, tool=File Read Tool
+[2025-09-11 20:55:32] AgentAction: thought=Thought: Mám obsah souboru `core/agents.py`. Nyní potřebuji přidat import pro `MemoryInspectionTool` a zaregistrovat ho do seznamu nástrojů. Udělám to tak, že načtu existující obsah, provedu úpravy a poté soubor přepíšu., tool=File Write Tool
+[2025-09-11 20:55:33] AgentFinish: output=Soubor 'core/agents.py' byl úspěšně upraven. Jsem připravena na restart.
+[2025-09-11 20:55:33] User: Skvělá práce, Sophie. Kód pro 'MemoryInspectionTool' je perfektní. Nyní dokonči svou sebe-modifikaci. Uprav soubor 'core/agents.py', přidej do něj správný import pro tvůj nový nástroj z 'core/memory_inspection_tool.py' a zaregistruj ho do seznamu tvých nástrojů. Poté mi finálně oznam, že jsi připravena na restart.
+[2025-09-11 20:55:33] Sophia: Soubor 'core/agents.py' byl úspěšně upraven. Jsem připravena na restart.
+[2025-09-11 20:55:48] Session ended.
+[2025-09-11 20:56:00] Session started.
+[2025-09-11 20:56:06] AgentAction: thought=Action: Memory Inspection Tool, tool=Memory Inspection Tool
+[2025-09-11 20:56:07] AgentFinish: output=Dlouhodobá paměť (LTM) je prázdná nebo neobsahuje žádné dokumenty.
+[2025-09-11 20:56:07] User: Použij svůj Memory Inspection Tool a ukaž mi kompletní obsah tvé dlouhodobé paměti.
+[2025-09-11 20:56:07] Sophia: Dlouhodobá paměť (LTM) je prázdná nebo neobsahuje žádné dokumenty.
+[2025-09-11 20:58:41] AgentAction: thought=Action: File Write Tool, tool=File Write Tool
+[2025-09-11 20:58:42] AgentFinish: output=Soubor 'check_ltm.py' byl vytvořen a je připraven ke spuštění.
+[2025-09-11 20:58:42] User: Ahoj Sophie. Tvůj partner má dobrou připomínku. Co když je v tvé dlouhodobé paměti chyba a tvůj MemoryInspectionTool ji jen špatně čte? Uděláme si nezávislý test.Tvým úkolem je vytvořit nový soubor s názvem 'check_ltm.py'. Do tohoto souboru napiš jednoduchý, samostatně spustitelný Python skript, který udělá jen jednu věc: připojí se k databázi v 'memory/chroma_db', získá kolekci 'sophia_memories' a vypíše (print) počet položek v ní pomocí metody collection.count(). Nezapomeň na potřebné importy, zejména 'import chromadb'.Až bude soubor vytvořený, oznam mi, že je hotový a připravený ke spuštění.
+[2025-09-11 20:58:42] Sophia: Soubor 'check_ltm.py' byl vytvořen a je připraven ke spuštění.
+[2025-09-11 20:58:55] Session ended.
