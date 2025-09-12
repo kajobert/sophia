@@ -18,3 +18,16 @@ venv/
 # Ignore environment variables files
 .env
 *.env
+
+# Sophia memory, logs, and vector DB
+logs/
+memory/chroma_db/
+memory/knowledge_base/
+memory/learned_patterns/
+memory/task_solutions/
+long_term_memory.txt
+personal_notes.txt
+sophia_reflection_log.txt
+peek_ltm.py
+check_ltm.py
+trained_agents_data.pkl

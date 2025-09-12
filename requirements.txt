@@ -1,14 +1,7 @@
-requests
 crewai==0.35.8
 crewai-tools==0.3.0
 langchain==0.1.20
 langchain-google-genai==1.0.4
-llama-index==0.10.45
 chromadb==0.4.24
 python-dotenv==1.0.1
 pyyaml==6.0.1
-google-search-results
-duckduckgo-search
-
-# Pro dlouhodobou paměť a konsolidaci:
-# ChromaDB, crewai, crewai-tools již zahrnuty
