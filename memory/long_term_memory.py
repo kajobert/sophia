@@ -10,28 +10,39 @@ class LongTermMemory:
         # Ujistíme se, že máme API klíč pro embedding model
         if not os.getenv("GEMINI_API_KEY"):
             raise ValueError("GEMINI_API_KEY not found in environment variables.")
-
-        # Nastavení klienta a kolekce v ChromaDB
-        self.client = chromadb.PersistentClient(path=db_path)
-        self.collection = self.client.get_or_create_collection(name=collection_name)
-        
+        try:
+            # Nastavení klienta a kolekce v ChromaDB
+            self.client = chromadb.PersistentClient(path=db_path)
+            self.collection = self.client.get_or_create_collection(name=collection_name)
+        except Exception as e:
+            print(f"WARNING: ChromaDB is missing or corrupted: {e}")
+            self.client = None
+            self.collection = None
         # Inicializace embedding modelu od Google
         self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
-    def add_memory(self, memory_text: str, metadata: dict = None):
+    from typing import Optional
+    def add_memory(self, memory_text: str, metadata: Optional[dict] = None):
         """
         Adds a new memory to the long-term semantic store.
         The memory text is converted into a vector embedding.
         """
+        if self.collection is None:
+            print("WARNING: ChromaDB is not available. Memory not saved.")
+            return
         try:
             # Vytvoření embeddingu z textu
             embedding = self.embedding_model.embed_query(memory_text)
-            
-            # Unikátní ID pro každý záznam v paměti
+            # Pokud embedding není obyčejný list, převedeme ho (např. proto.marshal.collections.repeated.Repeated)
+            if not isinstance(embedding, list):
+                embedding = list(embedding)
+            if isinstance(embedding, list) and len(embedding) == 1 and isinstance(embedding[0], list):
+                embedding = embedding[0]
+            if not (isinstance(embedding, list) and all(isinstance(x, (float, int)) for x in embedding)):
+                raise ValueError(f"Embedding must be a list of floats/ints, got: {type(embedding)} with sample {embedding[:5]}")
             memory_id = f"mem_{self.collection.count() + 1}"
-
             self.collection.add(
-                embeddings=[embedding],
+                embeddings=[embedding],  # ChromaDB expects List[List[float]]
                 documents=[memory_text],
                 metadatas=[metadata] if metadata else None,
                 ids=[memory_id]
@@ -44,16 +55,27 @@ class LongTermMemory:
         """
         Fetches the most relevant memories from the LTM based on a query.
         """
+        if self.collection is None:
+            print("WARNING: ChromaDB is not available. No memories can be fetched.")
+            return []
         try:
             # Vytvoření embeddingu z dotazu
             query_embedding = self.embedding_model.embed_query(query_text)
+            if not isinstance(query_embedding, list):
+                query_embedding = list(query_embedding)
+            if isinstance(query_embedding, list) and len(query_embedding) == 1 and isinstance(query_embedding[0], list):
+                query_embedding = query_embedding[0]
+            if not (isinstance(query_embedding, list) and all(isinstance(x, (float, int)) for x in query_embedding)):
+                raise ValueError(f"Query embedding must be a list of floats/ints, got: {type(query_embedding)} with sample {query_embedding[:5]}")
             # ChromaDB očekává: query_embeddings = List[List[float]]
-            # Vždy zabalíme embedding do listu (jeden dotaz = jeden embedding)
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=num_results
             )
-            return results.get('documents', [])
+            docs = results.get('documents', [])
+            if docs is None:
+                return []
+            return docs
         except Exception as e:
             print(f"ERROR: Failed to fetch memories from LTM: {e}")
             return []

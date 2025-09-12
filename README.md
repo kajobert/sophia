@@ -1,24 +1,37 @@
-
-
 # Sophia
 
 Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, auditovatelné a rozšiřitelné zpracování úloh s podporou webového vyhledávání, práce se soubory a duální paměti (krátkodobá i dlouhodobá). Po každé interakci probíhá automaticky proces "snění" (konsolidace paměti), kdy specializovaný agent ukládá klíčové poznatky do dlouhodobé paměti.
 
-## Rychlý start
 
-1. Vytvoř `.env` v rootu projektu s potřebnými API klíči:
-	 ```
-	 SERPER_API_KEY="..."
-	 GEMINI_API_KEY="..."
-	 ```
-2. Instalace závislostí:
-	 ```bash
-	 pip install -r requirements.txt
-	 ```
-3. Spuštění v interaktivním režimu:
-	 ```bash
-	 python main.py
-	 ```
+## Instalace a první spuštění
+
+1. **Klonujte repozitář a spusťte instalační skript:**
+	```bash
+	git clone ...
+	cd sophia
+	bash install.sh
+	```
+
+2. **Doplňte API klíče do `.env` (vytvoří se šablona):**
+	- `GOOGLE_API_KEY` – pro webové vyhledávání (Serper)
+	- `SERPER_API_KEY` – pro Serper API (volitelné)
+	- `GEMINI_API_KEY` – pro Gemini LLM (volitelné)
+
+3. **Spusťte Sophiu:**
+	```bash
+	source .venv/bin/activate
+	python main.py
+	```
+
+4. **Základní práce:**
+	- Pište přirozené dotazy, Sophia rozhoduje, zda jde o znalost (uloží do LTM) nebo poznámku (uloží do souboru).
+	- Všechny znalosti a fakta jsou ukládány do dlouhodobé paměti (ChromaDB).
+	- Po každé odpovědi probíhá konsolidace paměti ("snění").
+
+## Rychlý start (alternativa)
+
+Pokud nechcete použít install.sh:
+1. Vytvořte a aktivujte venv, nainstalujte závislosti z requirements.txt, vytvořte .env a spusťte main.py ručně.
 
 ## Architektura
 
@@ -29,12 +42,10 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 	- `core/memory_agent.py` – specializovaný agent pro konsolidaci paměti.
 	- `core/memory_tasks.py` – úkol pro konsolidaci paměti.
 - **Nástroje** (core/custom_tools.py):
-	- WebSearchTool (Serper)
-	- FileWriteTool
-	- FileReadTool
-	- FileEditTool
+	- DecisionTool (rozhoduje, zda prompt patří do LTM nebo do souboru, znalosti ukládá do LTM)
+	- LtmWriteTool (zápis znalostí do dlouhodobé paměti)
 - **Agent** (core/agents.py):
-	- developer_agent má registrovány všechny nástroje.
+	- developer_agent má registrovány pouze bezpečné BaseTool nástroje.
 
 ## Vývoj a rozšíření
 
@@ -43,10 +54,11 @@ Sophia je autonomní agent postavený na CrewAI, zaměřený na bezpečné, audi
 - Po každé interakci probíhá konsolidace paměti: memory agent analyzuje krátkodobou paměť a ukládá klíčové poznatky do dlouhodobé (ChromaDB).
 - Pro přidání nástrojů editujte core/custom_tools.py a core/agents.py.
 
-## Poznámky
+
+## Další poznámky
 
 - `.env` nikdy necommitujte.
 - Logy a vektorová DB se generují automaticky.
 - Projekt je připraven pro týmové předání a další rozvoj. Kognitivní cyklus (interakce + snění) je plně funkční.
 
-Toto je můj první zápis do README.md, Sophia.
+Toto je čistá verze pro GitHub. Sophia.
