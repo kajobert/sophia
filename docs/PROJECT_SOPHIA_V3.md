@@ -54,6 +54,16 @@ Cílem je vytvořit systém, který:
 - [x] **3.2: Základní Smyčka Bdění/Spánek:**
     - V `main.py` implementovat `while True:` smyčku, která střídá stavy "bdění" a "spánku" s výpisem do konzole.
 
+### Fáze 3.5: Vylepšení a Dokumentace
+
+**Cíl:** Zlepšit kvalitu kódu, dokumentaci a čistotu repozitáře.
+
+- [x] **3.5.1: Refinement & Documentation:**
+    - Opravit formátování logů.
+    - Rozšířit `.gitignore` o specifické soubory.
+    - Vytvořit `INSTALL.md` s instrukcemi pro spuštění.
+    - Aktualizovat `README.md` a `AGENTS.md`.
+
 ### Fáze 4: Evoluce Paměti
 
 **Cíl:** Vybudovat funkční paměťové moduly s pokročilou logikou.

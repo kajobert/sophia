@@ -57,6 +57,14 @@ Naším cílem je plně autonomní, digitální mysl, která bude schopna:
 
 ---
 
+## 🚀 Getting Started
+
+Chcete si Sophii vyzkoušet? Připravili jsme jednoduchý návod, jak ji spustit v kontrolovaném prostředí.
+
+**➡️ [Přejít na Instalační Návod (INSTALL.md)](./INSTALL.md)**
+
+---
+
 ## Jak se Zapojit
 
 Tento projekt je na samém počátku své cesty. V tuto chvíli je vývoj řízen malým týmem, ale plánujeme postupné otevírání komunitě. Sledujte náš postup a připravte se na budoucnost.
