@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-13 12:55:00
+**Agent:** Jules
+**Task ID:** 3.5 - Refinement & Documentation
+
+**Cíl Úkolu:**
+- Vylepšit logování, rozšířit `.gitignore`, vytvořit instalační průvodce `INSTALL.md` a aktualizovat související dokumentaci (`README.md`, `AGENTS.md`).
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+
+**Problémy a Překážky:**
+- Nástroj `run_in_bash_session` se choval neočekávaně při práci s proměnnými a přesměrováním, což vedlo ke korupci tohoto souboru.
+
+**Navržené Řešení:**
+- Přechod na spolehlivější metodu čtení a následného přepsání souboru pomocí `read_file` a `overwrite_file_with_block`.
+
+**Nápady a Postřehy:**
+- Tento úkol zlepší kvalitu a udržitelnost projektu.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Opraveno formátování logů v `guardian.py` a `main.py` (nahrazeno `\\n` za `\n`).
+3.  Aktualizován a vyčištěn soubor `.gitignore` dle specifikací.
+4.  Vytvořen nový soubor `INSTALL.md` s instrukcemi pro spuštění.
+5.  Aktualizován `README.md` s odkazem na `INSTALL.md`.
+6.  Přidáno nové permanentní pravidlo o `.gitignore` do `AGENTS.md`.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-13 17:16:02
 **Agent:** Jules
 **Task ID:** 1, 2, 3
