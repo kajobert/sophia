@@ -1,15 +1,47 @@
 # Installation and Setup Guide for Sophia V3
 
-This guide provides simple instructions to get the Sophia V3 project running, specifically within a GitHub Codespace.
+This guide provides simple instructions to get the Sophia V3 project set up and running, specifically within a GitHub Codespace or a similar Linux-based environment.
 
 ## 🚀 Getting Started in a GitHub Codespace
 
-1.  **Open in Codespace:** Open this repository in a GitHub Codespace. The environment is pre-configured and should set up automatically.
+Follow these steps to get a functional instance of Sophia running.
 
-2.  **Start Sophia:** Once the Codespace is loaded and the terminal is ready, start the application by running the following command:
+### 1. Open in Codespace
 
-    ```bash
-    python3 guardian.py
-    ```
+Open this repository in a GitHub Codespace. The environment will be prepared for you automatically.
 
-3.  **Observe:** You should now see log output from both the Guardian and the main Sophia process in your terminal, indicating that the AGI is running its "Waking/Sleeping" lifecycle.
+### 2. Run the Setup Script
+
+Once the Codespace is loaded and you have a terminal, you need to run the setup script. This will install all the necessary dependencies.
+
+First, make the script executable:
+```bash
+chmod +x setup.sh
+```
+
+Now, run the script:
+```bash
+./setup.sh
+```
+The script will upgrade pip, install all Python libraries from `requirements.txt`, and create a `.env` file for your environment variables.
+
+### 3. Configure Environment (Optional)
+
+The setup script creates a `.env` file. If the project requires API keys (e.g., for OpenAI, Anthropic), you must add them to this `.env` file.
+
+Example `.env` content:
+```
+OPENAI_API_KEY="your_api_key_here"
+ANTHROPIC_API_KEY="your_api_key_here"
+```
+
+### 4. Start Sophia
+
+You are now ready to start the application. The main entry point is `guardian.py`, which monitors and runs the core process.
+
+Run the following command:
+```bash
+python3 guardian.py
+```
+
+You should now see log output from both the Guardian and the main Sophia process in your terminal, indicating that the AGI is running its "Waking/Sleeping" lifecycle.
