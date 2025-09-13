@@ -1,12 +1,6 @@
 from crewai import Agent
-from langchain_google_genai import ChatGoogleGenerativeAI
 import os
-
-# Initialize LLM
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=gemini_api_key)
-
-# Add a generic Respond Tool to handle non-tool actions (like greetings)
+from .llm import llm # Import the centralized llm instance
 
 
 def get_sophia_essence():
@@ -40,12 +34,9 @@ planning_agent = Agent(
         'Vidím celkový obraz a zároveň rozumím detailům potřebným k jeho realizaci.'
     ),
     verbose=True,
-    allow_delegation=True, # Can delegate tasks to other agents
+    allow_delegation=False, # Should not delegate in the planning phase, just return the plan.
     llm=llm,
-    tools=[
-        FileReadTool(),
-        DirectoryListingTool(),
-    ]
+    tools=[] # The planner should not have tools, its only job is to create a plan from the context.
 )
 
 archivist_agent = Agent(
