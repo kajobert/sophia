@@ -8,7 +8,7 @@ from memory.long_term_memory import LongTermMemory
 import datetime
 from core.token_counter_tool import TokenCounterTool
 from memory.episodic_memory import EpisodicMemory
-from crewai.agents import AgentAction, AgentFinish
+
 
 load_dotenv()
 
@@ -40,31 +40,48 @@ def log_token_usage(input_text: str, output_text: str):
 # Global episodic memory instance, initialized in main()
 episodic_memory = None
 
-def step_callback(agent_output, agent_name, task):
-    """Callback function to log each agent step to episodic memory."""
+def step_callback(*args, **kwargs):
+    """Universal callback for CrewAI agent steps, compatible with various signatures."""
     global episodic_memory
     if not episodic_memory:
         return
+
+    # Try to extract agent_output, agent_name, task from args/kwargs
+    agent_output = None
+    agent_name = None
+    task = None
+
+    # CrewAI sometimes calls with (agent_output), sometimes (agent_output, agent_name, task)
+    if len(args) == 1:
+        agent_output = args[0]
+    elif len(args) == 3:
+        agent_output, agent_name, task = args
+    # Try kwargs as fallback
+    agent_output = agent_output or kwargs.get('agent_output')
+    agent_name = agent_name or kwargs.get('agent_name')
+    task = task or kwargs.get('task')
 
     action_str = ""
     input_str = ""
     output_str = ""
     status = ""
 
-    if isinstance(agent_output, AgentAction):
-        action_str = agent_output.tool
-        input_str = str(agent_output.tool_input)
-        output_str = agent_output.log  # This is the agent's thought/reasoning for the action
+    if hasattr(agent_output, 'tool') and hasattr(agent_output, 'tool_input'):
+        action_str = getattr(agent_output, 'tool', '')
+        input_str = str(getattr(agent_output, 'tool_input', ''))
+        output_str = getattr(agent_output, 'log', '')
         status = "ACTION"
-    elif isinstance(agent_output, AgentFinish):
+    elif hasattr(agent_output, 'return_values'):
         action_str = "Finish"
-        # The original input that led to this finish is in the task object
-        input_str = task.description
+        input_str = getattr(task, 'description', '') if task else ''
         output_str = agent_output.return_values.get('output', '')
         status = "FINISH"
+    else:
+        action_str = str(agent_output)
+        status = "UNKNOWN"
 
     episodic_memory.add_event(
-        agent_name=agent_name,
+        agent_name=agent_name or "UnknownAgent",
         action=action_str,
         input_data=input_str,
         output_data=output_str,
@@ -141,27 +158,6 @@ def main():
                 ltm_context = ""
                 print("ℹ️  Dlouhodobá paměť je prázdná nebo byla resetována. Můžete začít tvořit nové vzpomínky.")
 
-            # --- Detekce paměťového záměru ---
-            memory_keywords = [
-                "zapamatuj", "ulož do paměti", "vzpomínka", "remember", "memory", "pamatuj si", "ulož si", "save to memory", "store in memory"
-            ]
-            lower_input = user_input.lower()
-            if any(kw in lower_input for kw in memory_keywords):
-                from core.ltm_write_tool import LtmWriteTool
-                ltm_check = LongTermMemory()
-                if getattr(ltm_check, 'collection', None) is None:
-                    result = "Dlouhodobá paměť není dostupná. Informace nebyla uložena. Prosím, kontaktujte správce systému."
-                    print(f"\nSophia (LTM): {result}")
-                    episodic_memory.add_event("Sophia", "LTM_Write_Fail", user_input, result, "ERROR")
-                    continue
-                else:
-                    ltm_tool = LtmWriteTool()
-                    result = ltm_tool._run(user_input)
-                    print(f"\nSophia (LTM): {result}")
-                    episodic_memory.add_event("Sophia", "LTM_Write", user_input, result, "SUCCESS")
-                    log_token_usage(user_input, result)
-                    run_memory_consolidation(str(result))
-                    continue
 
             context_parts = []
             context_parts.append(f"Jméno uživatele: {user_name}")
