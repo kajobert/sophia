@@ -36,6 +36,9 @@ Pro zajištění přehlednosti a dokumentace projektu se **musíš** řídit ná
 
 5.  **Udržuj Čistotu Repozitáře:**
     * Při vytváření nových souborů, které generují výstupy (jako logy nebo databáze), je tvojí povinností zajistit, že jsou správně zapsány v souboru `.gitignore`, aby se zabránilo jejich nahrání do repozitáře.
+  
+6.  **Udržuj Projekt Aktuální:**
+    * Pokud tvá práce zavádí novou softwarovou závislost (knihovnu), **musíš** ji okamžitě přidat do `requirements.txt`. Pokud se jakkoliv mění způsob, jakým se projekt spouští nebo instaluje, je **tvojí povinností** aktualizovat soubory `setup.sh` a `INSTALL.md`, aby vždy odrážely aktuální a funkční stav.
 
 Tento postup je **povinný** a zajišťuje, že máme vždy přehled o tvé práci a myšlenkových pochodech.
 
