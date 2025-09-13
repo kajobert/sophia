@@ -33,6 +33,9 @@ def load_config():
         log_message(f"CHYBA: Chyba při parsování konfiguračního souboru: {e}")
         return None
 
+from agents.planner_agent import PlannerAgent
+from crewai import Task
+
 def main():
     """Hlavní funkce Sophie, implementující cyklus bdění a spánku."""
     log_message("Jádro Vědomí (main.py) se spouští.")
@@ -47,8 +50,24 @@ def main():
 
     log_message("Zahajuji cyklus Bdění a Spánku.")
 
+    # Vytvoření jednoduchého úkolu pro testování
+    planning_task = Task(
+        description="Vytvoř plán pro implementaci nové funkce 'sebereflexe' do systému.",
+        agent=PlannerAgent,
+        expected_output="Podrobný, krok-za-krokem plán v Markdown formátu."
+    )
+
     while True:
         log_message("STAV: Bdění - Aktivní fáze.")
+        log_message("Spouštím plánovacího agenta...")
+        try:
+            # Provedení úkolu
+            plan_result = planning_task.execute()
+            log_message("Plánovací agent dokončil úkol. Výsledek:")
+            log_message(f"--- VÝSLEDNÝ PLÁN ---\n{plan_result}\n--- KONEC PLÁNU ---")
+        except Exception as e:
+            log_message(f"CHYBA: Došlo k chybě při provádění plánovacího úkolu: {e}")
+
         time.sleep(waking_duration)
 
         log_message("STAV: Spánek - Fáze sebereflexe a konsolidace.")
