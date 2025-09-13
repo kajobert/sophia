@@ -1,0 +1,1 @@
+# Krátkodobá, událostní paměť (SQLite)

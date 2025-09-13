@@ -21,25 +21,25 @@ Cílem je vytvořit systém, který:
 **Cíl:** Připravit kompletní adresářovou strukturu a prázdné soubory pro Julese.
 *(Toto je první úkol pro Julese, jak jsme se dohodli.)*
 
-- [ ] **1.1: Vytvořit Adresářovou Strukturu:**
+- [x] **1.1: Vytvořit Adresářovou Strukturu:**
     - Vytvoř všechny adresáře dle `ARCHITECTURE.md`: `core`, `agents`, `memory`, `tools`, `sandbox`, `logs`, `docs`, `web`, `web/ui`.
 
-- [ ] **1.2: Vytvořit Prázdné Soubory (`.py`):**
+- [x] **1.2: Vytvořit Prázdné Soubory (`.py`):**
     - Vytvoř všechny `.py` soubory specifikované v `ARCHITECTURE.md`.
     - Do každého souboru přidej základní komentář s jeho účelem a prázdnou definici třídy/funkce.
 
-- [ ] **1.3: Vytvořit Konfigurační a Logovací Soubory:**
+- [x] **1.3: Vytvořit Konfigurační a Logovací Soubory:**
     - Vytvoř prázdný `config.yaml`.
     - Vytvoř prázdné logovací soubory: `logs/guardian.log` a `logs/sophia_main.log`.
 
-- [ ] **1.4: Vytvořit Soubor Požadavků:**
+- [x] **1.4: Vytvořit Soubor Požadavků:**
     - Vytvoř `requirements.txt` se základními knihovnami (`crewai`, `langchain`, `pyyaml`, `chromadb`, atd.).
 
 ### Fáze 2: Implementace Strážce Bytí
 
 **Cíl:** Oživit `guardian.py` jako odolný monitor a restartovací mechanismus.
 
-- [ ] **2.1: Implementovat `guardian.py`:**
+- [x] **2.1: Implementovat `guardian.py`:**
     - Použít `subprocess` ke spuštění `main.py`.
     - V cyklu kontrolovat stav sub-procesu.
     - Při chybě zapsat do `logs/guardian.log`, provést `git reset --hard HEAD` a restartovat `main.py`.
@@ -48,10 +48,10 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vytvořit základní životní cyklus Sophie v `main.py`.
 
-- [ ] **3.1: Načítání Konfigurace:**
+- [x] **3.1: Načítání Konfigurace:**
     - Do `config.yaml` přidat cesty k databázím a logům.
     - Vytvořit v `main.py` funkci pro načtení `config.yaml`.
-- [ ] **3.2: Základní Smyčka Bdění/Spánek:**
+- [x] **3.2: Základní Smyčka Bdění/Spánek:**
     - V `main.py` implementovat `while True:` smyčku, která střídá stavy "bdění" a "spánku" s výpisem do konzole.
 
 ### Fáze 4: Evoluce Paměti

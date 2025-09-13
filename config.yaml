@@ -1,0 +1,10 @@
+# Konfigurace pro Sophia V3
+
+logging:
+  guardian_log: "logs/guardian.log"
+  sophia_main_log: "logs/sophia_main.log"
+
+# Nastavení životního cyklu
+lifecycle:
+  waking_duration_seconds: 10
+  sleeping_duration_seconds: 5
