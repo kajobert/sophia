@@ -15,7 +15,7 @@ if not gemini_api_key:
 # Inicializace Gemini LLM
 # Model 'gemini-pro' je zde jako příklad, může být potřeba ho upravit
 gemini_llm = ChatGoogleGenerativeAI(
-    model="gemini-pro",
+    model="gemini-2.5-flash",
     verbose=True,
     temperature=0.7,
     google_api_key=gemini_api_key
