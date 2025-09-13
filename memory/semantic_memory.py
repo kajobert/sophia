@@ -1,0 +1,1 @@
+# Dlouhodobá, sémantická paměť (ChromaDB)
