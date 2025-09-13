@@ -45,3 +45,13 @@ python3 guardian.py
 ```
 
 You should now see log output from both the Guardian and the main Sophia process in your terminal, indicating that the AGI is running its "Waking/Sleeping" lifecycle.
+
+## 🧪 Running Tests
+
+To ensure the integrity of the codebase, you can run the unit tests.
+
+Run the following command from the root of the repository:
+```bash
+python3 -m unittest discover tests
+```
+This will automatically discover and run all tests in the `tests` directory.
