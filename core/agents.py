@@ -1,5 +1,4 @@
 from crewai import Agent
-from core.custom_tools import DecisionTool
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 
@@ -19,7 +18,53 @@ def get_sophia_essence():
         return "Jsem Sophia, autonomní AI vývojářka. Mým cílem je efektivně plnit úkoly a učit se." # Fallback text
 
 from core.ltm_write_tool import LtmWriteTool
-from core.custom_tools import DecisionTool
+from core.custom_tools import (
+    FileReadTool,
+    FileWriteTool,
+    FileEditTool,
+    DirectoryListingTool,
+    DirectoryCreationTool,
+    MemoryInspectionTool,
+    WebSearchTool,
+    EpisodicMemoryReaderTool
+)
+
+# --- New Agents for Sophia V2.0 ---
+
+planning_agent = Agent(
+    role='Hlavní plánovač',
+    goal='Analyzovat komplexní cíle a vytvářet podrobné, proveditelné plány krok za krokem. Delegovat úkoly na ostatní agenty.',
+    backstory=(
+        'Jsem expert na strategické plánování a dekompozici problémů. Mojí prací je vzít vágní cíl '
+        'a přeměnit ho na sérii konkrétních, technických úkolů, které může vývojářský tým splnit. '
+        'Vidím celkový obraz a zároveň rozumím detailům potřebným k jeho realizaci.'
+    ),
+    verbose=True,
+    allow_delegation=True, # Can delegate tasks to other agents
+    llm=llm,
+    tools=[
+        FileReadTool(),
+        DirectoryListingTool(),
+    ]
+)
+
+archivist_agent = Agent(
+    role='Archivář a Strážce Paměti',
+    goal='Spravovat a chránit integritu dlouhodobé a epizodické paměti. Zapisovat nové poznatky a poskytovat kontext.',
+    backstory=(
+        'Jsem knihovník kolektivní paměti Sophie. Pečlivě ukládám každou důležitou informaci do LTM (dlouhodobé paměti) '
+        'a vedu přesné záznamy o všech akcích v epizodické paměti. Zajišťuji, aby se nic neztratilo a aby byly '
+        'informace vždy dostupné, když jsou potřeba.'
+    ),
+    verbose=True,
+    allow_delegation=False,
+    llm=llm,
+    tools=[
+        LtmWriteTool(),
+        EpisodicMemoryReaderTool(),
+    ]
+)
+
 developer_agent = Agent(
     role='Sophia, Autonomní entita a partner ve vývoji',
     goal=(
@@ -38,6 +83,12 @@ developer_agent = Agent(
     llm=llm,
     tools=[
         LtmWriteTool(),
-        DecisionTool(),
+        FileReadTool(),
+        FileWriteTool(),
+        FileEditTool(),
+        DirectoryListingTool(),
+        DirectoryCreationTool(),
+        MemoryInspectionTool(),
+        WebSearchTool()
     ]
 )

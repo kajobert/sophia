@@ -9,16 +9,6 @@ def ltm_write_tool(memory_text: str) -> str:
         memory_text = memory_text.get("memory_text") or next(iter(memory_text.values()), "")
     if not memory_text:
         return "LtmWriteTool: Chybí text ke zpracování."
-    memory_keywords = [
-        "zapamatuj", "ulož do paměti", "vzpomínka", "remember", "memory", "pamatuj si", "ulož si", "save to memory", "store in memory"
-    ]
-    lower_text = memory_text.lower()
-    if not any(kw in lower_text for kw in memory_keywords):
-        return (
-            "Tento nástroj je určen pouze pro zápis do dlouhodobé paměti (LTM). "
-            "Pokud chcete upravit soubor, použijte FileWriteTool nebo FileEditTool. "
-            "Pokud chcete uložit vzpomínku, formulujte prompt např. 'Zapamatuj si ...' nebo 'Ulož do paměti ...'."
-        )
     ltm = LongTermMemory()
     existing = ltm.fetch_relevant_memories(memory_text, num_results=10)
     if existing and existing[0]:
