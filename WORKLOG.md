@@ -1,3 +1,38 @@
+**Timestamp:** 2025-09-13 15:04:06
+**Agent:** Jules
+**Task ID:** 6 - The Birth of Agents with Integrated Testing
+
+**Cíl Úkolu:**
+- Implementovat prvního agenta (PlannerAgent), nastavit načítání API klíče z `.env` souboru a vytvořit robustní testovací mechanismus pomocí mockování, aby nebylo nutné používat reálný API klíč během testování.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Vytvořen soubor `.env.example` pro ukázku potřebných proměnných.
+3.  Vytvořen `core/llm_config.py` pro centralizovanou inicializaci Gemini LLM a načítání klíče z `.env`.
+4.  Přidána závislost `langchain-google-genai` do `requirements.txt`.
+5.  Implementován `PlannerAgent` v `agents/planner_agent.py` s rolí, cílem a příběhem.
+6.  Vytvořeny placeholder třídy pro ostatní agenty (`Philosopher`, `Architect`, `Engineer`, `Tester`).
+7.  Vytvořen adresář `tests` a v něm testovací soubor `tests/test_planner_agent.py`.
+8.  Implementován mock test s využitím `unittest.mock.patch` pro simulaci chování `crewai.agent.Agent.execute_task`, což umožnilo testování bez API klíče.
+9.  Po několika neúspěšných pokusech byla nalezena správná kombinace patchů (`os.getenv`, `ChatGoogleGenerativeAI`, `Agent.execute_task`), která vyřešila problémy s importem a závislostmi během testu.
+10. Aktualizován `INSTALL.md` o sekci s instrukcemi pro spouštění testů.
+11. Integrován `PlannerAgent` do hlavní smyčky v `main.py` pro testování operátorem.
+
+**Problémy a Překážky:**
+- Psaní mock testu bylo velmi náročné kvůli tomu, jak `crewai` a `langchain` pracují. Chyby při importu modulů, které vyžadují API klíče, bránily spuštění testů.
+- Bylo nutné experimentovat s různými strategiemi patchování (`patch.object`, `@patch` na různé cíle), abych našel správný způsob, jak izolovat testované komponenty od jejich závislostí, které selhávaly při importu.
+- Interní fungování `crewai.Agent` a jeho řetězce `langchain` je komplexní, což ztěžovalo identifikaci správné metody k mockování (`invoke` vs `stream` vs `execute_task`).
+
+**Navržené Řešení:**
+- Klíčem k úspěchu bylo patchování závislostí na úrovni jejich zdrojových modulů (`os.getenv`, `langchain_google_genai.ChatGoogleGenerativeAI`) a následné patchování metody `crewai.agent.Agent.execute_task`. Tento přístup zabránil chybám při importu a zároveň efektivně izoloval testovanou logiku.
+
+**Nápady a Postřehy:**
+- Mockování komplexních knihoven třetích stran vyžaduje hluboké porozumění jejich vnitřní struktuře a pořadí, v jakém jsou moduly importovány.
+- Psaní robustních unit testů je naprosto klíčové pro zajištění stability systému, zvláště když se jedná o komponenty závislé na externích API.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-13 14:15:04
 **Agent:** Jules
 **Task ID:** 5 - Implementace Etického Jádra

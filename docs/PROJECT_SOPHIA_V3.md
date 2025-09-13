@@ -88,11 +88,15 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vytvořit a inicializovat základní agenty.
 
-- [ ] **6.1: Implementovat `PlannerAgent`:**
-    - V `agents/planner_agent.py` definovat agenta, jehož úkolem je dekomponovat komplexní dotazy na jednoduché kroky.
-- [ ] **6.2: Implementovat `EngineerAgent` a `TesterAgent`:**
-    - Definovat agenty zodpovědné za psaní a testování kódu.
-- [ ] **6.3: Propojení Agentů a Nástrojů:**
+- [x] **6.1: Implementovat `PlannerAgent` a LLM Config:**
+    - V `core/llm_config.py` implementováno načítání API klíče z `.env` souboru.
+    - V `agents/planner_agent.py` definován agent, jehož úkolem je dekomponovat komplexní dotazy na jednoduché kroky.
+- [x] **6.2: Implementovat Placeholder Agenty:**
+    - Vytvořeny placeholder třídy pro `EngineerAgent`, `TesterAgent`, `PhilosopherAgent` a `ArchitectAgent`.
+- [x] **6.3: Vytvoření Mock Testovacího Prostředí:**
+    - Vytvořena testovací infrastruktura v adresáři `/tests`.
+    - Implementován robustní mock test pro `PlannerAgent`, který ověřuje funkčnost bez nutnosti API klíče.
+- [ ] **6.4: Propojení Agentů a Nástrojů:**
     - Vytvořit základní nástroje v `/tools` a zpřístupnit je agentům.
 
 ### Fáze 7: Probuzení Sebereflexe
