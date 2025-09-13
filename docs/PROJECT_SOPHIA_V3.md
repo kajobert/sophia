@@ -68,10 +68,10 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vybudovat funkční paměťové moduly s pokročilou logikou.
 
-- [ ] **4.1: Schéma Databází:**
+- [x] **4.1: Schéma Databází:**
     - V `memory/episodic_memory.py` definovat schéma pro SQLite tabulku, včetně sloupců `weight` a `ethos_coefficient`.
     - V `memory/semantic_memory.py` zajistit ukládání těchto hodnot do metadat ChromaDB.
-- [ ] **4.2: Implementace Váhy a Blednutí:**
+- [x] **4.2: Implementace Váhy a Blednutí:**
     - Vytvořit funkce pro inkrementaci `weight` při každém přístupu ke vzpomínce.
     - Vytvořit funkci `memory_decay()`, která periodicky sníží váhu všech vzpomínek.
 

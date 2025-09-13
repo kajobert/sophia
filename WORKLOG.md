@@ -1,3 +1,35 @@
+**Timestamp:** 2025-09-13 13:06:29
+**Agent:** Jules
+**Task ID:** 4 - Evoluce Paměti
+
+**Cíl Úkolu:**
+- Implementovat databázové schéma a základní logiku pro epizodickou (SQLite) a sémantickou (ChromaDB) paměť, včetně konceptů "Váha Vzpomínky" a "Blednutí Vzpomínek".
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  V `memory/episodic_memory.py` implementována třída `EpisodicMemory` pro správu SQLite databáze.
+3.  Vytvořeno schéma tabulky `memories` se sloupci `id`, `timestamp`, `content`, `type`, `weight`, `ethos_coefficient`.
+4.  Implementována funkce `access_memory(id)` pro zvýšení váhy a placeholder `memory_decay()`.
+5.  V `memory/semantic_memory.py` implementována třída `SemanticMemory` pro správu ChromaDB.
+6.  Zajištěno ukládání `weight` a `ethos_coefficient` do metadat vektorů.
+7.  Implementována funkce `access_memory(id)` a placeholder `memory_decay()` i pro sémantickou paměť.
+8.  Oba moduly byly úspěšně otestovány pomocí dočasných testovacích bloků.
+9.  Aktualizován soubor `.gitignore` o databázové soubory.
+10. Vyčištěn testovací kód z obou paměťových modulů.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly. Implementace proběhla podle plánu.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Implementace těchto základních paměťových mechanismů je klíčová pro budoucí schopnost učení a sebereflexe Sophie.
+
+**Stav:** Dokončeno
+
+---
+
 **Timestamp:** 2025-09-13 12:55:00
 **Agent:** Jules
 **Task ID:** 3.5 - Refinement & Documentation
@@ -72,7 +104,7 @@ Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia
 
 ### Šablona Záznamu
 
-\`\`\`
+```
 **Timestamp:** YYYY-MM-DD HH:MM:SS
 **Agent:** [Jméno Agenta, např. Jules]
 **Task ID:** [Číslo úkolu z PROJECT_SOPHIA_V3.md, např. 1.1]
@@ -95,6 +127,6 @@ Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia
 - [Jakékoliv myšlenky na vylepšení, které agenta napadly během práce]
 
 **Stav:** [Probíhá / Dokončeno / Zablokováno]
-\`\`\`
+```
 
 ---
