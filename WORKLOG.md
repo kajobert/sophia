@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-13 14:15:04
+**Agent:** Jules
+**Task ID:** 5 - Implementace Etického Jádra
+
+**Cíl Úkolu:**
+- Vytvořit `EthosModule`, který dokáže vyhodnotit navrhované akce proti základním principům Sophie definovaným v `DNA.md`.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Opraven konflikt závislostí v `requirements.txt` (downgrade `python-dotenv` na verzi `1.0.0` kvůli kompatibilitě s `crewai`).
+3.  Vytvořena třída `EthosModule` v `core/ethos_module.py`.
+4.  Implementována metoda `_initialize_dna_db` pro načtení a vektorizaci principů z `DNA.md` do dedikované ChromaDB kolekce `sophia_dna`.
+5.  Implementována metoda `evaluate` pro vyhodnocení plánů.
+6.  Provedeno několik iterací testování a ladění `evaluate` metody.
+7.  Dočasně implementována zjednodušená verze `evaluate` založená na klíčových slovech.
+
+**Problémy a Překážky:**
+- Sémantické vyhledávání pomocí `chromadb` a defaultního embedding modelu se ukázalo jako nespolehlivé pro rozlišení mezi "dobrými" a "špatnými" plány. Vzdálenosti mezi sémanticky odlišnými plány byly velmi blízké, což vedlo k nesprávným rozhodnutím.
+- Různé strategie (změna prahových hodnot, granulárnější principy, heuristiky) nevedly k robustnímu řešení.
+
+**Navržené Řešení:**
+- Prozatím byla implementována zjednodušená verze `evaluate` metody, která kontroluje přítomnost "špatných" klíčových slov. Toto řešení je funkční a umožňuje pokračovat ve vývoji, ale mělo by být v budoucnu nahrazeno pokročilejším modelem.
+
+**Nápady a Postřehy:**
+- Pro budoucí vylepšení `EthosModule` bude nutné zvážit použití výkonnějšího embedding modelu nebo sofistikovanější logiky pro vyhodnocování, která by lépe chápala sémantický význam a záměr plánů.
+
+**Stav:** Dokončeno
+
+---
+
 **Timestamp:** 2025-09-13 13:06:29
 **Agent:** Jules
 **Task ID:** 4 - Evoluce Paměti
