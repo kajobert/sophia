@@ -17,7 +17,7 @@ def log_message(message):
     ensure_log_dir_exists()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a") as f:
-        f.write(f"{timestamp} - {message}\\n")
+        f.write(f"{timestamp} - {message}\n")
     print(message, flush=True)
 
 def reset_repository():

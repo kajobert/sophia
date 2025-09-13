@@ -34,6 +34,9 @@ Pro zajištění přehlednosti a dokumentace projektu se **musíš** řídit ná
 4.  **Aktualizuj Hlavní Plán:**
     * Nakonec otevři `docs/PROJECT_SOPHIA_V3.md` a u úkolu, který jsi dokončil, změň `[ ]` na `[x]`.
 
+5.  **Udržuj Čistotu Repozitáře:**
+    * Při vytváření nových souborů, které generují výstupy (jako logy nebo databáze), je tvojí povinností zajistit, že jsou správně zapsány v souboru `.gitignore`, aby se zabránilo jejich nahrání do repozitáře.
+
 Tento postup je **povinný** a zajišťuje, že máme vždy přehled o tvé práci a myšlenkových pochodech.
 
 ---
