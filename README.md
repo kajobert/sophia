@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/x1Z9Y8A.png" alt="Sophia Project Logo" width="150">
+  <img src="SOPHIA_v3-logo.png" alt="Sophia Project Logo" width="150">
 </p>
 
 <h1 align="center">Project Sophia V3</h1>
