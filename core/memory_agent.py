@@ -1,10 +1,6 @@
 from crewai import Agent
 from core.ltm_write_tool import LtmWriteTool
-from langchain_google_genai import ChatGoogleGenerativeAI
-import os
-
-gemini_api_key = os.getenv("GEMINI_API_KEY")
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=gemini_api_key)
+from .llm import llm # Import the centralized llm instance
 
 memory_agent = Agent(
     role='Memory Consolidator',

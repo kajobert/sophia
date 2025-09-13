@@ -1,15 +1,23 @@
 import chromadb
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import os
+import numpy as np
+
+class MockEmbeddingModel:
+    """A mock embedding model for testing that returns a fixed-size vector of zeros."""
+    def __init__(self, model="models/embedding-001"):
+        # The real model has a dimension of 768
+        self.dimension = 768
+
+    def embed_query(self, text: str) -> list[float]:
+        print(f"--- MOCK EMBEDDING: Faking embedding for text: '{text[:30]}...' ---")
+        return list(np.zeros(self.dimension))
 
 class LongTermMemory:
     """
     Manages the agent's long-term (semantic) memory using ChromaDB.
     """
     def __init__(self, db_path: str = "memory/chroma_db", collection_name: str = "sophia_memories"):
-        # Ujistíme se, že máme API klíč pro embedding model
-        if not os.getenv("GEMINI_API_KEY"):
-            raise ValueError("GEMINI_API_KEY not found in environment variables.")
         try:
             # Nastavení klienta a kolekce v ChromaDB
             self.client = chromadb.PersistentClient(path=db_path)
@@ -18,8 +26,17 @@ class LongTermMemory:
             print(f"WARNING: ChromaDB is missing or corrupted: {e}")
             self.client = None
             self.collection = None
-        # Inicializace embedding modelu od Google
-        self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+
+        # Use mock embedding model if USE_MOCK_LLM is set
+        if os.getenv("USE_MOCK_LLM") == "true":
+            print("--- Using MOCK Embedding Model for testing ---")
+            self.embedding_model = MockEmbeddingModel()
+        else:
+            # Ujistíme se, že máme API klíč pro embedding model
+            if not os.getenv("GEMINI_API_KEY"):
+                raise ValueError("GEMINI_API_KEY not found in environment variables.")
+            # Inicializace embedding modelu od Google
+            self.embedding_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
     from typing import Optional
     def add_memory(self, memory_text: str, metadata: Optional[dict] = None):

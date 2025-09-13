@@ -1,16 +1,18 @@
 import os
 from dotenv import load_dotenv
+
+# Load environment variables first
+load_dotenv()
+
 from crewai import Crew, Process, Task
 from core.agents import developer_agent, planning_agent, archivist_agent, llm
 from core.memory_agent import memory_agent
 from core.memory_tasks import memory_consolidation_task
 from memory.long_term_memory import LongTermMemory
 import datetime
+import json
 from core.token_counter_tool import TokenCounterTool
 from memory.episodic_memory import EpisodicMemory
-
-
-load_dotenv()
 
 def log_token_usage(input_text: str, output_text: str):
     """Counts tokens for input and output and logs them."""
@@ -167,29 +169,91 @@ def main():
                 context_parts.append(f"Relevantní vzpomínky: {ltm_context}")
             task_context = "\n".join(context_parts)
 
-            # Create the planning task for the hierarchical crew
+            # --- Fáze 1: Plánování ---
+            print("📝 Fáze 1: Vytvářím plán...")
             planning_task = Task(
-                description=f"Vytvoř podrobný, krok-za-krokem plán pro splnění tohoto požadavku od uživatele: '{user_input}'.\n"
-                            f"Kontext, který máš k dispozici:\n{task_context}\n\n"
-                            "Deleguj jednotlivé kroky plánu na příslušné agenty (developer_agent, archivist_agent).",
-                expected_output="Kompletní, dobře strukturovaný a delegovaný plán provedení.",
+                description=(
+                    f"Analyzuj požadavek uživatele: '{user_input}'. Vytvoř podrobný plán krok za krokem. "
+                    f"Každý krok musí být samostatná, proveditelná akce pro developera.\n"
+                    f"Kontext, který máš k dispozici:\n{task_context}\n\n"
+                    "Odpověz POUZE ve formátu JSON, který obsahuje seznam s názvem 'plan', kde každá položka je objekt s klíči 'step' a 'description'."
+                    "Příklad: {\"plan\": [{\"step\": 1, \"description\": \"Popis prvního kroku.\"}, {\"step\": 2, \"description\": \"Popis druhého kroku.\"}]}"
+                ),
+                expected_output="JSON string se seznamem kroků plánu.",
                 agent=planning_agent
             )
 
-            # Assemble the new hierarchical crew
-            crew = Crew(
-                agents=[planning_agent, developer_agent, archivist_agent],
+            planning_crew = Crew(
+                agents=[planning_agent],
                 tasks=[planning_task],
-                process=Process.hierarchical,
-                manager_llm=llm,  # Explicitly set the manager LLM
-                step_callback=step_callback
+                process=Process.sequential,
+                verbose=False
             )
 
-            result = crew.kickoff()
+            plan_result = planning_crew.kickoff()
+            episodic_memory.add_event("Sophia", "PlanGenerated", user_input, str(plan_result), "INTERNAL")
+
+            try:
+                # Očištění a parsování JSONu
+                # LLM může vrátit JSON obalený v markdownu (```json ... ```)
+                clean_json_str = plan_result.strip().replace("```json", "").replace("```", "").strip()
+                plan_data = json.loads(clean_json_str)
+                plan_steps = plan_data.get("plan", [])
+                if not plan_steps:
+                    raise ValueError("Plán neobsahuje žádné kroky.")
+                print(f"✅ Plán úspěšně vytvořen s {len(plan_steps)} kroky.")
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"❌ Chyba: Nepodařilo se zpracovat plán. Výstup plánovače nebyl validní JSON. Chyba: {e}")
+                print(f"Raw výstup plánovače: {plan_result}")
+                result = "Omlouvám se, nepodařilo se mi vytvořit platný plán úkolů. Zkuste prosím přeformulovat svůj požadavek."
+                plan_steps = []
+
+
+            # --- Fáze 2: Vykonávání ---
+            if plan_steps:
+                print("\n🚀 Fáze 2: Spouštím vykonávání plánu...")
+                step_results = []
+                for i, step in enumerate(plan_steps):
+                    step_description = step.get("description", "Není popsáno.")
+                    print(f"   - Krok {i+1}/{len(plan_steps)}: {step_description}")
+
+                    # Předej výstup z předchozího kroku jako kontext
+                    previous_results_context = "\n".join(step_results)
+                    task_description_with_context = (
+                        f"{step_description}\n\n"
+                        f"Toto je krok {i+1} z celkových {len(plan_steps)}.\n"
+                        f"Kontext z předchozích kroků:\n{previous_results_context}"
+                    )
+
+                    execution_task = Task(
+                        description=task_description_with_context,
+                        expected_output="Výsledek provedeného kroku. Pokud krok generuje soubor, vrať cestu k souboru. Pokud ne, vrať textový popis výsledku.",
+                        agent=developer_agent
+                    )
+
+                    execution_crew = Crew(
+                        agents=[developer_agent, archivist_agent],
+                        tasks=[execution_task],
+                        process=Process.sequential,
+                        step_callback=step_callback,
+                        verbose=False
+                    )
+
+                    step_result = execution_crew.kickoff()
+                    episodic_memory.add_event("Sophia", f"Step_{i+1}_Executed", step_description, str(step_result), "INTERNAL")
+                    print(f"   - Výsledek kroku {i+1}: {step_result}")
+                    step_results.append(f"Výsledek kroku {i+1}: {step_result}")
+
+                result = "\n".join(step_results)
             print(f"\nSophia: {result}")
             episodic_memory.add_event("Sophia", "FinalAnswer", user_input, str(result), "OUTPUT")
             log_token_usage(user_input, result)
             run_memory_consolidation(str(result))
+
+            # Break the loop if in mock testing mode to prevent EOFError
+            if os.getenv("USE_MOCK_LLM") == "true":
+                print("\n--- MOCK TEST: Breaking loop after one run. ---")
+                break
 
 if __name__ == "__main__":
     main()
