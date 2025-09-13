@@ -79,9 +79,9 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Oživit `EthosModule` jako hlavního arbitra rozhodování.
 
-- [ ] **5.1: Vytvořit Vektorovou DB "Já":**
+- [x] **5.1: Vytvořit Vektorovou DB "Já":**
     - V `ethos_module.py` implementovat funkci, která při prvním spuštění načte `DNA.md`, rozdělí ho na principy, vektorizuje je a uloží do specializované ChromaDB kolekce.
-- [ ] **5.2: Implementovat `evaluate(plan)`:**
+- [x] **5.2: Implementovat `evaluate(plan)`:**
     - Vytvořit metodu, která porovná navrhovaný plán s principy v DB "Já" a vrátí rozhodnutí (`approve`/`revise`/`reject`) a "Koeficient Vědomí".
 
 ### Fáze 6: Zrození Agentů
