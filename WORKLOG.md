@@ -1,3 +1,32 @@
+**Timestamp:** 2025-09-14 06:34:53
+**Agent:** Jules
+**Task ID:** 9.2 - Intelligent Guardian
+
+**Cíl Úkolu:**
+- Upgrade the `guardian.py` script into an "Intelligent Guardian" capable of proactive health monitoring using the `psutil` library to monitor system resources (CPU, RAM) and implement logic to act before a critical failure occurs.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Přidána knihovna `psutil` do `requirements.txt`.
+3.  Do `config.yaml` přidána nová sekce `guardian` s prahovými hodnotami pro CPU a RAM.
+4.  Refaktorován `guardian.py`:
+    - Přidán import `psutil` a `yaml`.
+    - Implementováno načítání konfiguračních prahů.
+    - V hlavní smyčce přidán monitoring systémových prostředků (CPU, RAM).
+    - Implementována logika pro "měkký restart" procesu `main.py` po 3 po sobě jdoucích překročeních prahových hodnot.
+5.  Aktualizován `INSTALL.md` s poznámkou o nové závislosti.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tento upgrade posouvá Sophii od reaktivní odolnosti k proaktivní sebezáchově, což je klíčové pro její dlouhodobou autonomii.
+
+**Stav:** Dokončeno
+---
 ### Záznam 2025-09-14-2
 
 - **ID Tasku:** `fix-datetime-serialization`
