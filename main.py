@@ -35,7 +35,7 @@ def load_config():
 
 from agents.planner_agent import PlannerAgent
 from agents.philosopher_agent import PhilosopherAgent
-from memory.episodic_memory import EpisodicMemory
+from memory.advanced_memory import AdvancedMemory
 from crewai import Task
 
 def main():
@@ -55,15 +55,15 @@ def main():
     while True:
         # --- FÁZE BDĚNÍ ---
         log_message("STAV: Bdění - Kontrola nových úkolů.")
-        memory = EpisodicMemory()
+        memory = AdvancedMemory()
         next_task = memory.get_next_task()
 
         if next_task:
-            log_message(f"Nalezen nový úkol: {next_task['content']} (ID: {next_task['id']})")
+            log_message(f"Nalezen nový úkol: {next_task['user_input']} (ID: {next_task['chat_id']})")
 
             # Vytvoření plánovacího úkolu pro PlannerAgenta
             planning_task = Task(
-                description=f"Analyze the following user request and create a detailed, step-by-step execution plan. The user's request is: '{next_task['content']}'",
+                description=f"Analyze the following user request and create a detailed, step-by-step execution plan. The user's request is: '{next_task['user_input']}'",
                 agent=PlannerAgent,
                 expected_output="A list of actionable steps to be executed by other agents."
             )
@@ -74,13 +74,13 @@ def main():
                 log_message(f"Plánovač vytvořil plán:\n{plan}")
 
                 # Po úspěšném naplánování označíme úkol jako dokončený
-                memory.update_task_status(next_task['id'], "TASK_COMPLETED")
-                log_message(f"Úkol {next_task['id']} byl úspěšně naplánován a označen jako dokončený.")
+                memory.update_task_status(next_task['chat_id'], "TASK_COMPLETED")
+                log_message(f"Úkol {next_task['chat_id']} byl úspěšně naplánován a označen jako dokončený.")
 
             except Exception as e:
                 log_message(f"CHYBA: Selhání při zpracování úkolu PlannerAgentem: {e}")
                 # Volitelně můžete vrátit úkol zpět do fronty nebo ho označit jako selhaný
-                memory.update_task_status(next_task['id'], "TASK_FAILED")
+                memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
 
         else:
             log_message("Žádné nové úkoly ve frontě, odpočívám...")
@@ -93,7 +93,7 @@ def main():
 
         # 1. Přidáme záznam o dokončení cyklu do epizodické paměti
         try:
-            memory = EpisodicMemory()
+            memory = AdvancedMemory()
             memory.add_memory("Waking cycle completed successfully.", "lifecycle_event")
             memory.close()
             log_message("Přidán záznam o konci cyklu do epizodické paměti.")

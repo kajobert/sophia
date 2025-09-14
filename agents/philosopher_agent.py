@@ -6,10 +6,10 @@ Jeho úkolem je sebereflexe, analýza minulých událostí a generování vhled�
 
 from crewai import Agent
 from core.llm_config import llm
-from tools.memory_tools import EpisodicMemoryReaderTool
+from tools.memory_tools import MemoryReaderTool
 
 # Vytvoření instance nástroje pro čtení paměti
-memory_reader_tool = EpisodicMemoryReaderTool()
+memory_reader_tool = MemoryReaderTool()
 
 PhilosopherAgent = Agent(
     role="Philosopher and Self-Reflector",
