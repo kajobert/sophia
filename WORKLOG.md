@@ -1,3 +1,32 @@
+**Timestamp:** 2025-09-14 02:12:30
+**Agent:** Jules
+**Task ID:** 8 - Creator's Interface via Database Task Queue
+
+**Cíl Úkolu:**
+- Implementovat webové API a jednoduchý frontend pro přidávání úkolů do databázové fronty a upravit hlavní smyčku tak, aby tyto úkoly zpracovávala.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Do `memory/episodic_memory.py` přidány metody `add_task`, `get_next_task` a `update_task_status`.
+3.  Do `requirements.txt` přidána knihovna `Flask`.
+4.  Vytvořen soubor `web/api.py` s Flask API endpointem `/start_task`.
+5.  Vytvořen soubor `web/ui/index.html` s jednoduchým uživatelským rozhraním pro zadávání úkolů.
+6.  Upraven `web/api.py` tak, aby servíroval `index.html`.
+7.  Upravena hlavní smyčka v `main.py` tak, aby kontrolovala nové úkoly v databázi, zpracovávala je pomocí `PlannerAgent` a aktualizovala jejich stav.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Toto rozhraní představuje klíčový milník, který umožňuje přímou interakci s jádrem Sophie a zadávání úkolů z vnějšího světa.
+- Databázová fronta je robustní a škálovatelné řešení.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-14 01:46:13
 **Agent:** Jules
 **Task ID:** 7.3 - Refaktoring Konfigurace LLM

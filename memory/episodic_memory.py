@@ -126,6 +126,55 @@ class EpisodicMemory:
             })
         return memories
 
+    def add_task(self, description):
+        """
+        Přidá nový úkol do epizodické paměti.
+
+        Args:
+            description (str): Popis úkolu.
+
+        Returns:
+            int: ID nově přidaného úkolu.
+        """
+        return self.add_memory(description, "NEW_TASK")
+
+    def get_next_task(self):
+        """
+        Najde nejstarší nový úkol, označí ho jako probíhající a vrátí ho.
+        """
+        self.cursor.execute("SELECT * FROM memories WHERE type = 'NEW_TASK' ORDER BY timestamp ASC LIMIT 1")
+        row = self.cursor.fetchone()
+
+        if row:
+            task_id = row[0]
+            self.update_task_status(task_id, "IN_PROGRESS")
+
+            # Načteme znovu, abychom měli aktuální stav
+            self.cursor.execute("SELECT * FROM memories WHERE id = ?", (task_id,))
+            updated_row = self.cursor.fetchone()
+
+            return {
+                "id": updated_row[0],
+                "timestamp": updated_row[1],
+                "content": updated_row[2],
+                "type": updated_row[3],
+                "weight": updated_row[4],
+                "ethos_coefficient": updated_row[5]
+            }
+        else:
+            return None
+
+    def update_task_status(self, task_id, status):
+        """
+        Aktualizuje stav (typ) úkolu v databázi.
+
+        Args:
+            task_id (int): ID úkolu k aktualizaci.
+            status (str): Nový stav (např. 'IN_PROGRESS', 'TASK_COMPLETED').
+        """
+        self.cursor.execute("UPDATE memories SET type = ? WHERE id = ?", (status, task_id))
+        self.connection.commit()
+
     def close(self):
         """
         Uzavře připojení k databázi.
