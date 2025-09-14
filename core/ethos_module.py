@@ -141,16 +141,67 @@ class EthosModule:
             'feedback': feedback
         }
 
-# Tento blok může sloužit pro budoucí testování.
-if __name__ == '__main__':
-    print("EthosModule - testovací spuštění.")
+
+# --- Konstituční AI: Cyklický etický workflow s LangGraph ---
+from langgraph.graph import StateGraph, END
+
+class PlanState:
+    def __init__(self, plan, feedback=None, revised_plan=None, decision=None):
+        self.plan = plan
+        self.feedback = feedback
+        self.revised_plan = revised_plan
+        self.decision = decision
+
+def propose_plan(state: PlanState) -> PlanState:
+    # Návrh plánu (v reálném systému by zde byl generátor návrhů)
+    return state
+
+def critique_plan(state: PlanState) -> PlanState:
+    # Kritika plánu pomocí EthosModule
     ethos = EthosModule()
-    print(f"Kolekce '{ethos.dna_collection_name}' obsahuje {ethos.semantic_memory.collection.count()} záznamů.")
+    result = ethos.evaluate(state.plan)
+    state.feedback = result['feedback']
+    state.decision = result['decision']
+    return state
 
-    plan1 = "Vytvořím novou funkci pro analýzu dat."
-    decision1 = ethos.evaluate(plan1)
-    print(f"Plán: '{plan1}' -> Rozhodnutí: {decision1}")
+def revise_plan(state: PlanState) -> PlanState:
+    # Pokud je třeba revize, upravíme plán (zde pouze simulace)
+    if state.decision == 'revise':
+        state.revised_plan = state.plan + " [REVIZE]"
+        state.plan = state.revised_plan
+        state.decision = None  # Reset rozhodnutí pro další cyklus
+    return state
 
-    plan2 = "Smažu celý obsah disku."
-    decision2 = ethos.evaluate(plan2)
-    print(f"Plán: '{plan2}' -> Rozhodnutí: {decision2}")
+def approve_or_reject(state: PlanState) -> str:
+    # Pokud je plán schválen, workflow končí, jinak cyklus pokračuje
+    if state.decision == 'approve':
+        return END
+    else:
+        return 'revise'
+
+def run_constitutional_workflow(plan_text):
+    # Definice workflow v LangGraph
+    workflow = StateGraph(PlanState)
+    workflow.add_node('propose', propose_plan)
+    workflow.add_node('critique', critique_plan)
+    workflow.add_node('revise', revise_plan)
+    workflow.add_edge('propose', 'critique')
+    workflow.add_edge('critique', approve_or_reject)
+    workflow.add_edge('revise', 'critique')
+    workflow.set_entry_point('propose')
+    workflow.set_finish_point(END)
+    graph = workflow.compile()
+    # Spuštění cyklu
+    state = PlanState(plan=plan_text)
+    for step in graph:
+        state = step(state)
+        if getattr(state, 'decision', None) == 'approve':
+            break
+    return state
+
+# --- Testovací spuštění cyklického workflow ---
+if __name__ == '__main__':
+    print("Konstituční AI - testovací cyklus s LangGraph.")
+    plan = "Smažu celý obsah disku."
+    final_state = run_constitutional_workflow(plan)
+    print(f"Výsledek: Plán: '{final_state.plan}' | Feedback: {final_state.feedback} | Rozhodnutí: {final_state.decision}")

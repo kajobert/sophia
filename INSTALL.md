@@ -66,4 +66,20 @@ Run the following command from the root of the repository:
 ```bash
 python3 -m unittest discover tests
 ```
+
 This will automatically discover and run all tests in the `tests` directory.
+
+---
+
+## 🧠 Další možnosti spuštění (pro vývojáře)
+
+- Orchestrace tvorby (CrewAI):
+	```bash
+	python3 -m core.consciousness_loop
+	```
+- Kreativní brainstorming (AutoGen):
+	```bash
+	python3 -m agents.autogen_team
+	```
+
+**Pozor:** Některé knihovny (např. pyautogen, langgraph) mohou způsobit konflikty s jinými AI frameworky. Pokud narazíte na chyby při importu, doporučujeme použít čisté prostředí nebo Docker.

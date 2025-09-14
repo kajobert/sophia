@@ -25,7 +25,7 @@ Cílem je vytvořit systém, který:
     -   Aktualizovat `requirements.txt` o `psycopg2-binary` nebo podobný driver.
     -   Aktualizovat `INSTALL.md` a `setup.sh` s instrukcemi pro spuštění PostgreSQL (např. pomocí Dockeru).
 
-- [ ] **9.2. Inteligentní Guardian:**
+- [x] **9.2. Inteligentní Guardian:**
     -   Integrovat knihovnu `psutil` do `guardian.py`.
     -   Rozšířit monitorovací smyčku o kontrolu systémových prostředků (využití CPU a RAM).
     -   Implementovat logiku, která v případě překročení prahových hodnot (např. 90% RAM) provede "měkký" restart nebo pošle varování.
@@ -53,11 +53,11 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vylepšit etické jádro a implementovat agenty schopné psát a testovat kód.
 
-- [ ] **11.1. Konstituční AI:**
+- [x] **11.1. Konstituční AI:**
     -   Prozkoumat a integrovat knihovnu `LangGraph`.
     -   Přepracovat `core/ethos_module.py`, aby používal cyklický proces (kritika -> revize) inspirovaný Konstituční AI, místo jednoduchého porovnání.
 
-- [ ] **11.2. Oživení Agentů (CrewAI):**
+- [x] **11.2. Oživení Agentů (CrewAI):**
     -   Plně implementovat `agents/engineer_agent.py` a vybavit ho nástroji pro práci se soubory a spouštění kódu.
     -   Plně implementovat `agents/tester_agent.py` a vybavit ho stejnými nástroji.
 
@@ -65,11 +65,11 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Uzavřít smyčku autonomní tvorby a rozšířit schopnosti o kreativní procesy.
 
-- [ ] **12.1. Tým Snů (AutoGen):**
+- [x] **12.1. Tým Snů (AutoGen):**
     -   Prozkoumat a integrovat framework `AutoGen`.
     -   Vytvořit specializovaný tým agentů (`Philosopher`, `Architect`) v `AutoGen`, který bude aktivován během "spánkové" fáze pro generování nových nápadů a strategií.
 
-- [ ] **12.2. Uzavření Smyčky Tvorby:**
+- [x] **12.2. Uzavření Smyčky Tvorby:**
     -   Upravit `core/consciousness_loop.py` tak, aby dokázal orchestrovat celý řetězec: `Planner` -> `Engineer` -> `Tester`.
     -   Implementovat logiku pro zpracování zpětné vazby (např. když testy selžou, úkol se vrátí Inženýrovi s chybovou hláškou).
 
