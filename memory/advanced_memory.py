@@ -77,12 +77,16 @@ class AdvancedMemory:
         timeout = 5  # seconds
 
         while time.time() - start_time < timeout:
-            query = text("SELECT chat_id FROM chat_history WHERE metadata_json->>'task_uuid' = :task_uuid")
-            result = self.memori.db_manager.execute_with_translation(str(query), parameters={'task_uuid': task_uuid}).fetchone()
+            session = self.memori.db_manager.SessionLocal()
+            try:
+                query = text("SELECT chat_id FROM chat_history WHERE metadata_json->>'task_uuid' = :task_uuid")
+                result = session.execute(query, {'task_uuid': task_uuid}).fetchone()
 
-            if result and result[0] == chat_id:
-                print(f"Task {chat_id} with UUID {task_uuid} verified in database.")
-                return chat_id
+                if result and result[0] == chat_id:
+                    print(f"Task {chat_id} with UUID {task_uuid} verified in database.")
+                    return chat_id
+            finally:
+                session.close()
 
             await asyncio.sleep(0.2)
 
