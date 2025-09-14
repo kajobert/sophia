@@ -23,13 +23,23 @@ class MemoryReaderTool(BaseTool):
 
     def _run(self, n: int = 10) -> str:
         """
-        Spustí nástroj pro čtení paměti.
+        Synchronní zástupce pro asynchronní metodu.
+        """
+        # This is a fallback for synchronous calls.
+        # The main application should use the async version.
+        import asyncio
+        try:
+            return asyncio.run(self._arun(n))
+        except RuntimeError:
+            return "Error: asyncio.run() cannot be called from a running event loop. Use _arun instead."
+
+    async def _arun(self, n: int = 10) -> str:
+        """
+        Asynchronně spustí nástroj pro čtení paměti.
         """
         try:
             memory = AdvancedMemory()
-            # Since this tool is synchronous, we must run the async method in a new event loop.
-            import asyncio
-            recent_memories = asyncio.run(memory.read_last_n_memories(n))
+            recent_memories = await memory.read_last_n_memories(n)
             memory.close()
             # Převedeme seznam slovníků na JSON string pro čistší výstup
             return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
