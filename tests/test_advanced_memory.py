@@ -95,25 +95,27 @@ database:
 
     @patch('tools.memory_tools.AdvancedMemory')
     def test_memory_reader_tool(self, MockAdvancedMemory):
-        mock_memory_instance = MockAdvancedMemory.return_value
+        async def run_test():
+            mock_memory_instance = MockAdvancedMemory.return_value
 
-        test_time = datetime(2025, 1, 1, 12, 30, 0)
-        mock_memory_instance.read_last_n_memories = AsyncMock(return_value=[{
-            "chat_id": "1",
-            "timestamp": test_time,
-            "user_input": "Test with datetime",
-        }])
+            test_time = datetime(2025, 1, 1, 12, 30, 0)
+            mock_memory_instance.read_last_n_memories = AsyncMock(return_value=[{
+                "chat_id": "1",
+                "timestamp": test_time,
+                "user_input": "Test with datetime",
+            }])
 
-        tool = MemoryReaderTool()
-        result_json = tool._run(n=1)
+            tool = MemoryReaderTool()
+            result_json = await tool._arun(n=1)
 
-        try:
-            result_data = json.loads(result_json)
-            self.assertEqual(len(result_data), 1)
-            self.assertEqual(result_data[0]['timestamp'], test_time.isoformat())
-            mock_memory_instance.read_last_n_memories.assert_called_once_with(1)
-        except json.JSONDecodeError:
-            self.fail("The output of the tool is not a valid JSON string.")
+            try:
+                result_data = json.loads(result_json)
+                self.assertEqual(len(result_data), 1)
+                self.assertEqual(result_data[0]['timestamp'], test_time.isoformat())
+                mock_memory_instance.read_last_n_memories.assert_called_once_with(1)
+            except json.JSONDecodeError:
+                self.fail("The output of the tool is not a valid JSON string.")
+        asyncio.run(run_test())
 
 
 if __name__ == '__main__':

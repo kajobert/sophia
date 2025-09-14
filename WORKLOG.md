@@ -1,3 +1,28 @@
+**Timestamp:** 2025-09-14 11:31:00
+**Agent:** Jules
+**Task ID:** fix-async-and-race-condition-final
+
+**Cíl Úkolu:**
+- Finální oprava `TypeError` v `main.py` a race condition v `AdvancedMemory`.
+
+**Postup a Klíčové Kroky:**
+1.  **Oprava `main.py`**: Aplikace byla plně převedena na asynchronní model pomocí `async def main()` a `asyncio.run()`. Všechna volání metod `AdvancedMemory` nyní správně používají `await`.
+2.  **Oprava `get_next_task`**: Metoda byla refaktorována tak, aby prohledávala přímo tabulku `chat_history` místo `long_term_memory`, čímž se odstranila race condition způsobená zpožděním při zpracování paměti.
+3.  **Oprava `MemoryReaderTool`**: Nástroj byl upraven tak, aby správně fungoval v asynchronním prostředí `crewai` přejmenováním `_run` na `_arun` a odstraněním vnořeného volání `asyncio.run()`.
+4.  **Aktualizace Testů**: Testy byly upraveny tak, aby reflektovaly všechny výše uvedené změny a ověřovaly správné asynchronní chování.
+5.  **Finální Ověření**: Všechny unit testy prošly. Uživatel potvrdil, že jeho testovací skript nyní také funguje správně.
+
+**Problémy a Překážky:**
+- Bylo nutné zkombinovat několik oprav (asynchronní `main`, oprava race condition, oprava asynchronního nástroje) k dosažení plně funkčního stavu.
+
+**Navržené Řešení:**
+- Komplexní oprava na více místech aplikace, která sjednocuje přístup k databázi a správně implementuje asynchronní vzory.
+
+**Nápady a Postřehy:**
+- Tento úkol je ukázkou, jak mohou být chyby v komplexních systémech provázané a vyžadují holistický přístup k řešení.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 10:28:00
 **Agent:** Jules
 **Task ID:** fix-async-and-race-condition
