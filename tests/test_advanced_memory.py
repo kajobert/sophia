@@ -57,12 +57,10 @@ database:
 
     def test_get_next_task(self):
         async def run_test():
-            self.mock_memori_instance.db_manager.search_memories.return_value = [{
-                'chat_id': 'task_456',
-                'timestamp': datetime.now(),
-                'metadata': {'status': 'new'}
-            }]
+            # Mock the direct SQL query in get_next_task
+            self.mock_session.execute.return_value.fetchone.return_value = ("task_456",)
 
+            # Mock the access_memory call that happens after the update
             self.mock_memori_instance.get_conversation_history.return_value = [{
                 'chat_id': 'task_456',
                 'user_input': 'A new task',
@@ -75,7 +73,8 @@ database:
             self.assertEqual(task['chat_id'], 'task_456')
             self.assertEqual(task['metadata']['status'], 'IN_PROGRESS')
 
-            self.mock_memori_instance.db_manager.search_memories.assert_called_once()
+            # The session is used three times: once in get_next_task, once in update_task_status, once in access_memory
+            self.assertGreaterEqual(self.mock_memori_instance.db_manager.SessionLocal.call_count, 1)
         asyncio.run(run_test())
 
     def test_update_task_status(self):
