@@ -27,7 +27,9 @@ class MemoryReaderTool(BaseTool):
         """
         try:
             memory = AdvancedMemory()
-            recent_memories = memory.read_last_n_memories(n)
+            # Since this tool is synchronous, we must run the async method in a new event loop.
+            import asyncio
+            recent_memories = asyncio.run(memory.read_last_n_memories(n))
             memory.close()
             # Převedeme seznam slovníků na JSON string pro čistší výstup
             return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
