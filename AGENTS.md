@@ -44,3 +44,9 @@ Pro zajištění přehlednosti, udržitelnosti a dokumentace projektu se **musí
 
 ---
 Tvé první zadání najdeš v souboru `docs/PROJECT_SOPHIA_V4.md`, začni Fází 9.
+
+---
+
+## Nový agent: Aider IDE Agent
+
+Od Fáze 13 roadmapy je součástí Sophia ekosystému také Aider IDE agent, který slouží jako autonomní evoluční motor – samostatný agent, jenž umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Je klíčovým prvkem evoluční smyčky a umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa a soubor `agents/aider_agent.py`.

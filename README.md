@@ -39,6 +39,7 @@ Projekt je rozdělen do evolučních fází, které na sebe navazují.
 - **Hybrid Agent Model:** Dva specializované týmy agentů – disciplinovaný (`CrewAI`) pro práci a kreativní (`AutoGen`) pro růst.
 - **Proactive Guardian:** Inteligentní monitoring zdraví systému pro předcházení pádům.
 - **Autonomous Creator:** Cílová schopnost samostatně psát, testovat a nasazovat kód v bezpečném sandboxu.
+- **Aider IDE Agent:** Autonomní evoluční motor – samostatný agent, který umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa Fáze 13 (evoluční workflow).
 
 ## 🚀 Jak Začít
 
@@ -60,6 +61,10 @@ Všechny klíčové nástroje (paměť, souborový systém, exekuce kódu) jsou 
 - **Testováno:** Všechny testy procházejí, hlavní smyčka běží stabilně.
 
 Tato architektura výrazně zvyšuje robustnost a rozšiřitelnost systému pro budoucí vývoj.
+
+## 📈 Roadmapa
+
+Kompletní roadmapu včetně integrace Aider IDE agenta najdeš v [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md).
 
 ## 🛠️ Technologický Stack
 
