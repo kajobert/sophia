@@ -38,7 +38,7 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vytvořit a integrovat pokročilé nástroje, které agentům umožní efektivně pracovat.
 
-- [ ] **10.1. Implementace Pokročilé Paměti:**
+- [x] **10.1. Implementace Pokročilé Paměti:**
     -   Prozkoumat a integrovat externí paměťovou knihovnu (např. `GibsonAI/memori`).
     -   Nahradit naši stávající jednoduchou logiku pro "váhu" a "blednutí" za robustnější řešení z této knihovny.
 
