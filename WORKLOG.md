@@ -17,6 +17,21 @@
 **Stav:** Dokončeno
 
 ---
+**Timestamp:** 2025-09-15 00:10:00
+**Agent:** GitHub Copilot
+**Task ID:** crewai-agents-integration
+
+**Cíl Úkolu:**
+- Plně implementovat EngineerAgent a TesterAgent jako CrewAI agenty s nástroji pro práci se soubory a spouštění/testování kódu v sandboxu.
+- Ověřit jejich spolupráci integračním testem.
+
+**Postup a Poznámky:**
+- EngineerAgent a TesterAgent nyní využívají nástroje WriteFileTool, ReadFileTool, ListDirectoryTool, ExecutePythonScriptTool, RunUnitTestsTool.
+- Přidán integrační test `tests/test_agents_integration.py`, který ověřuje workflow: vytvoření kódu, testů, spuštění, validace.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-14 23:55:00
 **Agent:** GitHub Copilot
 **Task ID:** konstitucni-ai-langgraph
