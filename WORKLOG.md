@@ -1,4 +1,19 @@
 ---
+**Timestamp:** 2025-09-15 00:30:00
+**Agent:** GitHub Copilot
+**Task ID:** autogen-team-and-orchestration
+
+**Cíl Úkolu:**
+- Prozkoumat a integrovat AutoGen, vytvořit tým agentů Philosopher a Architect v AutoGen.
+- Upravit core/consciousness_loop.py pro orchestraci Planner -> Engineer -> Tester, včetně zpětné vazby.
+
+**Postup a Poznámky:**
+- AutoGen nainstalován a přidán do requirements.txt.
+- Implementován základní tým v agents/autogen_team.py (Philosopher + Architect, brainstorming).
+- Vytvořen orchestrátor v core/consciousness_loop.py, který uzavírá smyčku tvorby a zpětné vazby.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 23:30:00
 **Agent:** GitHub Copilot
 **Task ID:** evolucni-motor-aider-agent
@@ -15,6 +30,42 @@
 - Pravidelně reviduj, zda některé mechanismy nejsou redundantní nebo překonané a navrhuj další zjednodušení.
 
 **Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 00:10:00
+**Agent:** GitHub Copilot
+**Task ID:** crewai-agents-integration
+
+**Cíl Úkolu:**
+- Plně implementovat EngineerAgent a TesterAgent jako CrewAI agenty s nástroji pro práci se soubory a spouštění/testování kódu v sandboxu.
+- Ověřit jejich spolupráci integračním testem.
+
+**Postup a Poznámky:**
+- EngineerAgent a TesterAgent nyní využívají nástroje WriteFileTool, ReadFileTool, ListDirectoryTool, ExecutePythonScriptTool, RunUnitTestsTool.
+- Přidán integrační test `tests/test_agents_integration.py`, který ověřuje workflow: vytvoření kódu, testů, spuštění, validace.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-14 23:55:00
+**Agent:** GitHub Copilot
+**Task ID:** konstitucni-ai-langgraph
+
+**Cíl Úkolu:**
+- Prozkoumat a integrovat knihovnu LangGraph.
+- Přepracovat core/ethos_module.py na cyklický proces (kritika -> revize) inspirovaný Konstituční AI.
+
+**Postup a Poznámky:**
+- Stávající ethos_module.py používá pouze jednoduché sémantické vyhledávání a klíčová slova.
+- Dalším krokem je navrhnout a implementovat cyklický proces: návrh plánu -> kritika -> revize -> schválení/odmítnutí.
+- Nejprve ověřím možnosti knihovny LangGraph a navrhnu architekturu cyklu.
+
+**Stav:** Dokončeno
+
+**Shrnutí:**
+- Přidán cyklický etický workflow do core/ethos_module.py s využitím LangGraph.
+- Workflow umožňuje opakovanou kritiku a revizi plánu (kritika -> revize -> schválení/odmítnutí).
+- Lze snadno rozšířit o další kritiky nebo revizní kroky.
 ---
 **Timestamp:** 2025-09-14 23:00:00
 **Agent:** GitHub Copilot
@@ -44,6 +95,28 @@
 **Nápady a Postřehy:**
 - Aider může být využit i pro automatizované code review a refaktoring.
 - Lze rozšířit o možnost generovat návrhy změn, které musí schválit jiný agent (např. Philosopher nebo Architect).
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-14 23:45:00
+**Agent:** GitHub Copilot
+**Task ID:** inteligentni-guardian-psutil
+
+**Cíl Úkolu:**
+- Integrovat knihovnu psutil do guardian.py.
+- Rozšířit monitorovací smyčku o kontrolu systémových prostředků (CPU, RAM).
+- Implementovat logiku pro měkký restart nebo varování při překročení prahových hodnot.
+
+**Postup a Poznámky:**
+- psutil je již importován a používán v guardian.py.
+- Monitoring CPU a RAM je implementován, včetně prahových hodnot a restartu.
+- requirements.txt i INSTALL.md obsahují zmínku o psutil.
+- Do setup.sh byla přidána explicitní instalace psutil.
+
+**Problémy a Nápady:**
+- Všechny části úkolu jsou implementovány, není třeba další zásah.
+- Doporučuji pravidelně revidovat prahové hodnoty v config.yaml dle reálného provozu.
 
 **Stav:** Probíhá
 **Timestamp:** 2025-09-14 22:30:00

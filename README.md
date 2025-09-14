@@ -34,11 +34,11 @@ Projekt je rozdělen do evolučních fází, které na sebe navazují.
 - **Ethos Core:** Funkční etické jádro pro základní rozhodování.
 - **Self-Reflection Loop:** Schopnost "snít" a reflektovat své minulé akce.
 
-#### **V4: Autonomní Tvůrce (V Vývoji)**
-- **Constitutional AI:** Sofistikované svědomí založené na vnitřním dialogu (kritika -> revize).
-- **Hybrid Agent Model:** Dva specializované týmy agentů – disciplinovaný (`CrewAI`) pro práci a kreativní (`AutoGen`) pro růst.
-- **Proactive Guardian:** Inteligentní monitoring zdraví systému pro předcházení pádům.
-- **Autonomous Creator:** Cílová schopnost samostatně psát, testovat a nasazovat kód v bezpečném sandboxu.
+- **Constitutional AI:** Sofistikované svědomí založené na vnitřním dialogu (kritika -> revize, LangGraph, `core/ethos_module.py`).
+- **Hybrid Agent Model:** Dva specializované týmy agentů – disciplinovaný (`CrewAI`: Planner, Engineer, Tester) pro práci a kreativní (`AutoGen`: Philosopher, Architect) pro růst a brainstorming.
+- **Proactive Guardian:** Inteligentní monitoring zdraví systému pro předcházení pádům (`guardian.py`, `psutil`).
+- **Autonomous Creator:** Cílová schopnost samostatně plánovat, psát, testovat a nasazovat kód v bezpečném sandboxu (`core/consciousness_loop.py`).
+- **AutoGen Team:** Kreativní brainstorming a generování strategií v rámci "spánkové" fáze (`agents/autogen_team.py`).
 - **Aider IDE Agent:** Autonomní evoluční motor – samostatný agent, který umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa Fáze 13 (evoluční workflow).
 
 ## 🚀 Jak Začít
@@ -50,6 +50,18 @@ Všechny potřebné informace pro spuštění a pochopení projektu najdeš v na
 * **Technická Architektura:** [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 * **Hlubší Koncepty:** [`docs/CONCEPTS.md`](./docs/CONCEPTS.md)
 
+
+
+## 🧠 Příklady použití
+
+### Orchestrace tvorby (CrewAI):
+```bash
+python3 -m core.consciousness_loop
+```
+### Kreativní brainstorming (AutoGen):
+```bash
+python3 -m agents.autogen_team
+```
 
 ## ⚙️ Architektura Nástrojů (univerzální async/sync)
 
