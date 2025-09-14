@@ -94,30 +94,31 @@ class AdvancedMemory:
 
 
     async def get_next_task(self):
-        tasks = self.memori.db_manager.search_memories(
-            query="",
-            namespace=self.user_id,
-            category_filter=['TASK'],
-            limit=100
-        )
+        """
+        Najde nejstarší nový úkol, označí ho jako probíhající a vrátí ho.
+        Tato metoda nyní přímo prohledává 'chat_history' aby se předešlo race condition.
+        """
+        next_task_id = None
+        session = self.memori.db_manager.SessionLocal()
+        try:
+            # PostgreSQL specifický dotaz pro JSONB
+            query = text("""
+                SELECT chat_id FROM chat_history
+                WHERE metadata_json->>'memory_type' = 'TASK'
+                  AND metadata_json->>'status' = 'new'
+                  AND namespace = :namespace
+                ORDER BY timestamp ASC
+                LIMIT 1
+            """)
+            result = session.execute(query, {'namespace': self.user_id}).fetchone()
+            if result:
+                next_task_id = result[0]
+        finally:
+            session.close()
 
-        next_task = None
-        # We need to filter for tasks with status 'new' and sort by timestamp
-        new_tasks = []
-        for task in tasks:
-            metadata = task.get('metadata', {})
-            if metadata.get('status') == 'new':
-                new_tasks.append(task)
-
-        if new_tasks:
-            # Sort by timestamp to get the oldest
-            new_tasks.sort(key=lambda x: x.get('timestamp'))
-            next_task = new_tasks[0]
-
-        if next_task:
-            task_id = next_task.get('chat_id')
-            await self.update_task_status(task_id, "IN_PROGRESS")
-            return await self.access_memory(task_id)
+        if next_task_id:
+            await self.update_task_status(next_task_id, "IN_PROGRESS")
+            return await self.access_memory(next_task_id)
 
         return None
 
