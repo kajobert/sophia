@@ -1,6 +1,6 @@
-# Installation and Setup Guide for Sophia V3
+# Installation and Setup Guide for Sophia V4
 
-This guide provides simple instructions to get the Sophia V3 project set up and running, specifically within a GitHub Codespace or a similar Linux-based environment.
+This guide provides simple instructions to get the Sophia V4 project set up and running, specifically within a GitHub Codespace or a similar Linux-based environment.
 
 ## 🚀 Getting Started in a GitHub Codespace
 
@@ -25,7 +25,19 @@ Now, run the script:
 ```
 The script will upgrade pip, install all Python libraries from `requirements.txt`, and create a `.env` file for your environment variables.
 
-### 3. Configure Environment (Optional)
+### 3. Set Up PostgreSQL Database
+
+Sophia V4 uses a PostgreSQL database. The recommended way to run it locally is with Docker.
+
+Run the following command to start a PostgreSQL container. This command will also set it up to restart automatically.
+
+```bash
+docker run --name sophia-postgres -e POSTGRES_USER=sophia_user -e POSTGRES_PASSWORD=sophia_password -e POSTGRES_DB=sophia_db -p 5432:5432 -d --restart unless-stopped postgres:13
+```
+
+The environment variables used in this command (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`) correspond to the values in `config.yaml`. If you change them in `config.yaml`, you must also change them in the `docker run` command.
+
+### 4. Configure Environment (Optional)
 
 The setup script creates a `.env` file. If the project requires API keys (e.g., for OpenAI, Anthropic), you must add them to this `.env` file.
 
@@ -35,7 +47,7 @@ OPENAI_API_KEY="your_api_key_here"
 ANTHROPIC_API_KEY="your_api_key_here"
 ```
 
-### 4. Start Sophia
+### 5. Start Sophia
 
 You are now ready to start the application. The main entry point is `guardian.py`, which monitors and runs the core process.
 

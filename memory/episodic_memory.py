@@ -2,26 +2,31 @@
 """
 Modul pro správu epizodické paměti Sophie.
 Tato paměť ukládá konkrétní události a zážitky v chronologickém pořadí.
-Využívá databázi SQLite pro jednoduchost a efektivitu.
+Využívá databázi PostgreSQL pro robustnost a škálovatelnost.
 """
 
-import sqlite3
-import os
+import psycopg2
+import yaml
 from datetime import datetime
 
 class EpisodicMemory:
     """
-    Třída pro správu epizodické paměti pomocí SQLite.
+    Třída pro správu epizodické paměti pomocí PostgreSQL.
     """
-    def __init__(self, db_path='memory/sophia_episodic.db'):
+    def __init__(self, config_path='config.yaml'):
         """
         Inicializuje připojení k databázi a zajistí existenci tabulky.
         """
-        # Zajistíme, že adresář pro databázi existuje
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)['database']
 
-        self.db_path = db_path
-        self.connection = sqlite3.connect(self.db_path)
+        self.connection = psycopg2.connect(
+            host=config['db_host'],
+            port=config['db_port'],
+            user=config['db_user'],
+            password=config['db_password'],
+            dbname=config['db_name']
+        )
         self.cursor = self.connection.cursor()
         self.create_table()
 
@@ -32,8 +37,8 @@ class EpisodicMemory:
         """
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS memories (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp DATETIME NOT NULL,
+                id SERIAL PRIMARY KEY,
+                timestamp TIMESTAMPTZ NOT NULL,
                 content TEXT NOT NULL,
                 type TEXT NOT NULL,
                 weight REAL DEFAULT 1.0,
@@ -56,10 +61,12 @@ class EpisodicMemory:
         timestamp = datetime.now()
         self.cursor.execute("""
             INSERT INTO memories (timestamp, content, type)
-            VALUES (?, ?, ?)
+            VALUES (%s, %s, %s)
+            RETURNING id
         """, (timestamp, content, mem_type))
+        memory_id = self.cursor.fetchone()[0]
         self.connection.commit()
-        return self.cursor.lastrowid
+        return memory_id
 
     def access_memory(self, memory_id):
         """
@@ -72,13 +79,13 @@ class EpisodicMemory:
             dict: Slovník s daty vzpomínky, nebo None, pokud nebyla nalezena.
         """
         # Nejprve načteme vzpomínku
-        self.cursor.execute("SELECT * FROM memories WHERE id = ?", (memory_id,))
+        self.cursor.execute("SELECT * FROM memories WHERE id = %s", (memory_id,))
         row = self.cursor.fetchone()
 
         if row:
             # Zvýšíme váhu
             new_weight = row[4] + 0.1  # index 4 je 'weight'
-            self.cursor.execute("UPDATE memories SET weight = ? WHERE id = ?", (new_weight, memory_id))
+            self.cursor.execute("UPDATE memories SET weight = %s WHERE id = %s", (new_weight, memory_id))
             self.connection.commit()
 
             # Vrátíme data jako slovník pro snadnější použití
@@ -111,7 +118,7 @@ class EpisodicMemory:
         Returns:
             list: Seznam slovníků s daty posledních N vzpomínek.
         """
-        self.cursor.execute("SELECT * FROM memories ORDER BY timestamp DESC LIMIT ?", (n,))
+        self.cursor.execute("SELECT * FROM memories ORDER BY timestamp DESC LIMIT %s", (n,))
         rows = self.cursor.fetchall()
 
         memories = []
@@ -150,7 +157,7 @@ class EpisodicMemory:
             self.update_task_status(task_id, "IN_PROGRESS")
 
             # Načteme znovu, abychom měli aktuální stav
-            self.cursor.execute("SELECT * FROM memories WHERE id = ?", (task_id,))
+            self.cursor.execute("SELECT * FROM memories WHERE id = %s", (task_id,))
             updated_row = self.cursor.fetchone()
 
             return {
@@ -172,7 +179,7 @@ class EpisodicMemory:
             task_id (int): ID úkolu k aktualizaci.
             status (str): Nový stav (např. 'IN_PROGRESS', 'TASK_COMPLETED').
         """
-        self.cursor.execute("UPDATE memories SET type = ? WHERE id = ?", (status, task_id))
+        self.cursor.execute("UPDATE memories SET type = %s WHERE id = %s", (status, task_id))
         self.connection.commit()
 
     def close(self):
@@ -180,22 +187,3 @@ class EpisodicMemory:
         Uzavře připojení k databázi.
         """
         self.connection.close()
-
-# Tento blok slouží pro případné budoucí testování nebo ukázku použití.
-if __name__ == '__main__':
-    # Vytvoření instance paměti (vytvoří soubor sophia_episodic.db, pokud neexistuje)
-    em = EpisodicMemory()
-
-    # Přidání testovací vzpomínky
-    mem_id = em.add_memory("Toto je testovací vzpomínka.", "module_test")
-    print(f"Přidána vzpomínka s ID: {mem_id}")
-
-    # Přístup ke vzpomínce pro zvýšení váhy
-    retrieved_mem = em.access_memory(mem_id)
-    print(f"Načtená vzpomínka (po 1. přístupu): {retrieved_mem}")
-
-    retrieved_mem = em.access_memory(mem_id)
-    print(f"Načtená vzpomínka (po 2. přístupu): {retrieved_mem}")
-
-    em.close()
-    print("Test dokončen a připojení uzavřeno.")
