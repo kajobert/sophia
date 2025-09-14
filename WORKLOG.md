@@ -1,3 +1,28 @@
+**Timestamp:** 2025-09-14 10:13:00
+**Agent:** Jules
+**Task ID:** fix-transaction-isolation-add-task
+
+**Cíl Úkolu:**
+- Opravit problém s transakční izolací v `add_task`, kde nově přidaný úkol nebyl viditelný pro `get_next_task`.
+
+**Postup a Klíčové Kroky:**
+1.  Analyzována verifikační smyčka v `add_task` a zjištěno, že používá přímé spojení (`execute_with_translation`) místo session.
+2.  Refaktorována verifikační smyčka tak, aby v každé iteraci vytvářela novou session pomocí `db_manager.SessionLocal()`.
+3.  Tím je zajištěno, že ověřovací dotaz je spuštěn v nové transakci a vidí data zapsaná a comitnutá předchozími operacemi.
+4.  Upraveny testy pro `add_task`, aby mockovaly nový způsob správy session ve verifikační smyčce.
+5.  Všechny testy úspěšně prošly, což potvrzuje opravu.
+
+**Problémy a Překážky:**
+- Původní problém byl maskován tím, že verifikační smyčka viděla nekomitnuté změny, protože běžela v jiném kontextu než zbytek aplikace.
+
+**Navržené Řešení:**
+- Sjednocení přístupu k databázi tak, aby všechny operace používaly řízené session z `SessionLocal`, zajišťuje konzistentní chování transakcí.
+
+**Nápady a Postřehy:**
+- Tento bug je skvělou ukázkou, proč je důležité konzistentně používat stejný mechanismus pro správu databázových spojení a transakcí v celé aplikaci.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 09:40:00
 **Agent:** Jules
 **Task ID:** fix-transaction-isolation
