@@ -42,7 +42,7 @@ Cílem je vytvořit systém, který:
     -   Prozkoumat a integrovat externí paměťovou knihovnu (např. `GibsonAI/memori`).
     -   Nahradit naši stávající jednoduchou logiku pro "váhu" a "blednutí" za robustnější řešení z této knihovny.
 
-- [ ] **10.2. Nástroje pro Tvorbu:**
+- [x] **10.2. Nástroje pro Tvorbu:**
     -   Vytvořit `tools/file_system_tool.py` s nástroji pro čtení, zápis, a výpis souborů v `/sandbox`.
     -   Vytvořit `tools/code_executor_tool.py` s nástroji pro spouštění Python skriptů a `unittest` testů v `/sandbox` a zachytávání jejich výstupu a chyb.
 
