@@ -30,7 +30,7 @@ Cílem je vytvořit systém, který:
     -   Rozšířit monitorovací smyčku o kontrolu systémových prostředků (využití CPU a RAM).
     -   Implementovat logiku, která v případě překročení prahových hodnot (např. 90% RAM) provede "měkký" restart nebo pošle varování.
 
-- [ ] **9.3. Vytvoření Sandboxu:**
+- [x] **9.3. Vytvoření Sandboxu:**
     -   Vytvořit a zabezpečit adresář `/sandbox`.
     -   Zajistit, aby kód spuštěný v sandboxu neměl přístup k souborům mimo tento adresář.
 
