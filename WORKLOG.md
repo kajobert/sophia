@@ -1,3 +1,38 @@
+**Timestamp:** 2025-09-14 10:28:00
+**Agent:** Jules
+**Task ID:** fix-async-and-race-condition
+
+**Cíl Úkolu:**
+- Opravit `TypeError` v `main.py` způsobený chybějícím `await` při volání asynchronních metod.
+- Opravit race condition v `AdvancedMemory`, kde `get_next_task` neviděl nově přidané úkoly.
+
+**Postup a Klíčové Kroky:**
+1.  **Oprava Asynchronicity v `main.py`**:
+    -   Funkce `main` byla převedena na `async def main()`.
+    -   Všechny volání metod `AdvancedMemory` (`get_next_task`, `update_task_status`, `add_memory`) byly upraveny tak, aby používaly `await`.
+    -   Vstupní bod skriptu byl změněn na `asyncio.run(main())`.
+    -   Synchronní `time.sleep()` bylo nahrazeno za asynchronní `await asyncio.sleep()`.
+2.  **Oprava Race Condition v `get_next_task`**:
+    -   Metoda `get_next_task` byla refaktorována tak, aby nepoužívala `search_memories`, které prohledává `long_term_memory`.
+    -   Místo toho nyní provádí přímý SQL dotaz nad tabulkou `chat_history`, čímž se sjednocuje zdroj dat s metodou `add_task`.
+    -   Tímto je zajištěno, že `get_next_task` vidí úkoly okamžitě po jejich zapsání a ověření.
+3.  **Aktualizace Testů**:
+    -   Test `test_get_next_task` byl upraven tak, aby mockoval nový přímý SQL dotaz místo `search_memories`.
+4.  **Ověření**:
+    -   Všechny jednotkové testy prošly úspěšně.
+    -   Problémy nahlášené uživatelem by měly být tímto vyřešeny.
+
+**Problémy a Překážky:**
+- Původní analýza race condition byla neúplná. Problém nebyl v chybějícím `commit`, ale v tom, že `add_task` a `get_next_task` pracovaly s různými datovými tabulkami (`chat_history` vs. `long_term_memory`), mezi kterými existuje zpoždění kvůli asynchronnímu zpracování.
+
+**Navržené Řešení:**
+- Sjednocení logiky tak, aby obě metody pracovaly konzistentně s tabulkou `chat_history`, kde jsou úkoly okamžitě k dispozici.
+
+**Nápady a Postřehy:**
+- Tento komplexní bug odhalil důležitost hlubokého porozumění toku dat v externích knihovnách a nutnost konzistentního přístupu k datům napříč celou aplikací.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 10:13:00
 **Agent:** Jules
 **Task ID:** fix-transaction-isolation-add-task
