@@ -72,3 +72,26 @@ Cílem je vytvořit systém, který:
 - [ ] **12.2. Uzavření Smyčky Tvorby:**
     -   Upravit `core/consciousness_loop.py` tak, aby dokázal orchestrovat celý řetězec: `Planner` -> `Engineer` -> `Tester`.
     -   Implementovat logiku pro zpracování zpětné vazby (např. když testy selžou, úkol se vrátí Inženýrovi s chybovou hláškou).
+
+---
+
+### Fáze 13: Integrace Aider IDE Agenta
+
+
+**Cíl:** Využít Aider IDE jako autonomní evoluční motor – agent, který umožní Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu, a tím realizovat skutečnou autonomní evoluci schopností.
+
+
+- [ ] **13.1. Analýza a příprava integrace:**
+    -   Prozkoumat možnosti Aider IDE (https://github.com/paul-gauthier/aider) a jeho CLI/API.
+    -   Navrhnout Aider IDE jako samostatného autonomního agenta s právem měnit kód Sophie v sandboxu.
+- [ ] **13.2. Implementace AiderAgent:**
+    -   Vytvořit wrapper třídu `AiderAgent` v `agents/aider_agent.py` pro komunikaci s Aider IDE přes CLI.
+    -   Definovat protokol pro předávání úkolů (např. JSON přes stdin/stdout nebo REST endpoint).
+    -   Omezit všechny operace na `/sandbox` a validovat výstup před commitem.
+    -   Zajistit, že všechny změny budou auditovatelné (git log, review) a podléhají etické kontrole (Ethos module, případně schválení jiným agentem).
+- [ ] **13.3. Evoluční workflow:**
+    -   Umožnit Aider agentovi samostatně navrhovat a realizovat změny kódu na základě cílů nebo vlastního rozhodnutí v rámci evoluční smyčky.
+    -   Ostatní agenti (Planner, Philosopher, Architect) navrhují cíle, hodnotí změny a poskytují zpětnou vazbu, ale Aider agent provádí úpravy.
+    -   Všechny změny musí být bezpečné, auditované a revertovatelné.
+    -   Odstranit zbytečnou delegaci a složitou mezivrstvu – Aider agent je hlavní motor evoluce.
+    -   Pravidelně revidovat, zda některé mechanismy nejsou redundantní nebo překonané a roadmapu dále zjednodušovat.
