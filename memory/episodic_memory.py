@@ -101,6 +101,31 @@ class EpisodicMemory:
         """
         pass
 
+    def read_last_n_memories(self, n=10):
+        """
+        Přečte posledních N vzpomínek z databáze.
+
+        Args:
+            n (int): Počet vzpomínek k načtení.
+
+        Returns:
+            list: Seznam slovníků s daty posledních N vzpomínek.
+        """
+        self.cursor.execute("SELECT * FROM memories ORDER BY timestamp DESC LIMIT ?", (n,))
+        rows = self.cursor.fetchall()
+
+        memories = []
+        for row in rows:
+            memories.append({
+                "id": row[0],
+                "timestamp": row[1],
+                "content": row[2],
+                "type": row[3],
+                "weight": row[4],
+                "ethos_coefficient": row[5]
+            })
+        return memories
+
     def close(self):
         """
         Uzavře připojení k databázi.
