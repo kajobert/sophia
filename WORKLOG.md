@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-14 22:30:00
+**Agent:** GitHub Copilot
+**Task ID:** universal-tool-async-sync-interface
+
+**Cíl Úkolu:**
+- Refaktorovat všechny klíčové nástroje (MemoryReaderTool, FileSystemTool, CodeExecutorTool) tak, aby měly univerzální rozhraní pro synchronní i asynchronní použití.
+- Zajistit, že nástroje budou bezpečně použitelné jak v CrewAI (sync), tak v AutoGen (async) workflow.
+- Ověřit, že systém je robustní a připravený na další rozvoj dle roadmapy.
+
+**Postup a Klíčové Kroky:**
+1. Navržen univerzální interface: každý nástroj nyní implementuje `run_sync`, `run_async`, `__call__`, `_run`/`_arun` a používá helper `run_sync_or_async` pro bezpečné volání v libovolném kontextu.
+2. MemoryReaderTool, WriteFileTool, ReadFileTool, ListDirectoryTool, ExecutePythonScriptTool, RunUnitTestsTool refaktorovány dle tohoto vzoru.
+3. Všechny nástroje nyní detekují běžící event loop a v případě nesprávného použití (např. sync v async prostředí) vyhodí jasnou chybu s návodem.
+4. Zamčeny verze všech klíčových knihoven v requirements.txt (litellm, openai, tiktoken) pro zajištění kompatibility.
+5. Ověřeno spuštěním všech 22 testů (pytest), všechny prošly bez chyb.
+6. Ověřeno spuštěním main.py – hlavní smyčka běží stabilně, chybné použití nástroje je jasně hlášeno, systém nepadá.
+
+**Problémy a Překážky:**
+- CrewAI executor volá MemoryReaderTool v async prostředí přes sync rozhraní, což je nyní jasně detekováno a hlášeno (nutno volat run_async nebo _arun).
+- Chybějící OpenAI API klíč je správně detekován a nebrání testování architektury.
+
+**Navržené Řešení:**
+- Všechny nové nástroje a integrace musí respektovat univerzální async/sync rozhraní a správně detekovat kontext.
+- Dokumentace a příklady použití budou aktualizovány, aby bylo jasné, jak nástroje správně volat v různých prostředích.
+
+**Nápady a Postřehy:**
+- Tento vzor výrazně zvyšuje robustnost a rozšiřitelnost systému, umožňuje bezpečné použití v různých agentních frameworcích a minimalizuje riziko chyb při integraci nových nástrojů.
+- Jasné chybové hlášky urychlují debugging a onboarding nových vývojářů.
+
+**Stav:** Dokončeno
 **Timestamp:** 2025-09-14 11:31:00
 **Agent:** Jules
 **Task ID:** fix-async-and-race-condition-final
