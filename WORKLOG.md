@@ -1,3 +1,36 @@
+**Timestamp:** 2025-09-14 08:27:00
+**Agent:** Jules
+**Task ID:** Fáze 10.1 - Implementace Pokročilé Paměti
+
+**Cíl Úkolu:**
+- Nahradit stávající, na míru vytvořené paměťové moduly (`EpisodicMemory`, `SemanticMemory`) externí open-source knihovnou `GibsonAI/memori`.
+- Cílem bylo zvýšit robustnost, škálovatelnost a inteligentní funkce paměťového systému Sophie.
+
+**Postup a Klíčové Kroky:**
+1.  Provedena rešerše knihovny `GibsonAI/memori` pro pochopení jejího API a architektury.
+2.  Přidána závislost `memorisdk` do `requirements.txt` a odstraněna přímá závislost na `chromadb`.
+3.  Vytvořen nový modul `memory/advanced_memory.py` s wrapper třídou `AdvancedMemory`.
+4.  Třída `AdvancedMemory` byla navržena tak, aby replikovala veřejné rozhraní starých paměťových tříd a zároveň interně využívala `memori`.
+5.  Implementovány všechny potřebné metody (`add_memory`, `access_memory`, `add_task`, `get_next_task`, `update_task_status`).
+6.  Odstraněny staré soubory `memory/episodic_memory.py` a `memory/semantic_memory.py`.
+7.  Refaktorován veškerý aplikační kód (`main.py`, `core/ethos_module.py`, `tools/memory_tools.py`, `web/api.py`) pro použití nové třídy `AdvancedMemory`.
+8.  Refaktorovány a přejmenovány testy (`tests/test_advanced_memory.py`) pro ověření funkčnosti nové implementace s využitím mockování `memori` knihovny.
+9.  Všechny testy úspěšně prošly.
+
+**Problémy a Překážky:**
+- Knihovna `memori` je primárně navržena pro automatické učení z konverzací a nemá přímou metodu pro programatické vložení jedné "vzpomínky".
+- Chyběla také přímá metoda pro aktualizaci metadat existující vzpomínky, což bylo potřeba pro změnu stavu úkolu (např. z 'new' na 'IN_PROGRESS').
+
+**Navržené Řešení:**
+- Pro vkládání vzpomínek byl použit "trik" s voláním metody `memori.record_conversation`, kde je obsah vzpomínky předán jako `user_input`. Tím se využije interní zpracovatelský řetězec knihovny.
+- Pro aktualizaci stavu úkolu byl implementován přímý SQL dotaz (`UPDATE chat_history SET metadata_json = ...`), který cílí na databázovou tabulku `memori`. Toto řešení je závislé na interní struktuře `memori`, ale bylo nezbytné pro zachování požadované funkčnosti.
+
+**Nápady a Postřehy:**
+- Použití robustní externí knihovny pro paměť významně zjednodušuje architekturu (odstranění ChromaDB) a přináší pokročilé funkce, jako je automatická extrakce entit a inteligentní vyhledávání.
+- Wrapper třída se ukázala jako efektivní strategie pro minimalizaci dopadu takto velké změny na zbytek aplikace.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 07:05:39
 **Agent:** Jules
 **Task ID:** Fáze 10.2 - Vybavení Dílny Základními Nástroji
