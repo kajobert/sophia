@@ -103,9 +103,9 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Zprovoznit cyklus "spánku" jako mechanismus aktivního učení.
 
-- [ ] **7.1: Implementovat `PhilosopherAgent`:**
+- [x] **7.1: Implementovat `PhilosopherAgent`:**
     - V `agents/philosopher_agent.py` definovat agenta, který umí číst z epizodické paměti.
-- [ ] **7.2: Integrace do Smyčky Spánku:**
+- [x] **7.2: Integrace do Smyčky Spánku:**
     - V `main.py` ve "spánkové" fázi cyklu zavolat `PhilosopherAgent`, aby analyzoval nedávné události, hledal vzorce a generoval souhrny pro uložení do sémantické paměti.
 
 ### Fáze 8: Rozhraní pro Tvůrce

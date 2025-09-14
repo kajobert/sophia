@@ -34,6 +34,8 @@ def load_config():
         return None
 
 from agents.planner_agent import PlannerAgent
+from agents.philosopher_agent import PhilosopherAgent
+from memory.episodic_memory import EpisodicMemory
 from crewai import Task
 
 def main():
@@ -50,27 +52,44 @@ def main():
 
     log_message("Zahajuji cyklus Bdění a Spánku.")
 
-    # Vytvoření jednoduchého úkolu pro testování
-    planning_task = Task(
-        description="Vytvoř plán pro implementaci nové funkce 'sebereflexe' do systému.",
-        agent=PlannerAgent,
-        expected_output="Podrobný, krok-za-krokem plán v Markdown formátu."
-    )
-
     while True:
+        # --- FÁZE BDĚNÍ ---
         log_message("STAV: Bdění - Aktivní fáze.")
-        log_message("Spouštím plánovacího agenta...")
-        try:
-            # Provedení úkolu
-            plan_result = planning_task.execute()
-            log_message("Plánovací agent dokončil úkol. Výsledek:")
-            log_message(f"--- VÝSLEDNÝ PLÁN ---\n{plan_result}\n--- KONEC PLÁNU ---")
-        except Exception as e:
-            log_message(f"CHYBA: Došlo k chybě při provádění plánovacího úkolu: {e}")
-
+        log_message("Simuluji aktivní činnost (placeholder)...")
+        # Zde bude v budoucnu probíhat interakce s uživatelem a plnění úkolů
         time.sleep(waking_duration)
 
+        # --- FÁZE SPÁNKU ---
         log_message("STAV: Spánek - Fáze sebereflexe a konsolidace.")
+
+        # 1. Přidáme záznam o dokončení cyklu do epizodické paměti
+        try:
+            memory = EpisodicMemory()
+            memory.add_memory("Waking cycle completed successfully.", "lifecycle_event")
+            memory.close()
+            log_message("Přidán záznam o konci cyklu do epizodické paměti.")
+        except Exception as e:
+            log_message(f"CHYBA: Nepodařilo se zapsat do epizodické paměti: {e}")
+
+        # 2. Vytvoříme úkol pro Filosofa
+        reflection_task = Task(
+            description=(
+                "Read the most recent memories using your tool (defaulting to the last 10). "
+                "Generate a concise, one-paragraph summary of the key events and learnings "
+                "from the last 'waking' cycle. Focus on distilling insights, not just listing events."
+            ),
+            agent=PhilosopherAgent,
+            expected_output="A single, insightful paragraph summarizing the recent past."
+        )
+
+        # 3. Spustíme Filosofa, aby provedl sebereflexi
+        log_message("Spouštím Filosofa k sebereflexi...")
+        try:
+            summary = reflection_task.execute()
+            log_message(f"DREAMING: {summary}")
+        except Exception as e:
+            log_message(f"CHYBA: Došlo k chybě během sebereflexe (PhilosopherAgent): {e}")
+
         time.sleep(sleeping_duration)
 
 if __name__ == "__main__":
