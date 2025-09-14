@@ -131,10 +131,15 @@ class AdvancedMemory:
             WHERE chat_id = :chat_id
         """)
 
-        self.memori.db_manager.execute_with_translation(
-            query,
-            parameters={'status': f'"{status}"', 'chat_id': task_id}
-        )
+        session = self.memori.db_manager.SessionLocal()
+        try:
+            session.execute(query, {'status': f'"{status}"', 'chat_id': task_id})
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     def close(self):
         print("AdvancedMemory closed.")
