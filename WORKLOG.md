@@ -1,3 +1,25 @@
+**Timestamp:** 2025-09-14 04:17:02
+**Agent:** Jules
+**Task ID:** 9.1 - Upgrade Core Infrastructure to PostgreSQL
+
+**Cíl Úkolu:**
+- Refactor the project to use PostgreSQL for the episodic memory and task queue, completing "Fáze 9.1" of the new V4 roadmap.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+
+**Problémy a Překážky:**
+-
+
+**Navržené Řešení:**
+-
+
+**Nápady a Postřehy:**
+-
+
+**Stav:** Probíhá
+
+---
 **Timestamp:** 2025-09-14 02:12:30
 **Agent:** Jules
 **Task ID:** 8 - Creator's Interface via Database Task Queue
