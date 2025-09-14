@@ -57,7 +57,7 @@ Cílem je vytvořit systém, který:
     -   Prozkoumat a integrovat knihovnu `LangGraph`.
     -   Přepracovat `core/ethos_module.py`, aby používal cyklický proces (kritika -> revize) inspirovaný Konstituční AI, místo jednoduchého porovnání.
 
-- [ ] **11.2. Oživení Agentů (CrewAI):**
+- [x] **11.2. Oživení Agentů (CrewAI):**
     -   Plně implementovat `agents/engineer_agent.py` a vybavit ho nástroji pro práci se soubory a spouštění kódu.
     -   Plně implementovat `agents/tester_agent.py` a vybavit ho stejnými nástroji.
 
