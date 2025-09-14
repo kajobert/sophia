@@ -1,6 +1,6 @@
 PyYAML==6.0.1
 watchdog==4.0.1
-chromadb==0.4.24
+memorisdk
 crewai==0.28.8
 langchain==0.1.20
 openai==1.23.6
