@@ -1,3 +1,27 @@
+**Timestamp:** 2025-09-14 09:25:00
+**Agent:** Jules
+**Task ID:** fix-memory-verification-typeerror
+
+**Cíl Úkolu:**
+- Opravit `TypeError` ve verifikační smyčce metody `add_task`.
+- Problém byl způsoben předáváním SQLAlchemy `TextClause` objektu do nízkoúrovňové databázové funkce, která očekávala plain string.
+
+**Postup a Klíčové Kroky:**
+1.  Identifikována přesná řádka v `memory/advanced_memory.py`, kde docházelo k chybě.
+2.  Upravena tato řádka tak, aby byl `TextClause` objekt explicitně převeden na string pomocí `str()` před jeho předáním funkci `execute_with_translation`.
+3.  Spuštěny jednotkové testy, které potvrdily, že `TypeError` byl odstraněn a veškerá funkcionalita zůstala zachována.
+
+**Problémy a Překážky:**
+- Žádné významné problémy, jednalo se o přímočarou opravu datového typu.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tento případ ukazuje na důležitost pečlivé kontroly datových typů při interakci mezi různými vrstvami abstrakce (např. mezi ORM a přímými SQL dotazy).
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 09:05:00
 **Agent:** Jules
 **Task ID:** fix-memory-race-condition
