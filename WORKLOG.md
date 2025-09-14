@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-14 08:50:00
+**Agent:** Jules
+**Task ID:** fix-async-memory
+
+**Cíl Úkolu:**
+- Refaktorovat třídu `AdvancedMemory` tak, aby byla plně asynchronní a odpovídala asynchronní povaze knihovny `memori`.
+- Cílem bylo opravit `TypeError`, který vznikal při pokusu o `await` na synchronních metodách wrapperu.
+
+**Postup a Klíčové Kroky:**
+1.  Provedena analýza `AdvancedMemory` a identifikovány všechny veřejné metody, které vyžadují konverzi na `async def`.
+2.  Upraveny signatury metod v `memory/advanced_memory.py` na `async def`.
+3.  Provedena re-analýza `memori` knihovny, která potvrdila, že volané metody jsou synchronní, ale volající kód očekává asynchronní wrapper.
+4.  Refaktorovány testy v `tests/test_advanced_memory.py` tak, aby správně testovaly asynchronní metody.
+    - Testovací metody byly upraveny tak, aby používaly `asyncio.run()` pro spuštění asynchronního kódu.
+    - Mock pro `read_last_n_memories` byl upraven na `AsyncMock`.
+5.  Upraven `tools/memory_tools.py`, aby `MemoryReaderTool` mohl volat asynchronní metodu z synchronního kontextu pomocí `asyncio.run()`.
+6.  Spuštěny všechny testy, které úspěšně prošly bez `RuntimeWarning`s.
+
+**Problémy a Překážky:**
+- Prvotní nepochopení, proč `unittest` vyvolává `RuntimeWarning`. Původní předpoklad byl, že `unittest` automaticky správně zpracuje `async def` testy, ale ukázalo se, že je potřeba explicitně spravovat event loop, pokud testy nejsou spouštěny specializovaným runnerem.
+
+**Navržené Řešení:**
+- Použití `asyncio.run()` uvnitř každé testovací metody pro spuštění testovaného asynchronního kódu. Toto je čisté a robustní řešení pro standardní `unittest` runner.
+
+**Nápady a Postřehy:**
+- Integrace asynchronního a synchronního kódu vyžaduje pečlivé zvážení a správné použití nástrojů jako `asyncio.run()`.
+- Tento refaktoring je klíčový pro stabilitu a výkon, protože zajišťuje, že paměťový subsystém neblokuje hlavní smyčku aplikace.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 08:27:00
 **Agent:** Jules
 **Task ID:** Fáze 10.1 - Implementace Pokročilé Paměti
