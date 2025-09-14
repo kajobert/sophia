@@ -1,5 +1,8 @@
 # Installation and Setup Guide for Sophia V4
 
+
+> **POZOR:** Pro plnou funkčnost AiderAgentu je nutné ručně nainstalovat [Aider CLI](https://github.com/paul-gauthier/aider) dle oficiální dokumentace. Není součástí requirements.txt!
+
 This guide provides simple instructions to get the Sophia V4 project set up and running, specifically within a GitHub Codespace or a similar Linux-based environment.
 
 ## 🚀 Getting Started in a GitHub Codespace
