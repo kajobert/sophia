@@ -78,7 +78,7 @@ class AdvancedMemory:
 
         while time.time() - start_time < timeout:
             query = text("SELECT chat_id FROM chat_history WHERE metadata_json->>'task_uuid' = :task_uuid")
-            result = self.memori.db_manager.execute_with_translation(query, parameters={'task_uuid': task_uuid}).fetchone()
+            result = self.memori.db_manager.execute_with_translation(str(query), parameters={'task_uuid': task_uuid}).fetchone()
 
             if result and result[0] == chat_id:
                 print(f"Task {chat_id} with UUID {task_uuid} verified in database.")
