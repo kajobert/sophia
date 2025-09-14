@@ -114,7 +114,7 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vytvořit základní webové rozhraní pro interakci a monitoring.
 
-- [ ] **8.1: Základní API (`web/api.py`):**
+- [x] **8.1: Základní API (`web/api.py`):**
     - Vytvořit jednoduché API (např. pomocí Flask) s endpointem pro odeslání úkolu Sophii.
-- [ ] **8.2: Jednoduché UI (`web/ui/`):**
+- [x] **8.2: Jednoduché UI (`web/ui/`):**
     - Vytvořit `index.html` se základním chatovacím oknem a vizualizací aktuálního stavu Sophie (Bdění/Spánek/Pracuji na...).

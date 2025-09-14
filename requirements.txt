@@ -7,3 +7,4 @@ openai==1.23.6
 anthropic==0.25.0
 python-dotenv==1.0.0
 langchain-google-genai==1.0.2
+Flask==3.0.0
