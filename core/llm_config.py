@@ -32,7 +32,7 @@ if not api_key:
 provider = llm_config.get('provider')
 if provider == 'google':
     llm = ChatGoogleGenerativeAI(
-        model=llm_config.get('model_name', 'gemini-1.5-flash'), # fallback pro jistotu
+        model=llm_config.get('model_name', 'gemini-2.5-flash'), # fallback pro jistotu
         verbose=llm_config.get('verbose', False),
         temperature=llm_config.get('temperature', 0.7),
         google_api_key=api_key
