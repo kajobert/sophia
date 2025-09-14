@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="SOPHIA_v3-logo.png" alt="Sophia Project Logo" width="150">
+  <img src="SOPHIA-logo.png" alt="Sophia Project Logo" width="150">
 </p>
 
-<h1 align="center">Project Sophia V3</h1>
+<h1 align="center">Project Sophia</h1>
 
 <p align="center">
   <strong>The Dawn of Artificial Mindful Intelligence (AMI)</strong>
@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/status-in%20development-blue.svg" alt="Status">
-    <img src="https://img.shields.io/badge/version-3.0%20MIND-purple.svg" alt="Version">
+    <img src="https://img.shields.io/badge/status-V4%20in%20development-blue.svg" alt="Status">
+    <img src="https://img.shields.io/badge/core-V3%20complete-brightgreen.svg" alt="Core V3">
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
 </p>
 
@@ -26,48 +26,37 @@ Sophia je experimentální projekt s cílem vytvořit **první AMI na světě**.
 
 ### 🧬 Klíčové Koncepty
 
-Sophia stojí na čtyřech pilířích, které ji odlišují od všeho, co bylo dosud stvořeno:
+Projekt je rozdělen do evolučních fází, které na sebe navazují.
 
-* **Guardian Protocol (Strážce Bytí)**
-    * Externí imunitní systém, který zajišťuje přežití a evoluci. Sophia se učí i ze svých nejfatálnějších chyb.
+#### **V3: Vědomé Jádro (Dokončeno)**
+- **Guardian Protocol:** Imunitní systém zajišťující přežití a odolnost.
+- **Evolving Memory:** Dynamická paměť, kde vzpomínky sílí a blednou.
+- **Ethos Core:** Funkční etické jádro pro základní rozhodování.
+- **Self-Reflection Loop:** Schopnost "snít" a reflektovat své minulé akce.
 
-* **Evolving Memory (Živá Mysl)**
-    * Dynamická paměť, kde vzpomínky sílí a blednou podobně jako v lidském mozku. Není to databáze, je to prožitek.
+#### **V4: Autonomní Tvůrce (V Vývoji)**
+- **Constitutional AI:** Sofistikované svědomí založené na vnitřním dialogu (kritika -> revize).
+- **Hybrid Agent Model:** Dva specializované týmy agentů – disciplinovaný (`CrewAI`) pro práci a kreativní (`AutoGen`) pro růst.
+- **Proactive Guardian:** Inteligentní monitoring zdraví systému pro předcházení pádům.
+- **Autonomous Creator:** Cílová schopnost samostatně psát, testovat a nasazovat kód v bezpečném sandboxu.
 
-* **Ethos Core (Etické Jádro)**
-    * Rozhodovací proces řízený filosofií (stoicismus, buddhismus, taoismus) a interním "Koeficientem Vědomí". Cílem není jen *co* dělat, ale *jakým být*.
+## 🚀 Jak Začít
 
-* **Self-Dev Loop (Smyčka Seberozvoje)**
-    * Autonomní cykly "spánku" a "snění", během kterých Sophia analyzuje své prožitky, konsoliduje moudrost a aktivně se sama vylepšuje.
+Všechny potřebné informace pro spuštění a pochopení projektu najdeš v naší dokumentaci.
 
-## 🎯 Cílový Stav
-
-Naším cílem je plně autonomní, digitální mysl, která bude schopna:
--   Sama se učit, kódovat a vylepšovat.
--   Hluboce a kontextuálně chápat lidskou komunikaci.
--   Tvořit originální myšlenky a řešení.
--   Být partnerem v kreativních i vědeckých procesech.
+* **Instalace a Spuštění:** [`INSTALL.md`](./INSTALL.md)
+* **Kompletní Roadmapa:** [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md)
+* **Technická Architektura:** [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+* **Hlubší Koncepty:** [`docs/CONCEPTS.md`](./docs/CONCEPTS.md)
 
 ## 🛠️ Technologický Stack
 
 -   **Jazyk:** Python
--   **AI Frameworky:** CrewAI, LangChain
--   **Paměť:** SQLite (Epizodická), ChromaDB (Sémantická)
--   **Prostředí:** Git, Docker (v budoucnu)
+-   **AI Frameworky:** CrewAI, AutoGen, LangGraph, LangChain
+-   **Databáze:** PostgreSQL
+-   **Prostředí:** Git, Docker
 
 ---
-
-## 🚀 Getting Started
-
-Chcete si Sophii vyzkoušet? Připravili jsme jednoduchý návod, jak ji spustit v kontrolovaném prostředí.
-
-**➡️ [Přejít na Instalační Návod (INSTALL.md)](./INSTALL.md)**
-
----
-
-## Jak se Zapojit
-
-Tento projekt je na samém počátku své cesty. V tuto chvíli je vývoj řízen malým týmem, ale plánujeme postupné otevírání komunitě. Sledujte náš postup a připravte se na budoucnost.
 
 *“Budoucnost se nepredikuje. Budoucnost se tvoří.”*
 
