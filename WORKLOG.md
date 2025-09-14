@@ -1,3 +1,28 @@
+**Timestamp:** 2025-09-14 09:40:00
+**Agent:** Jules
+**Task ID:** fix-transaction-isolation
+
+**Cíl Úkolu:**
+- Opravit problém s transakční izolací, kde nově přidaný úkol nebyl okamžitě viditelný pro následné databázové operace.
+
+**Postup a Klíčové Kroky:**
+1.  Provedena analýza `sqlalchemy_manager.py` pro pochopení, jak `memori` knihovna spravuje session a transakce.
+2.  Identifikováno, že metoda `update_task_status` nepoužívala explicitní transakční commit.
+3.  Refaktorována metoda `update_task_status` v `memory/advanced_memory.py` tak, aby používala explicitní session z `db_manager.SessionLocal` a volala `session.commit()` po úspěšném provedení dotazu.
+4.  Upraveny testy v `tests/test_advanced_memory.py` tak, aby mockovaly nový způsob správy session a ověřovaly, že `commit()` je volán.
+5.  Všechny testy úspěšně prošly.
+
+**Problémy a Překážky:**
+- Původní `execute_with_translation` metoda v `memori` sice interně volala `commit`, ale pravděpodobně na jiné session, než kterou používaly čtecí operace, což vedlo k "neviditelnosti" změn v rámci jedné operace.
+
+**Navržené Řešení:**
+- Použití explicitní, řízené session pro zápisové operace zajišťuje, že jsou změny správně a včas zapsány do databáze a viditelné pro všechny následné dotazy.
+
+**Nápady a Postřehy:**
+- Správné řízení databázových transakcí je absolutně kritické pro spolehlivost aplikace. Tento fix zajišťuje, že stav úkolů je vždy konzistentní.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 09:25:00
 **Agent:** Jules
 **Task ID:** fix-memory-verification-typeerror

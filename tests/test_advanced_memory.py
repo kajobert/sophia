@@ -80,6 +80,10 @@ database:
 
     def test_update_task_status(self):
         async def run_test():
+            # Mock the session and its methods
+            mock_session = MagicMock()
+            self.mock_memori_instance.db_manager.SessionLocal.return_value = mock_session
+
             self.mock_memori_instance.get_conversation_history.return_value = [{
                 'chat_id': 'task_789',
                 'metadata': {'status': 'IN_PROGRESS'}
@@ -87,7 +91,11 @@ database:
 
             await self.memory.update_task_status('task_789', 'DONE')
 
-            self.mock_memori_instance.db_manager.execute_with_translation.assert_called_once()
+            # Verify that the session was used and committed
+            self.mock_memori_instance.db_manager.SessionLocal.assert_called_once()
+            mock_session.execute.assert_called_once()
+            mock_session.commit.assert_called_once()
+            mock_session.close.assert_called_once()
         asyncio.run(run_test())
 
 
