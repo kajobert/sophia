@@ -5,7 +5,7 @@ import os
 # Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z `memory`
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from memory.episodic_memory import EpisodicMemory
+from memory.advanced_memory import AdvancedMemory
 
 app = Flask(__name__, static_folder='ui')
 
@@ -29,7 +29,7 @@ def start_task():
     task_description = data['task_description']
 
     try:
-        memory = EpisodicMemory()
+        memory = AdvancedMemory()
         task_id = memory.add_task(task_description)
         memory.close()
         return jsonify({"message": "Task added successfully", "task_id": task_id}), 201
