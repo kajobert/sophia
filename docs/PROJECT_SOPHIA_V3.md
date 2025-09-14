@@ -107,6 +107,8 @@ Cílem je vytvořit systém, který:
     - V `agents/philosopher_agent.py` definovat agenta, který umí číst z epizodické paměti.
 - [x] **7.2: Integrace do Smyčky Spánku:**
     - V `main.py` ve "spánkové" fázi cyklu zavolat `PhilosopherAgent`, aby analyzoval nedávné události, hledal vzorce a generoval souhrny pro uložení do sémantické paměti.
+- [x] **7.3: Refaktoring Konfigurace LLM:**
+    - Přesunout hardcoded název modelu a parametry z `core/llm_config.py` do globálního `config.yaml`, aby byla zajištěna větší flexibilita.
 
 ### Fáze 8: Rozhraní pro Tvůrce
 

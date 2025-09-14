@@ -8,3 +8,12 @@ logging:
 lifecycle:
   waking_duration_seconds: 10
   sleeping_duration_seconds: 5
+
+# Konfigurace pro Large Language Models (LLM)
+# Struktura je navržena pro budoucí podporu více modelů.
+llm_models:
+  primary_llm:
+    provider: "google" # 'google', 'openai', 'anthropic', atd.
+    model_name: "gemini-2.5-flash"
+    temperature: 0.7
+    verbose: True
