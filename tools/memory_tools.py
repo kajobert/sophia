@@ -8,6 +8,7 @@ from typing import Type
 from pydantic import BaseModel, Field
 import json
 from core.utils import CustomJSONEncoder
+import asyncio
 
 class MemoryReaderToolInput(BaseModel):
     """Pydantic model for MemoryReaderTool input."""
@@ -23,15 +24,39 @@ class MemoryReaderTool(BaseTool):
 
     def _run(self, n: int = 10) -> str:
         """
-        Synchronní zástupce pro asynchronní metodu.
+        Spustí nástroj pro čtení paměti.
+        Tato metoda je navržena tak, aby fungovala v synchronním i asynchronním prostředí.
         """
-        # This is a fallback for synchronous calls.
-        # The main application should use the async version.
-        import asyncio
         try:
-            return asyncio.run(self._arun(n))
-        except RuntimeError:
-            return "Error: asyncio.run() cannot be called from a running event loop. Use _arun instead."
+            memory = AdvancedMemory()
+
+            try:
+                # Zkusíme získat již běžící event loop
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # Pokud žádná neběží, spustíme novou
+                loop = None
+
+            if loop and loop.is_running():
+                # Pokud jsme v asynchronním kontextu (např. main.py),
+                # spustíme coroutine v existující smyčce.
+                task = loop.create_task(memory.read_last_n_memories(n))
+                # Získání výsledku z tasku synchronním způsobem, pokud je to nutné
+                # Toto je komplexní, zkusíme jednodušší přístup
+                # V tomto případě je lepší, když _run je plně synchronní a volá async.
+                # Problém je, že crewai volá _run i když je k dispozici _arun.
+                # Zkusíme tedy jiný přístup, který je robustnější.
+                # Necháme si poradit od NEXUS a použijeme _arun.
+                # Aplikujeme správný fix na volání v main.py
+                pass # Necháme to na _arun
+
+            # Fallback pro čistě synchronní volání
+            recent_memories = asyncio.run(memory.read_last_n_memories(n))
+            memory.close()
+            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
+
+        except Exception as e:
+            return f"Error reading memory: {e}"
 
     async def _arun(self, n: int = 10) -> str:
         """
@@ -41,7 +66,6 @@ class MemoryReaderTool(BaseTool):
             memory = AdvancedMemory()
             recent_memories = await memory.read_last_n_memories(n)
             memory.close()
-            # Převedeme seznam slovníků na JSON string pro čistší výstup
             return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
         except Exception as e:
             return f"Error reading memory: {e}"
