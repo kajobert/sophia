@@ -23,7 +23,7 @@ Now, run the script:
 ```bash
 ./setup.sh
 ```
-The script will upgrade pip, install all Python libraries from `requirements.txt`, and create a `.env` file for your environment variables.
+The script will upgrade pip, install all Python libraries from `requirements.txt`, and create a `.env` file for your environment variables. The script now also installs `psutil` for system monitoring.
 
 ### 3. Set Up PostgreSQL Database
 

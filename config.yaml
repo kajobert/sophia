@@ -25,3 +25,8 @@ llm_models:
     model_name: "gemini-2.5-flash"
     temperature: 0.7
     verbose: True
+
+# Konfigurace pro Intelligent Guardian
+guardian:
+  cpu_threshold: 90.0
+  ram_threshold: 90.0
