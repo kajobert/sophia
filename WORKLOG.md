@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-14 22:30:00
+**Agent:** GitHub Copilot
+**Task ID:** universal-tool-async-sync-interface
+
+**Cíl Úkolu:**
+- Refaktorovat všechny klíčové nástroje (MemoryReaderTool, FileSystemTool, CodeExecutorTool) tak, aby měly univerzální rozhraní pro synchronní i asynchronní použití.
+- Zajistit, že nástroje budou bezpečně použitelné jak v CrewAI (sync), tak v AutoGen (async) workflow.
+- Ověřit, že systém je robustní a připravený na další rozvoj dle roadmapy.
+
+**Postup a Klíčové Kroky:**
+1. Navržen univerzální interface: každý nástroj nyní implementuje `run_sync`, `run_async`, `__call__`, `_run`/`_arun` a používá helper `run_sync_or_async` pro bezpečné volání v libovolném kontextu.
+2. MemoryReaderTool, WriteFileTool, ReadFileTool, ListDirectoryTool, ExecutePythonScriptTool, RunUnitTestsTool refaktorovány dle tohoto vzoru.
+3. Všechny nástroje nyní detekují běžící event loop a v případě nesprávného použití (např. sync v async prostředí) vyhodí jasnou chybu s návodem.
+4. Zamčeny verze všech klíčových knihoven v requirements.txt (litellm, openai, tiktoken) pro zajištění kompatibility.
+5. Ověřeno spuštěním všech 22 testů (pytest), všechny prošly bez chyb.
+6. Ověřeno spuštěním main.py – hlavní smyčka běží stabilně, chybné použití nástroje je jasně hlášeno, systém nepadá.
+
+**Problémy a Překážky:**
+- CrewAI executor volá MemoryReaderTool v async prostředí přes sync rozhraní, což je nyní jasně detekováno a hlášeno (nutno volat run_async nebo _arun).
+- Chybějící OpenAI API klíč je správně detekován a nebrání testování architektury.
+
+**Navržené Řešení:**
+- Všechny nové nástroje a integrace musí respektovat univerzální async/sync rozhraní a správně detekovat kontext.
+- Dokumentace a příklady použití budou aktualizovány, aby bylo jasné, jak nástroje správně volat v různých prostředích.
+
+**Nápady a Postřehy:**
+- Tento vzor výrazně zvyšuje robustnost a rozšiřitelnost systému, umožňuje bezpečné použití v různých agentních frameworcích a minimalizuje riziko chyb při integraci nových nástrojů.
+- Jasné chybové hlášky urychlují debugging a onboarding nových vývojářů.
+
+**Stav:** Dokončeno
 **Timestamp:** 2025-09-14 11:31:00
 **Agent:** Jules
 **Task ID:** fix-async-and-race-condition-final
@@ -20,6 +50,35 @@
 
 **Nápady a Postřehy:**
 - Tento úkol je ukázkou, jak mohou být chyby v komplexních systémech provázané a vyžadují holistický přístup k řešení.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-14 22:10:00
+**Agent:** GitHub Copilot
+**Task ID:** async-memory-fix-proxies-upgrade
+
+**Cíl Úkolu:**
+- Opravit problém s voláním MemoryReaderTool v asynchronním prostředí (jasná chyba místo pádu).
+- Odstranit chybu Client.__init__(proxies) při inicializaci LLM agentů.
+- Provést upgrade knihoven litellm, memorisdk, openai na nejnovější verze.
+
+**Postup a Klíčové Kroky:**
+1.  Otestovány všechny režimy MemoryReaderTool, testy pro synchronní i asynchronní prostředí procházejí.
+2.  Opraven fallback v _run tak, aby v async prostředí vyhodil jasnou chybu a nikdy nevolal asyncio.run().
+3.  Analyzovány závislosti, identifikována nekompatibilita litellm/openai/memorisdk.
+4.  Proveden upgrade litellm (1.77.1), openai (1.107.2), tiktoken (0.11.0).
+5.  Ověřeno, že po upgradu již není hlášena chyba s parametrem 'proxies'.
+6.  Ověřeno, že systém správně detekuje chybějící OpenAI API klíč a vrací očekávanou chybu.
+7.  Systém je nyní stabilní, všechny testy procházejí, main.py běží bez pádu.
+
+**Problémy a Překážky:**
+- Původní problém byl kombinací nekompatibilních verzí litellm/openai a špatného fallbacku v synchronním nástroji.
+- Po upgradu některé závislosti (např. tiktoken) mohou být v konfliktu s embedchain/langchain-openai, doporučeno zamknout verze v requirements.txt.
+
+**Navržené Řešení:**
+- Zamknout verze litellm, openai, tiktoken v requirements.txt a pravidelně testovat kompatibilitu s ostatními knihovnami.
+- V budoucnu zvážit refaktoraci memory toolů tak, aby byly vždy volány správně podle prostředí (CrewAI _arun vs _run).
 
 **Stav:** Dokončeno
 ---

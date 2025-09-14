@@ -1,3 +1,15 @@
+import asyncio
+import threading
+# Helper pro univerzální volání sync/async
+def run_sync_or_async(coro):
+    try:
+        loop = asyncio.get_running_loop()
+        if threading.current_thread() is threading.main_thread():
+            raise RuntimeError("Nelze volat synchronní nástroj v běžící async smyčce. Použijte async variantu nebo run_async().")
+        future = asyncio.run_coroutine_threadsafe(coro, loop)
+        return future.result()
+    except RuntimeError:
+        return asyncio.run(coro)
 import os
 import subprocess
 from typing import Type
@@ -34,87 +46,113 @@ class ExecutePythonScriptTool(BaseTool):
     description: str = "Executes a specified Python script from the /sandbox directory and returns its output."
     args_schema: Type[BaseModel] = ExecutePythonScriptInput
 
-    def _run(self, file_path: str) -> str:
+    def run_sync(self, file_path: str) -> str:
         # Construct the full path safely within the sandbox
         full_path = os.path.join(SANDBOX_DIR, file_path)
 
-        # Security check
         if not _is_within_sandbox(full_path):
             return f"Error: Path '{file_path}' is outside the allowed /sandbox directory."
-
         if not os.path.exists(full_path):
             return f"Error: Script file '{file_path}' not found in the sandbox."
-
         if not file_path.endswith('.py'):
             return f"Error: File '{file_path}' is not a Python script."
-
         try:
-            # Run the script using subprocess
             process = subprocess.run(
                 ['python3', full_path],
                 capture_output=True,
                 text=True,
-                timeout=30,  # Add a timeout for safety
-                check=False # Do not raise exception on non-zero exit codes
+                timeout=30,
+                check=False
             )
             stdout = process.stdout
             stderr = process.stderr
-
             output = ""
             if stdout:
                 output += f"--- STDOUT ---\n{stdout}\n"
             if stderr:
                 output += f"--- STDERR ---\n{stderr}\n"
-
             if not output:
                 return f"Script '{file_path}' executed with no output."
-
             return output.strip()
-
         except subprocess.TimeoutExpired:
             return f"Error: Script '{file_path}' timed out after 30 seconds."
         except Exception as e:
             return f"Error executing Python script: {e}"
+
+    async def run_async(self, file_path: str) -> str:
+        return self.run_sync(file_path)
+
+    def __call__(self, file_path: str) -> str:
+        try:
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+            if loop and loop.is_running():
+                raise RuntimeError("ExecutePythonScriptTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun().")
+            return self.run_sync(file_path)
+        except Exception as e:
+            return f"Error executing Python script: {e}"
+
+    def _run(self, file_path: str) -> str:
+        return self.__call__(file_path)
+
+    async def _arun(self, file_path: str) -> str:
+        return await self.run_async(file_path)
 
 class RunUnitTestsTool(BaseTool):
     name: str = "Run Unit Tests"
     description: str = "Runs unit tests from a specified file within the /sandbox directory using 'python -m unittest'."
     args_schema: Type[BaseModel] = RunUnitTestsInput
 
-    def _run(self, test_file_path: str) -> str:
+    def run_sync(self, test_file_path: str) -> str:
         # Construct the full path safely within the sandbox
         full_path = os.path.join(SANDBOX_DIR, test_file_path)
 
-        # Security check
         if not _is_within_sandbox(full_path):
             return f"Error: Path '{test_file_path}' is outside the allowed /sandbox directory."
-
         if not os.path.exists(full_path):
             return f"Error: Test file '{test_file_path}' not found in the sandbox."
-
         if not test_file_path.endswith('.py'):
             return f"Error: File '{test_file_path}' is not a Python file."
-
         try:
-            # Running `python -m unittest <path>` is a reliable way to run a specific test file.
             process = subprocess.run(
                 ['python3', '-m', 'unittest', full_path],
                 capture_output=True,
                 text=True,
-                timeout=60, # Longer timeout for tests
+                timeout=60,
                 check=False
             )
-            # Unittest prints its output to stderr, even for successful runs.
-            # We combine stdout and stderr for a complete report.
             output = f"--- Unittest Output for {test_file_path} ---\n"
             if process.stdout:
                 output += f"--- STDOUT ---\n{process.stdout}\n"
             if process.stderr:
                 output += f"--- STDERR ---\n{process.stderr}\n"
-
             return output.strip()
-
         except subprocess.TimeoutExpired:
             return f"Error: Unit test run for '{test_file_path}' timed out after 60 seconds."
         except Exception as e:
             return f"Error running unit tests: {e}"
+
+    async def run_async(self, test_file_path: str) -> str:
+        return self.run_sync(test_file_path)
+
+    def __call__(self, test_file_path: str) -> str:
+        try:
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+            if loop and loop.is_running():
+                raise RuntimeError("RunUnitTestsTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun().")
+            return self.run_sync(test_file_path)
+        except Exception as e:
+            return f"Error running unit tests: {e}"
+
+    def _run(self, test_file_path: str) -> str:
+        return self.__call__(test_file_path)
+
+    async def _arun(self, test_file_path: str) -> str:
+        return await self.run_async(test_file_path)

@@ -34,6 +34,7 @@ Cílem je vytvořit systém, který:
     -   Vytvořit a zabezpečit adresář `/sandbox`.
     -   Zajistit, aby kód spuštěný v sandboxu neměl přístup k souborům mimo tento adresář.
 
+
 ### Fáze 10: Vybavení Dílny
 
 **Cíl:** Vytvořit a integrovat pokročilé nástroje, které agentům umožní efektivně pracovat.
@@ -41,10 +42,12 @@ Cílem je vytvořit systém, který:
 - [x] **10.1. Implementace Pokročilé Paměti:**
     -   Prozkoumat a integrovat externí paměťovou knihovnu (např. `GibsonAI/memori`).
     -   Nahradit naši stávající jednoduchou logiku pro "váhu" a "blednutí" za robustnější řešení z této knihovny.
+    -   Refaktorovat MemoryReaderTool a všechny paměťové nástroje na univerzální async/sync rozhraní (hotovo, viz WORKLOG.md 2025-09-14 22:30).
 
 - [x] **10.2. Nástroje pro Tvorbu:**
-    -   Vytvořit `tools/file_system_tool.py` s nástroji pro čtení, zápis, a výpis souborů v `/sandbox`.
-    -   Vytvořit `tools/code_executor_tool.py` s nástroji pro spouštění Python skriptů a `unittest` testů v `/sandbox` a zachytávání jejich výstupu a chyb.
+    -   Vytvořit `tools/file_system.py` s nástroji pro čtení, zápis, a výpis souborů v `/sandbox` (hotovo, univerzální async/sync rozhraní).
+    -   Vytvořit `tools/code_executor.py` s nástroji pro spouštění Python skriptů a `unittest` testů v `/sandbox` a zachytávání jejich výstupu a chyb (hotovo, univerzální async/sync rozhraní).
+    -   Všechny nástroje nyní podporují bezpečné použití v CrewAI (sync) i AutoGen (async) workflow.
 
 ### Fáze 11: Zrození Týmu Tvůrců
 
