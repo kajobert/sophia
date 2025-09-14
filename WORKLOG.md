@@ -1,3 +1,51 @@
+---
+**Timestamp:** 2025-09-14 23:30:00
+**Agent:** GitHub Copilot
+**Task ID:** evolucni-motor-aider-agent
+
+**Shrnutí a doporučení:**
+- Aider IDE agent bude fungovat jako autonomní evoluční motor – samostatný agent, který umožní Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu.
+- Evoluční workflow: Ostatní agenti (Planner, Philosopher, Architect) navrhují cíle a hodnotí změny, ale Aider agent má právo provádět skutečné úpravy kódu.
+- Všechny změny jsou auditované, bezpečné a podléhají etické kontrole (Ethos module, případně review od jiných agentů).
+- Odstraněna zbytečná delegace a složité mezivrstvy – Aider agent je hlavní motor evoluce.
+- Roadmapa, README.md a AGENTS.md byly aktualizovány, aby reflektovaly tuto změnu.
+
+**Doporučení pro AI coder agenta:**
+- Navazuj na tento evoluční model, implementuj AiderAgent jako autonomního agenta dle nové roadmapy.
+- Pravidelně reviduj, zda některé mechanismy nejsou redundantní nebo překonané a navrhuj další zjednodušení.
+
+**Stav:** Dokončeno
+---
+**Timestamp:** 2025-09-14 23:00:00
+**Agent:** GitHub Copilot
+**Task ID:** aider-ide-agent-integration
+
+**Cíl Úkolu:**
+- Navrhnout a naplánovat integraci Aider IDE jako specializovaného agenta do systému Sophia V4.
+- Popsat architekturu, interakci s ostatními agenty a přínos pro workflow.
+
+**Postup a Klíčové Kroky:**
+1. Analýza možností Aider IDE (https://github.com/paul-gauthier/aider) – open-source AI pair programming, CLI, podpora multi-agentních scénářů, práce s git repozitářem.
+2. Návrh role: Aider IDE bude fungovat jako "Coding Assistant Agent" – bude přijímat úkoly od Plannera, generovat/aktualizovat kód, provádět refaktoring a commitovat změny do sandboxu.
+3. Komunikační rozhraní: Integrace přes CLI/API, komunikace přes subprocess nebo REST (dle možností Aideru).
+4. Bezpečnost: Veškeré operace budou omezeny na /sandbox, Aider agent nebude mít přístup mimo tento adresář.
+5. Interakce: Planner předá úkol Aider agentovi, ten provede změny, Engineer a Tester agenti následně validují výstup.
+6. Výhody: Zrychlení vývoje, možnost využít pokročilé AI pair programming funkce, lepší git workflow.
+
+**Problémy a Překážky:**
+- Nutnost robustní izolace (sandbox), aby Aider nemohl ovlivnit produkční kód.
+- Potřeba jasného API/CLI rozhraní pro zadávání úkolů a získávání výsledků.
+
+**Navržené Řešení:**
+- Vytvořit wrapper třídu `AiderAgent` v agents/aider_agent.py, která bude komunikovat s Aider IDE přes CLI.
+- Definovat protokol pro předávání úkolů (např. JSON přes stdin/stdout nebo REST endpoint).
+- Omezit všechny operace na /sandbox a validovat výstup před commitem.
+
+**Nápady a Postřehy:**
+- Aider může být využit i pro automatizované code review a refaktoring.
+- Lze rozšířit o možnost generovat návrhy změn, které musí schválit jiný agent (např. Philosopher nebo Architect).
+
+**Stav:** Probíhá
 **Timestamp:** 2025-09-14 22:30:00
 **Agent:** GitHub Copilot
 **Task ID:** universal-tool-async-sync-interface
