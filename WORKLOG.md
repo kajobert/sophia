@@ -1,3 +1,32 @@
+**Timestamp:** 2025-09-14 07:05:39
+**Agent:** Jules
+**Task ID:** Fáze 10.2 - Vybavení Dílny Základními Nástroji
+
+**Cíl Úkolu:**
+- Vytvořit a implementovat základní nástroje pro agenty: `FileSystemTool` (pro zápis, čtení a výpis souborů) a `CodeExecutorTool` (pro spouštění Python skriptů a jednotkových testů).
+- Zajistit, aby všechny nástroje fungovaly bezpečně a výhradně v rámci adresáře `/sandbox`.
+- Vytvořit komplexní jednotkové testy pro ověření funkčnosti a bezpečnostních omezení.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Provedena analýza stávajícího kódu, dokumentace (`AGENTS.md`) a požadavků.
+3.  Vytvořeny soubory `tools/file_system.py` a `tools/code_executor.py` s implementací požadovaných nástrojů (`WriteFile`, `ReadFile`, `ListDirectory`, `ExecutePythonScript`, `RunUnitTests`).
+4.  Do všech nástrojů implementována bezpečnostní kontrola omezující operace na adresář `/sandbox`.
+5.  Vytvořeny jednotkové testy v `tests/test_file_system_tool.py` a `tests/test_code_executor_tool.py`.
+6.  Testy spuštěny a po opravě `ImportError` (změna importu `BaseTool` na `langchain_core.tools`) všechny úspěšně prošly.
+
+**Problémy a Překážky:**
+- Prvotní nejasnost ohledně původu třídy `BaseTool`. `google_search` vedl na `crewai.tools`, ale správná verze pro tento projekt byla `langchain_core.tools`, jak odhalil `grep` a následné selhání testů.
+- Existující soubory pro nástroje byly jen prázdné placeholdery.
+
+**Navržené Řešení:**
+- Oprava importu `BaseTool` v obou vytvořených souborech s nástroji.
+
+**Nápady a Postřehy:**
+- Vytvoření těchto základních nástrojů je kritickým krokem pro autonomii agentů. Důkladné testování, zejména bezpečnostních aspektů, je naprosto nezbytné.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 06:57:27
 **Agent:** Jules
 **Task ID:** 9.3 - Vytvoření Sandboxu
