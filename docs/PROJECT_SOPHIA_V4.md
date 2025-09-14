@@ -65,11 +65,11 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Uzavřít smyčku autonomní tvorby a rozšířit schopnosti o kreativní procesy.
 
-- [ ] **12.1. Tým Snů (AutoGen):**
+- [x] **12.1. Tým Snů (AutoGen):**
     -   Prozkoumat a integrovat framework `AutoGen`.
     -   Vytvořit specializovaný tým agentů (`Philosopher`, `Architect`) v `AutoGen`, který bude aktivován během "spánkové" fáze pro generování nových nápadů a strategií.
 
-- [ ] **12.2. Uzavření Smyčky Tvorby:**
+- [x] **12.2. Uzavření Smyčky Tvorby:**
     -   Upravit `core/consciousness_loop.py` tak, aby dokázal orchestrovat celý řetězec: `Planner` -> `Engineer` -> `Tester`.
     -   Implementovat logiku pro zpracování zpětné vazby (např. když testy selžou, úkol se vrátí Inženýrovi s chybovou hláškou).
 
