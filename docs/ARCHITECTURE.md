@@ -72,6 +72,9 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
         * **Exekuční Tým (CrewAI):** Agenti jako `Planner`, `Engineer`, `Tester` budou fungovat v disciplinovaném, procesně orientovaném rámci `CrewAI` během fáze "Bdění" pro efektivní plnění úkolů.
         * **Kreativní Tým (AutoGen):** Agenti jako `Philosopher`, `Architect` budou fungovat ve flexibilním, konverzačním rámci `AutoGen` během fáze "Spánku" pro generování nových nápadů, sebereflexi a strategické plánování.
 
+* **`/sandbox` (Izolované Prostředí)**:
+    * **Funkce:** Bezpečný a izolovaný adresář, kde mohou agenti volně vytvářet, upravovat a spouštět soubory a kód, aniž by ovlivnili zbytek systému. Slouží jako testovací pole pro všechny tvůrčí úkoly.
+
 * **`tools/` (Dílna pro Tvůrce)**:
     * **Technologie:** Vlastní implementace
     * **Funkce:** Bude obsahovat nové, klíčové nástroje pro agenty, jako `FileSystemTool` (pro práci se soubory v `/sandbox`) a `CodeExecutorTool` (pro spouštění a testování kódu).
