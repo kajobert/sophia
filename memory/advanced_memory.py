@@ -10,6 +10,8 @@ from memori import Memori
 from datetime import datetime
 from sqlalchemy import text
 import asyncio
+import uuid
+import time
 
 class AdvancedMemory:
     """
@@ -63,7 +65,29 @@ class AdvancedMemory:
         return self.memori.get_conversation_history(limit=n)
 
     async def add_task(self, description):
-        return await self.add_memory(description, "TASK", metadata={'status': 'new'})
+        """
+        Přidá nový úkol do paměti a ověří jeho úspěšné zapsání.
+        """
+        task_uuid = str(uuid.uuid4())
+        metadata = {'status': 'new', 'task_uuid': task_uuid}
+
+        chat_id = await self.add_memory(description, "TASK", metadata)
+
+        start_time = time.time()
+        timeout = 5  # seconds
+
+        while time.time() - start_time < timeout:
+            query = text("SELECT chat_id FROM chat_history WHERE metadata_json->>'task_uuid' = :task_uuid")
+            result = self.memori.db_manager.execute_with_translation(query, parameters={'task_uuid': task_uuid}).fetchone()
+
+            if result and result[0] == chat_id:
+                print(f"Task {chat_id} with UUID {task_uuid} verified in database.")
+                return chat_id
+
+            await asyncio.sleep(0.2)
+
+        raise TimeoutError(f"Failed to verify task creation in memory for chat_id {chat_id}")
+
 
     async def get_next_task(self):
         tasks = self.memori.db_manager.search_memories(
@@ -74,11 +98,17 @@ class AdvancedMemory:
         )
 
         next_task = None
-        for task in sorted(tasks, key=lambda x: x.get('timestamp')):
+        # We need to filter for tasks with status 'new' and sort by timestamp
+        new_tasks = []
+        for task in tasks:
             metadata = task.get('metadata', {})
             if metadata.get('status') == 'new':
-                next_task = task
-                break
+                new_tasks.append(task)
+
+        if new_tasks:
+            # Sort by timestamp to get the oldest
+            new_tasks.sort(key=lambda x: x.get('timestamp'))
+            next_task = new_tasks[0]
 
         if next_task:
             task_id = next_task.get('chat_id')

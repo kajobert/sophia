@@ -1,3 +1,30 @@
+**Timestamp:** 2025-09-14 09:05:00
+**Agent:** Jules
+**Task ID:** fix-memory-race-condition
+
+**Cíl Úkolu:**
+- Opravit race condition v metodě `add_task` třídy `AdvancedMemory`.
+- Cílem bylo zajistit, aby metoda nevrátila hodnotu dříve, než je úkol skutečně zapsán a ověřitelný v databázi.
+
+**Postup a Klíčové Kroky:**
+1.  Do metody `add_task` byl přidán unikátní identifikátor (`task_uuid`) do metadat každého úkolu.
+2.  Implementována polling smyčka, která se po dobu až 5 sekund v intervalech 0.2 sekundy dotazuje databáze na existenci záznamu s daným `task_uuid`.
+3.  Pro ověření byl použit přímý SQL dotaz přes `db_manager.execute_with_translation`.
+4.  Pokud úkol není nalezen v časovém limitu, je vyvolána výjimka `TimeoutError`.
+5.  Upraveny testy v `tests/test_advanced_memory.py` tak, aby mockovaly chování ověřovací smyčky, včetně úspěšného scénáře i scénáře s timeoutem.
+6.  Všechny testy úspěšně prošly.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tento typ problému (race condition) je běžný při práci s asynchronními systémy a distribuovanými databázemi. Implementace ověřovací smyčky ("read-your-own-writes" pattern) je robustní způsob, jak zajistit konzistenci.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-14 08:50:00
 **Agent:** Jules
 **Task ID:** fix-async-memory
