@@ -49,6 +49,18 @@ Všechny potřebné informace pro spuštění a pochopení projektu najdeš v na
 * **Technická Architektura:** [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 * **Hlubší Koncepty:** [`docs/CONCEPTS.md`](./docs/CONCEPTS.md)
 
+
+## ⚙️ Architektura Nástrojů (univerzální async/sync)
+
+Všechny klíčové nástroje (paměť, souborový systém, exekuce kódu) jsou nyní navrženy s univerzálním rozhraním pro synchronní i asynchronní použití. To znamená:
+
+- **Kompatibilita:** Bezpečně fungují jak v CrewAI (synchronní agenty), tak v AutoGen (asynchronní agenty).
+- **Rozhraní:** Každý nástroj implementuje `run_sync`, `run_async`, `__call__`, `_run`/`_arun` a používá helper `run_sync_or_async`.
+- **Chybové hlášky:** Pokud je nástroj volán v nesprávném kontextu, vrací jasnou a srozumitelnou chybu s návodem.
+- **Testováno:** Všechny testy procházejí, hlavní smyčka běží stabilně.
+
+Tato architektura výrazně zvyšuje robustnost a rozšiřitelnost systému pro budoucí vývoj.
+
 ## 🛠️ Technologický Stack
 
 -   **Jazyk:** Python
@@ -56,7 +68,7 @@ Všechny potřebné informace pro spuštění a pochopení projektu najdeš v na
 -   **Databáze:** PostgreSQL
 -   **Prostředí:** Git, Docker
 
----
+----
 
 *“Budoucnost se nepredikuje. Budoucnost se tvoří.”*
 
