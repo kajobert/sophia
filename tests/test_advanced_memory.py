@@ -19,6 +19,9 @@ database:
 """)
     def setUp(self, mock_file, MockMemori):
         self.mock_memori_instance = MockMemori.return_value
+        # We need to mock the SessionLocal factory to return a mock session
+        self.mock_session = MagicMock()
+        self.mock_memori_instance.db_manager.SessionLocal.return_value = self.mock_session
         self.memory = AdvancedMemory()
 
     def test_initialization(self):
@@ -29,14 +32,13 @@ database:
             self.mock_memori_instance.record_conversation.return_value = "chat_123"
 
             # Simulate the verification loop: fail once, then succeed
-            mock_result = MagicMock()
-            mock_result.fetchone.side_effect = [None, ("chat_123",)]
-            self.mock_memori_instance.db_manager.execute_with_translation.return_value = mock_result
+            self.mock_session.execute.return_value.fetchone.side_effect = [None, ("chat_123",)]
 
             task_id = await self.memory.add_task("Test task with verification")
 
             self.assertEqual(task_id, "chat_123")
-            self.assertGreaterEqual(self.mock_memori_instance.db_manager.execute_with_translation.call_count, 1)
+            # It should be called twice: once fails, once succeeds
+            self.assertEqual(self.mock_session.execute.call_count, 2)
         asyncio.run(run_test())
 
     def test_add_task_timeout(self):
@@ -44,9 +46,7 @@ database:
             self.mock_memori_instance.record_conversation.return_value = "chat_456"
 
             # Simulate the verification loop always failing
-            mock_result = MagicMock()
-            mock_result.fetchone.return_value = None
-            self.mock_memori_instance.db_manager.execute_with_translation.return_value = mock_result
+            self.mock_session.execute.return_value.fetchone.return_value = None
 
             with self.assertRaises(TimeoutError):
                 await self.memory.add_task("Test task timeout")
@@ -80,10 +80,6 @@ database:
 
     def test_update_task_status(self):
         async def run_test():
-            # Mock the session and its methods
-            mock_session = MagicMock()
-            self.mock_memori_instance.db_manager.SessionLocal.return_value = mock_session
-
             self.mock_memori_instance.get_conversation_history.return_value = [{
                 'chat_id': 'task_789',
                 'metadata': {'status': 'IN_PROGRESS'}
@@ -91,11 +87,10 @@ database:
 
             await self.memory.update_task_status('task_789', 'DONE')
 
-            # Verify that the session was used and committed
             self.mock_memori_instance.db_manager.SessionLocal.assert_called_once()
-            mock_session.execute.assert_called_once()
-            mock_session.commit.assert_called_once()
-            mock_session.close.assert_called_once()
+            self.mock_session.execute.assert_called_once()
+            self.mock_session.commit.assert_called_once()
+            self.mock_session.close.assert_called_once()
         asyncio.run(run_test())
 
 
