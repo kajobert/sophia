@@ -1,3 +1,32 @@
+**Timestamp:** 2025-09-14 01:46:13
+**Agent:** Jules
+**Task ID:** 7.3 - Refaktoring Konfigurace LLM
+
+**Cíl Úkolu:**
+- Přesunout hardcoded konfiguraci LLM z `core/llm_config.py` do globálního konfiguračního souboru `config.yaml`, aby se zvýšila flexibilita a usnadnila budoucí správa více modelů.
+
+**Postup a Klíčové Kroky:**
+1.  Založen tento záznam v WORKLOG.md.
+2.  Do `docs/PROJECT_SOPHIA_V3.md` přidán nový úkol `7.3`.
+3.  Do `config.yaml` přidána nová, rozšiřitelná sekce `llm_models`.
+4.  Do této sekce přidána konfigurace pro `primary_llm` s modelem `gemini-2.5-flash` a jeho parametry.
+5.  Kompletně refaktorován soubor `core/llm_config.py` tak, aby dynamicky načítal konfiguraci z `config.yaml`.
+6.  Přidána robustní kontrola chyb pro případ chybějící konfigurace nebo API klíče.
+7.  Provedeny unit testy, které potvrdily, že změny neporušily funkčnost.
+8.  Aktualizován tento záznam a `PROJECT_SOPHIA_V3.md`.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Centralizace konfigurace do jednoho souboru je klíčovým krokem pro robustnost a škálovatelnost projektu. Umožní to v budoucnu snadno přidávat a přepínat mezi různými LLM modely bez nutnosti zasahovat do kódu.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-13 15:35:31
 **Agent:** Jules
 **Task ID:** 7 - Probuzení Sebereflexe
