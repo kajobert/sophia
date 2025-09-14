@@ -25,7 +25,7 @@ Cílem je vytvořit systém, který:
     -   Aktualizovat `requirements.txt` o `psycopg2-binary` nebo podobný driver.
     -   Aktualizovat `INSTALL.md` a `setup.sh` s instrukcemi pro spuštění PostgreSQL (např. pomocí Dockeru).
 
-- [ ] **9.2. Inteligentní Guardian:**
+- [x] **9.2. Inteligentní Guardian:**
     -   Integrovat knihovnu `psutil` do `guardian.py`.
     -   Rozšířit monitorovací smyčku o kontrolu systémových prostředků (využití CPU a RAM).
     -   Implementovat logiku, která v případě překročení prahových hodnot (např. 90% RAM) provede "měkký" restart nebo pošle varování.
@@ -53,7 +53,7 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Vylepšit etické jádro a implementovat agenty schopné psát a testovat kód.
 
-- [ ] **11.1. Konstituční AI:**
+- [x] **11.1. Konstituční AI:**
     -   Prozkoumat a integrovat knihovnu `LangGraph`.
     -   Přepracovat `core/ethos_module.py`, aby používal cyklický proces (kritika -> revize) inspirovaný Konstituční AI, místo jednoduchého porovnání.
 
