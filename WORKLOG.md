@@ -1,3 +1,14 @@
+### Záznam 2025-09-14-2
+
+- **ID Tasku:** `fix-datetime-serialization`
+- **Stav:** Dokončeno
+- **Přiřazen:** Jules
+- **Popis:** Opravit `TypeError` při serializaci `datetime` objektů do JSON. Vytvořit vlastní `CustomJSONEncoder`, který převádí `datetime` na ISO 8601 string a integrovat ho do místa, kde dochází k serializaci dat z `EpisodicMemory`.
+- **Výsledek:** Vytvořen `core/utils.py` s `CustomJSONEncoder`. Tento enkodér byl integrován do `tools/memory_tools.py`. Přidán nový unit test `test_memory_serialization` pro ověření funkčnosti, všechny testy procházejí.
+- **Problémy:** Žádné.
+- **Poznámky:** Běžný problém při práci s databázemi a JSON. Robustní řešení je klíčové.
+
+---
 **Timestamp:** 2025-09-14 04:17:02
 **Agent:** Jules
 **Task ID:** 9.1 - Upgrade Core Infrastructure to PostgreSQL
@@ -181,7 +192,7 @@
 **Cíl Úkolu:**
 - Implementovat databázové schéma a základní logiku pro epizodickou (SQLite) a sémantickou (ChromaDB) paměť, včetně konceptů "Váha Vzpomínky" a "Blednutí Vzpomínek".
 
-**Postup a Klíčové Kroky:**
+**Postup a Klíčové Kroky:**.
 1.  Založen tento záznam v WORKLOG.md.
 2.  V `memory/episodic_memory.py` implementována třída `EpisodicMemory` pro správu SQLite databáze.
 3.  Vytvořeno schéma tabulky `memories` se sloupci `id`, `timestamp`, `content`, `type`, `weight`, `ethos_coefficient`.

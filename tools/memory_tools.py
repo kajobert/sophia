@@ -7,6 +7,7 @@ from memory.episodic_memory import EpisodicMemory
 from typing import Type
 from pydantic import BaseModel, Field
 import json
+from core.utils import CustomJSONEncoder
 
 class EpisodicMemoryReaderToolInput(BaseModel):
     """Pydantic model for EpisodicMemoryReaderTool input."""
@@ -29,6 +30,6 @@ class EpisodicMemoryReaderTool(BaseTool):
             recent_memories = memory.read_last_n_memories(n)
             memory.close()
             # Převedeme seznam slovníků na JSON string pro čistší výstup
-            return json.dumps(recent_memories, indent=2, ensure_ascii=False)
+            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
         except Exception as e:
             return f"Error reading episodic memory: {e}"
