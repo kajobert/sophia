@@ -80,16 +80,15 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Využít Aider IDE jako autonomní evoluční motor – agent, který umožní Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu, a tím realizovat skutečnou autonomní evoluci schopností.
 
-
-- [ ] **13.1. Analýza a příprava integrace:**
+- [x] **13.1. Analýza a příprava integrace:**
     -   Prozkoumat možnosti Aider IDE (https://github.com/paul-gauthier/aider) a jeho CLI/API.
     -   Navrhnout Aider IDE jako samostatného autonomního agenta s právem měnit kód Sophie v sandboxu.
-- [ ] **13.2. Implementace AiderAgent:**
+- [x] **13.2. Implementace AiderAgent:**
     -   Vytvořit wrapper třídu `AiderAgent` v `agents/aider_agent.py` pro komunikaci s Aider IDE přes CLI.
     -   Definovat protokol pro předávání úkolů (např. JSON přes stdin/stdout nebo REST endpoint).
     -   Omezit všechny operace na `/sandbox` a validovat výstup před commitem.
     -   Zajistit, že všechny změny budou auditovatelné (git log, review) a podléhají etické kontrole (Ethos module, případně schválení jiným agentem).
-- [ ] **13.3. Evoluční workflow:**
+- [x] **13.3. Evoluční workflow:**
     -   Umožnit Aider agentovi samostatně navrhovat a realizovat změny kódu na základě cílů nebo vlastního rozhodnutí v rámci evoluční smyčky.
     -   Ostatní agenti (Planner, Philosopher, Architect) navrhují cíle, hodnotí změny a poskytují zpětnou vazbu, ale Aider agent provádí úpravy.
     -   Všechny změny musí být bezpečné, auditované a revertovatelné.
