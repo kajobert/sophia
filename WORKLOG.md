@@ -22,6 +22,35 @@
 - Tento úkol je ukázkou, jak mohou být chyby v komplexních systémech provázané a vyžadují holistický přístup k řešení.
 
 **Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-14 22:10:00
+**Agent:** GitHub Copilot
+**Task ID:** async-memory-fix-proxies-upgrade
+
+**Cíl Úkolu:**
+- Opravit problém s voláním MemoryReaderTool v asynchronním prostředí (jasná chyba místo pádu).
+- Odstranit chybu Client.__init__(proxies) při inicializaci LLM agentů.
+- Provést upgrade knihoven litellm, memorisdk, openai na nejnovější verze.
+
+**Postup a Klíčové Kroky:**
+1.  Otestovány všechny režimy MemoryReaderTool, testy pro synchronní i asynchronní prostředí procházejí.
+2.  Opraven fallback v _run tak, aby v async prostředí vyhodil jasnou chybu a nikdy nevolal asyncio.run().
+3.  Analyzovány závislosti, identifikována nekompatibilita litellm/openai/memorisdk.
+4.  Proveden upgrade litellm (1.77.1), openai (1.107.2), tiktoken (0.11.0).
+5.  Ověřeno, že po upgradu již není hlášena chyba s parametrem 'proxies'.
+6.  Ověřeno, že systém správně detekuje chybějící OpenAI API klíč a vrací očekávanou chybu.
+7.  Systém je nyní stabilní, všechny testy procházejí, main.py běží bez pádu.
+
+**Problémy a Překážky:**
+- Původní problém byl kombinací nekompatibilních verzí litellm/openai a špatného fallbacku v synchronním nástroji.
+- Po upgradu některé závislosti (např. tiktoken) mohou být v konfliktu s embedchain/langchain-openai, doporučeno zamknout verze v requirements.txt.
+
+**Navržené Řešení:**
+- Zamknout verze litellm, openai, tiktoken v requirements.txt a pravidelně testovat kompatibilitu s ostatními knihovnami.
+- V budoucnu zvážit refaktoraci memory toolů tak, aby byly vždy volány správně podle prostředí (CrewAI _arun vs _run).
+
+**Stav:** Dokončeno
 ---
 **Timestamp:** 2025-09-14 10:28:00
 **Agent:** Jules
