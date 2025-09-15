@@ -10,7 +10,7 @@ class GeminiLLMAdapter(LLM):
     """
     LangChain-kompatibilní wrapper pro Google Gemini API.
     """
-    model_name: str = "gemini-1.5-flash"
+    model_name: str
     temperature: float = 0.7
     max_tokens: int = 2048
 
@@ -19,16 +19,14 @@ class GeminiLLMAdapter(LLM):
 
     def __init__(
         self,
-        model: str = "gemini-1.5-flash",
+        model: str,
         api_key: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
         **kwargs: Any
     ):
-        super().__init__(**kwargs)
-        self.model_name = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
+        # Všechny fieldy musí být předány do super().__init__ pro Pydantic validaci
+        super().__init__(model_name=model, temperature=temperature, max_tokens=max_tokens, **kwargs)
 
         # Konfigurace a inicializace klienta
         final_api_key = api_key or os.getenv("GEMINI_API_KEY")
