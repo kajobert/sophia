@@ -1,8 +1,8 @@
 ### Autentizace a ochrana API – příklad toku
 
 1. Uživatel klikne na „Přihlásit se“ (frontend).
-2. Frontend přesměruje na `/api/login` (backend), backend zahájí OAuth2 flow (Google).
-3. Po úspěšném přihlášení backend nastaví session cookie a přesměruje zpět na frontend.
+2. Frontend přesměruje na `/api/login/google` (backend), backend zahájí OAuth2 flow (Google, Authlib).
+3. Po úspěšném přihlášení Google přesměruje na `/api/auth/callback`, backend získá identitu uživatele, uloží ji do session a přesměruje zpět na frontend.
 4. Frontend zavolá `/api/me` a získá informace o uživateli (jméno, email, role).
 5. Všechny chráněné endpointy (např. `/api/chat`) kontrolují session/token. Nepřihlášený uživatel dostane 401.
 6. Odhlášení: frontend zavolá `/api/logout`, backend smaže session.

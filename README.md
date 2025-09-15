@@ -1,6 +1,11 @@
 ## 🔐 Autentizace a přihlášení
 
-Sophia používá bezpečné přihlášení přes Google OAuth2. Po kliknutí na „Přihlásit se“ je uživatel přesměrován na Google, po úspěšném přihlášení je vrácen zpět a backend nastaví session. Všechny chráněné API endpointy vyžadují přihlášení.
+
+Sophia používá bezpečné přihlášení přes Google OAuth2 (implementováno ve Flask backendu pomocí knihovny Authlib).
+
+- Po kliknutí na „Přihlásit se“ je uživatel přesměrován na Google (endpoint `/api/login/google`).
+- Po úspěšném přihlášení Google přesměruje zpět na backend (`/api/auth/callback`), kde backend získá identitu uživatele a uloží ji do session.
+- Všechny chráněné API endpointy vyžadují přihlášení (session cookie).
 
 - **Jak poznám, že jsem přihlášen?** Po přihlášení se v UI zobrazí vaše jméno a možnost odhlášení. Pokud session vyprší, budete vyzváni k opětovnému přihlášení.
 - **Jak funguje ochrana API?** Backend kontroluje session/token u každého požadavku. Nepřihlášený uživatel dostane 401 Unauthorized.

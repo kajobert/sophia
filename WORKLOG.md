@@ -1,3 +1,8 @@
+# 2025-09-15: Implementace Google OAuth2 ve Flask backendu
+- Přidán endpoint `/api/login/google` pro zahájení OAuth2 flow (Authlib, Flask)
+- Přidán endpoint `/api/auth/callback` pro zpracování odpovědi od Google a uložení identity do session
+- requirements.txt: přidán komentář a Authlib pro Flask
+- README.md a ARCHITECTURE.md: aktualizován popis autentizace, reálný flow, endpointy
 ---
 **Timestamp:** 2025-09-15 14:00:00
 **Agent:** GitHub Copilot

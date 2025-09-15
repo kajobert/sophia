@@ -1,9 +1,8 @@
 
 # Produkční závislosti pro backend Sophia (FastAPI, DB, monitoring, OAuth2)
-fastapi
-uvicorn
-python-multipart
-starlette
+
+## Flask backend dependencies (Google OAuth2: Authlib)
+flask
 authlib
 python-dotenv
 psutil

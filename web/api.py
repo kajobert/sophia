@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
 import sys
 import os
 
@@ -7,15 +7,59 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from memory.advanced_memory import AdvancedMemory
 
+from authlib.integrations.flask_client import OAuth
+
 app = Flask(__name__, static_folder='ui')
 app.secret_key = os.environ.get("SOPHIA_SECRET_KEY", "dev-secret")
+
+# OAuth2 konfigurace
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "demo-google-client-id")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "demo-google-client-secret")
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url=GOOGLE_DISCOVERY_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 def get_current_user():
     # Demo: uživatel je v session pod klíčem 'user', jinak None
     return session.get("user")
 
+
+# Google OAuth2 login endpoint
+@app.route('/api/login/google')
+def login_google():
+    redirect_uri = url_for('auth_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+# Google OAuth2 callback endpoint
+@app.route('/api/auth/callback')
+def auth_callback():
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get('userinfo')
+    if not userinfo:
+        # Pokud userinfo není v tokenu, získej ho explicitně
+        resp = oauth.google.get('userinfo')
+        userinfo = resp.json()
+    if not userinfo or not userinfo.get('email'):
+        return jsonify({"error": "Google OAuth2 selhalo, chybí email"}), 400
+    session['user'] = {
+        "name": userinfo.get('name', ''),
+        "email": userinfo.get('email', ''),
+        "avatar": userinfo.get('picture', '')
+    }
+    # Po přihlášení přesměrovat na frontend (kořen)
+    return redirect('/')
+
+# Demo login pro testování (ponechán pro fallback/testy)
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    # Demo login: přijme JSON s 'name', uloží do session
     data = request.get_json()
     if not data or 'name' not in data:
         return jsonify({"error": "Missing 'name' in request body"}), 400
