@@ -1,8 +1,13 @@
-# 2025-09-15: Implementace Google OAuth2 ve Flask backendu
-- Přidán endpoint `/api/login/google` pro zahájení OAuth2 flow (Authlib, Flask)
-- Přidán endpoint `/api/auth/callback` pro zpracování odpovědi od Google a uložení identity do session
-- requirements.txt: přidán komentář a Authlib pro Flask
-- README.md a ARCHITECTURE.md: aktualizován popis autentizace, reálný flow, endpointy
+# 2025-09-15: Implementace Google OAuth2, ochrana API a automatizace testů
+- Backend přepsán na Flask, implementováno bezpečné přihlášení přes Google OAuth2 pomocí Authlib
+- Přidán endpoint `/api/login/google` (zahájení OAuth2 flow) a `/api/auth/callback` (zpracování odpovědi od Google, uložení identity do session)
+- Session ukládá pouze základní identitu (jméno, email, avatar), nikdy neukládá Google access token
+- Přidán fallback endpoint `/api/login` (POST, demo login pro vývoj a testy)
+- Všechny chráněné endpointy kontrolují session, nepřihlášený uživatel dostane 401
+- requirements.txt: odstraněny FastAPI závislosti, přidán komentář a Authlib pro Flask
+- README.md: rozšířena sekce autentizace o detaily OAuth2, proměnné prostředí, bezpečnost, testování
+- ARCHITECTURE.md: doplněn detailní popis OAuth2 toku, session, proměnných prostředí, bezpečnosti a testování
+- scripts/start_sophia_stack.sh: robustní skript pro spuštění backendu na volném portu, automatizované testy autentizace a ochrany API (včetně fallback loginu)
 ---
 **Timestamp:** 2025-09-15 14:00:00
 **Agent:** GitHub Copilot

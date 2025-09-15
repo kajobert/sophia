@@ -2,7 +2,24 @@
 
 1. Uživatel klikne na „Přihlásit se“ (frontend).
 2. Frontend přesměruje na `/api/login/google` (backend), backend zahájí OAuth2 flow (Google, Authlib).
-3. Po úspěšném přihlášení Google přesměruje na `/api/auth/callback`, backend získá identitu uživatele, uloží ji do session a přesměruje zpět na frontend.
+3. Po úspěšném přihlášení Google přesměruje na `/api/auth/callback`, backend získá identitu uživatele (jméno, email, avatar), uloží ji do session a přesměruje zpět na frontend.
+
+**Proměnné prostředí:**
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` – údaje z Google Cloud Console
+- `SOPHIA_SECRET_KEY` – tajný klíč Flasku pro session
+
+**Session:**
+- Uživatel je v session pod klíčem `user` (dict: name, email, avatar)
+- Session cookie je HttpOnly, není přístupná z JS
+
+**Bezpečnost:**
+- Backend nikdy neukládá Google access token, pouze základní identitu
+- Pro produkci používat HTTPS a silný secret key
+
+**Testování:**
+- `/api/login/google` lze otestovat v prohlížeči (přesměrování na Google)
+- Po přihlášení lze ověřit session přes `/api/me`
+- Pro vývoj je fallback `/api/login` (POST, demo login)
 4. Frontend zavolá `/api/me` a získá informace o uživateli (jméno, email, role).
 5. Všechny chráněné endpointy (např. `/api/chat`) kontrolují session/token. Nepřihlášený uživatel dostane 401.
 6. Odhlášení: frontend zavolá `/api/logout`, backend smaže session.

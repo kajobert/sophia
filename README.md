@@ -1,11 +1,38 @@
-## 🔐 Autentizace a přihlášení
 
+## 🔐 Autentizace a přihlášení (Google OAuth2)
 
-Sophia používá bezpečné přihlášení přes Google OAuth2 (implementováno ve Flask backendu pomocí knihovny Authlib).
+Sophia používá bezpečné přihlášení přes Google OAuth2, implementované ve Flask backendu pomocí knihovny [Authlib](https://docs.authlib.org/).
 
-- Po kliknutí na „Přihlásit se“ je uživatel přesměrován na Google (endpoint `/api/login/google`).
-- Po úspěšném přihlášení Google přesměruje zpět na backend (`/api/auth/callback`), kde backend získá identitu uživatele a uloží ji do session.
-- Všechny chráněné API endpointy vyžadují přihlášení (session cookie).
+### Jak to funguje?
+1. Uživatel klikne na „Přihlásit se“ (frontend).
+2. Frontend přesměruje na `/api/login/google` (backend), backend zahájí OAuth2 flow (Google).
+3. Po úspěšném přihlášení Google přesměruje na `/api/auth/callback`, backend získá identitu uživatele (jméno, email, avatar) a uloží ji do session.
+4. Backend nastaví session cookie, uživatel je přesměrován zpět na frontend.
+5. Všechny chráněné API endpointy vyžadují přihlášení (session cookie).
+
+### Proměnné prostředí
+- `GOOGLE_CLIENT_ID` – Client ID vaší Google OAuth2 aplikace
+- `GOOGLE_CLIENT_SECRET` – Client Secret vaší Google OAuth2 aplikace
+- `SOPHIA_SECRET_KEY` – tajný klíč Flasku pro session (nutné pro produkci)
+
+### Ukázka identity uživatele v session
+```json
+{
+  "name": "Jan Novák",
+  "email": "jan.novak@gmail.com",
+  "avatar": "https://lh3.googleusercontent.com/..."
+}
+```
+
+### Bezpečnostní poznámky
+- Session cookie je HttpOnly, není přístupná z JavaScriptu.
+- Backend nikdy neukládá Google access token, pouze základní identitu.
+- Pro produkci nastavte silný `SOPHIA_SECRET_KEY` a používejte HTTPS.
+
+### Testování
+- Endpoint `/api/login/google` lze otestovat v prohlížeči – přesměruje na Google OAuth2.
+- Po úspěšném přihlášení lze ověřit session přes `/api/me` (vrací identitu uživatele).
+- Pro vývoj a testy je k dispozici fallback endpoint `/api/login` (POST, demo login bez Google).
 
 - **Jak poznám, že jsem přihlášen?** Po přihlášení se v UI zobrazí vaše jméno a možnost odhlášení. Pokud session vyprší, budete vyzváni k opětovnému přihlášení.
 - **Jak funguje ochrana API?** Backend kontroluje session/token u každého požadavku. Nepřihlášený uživatel dostane 401 Unauthorized.
