@@ -53,8 +53,12 @@ async def main():
 
     log_message("Zahajuji cyklus Bdění a Spánku.")
 
+
+    from agents.engineer_agent import EngineerAgent
+    from agents.tester_agent import TesterAgent
+    from agents.aider_agent import AiderAgent
+
     while True:
-        # --- FÁZE BDĚNÍ ---
         log_message("STAV: Bdění - Kontrola nových úkolů.")
         memory = AdvancedMemory()
         next_task = await memory.get_next_task()
@@ -62,22 +66,70 @@ async def main():
         if next_task:
             log_message(f"Nalezen nový úkol: {next_task['user_input']} (ID: {next_task['chat_id']})")
 
+            # 1. Plánování
             planning_task = Task(
                 description=f"Analyze the following user request and create a detailed, step-by-step execution plan. The user's request is: '{next_task['user_input']}'",
                 agent=PlannerAgent,
                 expected_output="A list of actionable steps to be executed by other agents."
             )
-
             log_message("Spouštím PlannerAgenta pro vytvoření plánu...")
             try:
                 plan = planning_task.execute()
                 log_message(f"Plánovač vytvořil plán:\n{plan}")
-
-                await memory.update_task_status(next_task['chat_id'], "TASK_COMPLETED")
-                log_message(f"Úkol {next_task['chat_id']} byl úspěšně naplánován a označen jako dokončený.")
-
             except Exception as e:
                 log_message(f"CHYBA: Selhání při zpracování úkolu PlannerAgentem: {e}")
+                await memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
+                memory.close()
+                continue
+
+            # 2. Implementace (Engineer nebo AiderAgent podle typu úkolu)
+            engineer_result = None
+            aider_result = None
+            if any(word in next_task['user_input'].lower() for word in ["refaktoruj", "oprav", "vylepši", "refactor", "fix", "improve"]):
+                log_message("Detekován úkol pro AiderAgent (refaktorace/oprava/vylepšení)...")
+                aider = AiderAgent()
+                try:
+                    aider_result = aider.propose_change(description=next_task['user_input'])
+                    log_message(f"AiderAgent výsledek: {aider_result}")
+                except Exception as e:
+                    log_message(f"CHYBA: AiderAgent selhal: {e}")
+                    await memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
+                    memory.close()
+                    continue
+            else:
+                log_message("Spouštím EngineerAgenta pro implementaci...")
+                try:
+                    engineer_task = Task(
+                        description=plan,
+                        agent=EngineerAgent,
+                        expected_output="Implemented code in sandbox."
+                    )
+                    engineer_result = engineer_task.execute()
+                    log_message(f"EngineerAgent výsledek: {engineer_result}")
+                except Exception as e:
+                    log_message(f"CHYBA: EngineerAgent selhal: {e}")
+                    await memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
+                    memory.close()
+                    continue
+
+            # 3. Testování
+            log_message("Spouštím TesterAgenta...")
+            try:
+                tester_task = Task(
+                    description="Otestuj nově implementovaný/refaktorovaný kód v sandboxu pomocí unit testů.",
+                    agent=TesterAgent,
+                    expected_output="Výsledek testů."
+                )
+                test_result = tester_task.execute()
+                log_message(f"TesterAgent výsledek: {test_result}")
+                if "fail" in str(test_result).lower() or "error" in str(test_result).lower():
+                    log_message("Testy selhaly, úkol se vrací k revizi.")
+                    await memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
+                else:
+                    await memory.update_task_status(next_task['chat_id'], "TASK_COMPLETED")
+                    log_message(f"Úkol {next_task['chat_id']} byl úspěšně dokončen.")
+            except Exception as e:
+                log_message(f"CHYBA: TesterAgent selhal: {e}")
                 await memory.update_task_status(next_task['chat_id'], "TASK_FAILED")
 
         else:
@@ -88,7 +140,6 @@ async def main():
 
         # --- FÁZE SPÁNKU ---
         log_message("STAV: Spánek - Fáze sebereflexe a konsolidace.")
-
         try:
             memory = AdvancedMemory()
             await memory.add_memory("Waking cycle completed successfully.", "lifecycle_event")
@@ -106,7 +157,6 @@ async def main():
             agent=PhilosopherAgent,
             expected_output="A single, insightful paragraph summarizing the recent past."
         )
-
         log_message("Spouštím Filosofa k sebereflexi...")
         try:
             summary = reflection_task.execute()

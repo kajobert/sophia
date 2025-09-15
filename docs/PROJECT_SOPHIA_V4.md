@@ -19,7 +19,7 @@ Cílem je vytvořit systém, který:
 
 **Cíl:** Připravit robustní, škálovatelné a bezpečné prostředí pro autonomní operace.
 
-- [ ] **9.1. Upgrade Databáze:**
+- [x] **9.1. Upgrade Databáze:**
     -   Nahradit stávající řešení s SQLite za client-server databázi PostgreSQL.
     -   Upravit `memory/episodic_memory.py` a `web/api.py` pro práci s novou databází.
     -   Aktualizovat `requirements.txt` o `psycopg2-binary` nebo podobný driver.
@@ -94,3 +94,18 @@ Cílem je vytvořit systém, který:
     -   Všechny změny musí být bezpečné, auditované a revertovatelné.
     -   Odstranit zbytečnou delegaci a složitou mezivrstvu – Aider agent je hlavní motor evoluce.
     -   Pravidelně revidovat, zda některé mechanismy nejsou redundantní nebo překonané a roadmapu dále zjednodušovat.
+
+### Fáze 14: Robustní LLM integrace (GeminiLLMAdapter)
+
+**Cíl:** Zajistit robustní, snadno vyměnitelnou a testovatelnou integraci LLM pro všechny agenty.
+
+- [x] **14.1. Návrh a implementace GeminiLLMAdapter:**
+    -   Navrhnout a implementovat vlastní adapter pro Google Gemini API (`core/gemini_llm_adapter.py`).
+    -   Zajistit kompatibilitu s CrewAI a orchestrace agentů (předávání `llm=llm`).
+    -   Připravit možnost snadného přepnutí na LangChain wrapper v budoucnu.
+    -   Implementovat sledování spotřeby tokenů a základní testy.
+    -   Aktualizovat dokumentaci (`README.md`, `INSTALL.md`, `ARCHITECTURE.md`, `CONCEPTS.md`).
+    -   Ověřit, že všichni agenti používají nový adapter a vše je plně funkční.
+    -   Přidat závislost `google-generativeai` do requirements.txt.
+    -   Otestovat inicializaci a základní workflow agentů s novým adapterem.
+    -   Zapsat změny do WORKLOG.md a roadmapy.
