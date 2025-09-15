@@ -53,6 +53,11 @@ Uvědomili jsme si, že jedna velikost nesedí všem. Lidská mysl má také rů
 
 * **Kreativní Tým (AutoGen) - "Kulatý Stůl"**: Během "spánku", kdy je cílem sebereflexe, generování nových nápadů a strategické plánování, použijeme `AutoGen`. Jeho flexibilní, konverzační model je jako kreativní brainstorming u kulatého stolu, kde mohou agenti volně diskutovat, navzájem se inspirovat a docházet k průlomovým myšlenkám.
 
+* **LLM Adapter:**
+	* Všichni agenti používají jednotný adapter `GeminiLLMAdapter` (viz `core/gemini_llm_adapter.py`), který zajišťuje robustní a snadno vyměnitelnou integraci s Google Gemini API.
+	* Adapter je inicializován v `core/llm_config.py` dle konfigurace v `config.yaml` a předáván agentům jako `llm=llm`.
+	* Přepnutí na jiného providera (např. OpenAI, LangChain) je možné úpravou konfigurace a jednoho řádku v `llm_config.py`.
+
 Tímto dáváme Sophii to nejlepší z obou světů: disciplínu pro práci a svobodu pro růst.
 
 ### 4. Sandbox: Bezpečnost a Svoboda Tvorby
