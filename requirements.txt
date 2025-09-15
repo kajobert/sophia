@@ -19,3 +19,4 @@ langgraph
 pytest
 pydantic
 google-generativeai
+memorisdk
