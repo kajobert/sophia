@@ -82,7 +82,6 @@ Sophia V4 využívá vlastní adapter `GeminiLLMAdapter` pro přímou integraci 
   - Robustní, rychlá a budoucí-proof integrace bez závislosti na nestabilních LangChain wrapperech.
   - Plně kompatibilní s CrewAI orchestrace agentů (předává se jako `llm=llm` všem agentům).
   - Snadná možnost přepnutí zpět na LangChain wrapper v budoucnu (stačí změnit inicializaci v `core/llm_config.py`).
-  - Sledování spotřeby tokenů (`get_token_usage()`).
 
 ### Konfigurace
 
