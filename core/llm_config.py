@@ -26,14 +26,15 @@ if not llm_config:
 # Získání API klíče z proměnných prostředí
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("API klíč pro LLM (GEMINI_API_KEY) nebyl nalezen v .env souboru.")
+    print("Warning: GEMINI_API_KEY not found in .env. Using a dummy key for test collection.")
+    api_key = "dummy-key"
 
 provider = llm_config.get('provider')
 # Inicializace LLM na základě konfigurace
 # V budoucnu zde může být logika pro výběr providera (google, openai, atd.)
 if provider == 'google':
     llm = GeminiLLMAdapter(
-        model=llm_config.get('model_name', 'gemini-2.5-flash'),
+        model=llm_config['model_name'], # Striktně vyžaduje 'model_name' z config.yaml
         api_key=api_key,
         temperature=llm_config.get('temperature', 0.7),
         max_tokens=llm_config.get('max_tokens', 2048),
