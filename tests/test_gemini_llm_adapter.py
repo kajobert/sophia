@@ -1,33 +1,65 @@
 import pytest
+from unittest.mock import patch, MagicMock, PropertyMock
 from core.gemini_llm_adapter import GeminiLLMAdapter
-import os
 
-def test_gemini_llm_adapter_init():
-    # Dummy API key, won't actually call API
-    adapter = GeminiLLMAdapter(model="gemini-2.5-flash", api_key="dummy-key", temperature=0.7, max_tokens=128)
-    assert adapter.model_name == "gemini-2.5-flash"
-    assert adapter.api_key == "dummy-key"
-    assert adapter.temperature == 0.7
-    assert adapter.max_tokens == 128
+def test_llm_adapter_initialization():
+    """Testuje, zda se adaptér správně inicializuje."""
+    with patch('google.generativeai.configure') as mock_configure, \
+         patch('google.generativeai.GenerativeModel') as mock_model:
 
-def test_gemini_llm_adapter_call_mock(monkeypatch):
-    # Mock the actual Gemini API call
-    adapter = GeminiLLMAdapter(model="gemini-2.5-flash", api_key="dummy-key", temperature=0.7, max_tokens=32)
+        adapter = GeminiLLMAdapter(model="test-model", api_key="test-key")
 
-    class DummyResponse:
-        def __init__(self):
-            self.text = "Hello, Sophia!"
-            self.usage_metadata = {"total_tokens": 7}
+        mock_configure.assert_called_once_with(api_key="test-key")
+        mock_model.assert_called_once_with("test-model")
+        assert adapter.model_name == "test-model"
 
-    def dummy_generate(self, prompt, generation_config):
-        return DummyResponse()
+def test_llm_adapter_initialization_uses_env_var():
+    """Testuje, zda adaptér použije API klíč z proměnných prostředí."""
+    with patch('google.generativeai.configure') as mock_configure, \
+         patch('google.generativeai.GenerativeModel'), \
+         patch('os.getenv', return_value="env-key"):
 
-    monkeypatch.setattr(GeminiLLMAdapter, "_generate", dummy_generate)
-    result = adapter("Say hello to Sophia")
-    assert "Hello, Sophia" in result
-    assert adapter.get_token_usage() == 7
+        adapter = GeminiLLMAdapter(model="test-model")
+        mock_configure.assert_called_once_with(api_key="env-key")
 
-def test_gemini_llm_token_usage():
-    adapter = GeminiLLMAdapter(model="gemini-2.5-flash", api_key="dummy-key", temperature=0.7, max_tokens=32)
-    adapter._last_token_usage = 42
-    assert adapter.get_token_usage() == 42
+def test_llm_adapter_call():
+    """Testuje metodu _call a ověřuje, že volá správnou metodu Gemini API."""
+
+    mock_api_response = MagicMock()
+    mock_api_response.text = "Mocked response"
+
+    with patch('google.generativeai.configure'), \
+         patch('google.generativeai.GenerativeModel') as mock_model_class:
+
+        mock_model_instance = MagicMock()
+        mock_model_instance.generate_content.return_value = mock_api_response
+        mock_model_class.return_value = mock_model_instance
+
+        adapter = GeminiLLMAdapter(model="test-model", api_key="test-key")
+
+        result = adapter.invoke("Test prompt")
+
+        mock_model_instance.generate_content.assert_called_once()
+        call_args, call_kwargs = mock_model_instance.generate_content.call_args
+        assert call_args[0] == "Test prompt"
+
+        assert result == "Mocked response"
+
+def test_llm_adapter_call_handles_blocked_response():
+    """Testuje, jak se adaptér chová, když je odpověď z API blokována."""
+    mock_api_response = MagicMock()
+    type(mock_api_response).text = PropertyMock(side_effect=ValueError)
+    mock_api_response.prompt_feedback = "Safety reasons"
+
+    with patch('google.generativeai.configure'), \
+         patch('google.generativeai.GenerativeModel') as mock_model_class:
+
+        mock_model_instance = MagicMock()
+        mock_model_instance.generate_content.return_value = mock_api_response
+        mock_model_class.return_value = mock_model_instance
+
+        adapter = GeminiLLMAdapter(model="test-model", api_key="test-key")
+        result = adapter.invoke("A potentially problematic prompt")
+
+        assert "Error: Response from Gemini API was blocked" in result
+        assert "Safety reasons" in result
