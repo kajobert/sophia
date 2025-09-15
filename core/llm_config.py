@@ -26,7 +26,8 @@ if not llm_config:
 # Získání API klíče z proměnných prostředí
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
-    raise ValueError("API klíč pro LLM (GEMINI_API_KEY) nebyl nalezen v .env souboru.")
+    print("Warning: GEMINI_API_KEY not found in .env. Using a dummy key for test collection.")
+    api_key = "dummy-key"
 
 provider = llm_config.get('provider')
 # Inicializace LLM na základě konfigurace
