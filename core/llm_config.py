@@ -34,7 +34,7 @@ provider = llm_config.get('provider')
 # V budoucnu zde může být logika pro výběr providera (google, openai, atd.)
 if provider == 'google':
     llm = GeminiLLMAdapter(
-        model=llm_config.get('model_name', 'gemini-2.5-flash'),
+        model=llm_config['model_name'], # Striktně vyžaduje 'model_name' z config.yaml
         api_key=api_key,
         temperature=llm_config.get('temperature', 0.7),
         max_tokens=llm_config.get('max_tokens', 2048),
