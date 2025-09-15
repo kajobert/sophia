@@ -66,7 +66,7 @@ Podrobný návod najdeš v [`INSTALL.md`](./INSTALL.md).
 Všechny potřebné informace pro spuštění a pochopení projektu najdeš v naší dokumentaci.
 
 * **Instalace a Spuštění:** [`INSTALL.md`](./INSTALL.md)
-* **Kompletní Roadmapa:** [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md)
+* [Strategická Roadmapa (Nexus v1.0)](docs/ROADMAP_NEXUS_V1.md) - Aktuální plán našeho vývoje.
 * **Technická Architektura:** [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 * **Hlubší Koncepty:** [`docs/CONCEPTS.md`](./docs/CONCEPTS.md)
 
