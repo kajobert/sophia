@@ -1,47 +1,35 @@
-import unittest
-from unittest.mock import patch, MagicMock
-from crewai import Task
+import pytest
+from unittest.mock import patch
+from crewai import Crew, Task
+from agents.planner_agent import PlannerAgent
 
-class TestPlannerAgent(unittest.TestCase):
+@patch('crewai.agent.Agent.execute_task', return_value="Mocked plan generated successfully.")
+def test_planner_agent_execution_in_crew(mock_agent_execute):
+    """
+    Tests the planner agent's execution within a Crew by mocking the agent's
+    execute_task method. This validates that the Crew and Task are wired
+    correctly to the agent without needing a real LLM.
+    """
+    # 1. Since execute_task is mocked, the LLM is never called.
+    # We can initialize the agent directly.
+    planner_instance = PlannerAgent().get_agent()
 
-    # Decorators are applied from bottom up.
-    # 1. os.getenv is patched.
-    # 2. ChatGoogleGenerativeAI is patched.
-    # 3. Agent.execute_task is patched.
-    @patch('crewai.agent.Agent.execute_task')
-    @patch('langchain_google_genai.ChatGoogleGenerativeAI')
-    @patch('os.getenv')
-    def test_planner_agent_execution(self, mock_getenv, mock_chat_google, mock_execute_task):
-        # --- Setup Mocks ---
-        # Mock dependencies to allow the agent module to be imported without error.
-        mock_getenv.return_value = "DUMMY_API_KEY"
-        mock_chat_google.return_value = MagicMock()
+    # 2. Create a task for the agent
+    task = Task(
+        description="Create a plan for a new feature.",
+        agent=planner_instance,
+        expected_output="A comprehensive plan."
+    )
 
-        # Mock the agent's execution method to return a predictable string.
-        # This is the method called by task.execute().
-        mock_execute_task.return_value = "Mock plan generated successfully."
+    # 3. Create and run the Crew
+    crew = Crew(
+        agents=[planner_instance],
+        tasks=[task],
+        verbose=0
+    )
+    result = crew.kickoff()
 
-        # --- Import Agent ---
-        # This import must happen *after* the mocks are in place.
-        from agents.planner_agent import PlannerAgent
-
-        # --- Create Task ---
-        # Create a task and assign it to the agent.
-        task = Task(
-            description="Create a plan for a new feature.",
-            agent=PlannerAgent,
-            expected_output="A comprehensive plan."
-        )
-
-        # --- Execute and Assert ---
-        # Calling task.execute() will now call our mocked Agent.execute_task
-        result = task.execute()
-
-        # Assert that the result is the one from our mock.
-        self.assertEqual(result, "Mock plan generated successfully.")
-
-        # Assert that the mocked execution method was called exactly once.
-        mock_execute_task.assert_called_once()
-
-if __name__ == '__main__':
-    unittest.main()
+    # 4. Assert the result
+    # The result of kickoff() is a CrewOutput object; the raw string is in the .raw attribute.
+    assert result.raw == "Mocked plan generated successfully."
+    mock_agent_execute.assert_called_once()
