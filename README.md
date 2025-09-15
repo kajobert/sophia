@@ -43,6 +43,26 @@ Projekt je rozdělen do evolučních fází, které na sebe navazují.
 
 ## 🚀 Jak Začít
 
+---
+
+## 🛠️ Evoluční motor Sophia: Aider IDE
+
+Aider IDE je autonomní nástroj, který umožňuje Sophii (skrze agenta AiderAgent) samostatně refaktorovat, opravovat a vylepšovat kód v sandboxu. Je klíčový pro skutečnou evoluci schopností.
+
+### Instalace Aider CLI
+- Doporučeno: `pip install aider-chat`
+- Alternativně: `pip install git+https://github.com/paul-gauthier/aider.git`
+- Ověření: `aider --help`
+
+### Použití v rámci Sophia
+- Všechny změny AiderAgent provádí pouze v adresáři `/sandbox`.
+- Změny jsou auditované (git log), validované testy a etickým modulem.
+- Nikdy nespouštějte Aider CLI mimo sandbox.
+- Všechny změny lze revertovat pomocí git.
+
+Podrobný návod najdeš v [`INSTALL.md`](./INSTALL.md).
+
+
 Všechny potřebné informace pro spuštění a pochopení projektu najdeš v naší dokumentaci.
 
 * **Instalace a Spuštění:** [`INSTALL.md`](./INSTALL.md)
@@ -53,6 +73,55 @@ Všechny potřebné informace pro spuštění a pochopení projektu najdeš v na
 
 
 ## 🧠 Příklady použití
+
+## � Integrace LLM: GeminiLLMAdapter
+
+Sophia V4 využívá vlastní adapter `GeminiLLMAdapter` pro přímou integraci s Google Gemini API (přes knihovnu `google-generativeai`).
+
+- **Výhody:**
+  - Robustní, rychlá a budoucí-proof integrace bez závislosti na nestabilních LangChain wrapperech.
+  - Plně kompatibilní s CrewAI orchestrace agentů (předává se jako `llm=llm` všem agentům).
+  - Snadná možnost přepnutí zpět na LangChain wrapper v budoucnu (stačí změnit inicializaci v `core/llm_config.py`).
+  - Sledování spotřeby tokenů (`get_token_usage()`).
+
+### Konfigurace
+
+V souboru `config.yaml` nastavte sekci:
+
+```yaml
+llm_models:
+  primary_llm:
+    provider: "google"
+    model_name: "gemini-2.5-flash"
+    temperature: 0.7
+    verbose: True
+```
+
+API klíč vložte do `.env` jako `GEMINI_API_KEY="..."`.
+
+### Použití v kódu
+
+LLM je inicializován v `core/llm_config.py` a importován do všech agentů:
+
+```python
+from core.llm_config import llm
+```
+
+Všechny agenty (Planner, Engineer, Philosopher, Tester) používají tento adapter automaticky.
+
+Pro přepnutí na LangChain wrapper stačí odkomentovat příslušný řádek v `llm_config.py` a upravit provider/model.
+
+## �🧪 Testování
+
+Pro spuštění všech testů (pytest i unittest) použijte:
+```bash
+PYTHONPATH=. pytest tests/
+```
+Pokud chcete spustit pouze unittest testy:
+```bash
+PYTHONPATH=. python3 -m unittest discover tests
+```
+
 
 ### Orchestrace tvorby (CrewAI):
 ```bash

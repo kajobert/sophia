@@ -72,10 +72,20 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
         * **Exekuční Tým (CrewAI):** Agenti jako `Planner`, `Engineer`, `Tester` budou fungovat v disciplinovaném, procesně orientovaném rámci `CrewAI` během fáze "Bdění" pro efektivní plnění úkolů.
         * **Kreativní Tým (AutoGen):** Agenti jako `Philosopher`, `Architect` budou fungovat ve flexibilním, konverzačním rámci `AutoGen` během fáze "Spánku" pro generování nových nápadů, sebereflexi a strategické plánování.
 
+    * **LLM Integrace:**
+        * Všichni agenti používají jednotný adapter `GeminiLLMAdapter` (viz `core/gemini_llm_adapter.py`), který zajišťuje robustní a snadno vyměnitelnou integraci s Google Gemini API.
+        * Adapter je inicializován v `core/llm_config.py` dle konfigurace v `config.yaml` a předáván agentům jako `llm=llm`.
+        * Přepnutí na jiného providera (např. OpenAI, LangChain) je možné úpravou konfigurace a jednoho řádku v `llm_config.py`.
+
+
 * **`/sandbox` (Izolované Prostředí)**:
     * **Funkce:** Bezpečný a izolovaný adresář, kde mohou agenti volně vytvářet, upravovat a spouštět soubory a kód, aniž by ovlivnili zbytek systému. Slouží jako testovací pole pro všechny tvůrčí úkoly.
 
 * **`tools/` (Dílna pro Tvůrce)**:
     * **Technologie:** Vlastní implementace
     * **Funkce:** Bude obsahovat nové, klíčové nástroje pro agenty, jako `FileSystemTool` (pro práci se soubory v `/sandbox`) a `CodeExecutorTool` (pro spouštění a testování kódu).
+
+* **`core/gemini_llm_adapter.py` (LLM Adapter):**
+    * **Technologie:** `google-generativeai`
+    * **Funkce:** Zajišťuje jednotné rozhraní pro všechny agenty a snadnou rozšiřitelnost na další LLM providery.
 

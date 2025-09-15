@@ -1,4 +1,100 @@
 # Installation and Setup Guide for Sophia V4
+# ---
+# Aider IDE (Evoluční motor Sophia)
+# ---
+
+## 🤖 Integrace LLM: GeminiLLMAdapter
+
+Sophia V4 využívá vlastní adapter `GeminiLLMAdapter` pro přímou integraci s Google Gemini API.
+
+- **Požadavky:**
+	- Python knihovna `google-generativeai` (instaluje se automaticky přes `requirements.txt`)
+	- API klíč pro Gemini: nastavte do `.env` souboru proměnnou `GEMINI_API_KEY="..."`
+
+### Nastavení LLM v config.yaml
+
+```yaml
+llm_models:
+	primary_llm:
+		provider: "google"
+		model_name: "gemini-2.5-flash"
+		temperature: 0.7
+		verbose: True
+```
+
+LLM je inicializován v `core/llm_config.py` a automaticky používán všemi agenty.
+
+Pro přepnutí na LangChain wrapper stačí upravit provider a model v config.yaml a odkomentovat příslušný řádek v `llm_config.py`.
+
+## 🛠️ Instalace a použití Aider IDE
+
+Aider IDE je klíčový nástroj pro autonomní evoluci schopností Sophia. Umožňuje agentovi AiderAgent bezpečně refaktorovat, opravovat a vylepšovat kód v sandboxu.
+
+### Instalace Aider CLI
+
+1. **Doporučený způsob (pip):**
+	```bash
+	pip install aider-chat
+	```
+2. **Alternativně (z Gitu):**
+	```bash
+	pip install git+https://github.com/paul-gauthier/aider.git
+	```
+3. Ověřte instalaci:
+	```bash
+	aider --help
+	```
+
+### Spuštění Aider IDE v sandboxu
+
+Všechny operace AiderAgent provádí pouze v adresáři `/sandbox`.
+
+Příklad ručního spuštění:
+```bash
+cd sandbox
+aider main.py
+```
+
+### Propojení s Sophia (AiderAgent)
+
+AiderAgent komunikuje s Aider CLI přes příkazovou řádku. Všechny změny jsou auditované (git log) a validované testy a Ethos modulem.
+
+**Bezpečnostní doporučení:**
+- Nikdy nespouštějte Aider CLI mimo sandbox.
+- Pravidelně kontrolujte git historii a validujte změny.
+- Všechny změny lze revertovat pomocí git.
+
+---
+# ---
+# PostgreSQL Setup (Docker)
+# ---
+
+## 🐘 Rychlý start PostgreSQL v Dockeru
+
+Pro lokální vývoj spusťte PostgreSQL pomocí následujícího příkazu (používá stejné údaje jako v `config.yaml`):
+
+```bash
+docker run --name sophia-postgres \
+	-e POSTGRES_USER=sophia_user \
+	-e POSTGRES_PASSWORD=sophia_password \
+	-e POSTGRES_DB=sophia_db \
+	-p 5432:5432 \
+	-d --restart unless-stopped postgres:13
+```
+
+Pokud změníte přihlašovací údaje v `config.yaml`, upravte je i zde.
+
+Pro kontrolu běžícího kontejneru použijte:
+```bash
+docker ps
+```
+
+Pro zastavení a smazání databáze:
+```bash
+docker stop sophia-postgres && docker rm sophia-postgres
+```
+
+---
 
 
 > **POZOR:** Pro plnou funkčnost AiderAgentu je nutné ručně nainstalovat [Aider CLI](https://github.com/paul-gauthier/aider) dle oficiální dokumentace. Není součástí requirements.txt!
@@ -63,14 +159,20 @@ You should now see log output from both the Guardian and the main Sophia process
 
 ## 🧪 Running Tests
 
-To ensure the integrity of the codebase, you can run the unit tests.
 
-Run the following command from the root of the repository:
+
+To ensure the integrity of the codebase, run all tests using **pytest** (doporučeno):
+
 ```bash
-python3 -m unittest discover tests
+PYTHONPATH=. pytest tests/
 ```
 
-This will automatically discover and run all tests in the `tests` directory.
+This will automatically discover and run all tests (pytest i unittest) in the `tests` directory.
+
+If you want to run only unittest tests (without pytest fixtures), you can use:
+```bash
+PYTHONPATH=. python3 -m unittest discover tests
+```
 
 ---
 

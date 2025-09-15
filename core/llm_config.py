@@ -1,7 +1,8 @@
 import os
 import yaml
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+from core.gemini_llm_adapter import GeminiLLMAdapter
+# from langchain_google_genai import ChatGoogleGenerativeAI  # fallback do budoucna
 
 # Načtení proměnných prostředí ze souboru .env
 load_dotenv()
@@ -27,16 +28,18 @@ api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise ValueError("API klíč pro LLM (GEMINI_API_KEY) nebyl nalezen v .env souboru.")
 
+provider = llm_config.get('provider')
 # Inicializace LLM na základě konfigurace
 # V budoucnu zde může být logika pro výběr providera (google, openai, atd.)
-provider = llm_config.get('provider')
 if provider == 'google':
-    llm = ChatGoogleGenerativeAI(
-        model=llm_config.get('model_name', 'gemini-2.5-flash'), # fallback pro jistotu
-        verbose=llm_config.get('verbose', False),
+    llm = GeminiLLMAdapter(
+        model=llm_config.get('model_name', 'gemini-2.5-flash'),
+        api_key=api_key,
         temperature=llm_config.get('temperature', 0.7),
-        google_api_key=api_key
+        max_tokens=llm_config.get('max_tokens', 2048),
+        verbose=llm_config.get('verbose', False)
     )
+    # Pokud bude LangChain wrapper funkční, lze zde přepnout na ChatGoogleGenerativeAI
 else:
     # V budoucnu zde může být podpora pro další providery
     raise ValueError(f"Neznámý nebo nepodporovaný provider LLM: {provider}")
