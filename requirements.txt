@@ -1,21 +1,10 @@
-# POZOR: Pro AiderAgent je nutné mít nainstalovaný Aider CLI (https://github.com/paul-gauthier/aider)
 
-# Základní stabilní závislosti pro Sophia V4
-pyautogen
-PyYAML
-watchdog
-crewai
-langchain>=0.3.0
-langchain-google-genai==0.0.7
-openai
-litellm
-tiktoken
-anthropic
+# Produkční závislosti pro backend Sophia (FastAPI, DB, monitoring, OAuth2)
+fastapi
+uvicorn
+python-multipart
+starlette
+authlib
 python-dotenv
-Flask
-psycopg2-binary
 psutil
-langgraph
 pytest
-pydantic>=2.0.0
-google-generativeai

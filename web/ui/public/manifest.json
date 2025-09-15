@@ -1,0 +1,9 @@
+{
+  "name": "Sophia Web UI",
+  "short_name": "SophiaUI",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Webové rozhraní pro projekt Sophia.",
+  "icons": []
+}

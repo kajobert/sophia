@@ -1,3 +1,98 @@
+### Autentizace a ochrana API – příklad toku
+
+1. Uživatel klikne na „Přihlásit se“ (frontend).
+2. Frontend přesměruje na `/api/login` (backend), backend zahájí OAuth2 flow (Google).
+3. Po úspěšném přihlášení backend nastaví session cookie a přesměruje zpět na frontend.
+4. Frontend zavolá `/api/me` a získá informace o uživateli (jméno, email, role).
+5. Všechny chráněné endpointy (např. `/api/chat`) kontrolují session/token. Nepřihlášený uživatel dostane 401.
+6. Odhlášení: frontend zavolá `/api/logout`, backend smaže session.
+
+**Příklad volání:**
+
+```http
+GET /api/me
+Cookie: session=... (nastaví backend po přihlášení)
+
+HTTP/1.1 200 OK
+{
+    "name": "Jan Novák",
+    "email": "jan.novak@gmail.com",
+    "avatar": "https://..."
+}
+```
+
+Nepřihlášený uživatel:
+
+```http
+GET /api/me
+
+HTTP/1.1 401 Unauthorized
+{
+    "detail": "Not authenticated"
+}
+```
+---
+
+## Webové rozhraní (V4) – Návrh architektury
+
+### Přehled
+
+Webové rozhraní Sophia V4 je navrženo jako moderní, modulární a bezpečná platforma, která umožní uživatelům komunikovat se Sophií, spravovat svá data a v budoucnu rozšiřovat funkcionalitu (nahrávání souborů, notifikace, role, mobilní klienti atd.).
+
+### Hlavní komponenty
+
+- **Backend (API server):**
+    - Framework: FastAPI (Python)
+    - Autentizace: Google OAuth2 (přihlášení, identita, role)
+    - API: REST + WebSocket (chat, správa souborů, uživatelé, notifikace, audit)
+    - Správa session, bezpečnost, auditní logy
+    - Připraveno na rozšíření o další endpointy (soubory, notifikace, profil, nastavení)
+    - Navrženo pro multiplatformní použití (web, mobilní aplikace)
+
+- **Frontend (Web klient):**
+    - Framework: React (SPA, modularita, rozšiřitelnost)
+    - Komponenty: přihlášení, chat, historie, nahrávání souborů (zatím nefunkční), správa dat, profil, nastavení, notifikace
+    - Připraveno na i18n (vícejazyčnost), světlý/tmavý režim, rozšiřitelnost
+    - Komunikace s backendem přes REST/WebSocket API
+
+### Budoucí rozšiřitelnost
+
+- **Nahrávání a správa souborů:**
+    - Backend i frontend připraveny na upload, správu a analýzu uživatelských dat
+- **Role a oprávnění:**
+    - Možnost rozlišovat běžné uživatele, adminy, testery
+- **Notifikace a zprávy:**
+    - Systém pro upozornění na události, bezpečnostní hlášení, nové funkce
+- **API pro mobilní aplikace:**
+    - Stejné API použitelné pro web i mobilní klienty (Android/iOS)
+- **Audit a bezpečnost:**
+    - Logování akcí, auditní stopy, ochrana osobních údajů (GDPR)
+- **i18n a UX:**
+    - Připraveno na vícejazyčné rozhraní a UX vylepšení
+
+### Schéma architektury
+
+```
+Uživatel <-> Frontend (React SPA) <-> Backend (FastAPI REST/WebSocket API) <-> Sophia Core/Agenti
+```
+
+
+### Build a testování webového UI
+
+- Umístění: `web/ui/`
+- Build: `npm run build`
+- Testování: `npm test` (Jest, Testing Library)
+- Hlavní komponenty: Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager
+- Komunikace s backendem přes REST API (`/api/`)
+
+### Poznámky k implementaci
+
+- Backend a frontend jsou oddělené projekty, komunikují přes API.
+- Autentizace a session management řeší backend, frontend pouze získává tokeny a stav.
+- Veškeré nové funkce (soubory, notifikace, role, mobilní klienti) lze přidat bez zásadních změn architektury.
+- Dokumentace a datové modely budou od začátku navrženy s ohledem na verzování a rozšiřitelnost.
+
+---
 # Sophia V3 & V4 - Technická Architektura
 
 Tento dokument popisuje technickou strukturu a komponenty systému Sophia.

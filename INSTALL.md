@@ -1,4 +1,26 @@
+## 🔐 Přihlášení a ochrana API
+
+Po spuštění backendu a frontendu otevřete webovou aplikaci. Při prvním vstupu budete vyzváni k přihlášení přes Google (OAuth2). Po úspěšném přihlášení můžete používat všechny funkce. Pokud se odhlásíte nebo session vyprší, budete opět vyzváni k přihlášení.
+
+- **Chráněné endpointy:** `/api/chat`, `/api/upload`, `/api/files` a další vyžadují přihlášení.
+- **Testování přihlášení:** Po přihlášení zkuste zavolat `/api/me` – vrátí informace o uživateli. Pokud nejste přihlášeni, vrátí 401.
+
 # Installation and Setup Guide for Sophia V4
+
+## 🌐 Frontend (web/ui)
+
+1. Otevři terminál v adresáři `web/ui/`
+2. Spusť:
+	npm install
+	npm run start
+
+3. Pro spuštění testů:
+	npm test
+
+4. Pro build produkční verze:
+	npm run build
+
+Výstupní build bude v `web/ui/dist/`
 # ---
 # Aider IDE (Evoluční motor Sophia)
 # ---

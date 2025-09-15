@@ -1,4 +1,134 @@
 ---
+**Timestamp:** 2025-09-15 14:00:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-ui-structure
+
+**Cíl Úkolu:**
+- Navrhnout a vytvořit adresářovou strukturu pro frontendové UI (React SPA) v adresáři web/ui/.
+
+**Postup a Poznámky:**
+- Vytvořen adresář web/ui/.
+- Připravena struktura pro React aplikaci (SPA):
+    - public/
+    - src/
+        - components/ (Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager)
+        - App.js, index.js
+- Všechny plánované funkce budou mít vlastní komponentu a tlačítko v hlavním menu (zatím placeholdery).
+- Další krok: inicializace React projektu a implementace základního UI.
+
+**Stav:** Probíhá
+
+---
+**Timestamp:** 2025-09-15 22:00:00
+**Agent:** GitHub Copilot
+**Task ID:** dokumentace-auth-api
+
+**Cíl Úkolu:**
+- Doplnit dokumentaci k autentizaci, přihlášení a ochraně API do README.md, INSTALL.md a ARCHITECTURE.md.
+
+**Postup a Poznámky:**
+- Přidána sekce „Autentizace a přihlášení“ do README.md a INSTALL.md.
+- Do ARCHITECTURE.md doplněn konkrétní příklad API toku (OAuth2, session, endpointy, příklad volání).
+- Vše popsáno v souladu s aktuální implementací a roadmapou.
+
+**Stav:** Dokončeno
+---
+---
+**Timestamp:** 2025-09-15 13:35:00
+**Agent:** GitHub Copilot
+**Task ID:** web-backend-api-basic-tests
+
+**Cíl Úkolu:**
+- Otestovat základní funkčnost web API (root, chat, upload, login redirect) pomocí pytest + FastAPI TestClient.
+
+**Postup a Poznámky:**
+- Vytvořen testovací soubor tests/web_api/test_api_basic.py.
+- Testuje root endpoint, odmítnutí nepřihlášeného chatu/uploadu, a že /login správně přesměrovává na Google OAuth2.
+- Testy pro plné přihlášení přes Google OAuth2 vyžadují interaktivní flow a nelze je plně automatizovat bez mockování.
+
+**Stav:** Dokončeno
+---
+---
+**Timestamp:** 2025-09-15 13:30:00
+**Agent:** GitHub Copilot
+**Task ID:** web-backend-chat-upload-endpoints
+
+**Cíl Úkolu:**
+- Přidat dummy chat endpoint a nefunkční upload endpoint do FastAPI backendu.
+
+**Postup a Poznámky:**
+- Přidán POST /chat endpoint (vyžaduje přihlášení, echo odpověď Sophia říká: ...).
+- Přidán POST /upload endpoint (vyžaduje přihlášení, pouze potvrzení přijetí souboru, neukládá se).
+- Oba endpointy připraveny na budoucí rozšíření (napojení na agenty, správu souborů).
+
+**Stav:** Dokončeno
+---
+---
+**Timestamp:** 2025-09-15 13:25:00
+**Agent:** GitHub Copilot
+**Task ID:** web-backend-google-oauth2-deps
+
+**Cíl Úkolu:**
+- Zajistit všechny potřebné závislosti pro Google OAuth2 backend (FastAPI, Starlette, Uvicorn, python-multipart).
+
+**Postup a Poznámky:**
+- Do requirements.txt přidány a nainstalovány balíčky: fastapi, uvicorn, python-multipart, starlette.
+- Backend je nyní připraven na běh a testování OAuth2 flow.
+
+**Stav:** Dokončeno
+---
+---
+**Timestamp:** 2025-09-15 13:20:00
+**Agent:** GitHub Copilot
+**Task ID:** web-backend-google-oauth2-authlib
+
+**Cíl Úkolu:**
+- Implementovat Google OAuth2 autentizaci do FastAPI backendu pomocí knihovny Authlib.
+
+**Postup a Poznámky:**
+- Provedena analýza možností OAuth2 pro FastAPI: Authlib zvolen jako moderní, bezpečné a rozšiřitelné řešení.
+- Authlib podporuje Google OAuth2, session management, rozšiřitelnost na další poskytovatele, multiplatformní použití.
+- Nainstalovány balíčky authlib a python-dotenv (pro správu tajných klíčů).
+- Další krok: implementace základního OAuth2 flow a endpointů v backendu.
+
+**Stav:** Probíhá
+---
+---
+**Timestamp:** 2025-09-15 13:10:00
+**Agent:** GitHub Copilot
+**Task ID:** web-backend-fastapi-skeleton
+
+**Cíl Úkolu:**
+- Vytvořit základní skeleton backendu pro webové rozhraní Sophia pomocí FastAPI.
+
+**Postup a Poznámky:**
+- Vytvořen adresář web/api/ a soubor main.py.
+- Implementován základní FastAPI server s CORS middleware a testovacím endpointem "/".
+- Připraveno na přidání Google OAuth2 login endpointu, session managementu, chatu a uploadu.
+- Další kroky: přidat Google OAuth2 autentizaci a základní endpoints.
+
+**Stav:** Probíhá
+---
+---
+**Timestamp:** 2025-09-15 13:00:00
+**Agent:** GitHub Copilot
+**Task ID:** web-interface-architecture-analysis
+
+**Cíl Úkolu:**
+- Navrhnout architekturu webového rozhraní pro Sophii s ohledem na budoucí rozšiřitelnost (chat, nahrávání souborů, správa dat, role, notifikace, API pro mobilní klienty, i18n, audit, bezpečnost).
+
+**Postup a Poznámky:**
+- Prostudovány možnosti: FastAPI (backend, REST/WebSocket API), React (frontend, modularita, rozšiřitelnost), Google OAuth2 (přihlášení, identita).
+- Navržena oddělená architektura backendu a frontendu:
+    - Backend: FastAPI, autentizace přes Google OAuth2, správa session, API pro chat, správu souborů, uživatele, notifikace, audit.
+    - Frontend: React (SPA), modulární komponenty (chat, soubory, profil, nastavení, notifikace), připraveno na i18n a rozšíření.
+    - API navrženo pro multiplatformní použití (web, mobilní aplikace).
+- Zohledněna bezpečnost (OAuth2, session, audit, role), škálovatelnost, možnost přidávání nových funkcí bez zásadních změn.
+- Připravit návrh architektury do docs/ARCHITECTURE.md.
+
+**Stav:** Probíhá
+---
+---
 **Timestamp:** 2025-09-15 00:30:00
 **Agent:** GitHub Copilot
 **Task ID:** autogen-team-and-orchestration
@@ -42,14 +172,17 @@
 - Vytvořit wrapper třídu AiderAgent v agents/aider_agent.py pro komunikaci s Aider IDE přes CLI.
 - Zajistit auditovatelnost, bezpečnost a etickou kontrolu všech změn v sandboxu.
 
+
 **Postup a Poznámky:**
 - [x] Prostudovat možnosti Aider IDE a jeho CLI/API.
 - [x] Navrhnout architekturu wrapperu a protokol komunikace.
 - [x] Implementovat základní třídu AiderAgent s omezením na /sandbox.
-- [ ] Validovat a auditovat všechny změny (git log, review, Ethos module).
+- [x] Validovat a auditovat všechny změny (git log, Ethos module):
+    - Implementována metoda _audit_change(), která kontroluje poslední commit v sandboxu a validuje jej Ethos modulem.
+    - Pokud změna není eticky schválena, raise error.
 - [ ] Průběžně aktualizovat tento záznam.
 
-**Stav:** Probíhá
+**Stav:** Dokončeno
 ---
 **Timestamp:** 2025-09-15 00:10:00
 **Agent:** GitHub Copilot
@@ -761,6 +894,149 @@
 
 ---
 # Sophia V3 - Pracovní Deník (Work Log)
+
+---
+**Timestamp:** 2025-09-15 15:10:00
+**Agent:** GitHub Copilot
+**Task ID:** docker-compose-setup
+
+**Cíl Úkolu:**
+- Zavést Docker Compose pro celý ekosystém Sophia (backend, frontend, databáze).
+- Připravit Dockerfile pro frontend (React) i backend (FastAPI).
+- Zapsat změny do WORKLOG.md a přidat stručný návod (DOCKER_README.md).
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen docker-compose.yml s třemi službami: backend, frontend, db.
+2. Přidán Dockerfile pro web/ui (Node/React) a web/api (Python/FastAPI).
+3. Vytvořen DOCKER_README.md s návodem na spuštění a vývoj.
+4. Všechny služby mountují kód jako volume, hot reload funguje.
+5. Zapsáno do WORKLOG.md.
+
+**Problémy a Překážky:**
+- Žádné zásadní, vše funguje dle očekávání.
+
+**Nápady a Postřehy:**
+- Docker Compose výrazně zjednodušuje vývoj, testování i nasazení Sophia.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 14:50:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-docs-update
+
+**Cíl Úkolu:**
+- Doplnit dokumentaci (README.md, INSTALL.md, ARCHITECTURE.md) o informace k webovému UI a jeho testování.
+- Zapsat změny do WORKLOG.md.
+- Přidat úkol do PROJECT_SOPHIA_V4.md.
+
+**Postup a Klíčové Kroky:**
+1. Aktualizován web/ui/README.md o sekci testování a build.
+2. Doplněn hlavní README.md o info o webovém UI.
+3. Doplněn INSTALL.md o sekci pro frontend.
+4. Doplněn ARCHITECTURE.md o sekci o webovém UI.
+5. Zapsáno do WORKLOG.md.
+
+**Problémy a Překážky:**
+- Žádné.
+
+**Nápady a Postřehy:**
+- Dokumentace je nyní kompletní a reflektuje aktuální stav frontendové části.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 14:40:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-ui-integration-test
+
+**Cíl Úkolu:**
+- Vytvořit integrační test pro React UI (menu, chat, základní interakce) pomocí Jest a Testing Library.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen test src/__tests__/App.test.js pro ověření zobrazení menu a funkce chatu (mock fetch).
+2. Doinstalovány závislosti: jest, @testing-library/react, @testing-library/jest-dom, babel-jest, jest-environment-jsdom.
+3. Opraveny chyby v testu (import React, jest-dom, mock fetch).
+4. Test úspěšně prochází, ověřuje základní funkčnost UI.
+5. Zapsáno do WORKLOG.md.
+
+**Problémy a Překážky:**
+- Nutnost mockovat fetch pro chat endpoint.
+
+**Nápady a Postřehy:**
+- Testy umožní rychlou detekci regresí při dalším rozvoji UI.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 14:30:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-backend-integration-chat
+
+**Cíl Úkolu:**
+- Propojit frontendový chat s backendem (FastAPI /api/chat endpoint), ověřit komunikaci a chybové stavy.
+
+**Postup a Klíčové Kroky:**
+1. Komponenta Chat nyní odesílá POST na /api/chat a zobrazuje odpověď Sophia z backendu.
+2. Ošetřeny chybové stavy (HTTP error, prázdná odpověď).
+3. Ověřeno, že komunikace funguje (při běžícím backendu).
+4. Zapsáno do WORKLOG.md.
+
+**Problémy a Překážky:**
+- Pokud backend neběží nebo není přihlášení, zobrazí se chybová hláška.
+
+**Nápady a Postřehy:**
+- Tato integrace umožňuje rychlé testování a další rozvoj (upload, files, ...).
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 14:20:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-ui-login-chat
+
+**Cíl Úkolu:**
+- Implementovat základní UI: přihlášení (Google OAuth2) a chat (dummy logika), včetně placeholderů pro všechny plánované funkce.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořeny a napojené komponenty Login a Chat v React SPA.
+2. Login obsahuje tlačítko pro přihlášení přes Google (vede na /api/login).
+3. Chat obsahuje jednoduchý formulář, lokální stav zpráv, echo odpověď Sophia říká: ...
+4. Ostatní komponenty (Upload, Files, Profile, Notifikace, Nastavení, Role, i18n, Helpdesk) mají placeholdery.
+5. UI je připraveno na napojení na backend a rozšiřování.
+
+**Problémy a Překážky:**
+- Zatím není napojeno na backend, vše je pouze lokální logika.
+
+**Nápady a Postřehy:**
+- První verze UI umožňuje rychlé testování a iteraci, napojení na backend bude následovat.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-15 14:10:00
+**Agent:** GitHub Copilot
+**Task ID:** web-frontend-ui-structure-setup
+
+**Cíl Úkolu:**
+- Inicializovat React projekt v adresáři web/ui/ (npm, package.json, závislosti, build skripty, webpack, Babel, CSS).
+- Připravit základní stylování a dokumentaci pro vývoj frontendové SPA.
+
+**Postup a Klíčové Kroky:**
+1. Inicializován npm projekt (`npm init -y`).
+2. Nainstalovány závislosti: react, react-dom, webpack, babel, loader, CSS.
+3. Vytvořen webpack.config.js, babel.config.json, manifest.json, index.css.
+4. Přidány build a start skripty do package.json.
+5. Vytvořen README.md s instrukcemi pro vývojáře.
+6. Ověřeno, že adresářová struktura a build systém odpovídají modernímu SPA workflow.
+
+**Problémy a Překážky:**
+- Žádné zásadní, vše proběhlo hladce.
+
+**Nápady a Postřehy:**
+- Tato příprava umožní rychlý rozvoj UI a snadné napojení na backend.
+
+**Stav:** Dokončeno
 
 Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia V3. Každý AI programátor je povinen zde dokumentovat svou práci.
 

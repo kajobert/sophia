@@ -77,7 +77,6 @@ Cílem je vytvořit systém, který:
 
 ### Fáze 13: Integrace Aider IDE Agenta
 
-
 **Cíl:** Využít Aider IDE jako autonomní evoluční motor – agent, který umožní Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu, a tím realizovat skutečnou autonomní evoluci schopností.
 
 - [x] **13.1. Analýza a příprava integrace:**
@@ -108,4 +107,23 @@ Cílem je vytvořit systém, který:
     -   Ověřit, že všichni agenti používají nový adapter a vše je plně funkční.
     -   Přidat závislost `google-generativeai` do requirements.txt.
     -   Otestovat inicializaci a základní workflow agentů s novým adapterem.
+    -   Zapsat změny do WORKLOG.md a roadmapy.
+
+---
+
+### Fáze 15: Webové rozhraní a testování (React UI)
+
+**Cíl:** Implementovat a zdokumentovat frontendovou SPA aplikaci, ověřit její funkčnost a propojení s backendem.
+
+- [x] **15.1. Struktura a základní UI:**
+    -   Vytvořit adresář `web/ui/`, připravit strukturu pro React SPA.
+    -   Implementovat hlavní komponenty (Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager).
+    -   Všechny funkce mají tlačítka v hlavním menu (zatím placeholdery).
+    -   Zapsat do WORKLOG.md.
+- [x] **15.2. Propojení s backendem a testování:**
+    -   Ověřit komunikaci s backendem (login, chat endpoint).
+    -   Implementovat integrační testy (Jest, Testing Library).
+    -   Zapsat do WORKLOG.md.
+- [x] **15.3. Dokumentace:**
+    -   Doplnit README.md, INSTALL.md, ARCHITECTURE.md o sekci pro frontend.
     -   Zapsat změny do WORKLOG.md a roadmapy.

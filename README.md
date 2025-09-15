@@ -1,3 +1,11 @@
+## 🔐 Autentizace a přihlášení
+
+Sophia používá bezpečné přihlášení přes Google OAuth2. Po kliknutí na „Přihlásit se“ je uživatel přesměrován na Google, po úspěšném přihlášení je vrácen zpět a backend nastaví session. Všechny chráněné API endpointy vyžadují přihlášení.
+
+- **Jak poznám, že jsem přihlášen?** Po přihlášení se v UI zobrazí vaše jméno a možnost odhlášení. Pokud session vyprší, budete vyzváni k opětovnému přihlášení.
+- **Jak funguje ochrana API?** Backend kontroluje session/token u každého požadavku. Nepřihlášený uživatel dostane 401 Unauthorized.
+- **Odhlášení:** V menu je tlačítko „Odhlásit se“, které ukončí session.
+
 <p align="center">
   <img src="SOPHIA-logo.png" alt="Sophia Project Logo" width="150">
 </p>
@@ -147,11 +155,23 @@ Tato architektura výrazně zvyšuje robustnost a rozšiřitelnost systému pro 
 
 Kompletní roadmapu včetně integrace Aider IDE agenta najdeš v [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md).
 
+
+## 🌐 Webové rozhraní (React UI)
+
+Frontendová SPA aplikace je v adresáři `web/ui/`.
+
+- Vývoj: viz `web/ui/README.md`
+- Testování: `npm test` v `web/ui/` (Jest, Testing Library)
+- Build: `npm run build` v `web/ui/`
+- Hlavní komponenty: Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager
+- Komunikace s backendem přes REST API (`/api/`)
+
 ## 🛠️ Technologický Stack
 
 -   **Jazyk:** Python
 -   **AI Frameworky:** CrewAI, AutoGen, LangGraph, LangChain
 -   **Databáze:** PostgreSQL
+-   **Frontend:** React (SPA, `web/ui/`)
 -   **Prostředí:** Git, Docker
 
 ----

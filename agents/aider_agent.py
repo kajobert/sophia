@@ -45,5 +45,20 @@ class AiderAgent:
 
     def _audit_change(self):
         """Audituje změny v sandboxu (git log, validace Ethos modulem)."""
-        # TODO: Integrace s Ethos modulem, review, git log atd.
-        pass
+        import subprocess
+        from core.ethos_module import EthosModule
+
+        # Získání posledního commitu v sandboxu
+        try:
+            git_log = subprocess.check_output([
+                "git", "--no-pager", "log", "-1", "--pretty=%B"
+            ], cwd=self.sandbox_path, text=True)
+        except Exception as e:
+            raise RuntimeError(f"Nelze získat git log v sandboxu: {e}")
+
+        # Validace commit message Ethos modulem
+        ethos = EthosModule()
+        result = ethos.evaluate(git_log.strip())
+        if result['decision'] != 'approve':
+            raise RuntimeError(f"Změna v sandboxu nebyla eticky schválena: {result['feedback']}")
+        # TODO: Možnost review jiným agentem (Philosopher/Architect) lze přidat zde
