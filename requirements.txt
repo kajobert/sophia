@@ -1,3 +1,4 @@
+# POZOR: Pro AiderAgent je nutné mít nainstalovaný Aider CLI (https://github.com/paul-gauthier/aider)
 pyautogen
 PyYAML==6.0.1
 watchdog==4.0.1
