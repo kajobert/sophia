@@ -1,3 +1,25 @@
+**Timestamp:** 2025-09-16 08:46:00
+**Agent:** Jules
+**Task ID:** fix-mock-logic-order
+
+**Cíl Úkolu:**
+- Opravit chybu v logice mockovacího handleru, kde příliš obecná podmínka způsobovala nesprávné chování při testování webového UI.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza Problému:** Bylo identifikováno, že prompt pro `PlannerAgenta` může obsahovat obecná klíčová slova jako "test", což způsobilo, že byla nesprávně aktivována větev pro `TesterAgenta` v `if/elif` bloku.
+2.  **Refaktoring Podmínek:** Logika v `core/mocks.py` v rámci funkce `mock_litellm_completion_handler` byla přeuspořádána. Podmínka pro `PlannerAgenta`, která je nejvíce specifická (vyžaduje přítomnost "plan" a "ethical review"), byla přesunuta na první místo. Tím je zajištěno, že je vyhodnocena dříve než obecnější podmínky.
+
+**Problémy a Překážky:**
+- Žádné. Oprava byla přímočará.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tento příklad ukazuje důležitost pořadí a specifičnosti podmínek v mockovacích funkcích, zvláště když se zpracovávají komplexní, automaticky generované prompty.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 06:39:00
 **Agent:** Jules
 **Task ID:** robust-planner-mock
