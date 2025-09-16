@@ -2,7 +2,6 @@ import pytest
 from crewai import Task, Crew
 from agents.engineer_agent import EngineerAgent
 from tools.file_system import ReadFileTool, WriteFileTool
-from tests.mocks import MockGeminiLLMAdapter
 import os
 
 SANDBOX_DIR = os.path.abspath("sandbox")
@@ -27,9 +26,9 @@ def test_engineer_creates_file_via_task(setup_sandbox, monkeypatch):
     Tests that an engineer agent can execute a task to create a file,
     using a mocked LLM that forces a tool call.
     """
-    # 1. Mock the LLM used by the agents using pytest's monkeypatch fixture.
-    mock_llm = MockGeminiLLMAdapter(model="mock", api_key="mock")
-    monkeypatch.setattr("core.llm_config.llm", mock_llm)
+    # This test is currently skipped. The mocking strategy below is now
+    # obsolete due to the global mock in conftest.py. If this test is
+    # to be re-enabled, it will need a new mocking approach.
 
     # 2. Define Agent and provide it with the necessary tool for the test.
     engineer = EngineerAgent().get_agent()

@@ -1,5 +1,5 @@
 from crewai import Agent
-from core.llm_config import llm
+import core.llm_config
 
 class PlannerAgent:
     """
@@ -16,7 +16,7 @@ class PlannerAgent:
                 "krok-za-krokem plánů. Sleduji každý detail, předvídám možné překážky a zajišťuji, "
                 "že cesta k cíli je co nejefektivnější. Bez mého plánu vládne chaos; s mým plánem je úspěch nevyhnutelný."
             ),
-            llm=llm,
+            llm=core.llm_config.llm,
             verbose=True,
             allow_delegation=False,
             max_iter=5
