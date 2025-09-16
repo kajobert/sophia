@@ -24,42 +24,41 @@ def test_planner_with_shared_context():
     print(f"\n--- Planner Result ---\n{updated_context.payload['plan']}\n------------------------")
 
 
-def test_linear_agent_collaboration_with_context():
+def test_linear_agent_collaboration():
     """
-    Testuje E2E spolupráci agentů s využitím SharedContext.
-    Planner nejprve vytvoří plán do kontextu, Engineer ho pak použije.
+    Tests the E2E collaboration of agents using SharedContext.
+    The Planner first creates a plan in the context, which the Engineer then uses.
     """
-    # 1. Fáze Plánování
+    # 1. Planning Phase
     planner = PlannerAgent()
     prompt = "Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla."
     context = SharedContext(session_id="test_session_e2e", original_prompt=prompt)
 
     context_with_plan = planner.run_task(context)
 
+    assert 'plan' in context_with_plan.payload
     assert "Definuj funkci `add(a, b)`" in context_with_plan.payload['plan']
 
-    # 2. Fáze Inženýringu
-    engineer_agent = EngineerAgent().get_agent()
+    # 2. Engineering Phase
+    engineer = EngineerAgent()
+    final_context = engineer.run_task(context_with_plan)
 
-    # Inženýrský úkol nyní používá plán z kontextu.
-    coding_task = Task(
-        description=f"Na základě tohoto plánu vytvoř kód v Pythonu: {context_with_plan.payload['plan']}",
-        agent=engineer_agent,
-        expected_output="Funkční a okomentovaný kód v Pythonu."
-    )
+    # 3. Verification of the Final Result
+    assert isinstance(final_context, SharedContext)
+    assert 'plan' in final_context.payload
+    assert 'code' in final_context.payload
 
-    # Spustíme pouze inženýrský úkol
-    crew = Crew(
-        agents=[engineer_agent],
-        tasks=[coding_task],
-        verbose=True
-    )
+    plan = final_context.payload['plan']
+    code = final_context.payload['code']
 
-    result = crew.kickoff()
+    print(f"\n--- Final Context Plan ---\n{plan}\n--------------------------")
+    print(f"\n--- Final Context Code ---\n{code}\n--------------------------")
 
-    # 3. Ověření konečného výsledku
-    print(f"\n--- Final Crew Result ---\n{result}\n------------------------")
-    assert result is not None
-    assert "def add(a, b):" in result.raw
-    assert "return a + b" in result.raw
-    assert "plán" not in result.raw.lower()
+    # Verify that the original plan is still present
+    assert "Definuj funkci `add(a, b)`" in plan
+
+    # Verify that the generated code is correct
+    assert "def add(a, b):" in code
+    assert "return a + b" in code
+    # Ensure the code doesn't contain irrelevant parts of the prompt
+    assert "plán" not in code.lower()

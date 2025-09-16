@@ -1,7 +1,8 @@
-from crewai import Agent
+from crewai import Agent, Task, Crew
 import core.llm_config
 from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool
 from tools.code_executor import ExecutePythonScriptTool
+from core.context import SharedContext
 
 class EngineerAgent:
     """
@@ -28,6 +29,46 @@ class EngineerAgent:
             allow_delegation=False,
             memory=False
         )
+
+    def run_task(self, context: SharedContext) -> SharedContext:
+        """
+        Takes a SharedContext object with a 'plan' and executes the engineering task.
+        The resulting code is added back to the context.
+
+        Args:
+            context (SharedContext): The shared context containing the plan.
+
+        Returns:
+            SharedContext: The updated context with the generated code.
+        """
+        plan = context.payload.get('plan')
+        if not plan:
+            raise ValueError("The 'plan' is missing from the context payload.")
+
+        # Vytvoření a spuštění CrewAI úlohy
+        coding_task = Task(
+            description=f"Na základě tohoto plánu vytvoř kód v Pythonu:\n---\n{plan}",
+            agent=self.agent,
+            expected_output="Funkční a okomentovaný kód v Pythonu, připravený k přímému spuštění."
+        )
+
+        crew = Crew(
+            agents=[self.agent],
+            tasks=[coding_task],
+            verbose=False  # Keep it clean for this level
+        )
+
+        result = crew.kickoff()
+
+        # Uložení výsledku do kontextu
+        # Předpokládáme, že 'result' je objekt, kde 'raw' obsahuje čistý kód
+        if hasattr(result, 'raw'):
+            generated_code = result.raw
+        else:
+            generated_code = str(result)
+
+        context.payload['code'] = generated_code
+        return context
 
     def get_agent(self):
         """Returns the underlying crewAI Agent instance."""
