@@ -35,7 +35,7 @@ Cílem tohoto plánu je systematicky opravit základní problémy, stabilizovat 
     -   **Ověření:** `main.py` bude obsahovat kompletní, integrovanou V4 smyčku.
 
 4.  **Aktualizace Roadmapy a Spuštění Testů:**
-    -   **Akce:** Upravím `docs/PROJECT_SOPHIA_V4.md` a označím úkol 9.1 (`Upgrade Databáze`) jako dokončený (`[x]`).
+    -   **Akce:** Upravím `docs/ROADMAP_NEXUS_V1.md` a označím úkol 9.1 (`Upgrade Databáze`) jako dokončený (`[x]`).
     -   **Akce:** Spustím unit testy příkazem `python3 -m unittest discover tests`.
     -   **Ověření:** Testy proběhnou a roadmapa bude reflektovat aktuální stav.
 
@@ -56,7 +56,7 @@ Cílem tohoto plánu je systematicky opravit základní problémy, stabilizovat 
 1.  **Oprav `requirements.txt`:** Odstraň konfliktní verze knihoven a nainstaluj stabilní prostředí.
 2.  **Dokumentuj a konfiguruj PostgreSQL:** Aktualizuj `INSTALL.md` o instrukce pro Docker a synchronizuj `config.yaml`.
 3.  **Implementuj plnou smyčku V4:** Integruj do `main.py` plnou orchestraci agentů Planner, Engineer a Tester.
-4.  **Finalizuj:** Aktualizuj roadmapu v `docs/PROJECT_SOPHIA_V4.md`, spusť testy a zajisti, že je projekt funkční.
+4.  **Finalizuj:** Aktualizuj roadmapu v `docs/ROADMAP_NEXUS_V1.md`, spusť testy a zajisti, že je projekt funkční.
 5.  **Odevzdej:** Po kontrole kvality kódu odevzdej svou práci.
 
 **Důležité:** Postupuj přesně podle kroků v plánu. Každý krok ověř, než postoupíš k dalšímu. Komunikuj jasně o svém postupu.
