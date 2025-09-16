@@ -1,3 +1,26 @@
+**Timestamp:** 2025-09-16 02:33:00
+**Agent:** Jules
+**Task ID:** self-review-rule
+
+**Cíl Úkolu:**
+- Rozšířit `AGENTS.md` o nové pravidlo č. 5, které zavádí povinnou seberevizi pomocí skriptu `run_review.py` před odevzdáním práce.
+
+**Postup a Klíčové Kroky:**
+1.  **Úprava `AGENTS.md`:** Do souboru `AGENTS.md` byla na konec sekce "Zlatá Pravidla Vývoje (Závazný Kodex)" přidána nová odrážka s pátým pravidlem.
+2.  **Zápis do WORKLOGu:** Tato změna byla zdokumentována v tomto záznamu v souboru `WORKLOG.md`.
+3.  **Ověření:** Změny v obou souborech (`AGENTS.md`, `WORKLOG.md`) byly ověřeny přečtením jejich obsahu po úpravě.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Formalizace procesu seberevize je klíčovým krokem ke zvýšení kvality a snížení chybovosti. Tímto se posiluje zodpovědnost každého agenta za svou práci.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 02:05:00
 **Agent:** Jules
 **Task ID:** shared-context-implementation
