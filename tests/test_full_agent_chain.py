@@ -4,13 +4,15 @@ from agents.planner_agent import PlannerAgent
 from agents.engineer_agent import EngineerAgent
 from agents.tester_agent import TesterAgent
 from core.context import SharedContext
+from core.llm_config import get_llm
 
 def test_planner_with_shared_context():
     """
     Tests the PlannerAgent's integration with the SharedContext.
     """
     # 1. Vytvoření instance agenta a kontextu
-    planner = PlannerAgent()
+    llm = get_llm()
+    planner = PlannerAgent(llm=llm)
     prompt = "Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla."
     context = SharedContext(session_id="test_session", original_prompt=prompt)
 
@@ -30,8 +32,9 @@ def test_linear_agent_collaboration():
     Tests the E2E collaboration of agents using SharedContext.
     The Planner first creates a plan in the context, which the Engineer then uses.
     """
+    llm = get_llm()
     # 1. Planning Phase
-    planner = PlannerAgent()
+    planner = PlannerAgent(llm=llm)
     prompt = "Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla."
     context = SharedContext(session_id="test_session_e2e", original_prompt=prompt)
 
@@ -41,14 +44,14 @@ def test_linear_agent_collaboration():
     assert "Definuj funkci `add(a, b)`" in context_with_plan.payload['plan']
 
     # 2. Engineering Phase
-    engineer = EngineerAgent()
+    engineer = EngineerAgent(llm=llm)
     context_with_code = engineer.run_task(context_with_plan)
 
     assert 'code' in context_with_code.payload
     assert "def add(a, b):" in context_with_code.payload['code']
 
     # 3. Testing Phase
-    tester = TesterAgent()
+    tester = TesterAgent(llm=llm)
     final_context = tester.run_task(context_with_code)
 
     # 4. Verification of the Final Result
