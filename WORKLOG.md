@@ -1,3 +1,26 @@
+**Timestamp:** 2025-09-16 10:31:00
+**Agent:** Jules
+**Task ID:** final-mock-logic-improvement
+
+**Cíl Úkolu:**
+- Vylepšit logiku mockovacího skriptu `core/mocks.py`, aby poskytoval inteligentnější a správnější odpovědi pro `PlannerAgenta` v testovacím režimu.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza Problému:** Stávající `if/elif` struktura v `mock_litellm_completion_handler` nebyla dostatečně specifická a mohla by v budoucnu vést k nesprávnému mockování. Bylo potřeba zajistit, aby dotaz pro `PlannerAgent` byl identifikován co nejpřesněji.
+2.  **Změna Pořadí a Specifičnost Podmínek:** Blok `if/elif` byl přepsán. Podmínka pro `PlannerAgenta` byla zpřísněna, aby vyžadovala klíčová slova "plan" a "ethical review", a byla umístěna na první místo.
+3.  **Vylepšení `else` Větve:** Výchozí `else` větev byla upravena tak, aby vracela smysluplnou a kompletní odpověď pro `PlannerAgenta`, což zajišťuje, že jakýkoliv neznámý vstup bude stále zpracován logicky správně pro účely UI testování.
+
+**Problémy a Překážky:**
+- Žádné. Úkol byl přímočarý.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tato finální úprava zajišťuje, že mockovací systém je robustní a předvídatelný, což je klíčové pro spolehlivé testování a vývoj frontendu.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 08:46:00
 **Agent:** Jules
 **Task ID:** fix-mock-logic-order
