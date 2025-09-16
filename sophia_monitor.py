@@ -1,3 +1,19 @@
+# --- Funkce pro test: detekce crash v logu ---
+def check_backend_crash_log(log_path, lines=10):
+    """Vrací dict s posledními řádky a nalezenými chybovými vzory (ImportError, Traceback)."""
+    result = {"last_lines": [], "error_matches": []}
+    patterns = [r"ImportError", r"Traceback"]
+    try:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            log_lines = f.readlines()[-lines:]
+        result["last_lines"] = log_lines
+        for i, line in enumerate(log_lines):
+            for pat in patterns:
+                if re.search(pat, line):
+                    result["error_matches"].append((i, line.strip(), pat))
+        return result
+    except Exception:
+        return result
 """
 Sophia Monitor: Pokročilé kontroly pro guardian.py
 

@@ -11,6 +11,7 @@
 ## Klíčové vlastnosti backendu
 - **FastAPI** – asynchronní, škálovatelný backend s OpenAPI dokumentací
 - **Centralizovaná konfigurace** v `core/config.py` (všechny proměnné prostředí, cesty, admin emaily, test mode)
+- **Robustní načítání config.yaml** – fallback na CWD, adresář modulu i root workspace, testy jsou environmentálně nezávislé.
 - **Oddělená business logika** v `services/` (uživatelé, role, chat, tokeny, audit)
 - **Role-based access control (RBAC)** – role `admin`, `user`, `guest` určují přístup k endpointům (viz `services/roles.py`)
 - **OAuth2 (Google)** – bezpečné přihlášení, identita v session
@@ -201,6 +202,12 @@ Tato sekce popisuje cílovou architekturu pro další fázi vývoje, která stav
 ### 1. Cílová Adresářová Struktura V4
 
 Struktura zůstává z velké části stejná, ale obsah a funkce klíčových modulů se dramaticky rozšiřují.
+
+
+### 2.1 Testování a Mockování
+
+- **Mock/fallback Redis:** Všechny testy používají automaticky in-memory mock Redis (InMemoryRedisMock) při nastavení `SOPHIA_TEST_MODE=1`. Díky tomu jsou testy plně automatizované a nezávislé na běžícím serveru.
+- **Environmentální nezávislost:** Testy fungují bez ohledu na aktuální pracovní adresář, konfigurace i cache jsou vždy dostupné.
 
 ### 2. Evoluce Klíčových Komponent ve V4
 

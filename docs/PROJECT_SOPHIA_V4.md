@@ -99,9 +99,9 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
     - (Plánováno, zatím neimplementováno)
 
 ### 5.2 Cache
-- **Cíl:** Zrychlit často volané endpointy.
-- **Postup:**
-    - Zavést Redis/memcached pro cache uživatelských dat, výsledků dotazů
+- [x] **Cíl:** Zrychlit často volané endpointy.
+- [x] **Postup:**
+    - Zavést Redis/memcached pro cache uživatelských dat, výsledků dotazů (včetně robustního mocku pro testy)
 
 ### 5.3 Optimalizace přístupu do paměti/databáze
 - **Cíl:** Snížit latenci, zvýšit propustnost.
@@ -111,10 +111,11 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
 ## 6. Bezpečnost a audit
 
 ### 6.1 Auditní logy a monitoring
-- **Cíl:** Sledovat a analyzovat klíčové akce a incidenty.
-- **Postup:**
+- [x] **Cíl:** Sledovat a analyzovat klíčové akce a incidenty.
+- [x] **Postup:**
     - Logovat přihlášení, odhlášení, změny dat, chyby, podezřelé akce
     - Nastavit alerty na kritické události
+    - Centralizovat monitoring do sophia_monitor.py, pokrýt testy
 
 ### 6.2 Rate limiting
 - **Cíl:** Ochrana proti zneužití API.
@@ -134,8 +135,8 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
     - Navrhnout rozhraní pro pluginy, oddělit jádro a rozšíření
 
 ### 7.2 Oddělení sandboxu a produkce
-- **Cíl:** Bezpečné experimenty bez vlivu na produkci.
-- **Postup:**
+- [x] **Cíl:** Bezpečné experimenty bez vlivu na produkci.
+- [x] **Postup:**
     - Sandbox držet odděleně, jasná pravidla pro migraci změn
 
 # Projekt Sophia V4: Roadmapa k Autonomnímu Tvůrci

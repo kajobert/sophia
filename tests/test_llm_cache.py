@@ -1,3 +1,6 @@
+
+import os
+os.environ['SOPHIA_TEST_MODE'] = '1'
 import pytest
 from services.llm_cache import make_cache_key, set_cached_reply, get_cached_reply, redis_client
 import time
