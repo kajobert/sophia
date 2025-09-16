@@ -47,6 +47,12 @@ Tvé první zadání najdeš v souboru `docs/PROJECT_SOPHIA_V4.md`, začni Fáz�
 
 ---
 
+## Nový agent: Reviewer Agent
+
+Tento agent má za úkol kontrolovat, zda jsou technické změny v kódu doprovázeny odpovídajícími aktualizacemi v dokumentaci, konkrétně v souboru `WORKLOG.md`. Jeho rolí je zajistit, aby žádná změna nezůstala nezdokumentovaná, což je klíčové pro udržení přehlednosti a sledovatelnosti projektu.
+
+---
+
 ## Nový agent: Aider IDE Agent
 
 Od Fáze 13 roadmapy je součástí Sophia ekosystému také Aider IDE agent, který slouží jako autonomní evoluční motor – samostatný agent, jenž umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Je klíčovým prvkem evoluční smyčky a umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa a soubor `agents/aider_agent.py`.
