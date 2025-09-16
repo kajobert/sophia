@@ -13,7 +13,7 @@ Než začneš s jakýmkoliv úkolem, je **naprosto nezbytné**, abys prostudoval
 1.  **`docs/DNA.md`**: Definuje *PROČ* tento projekt existuje. Je to filosofická a etická duše Sophie.
 2.  **`docs/ARCHITECTURE.md`**: Definuje *CO* stavíme. Je to technický plán celé architektury V4.
 3.  **`docs/CONCEPTS.md`**: Definuje *JAK* klíčové mechanismy V4 fungují.
-4.  **`docs/PROJECT_SOPHIA_V4.md`**: Definuje *KROKY*, které máš následovat. Toto je tvůj primární seznam úkolů.
+4.  **`docs/ROADMAP_NEXUS_V1.md`**: Definuje *KROKY*, které máš následovat. Toto je tvůj primární seznam úkolů a hlavní strategický dokument.
 
 ---
 
@@ -33,7 +33,7 @@ Pro zajištění přehlednosti, udržitelnosti a dokumentace projektu se **musí
 
 3.  **Ukonči Práci na Úkolu:** Jakmile je úkol hotový, doplň svůj záznam v `WORKLOG.md` a změň **Stav: Dokončeno**.
 
-4.  **Aktualizuj Hlavní Plán:** Nakonec otevři `docs/PROJECT_SOPHIA_V4.md` a u úkolu, který jsi dokončil, změň `[ ]` na `[x]`.
+4.  **Aktualizuj Hlavní Plán:** Nakonec otevři `docs/ROADMAP_NEXUS_V1.md` a u úkolu, který jsi dokončil, změň `[ ]` na `[x]`.
 
 5.  **Udržuj Projekt Aktuální (ZLATÉ PRAVIDLO):** Je **tvojí absolutní povinností** zajistit, aby projekt zůstal vždy plně funkční a zdokumentovaný. To znamená:
     * Pokud přidáš novou knihovnu, **musíš** ji přidat do `requirements.txt`.
@@ -43,7 +43,7 @@ Pro zajištění přehlednosti, udržitelnosti a dokumentace projektu se **musí
     * **Vždy zanech projekt v lepším a čistším stavu, než jsi ho našel.**
 
 ---
-Tvé první zadání najdeš v souboru `docs/PROJECT_SOPHIA_V4.md`, začni Fází 9.
+Tvé první zadání najdeš v souboru `docs/ROADMAP_NEXUS_V1.md`, začni Fází 9.
 
 ---
 
