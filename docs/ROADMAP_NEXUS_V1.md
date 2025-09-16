@@ -19,7 +19,7 @@ Tento dokument definuje aktuální strategický plán pro vývoj projektu Sophia
 
 - **[x] Úkol 2.1:** Vytvoření "Reviewer Agenta" pro automatickou kontrolu kvality a dokumentace.
 - **[x] Úkol 2.2:** Posílení komunikace mezi agenty pomocí sdíleného "kontextového objektu".
-- **[ ] Úkol 2.3:** Aktivní integrace `ethos_module` do rozhodovacího procesu.
+- **[x] Úkol 2.3:** Aktivní integrace `ethos_module` do rozhodovacího procesu.
 
 ---
 
