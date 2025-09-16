@@ -1,3 +1,32 @@
+---
+**Timestamp:** 2025-09-16 15:00:00
+**Agent:** GitHub Copilot
+**Task ID:** guardian-modularizace-monitoring
+
+**Cíl Úkolu:**
+- Zjednodušit guardian.py na minimalistické jádro a přesunout pokročilé kontroly do samostatného modulu sophia_monitor.py.
+- Zajistit snadnou rozšiřitelnost a testovatelnost všech kontrol.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen modul `sophia_monitor.py` s funkcemi pro integritu, log scan, síťové kontroly.
+2. Z guardian.py odstraněny pokročilé kontroly, zůstává pouze hlavní smyčka a restart logika.
+3. Guardian nyní volá pokročilé kontroly přes sophia_monitor.py.
+4. Vytvořeny a upraveny testy pro guardian i sophia_monitor (pytest, plné pokrytí základních scénářů).
+5. Přidána dokumentace a seznam plánovaných kontrol do sophia_monitor.py.
+
+**Problémy a Překážky:**
+- Původní testy selhávaly kvůli přesunu funkcí, bylo nutné je rozdělit a upravit.
+- Funkce check_integrity původně nezahrnovala dočasné soubory v testu.
+
+**Navržené Řešení:**
+- Testy rozděleny na guardian (import, logování) a sophia_monitor (integrita, logy, síť).
+- Test integrita upraven tak, aby vytvářel soubor v rootu workspace.
+
+**Nápady a Postřehy:**
+- Modularizace výrazně zjednodušila správu a rozšiřitelnost healthchecků.
+- Sophia_monitor.py je připraven na další bezpečnostní a provozní kontroly.
+
+**Stav:** Dokončeno
 # 2025-09-16: Refaktoring backendu, RBAC, refresh tokeny, audit logování
 **Timestamp:** 2025-09-16 10:00:00
 **Agent:** GitHub Copilot

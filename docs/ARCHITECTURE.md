@@ -1,3 +1,11 @@
+## Monitoring a Modularita (stav k 2025-09-16)
+
+- **guardian.py** nyní obsahuje pouze minimalistické jádro: spouštění hlavního procesu, základní restart logiku a monitoring CPU/RAM.
+- Pokročilé kontroly (integrita souborů, monitoring logů, síťové testy) byly přesunuty do samostatného modulu **sophia_monitor.py**.
+- Všechny pokročilé kontroly jsou volány z guardian.py jako samostatné funkce, což umožňuje snadné rozšiřování a testování.
+- Každá kontrola v sophia_monitor.py je samostatná, snadno testovatelná a připravená na další rozšíření (disk, certifikáty, zálohy, externí služby atd.).
+- Testy pro guardian i sophia_monitor jsou oddělené a pokrývají základní i chybové scénáře.
+
 # Backend V4 – aktuální architektura (stav k 2025-09-16)
 
 ## Klíčové vlastnosti backendu

@@ -157,6 +157,7 @@ Cílem je vytvořit systém, který:
 
 ### Fáze 9: Evoluce Infrastruktury
 
+
 **Cíl:** Připravit robustní, škálovatelné a bezpečné prostředí pro autonomní operace.
 
 - [x] **9.1. Upgrade Databáze:**
@@ -169,6 +170,9 @@ Cílem je vytvořit systém, který:
     -   Integrovat knihovnu `psutil` do `guardian.py`.
     -   Rozšířit monitorovací smyčku o kontrolu systémových prostředků (využití CPU a RAM).
     -   Implementovat logiku, která v případě překročení prahových hodnot (např. 90% RAM) provede "měkký" restart nebo pošle varování.
+    -   **Modularizace guardian.py:** Pokročilé kontroly (integrita, logy, síť) přesunuty do samostatného modulu `sophia_monitor.py`.
+    -   **Testování:** Vytvořeny a upraveny testy pro guardian i sophia_monitor (pytest, plné pokrytí základních scénářů).
+    -   **Dokumentace:** Přidán seznam plánovaných kontrol do `sophia_monitor.py` a aktualizován WORKLOG.
 
 - [x] **9.3. Vytvoření Sandboxu:**
     -   Vytvořit a zabezpečit adresář `/sandbox`.
