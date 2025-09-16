@@ -40,6 +40,7 @@ Projekt je rozdělen do evolučních fází, které na sebe navazují.
 - **Autonomous Creator:** Cílová schopnost samostatně plánovat, psát, testovat a nasazovat kód v bezpečném sandboxu (`core/consciousness_loop.py`).
 - **AutoGen Team:** Kreativní brainstorming a generování strategií v rámci "spánkové" fáze (`agents/autogen_team.py`).
 - **Aider IDE Agent:** Autonomní evoluční motor – samostatný agent, který umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa Fáze 13 (evoluční workflow).
+- **Reviewer Agent:** Specializovaný agent pro kontrolu kvality, který ověřuje, zda jsou změny v kódu doprovázeny odpovídající aktualizací dokumentace (`WORKLOG.md`), a tím zajišťuje udržitelnost a transparentnost projektu.
 
 ## 🚀 Jak Začít
 
