@@ -1,3 +1,142 @@
+# Akční plán optimalizace a zlepšení (2025-09-15)
+
+Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvýší efektivitu, rychlost a udržitelnost projektu Sophia. Každý bod obsahuje jasný popis, cíl a doporučený postup.
+
+## 1. Backend: výkon, škálovatelnost, bezpečnost
+
+### 1.1 Přechod na asynchronní framework (FastAPI)
+- **Cíl:** Získat vyšší výkon, async endpointy, automatickou OpenAPI dokumentaci.
+- **Postup:**
+    - Migrovat Flask backend na FastAPI (zachovat Authlib, session, endpoints)
+    - Refaktorovat endpointy na async funkce
+    - Otestovat kompatibilitu s frontendem a testy
+
+### 1.2 Centralizace konfigurace
+- **Cíl:** Jednoduchá správa prostředí, bezpečnost, přehlednost.
+- **Postup:**
+    - Vytvořit modul `core/config.py` pro všechny proměnné prostředí a cesty
+    - Všechny části backendu načítají konfiguraci pouze z tohoto modulu
+
+### 1.3 Oddělení business logiky od endpointů
+- **Cíl:** Lepší čitelnost, testovatelnost, rozšiřitelnost.
+- **Postup:**
+    - Každý endpoint volá pouze tenkou vrstvu, logika je v samostatných modulech/službách
+    - Připravit adresář `services/` pro business logiku
+
+### 1.4 JWT místo session cookies (volitelné)
+- **Cíl:** Škálovatelnost, možnost více backend instancí bez sdílené session.
+- **Postup:**
+    - Implementovat JWT autentizaci (např. pomocí PyJWT)
+    - Zajistit kompatibilitu s frontendem
+
+### 1.5 Bezpečnostní vylepšení
+- **Cíl:** Ochrana proti CSRF, XSS, session hijackingu.
+- **Postup:**
+    - Nastavit secure cookies, SameSite, CSRF ochranu (např. Flask-WTF, FastAPI CSRF)
+    - Pravidelně auditovat závislosti (Bandit, Snyk)
+
+## 2. Testování a CI/CD
+
+### 2.1 Mockování OAuth2 pro testy
+- **Cíl:** Plně automatizované testy bez nutnosti interakce s Googlem.
+- **Postup:**
+    - Vytvořit mock server nebo použít knihovnu pro simulaci OAuth2 odpovědí
+    - Pokrýt všechny scénáře (úspěch, selhání, expirovaný token)
+
+### 2.2 Pokrytí testy a coverage
+- **Cíl:** Zajistit spolehlivost a odhalit chyby v edge-case scénářích.
+- **Postup:**
+    - Měřit pokrytí testy (coverage.py)
+    - Pravidelně doplňovat testy pro nové i existující funkce
+
+### 2.3 CI/CD pipeline
+- **Cíl:** Automatizace build, test, lint, nasazení.
+- **Postup:**
+    - Nastavit GitHub Actions workflow pro lint, testy, build, deployment
+    - Přidat badge do README
+
+## 3. Frontend: UX, výkon, testy
+
+### 3.1 State management
+- **Cíl:** Jednotná správa uživatele, session, notifikací.
+- **Postup:**
+    - Zavést Redux, Zustand nebo Context API
+    - Refaktorovat komponenty na využití centralizovaného stavu
+
+### 3.2 Lazy loading a optimalizace bundle
+- **Cíl:** Rychlejší načítání, menší bundle.
+- **Postup:**
+    - Rozdělit velké komponenty, použít React.lazy/Suspense
+    - Optimalizovat build (tree-shaking, code splitting)
+
+### 3.3 E2E testy
+- **Cíl:** Automatizované testy uživatelských scénářů.
+- **Postup:**
+    - Zavést Cypress nebo Playwright
+    - Pokrýt hlavní scénáře (login, chat, upload, odhlášení)
+
+## 4. Dokumentace a Dev Experience
+
+### 4.1 OpenAPI/Swagger dokumentace
+- **Cíl:** Automaticky generovaná a aktuální API dokumentace.
+- **Postup:**
+    - Pro FastAPI nativně, pro Flask použít flasgger nebo apispec
+    - Publikovat dokumentaci na /docs
+
+### 4.2 Onboarding a přehlednost
+- **Cíl:** Rychlý start pro nové vývojáře, přehledná architektura.
+- **Postup:**
+    - Přidat sekci „Jak přispívat“, diagramy, quickstart do README
+    - Přidat .env.example
+
+## 5. Výkon a škálovatelnost
+
+### 5.1 Asynchronní background jobs
+- **Cíl:** Oddělit náročné úlohy od request/response cyklu.
+- **Postup:**
+    - Zavést Celery, RQ nebo FastAPI BackgroundTasks
+    - Použít pro generování odpovědí, práci s pamětí
+
+### 5.2 Cache
+- **Cíl:** Zrychlit často volané endpointy.
+- **Postup:**
+    - Zavést Redis/memcached pro cache uživatelských dat, výsledků dotazů
+
+### 5.3 Optimalizace přístupu do paměti/databáze
+- **Cíl:** Snížit latenci, zvýšit propustnost.
+- **Postup:**
+    - Profilovat a optimalizovat dotazy, zavést batch operace, indexy
+
+## 6. Bezpečnost a audit
+
+### 6.1 Auditní logy a monitoring
+- **Cíl:** Sledovat a analyzovat klíčové akce a incidenty.
+- **Postup:**
+    - Logovat přihlášení, odhlášení, změny dat, chyby, podezřelé akce
+    - Nastavit alerty na kritické události
+
+### 6.2 Rate limiting
+- **Cíl:** Ochrana proti zneužití API.
+- **Postup:**
+    - Zavést rate limiting (např. Flask-Limiter, FastAPI-limiter)
+
+### 6.3 Bezpečnostní skeny
+- **Cíl:** Pravidelně odhalovat zranitelnosti v závislostech.
+- **Postup:**
+    - Používat Bandit, Snyk, Dependabot
+
+## 7. Modularita a rozšiřitelnost
+
+### 7.1 Plugin architektura pro agenty
+- **Cíl:** Umožnit snadné přidávání nových agentů a nástrojů.
+- **Postup:**
+    - Navrhnout rozhraní pro pluginy, oddělit jádro a rozšíření
+
+### 7.2 Oddělení sandboxu a produkce
+- **Cíl:** Bezpečné experimenty bez vlivu na produkci.
+- **Postup:**
+    - Sandbox držet odděleně, jasná pravidla pro migraci změn
+
 # Projekt Sophia V4: Roadmapa k Autonomnímu Tvůrci
 
 Tento dokument slouží jako hlavní plán a TODO list pro vývoj AGI Sophia V4. Cílem této etapy je přeměnit Sophii z myslitele na autonomního tvůrce, který dokáže samostatně psát, testovat a vylepšovat kód v bezpečném prostředí.
