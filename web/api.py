@@ -33,22 +33,22 @@ class ChatRequest(BaseModel):
 async def read_index():
     return "web/ui/index.html"
 
+from core.llm_config import get_llm
+from agents.planner_agent import PlannerAgent
+
 @app.post("/chat")
 async def chat(request: ChatRequest):
     """
     Endpoint to receive a prompt and return a plan from the PlannerAgent.
     """
-    # --- Lazy Loading ---
-    # Import the agent here to prevent slow startup and import-time side effects.
-    from agents.planner_agent import PlannerAgent
-
     try:
         # 1. Create a context for the request
         session_id = str(uuid.uuid4())
         context = SharedContext(session_id=session_id, original_prompt=request.prompt)
 
         # 2. Instantiate and run the PlannerAgent
-        planner_agent = PlannerAgent()
+        llm_instance = get_llm()
+        planner_agent = PlannerAgent(llm=llm_instance)
         updated_context = planner_agent.run_task(context)
 
         # 3. Extract the results from the context payload
