@@ -22,10 +22,10 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
     elif "kód" in prompt_lower or "code" in prompt_lower:
         response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
     elif "plán" in prompt_lower or "plan" in prompt_lower:
-        if "ethical review" in prompt_lower or "etickou revizi" in prompt_lower:
-            response_content = "Thought: The user wants a plan and an ethical review.\nFinal Answer:\nToto je jednoduchý plán:\n1. Definuj funkci `add(a, b)`.\n2. Funkce bude brát dva argumenty.\n3. Funkce vrátí součet a + b.\n\nEthical Review Feedback: Plan seems to be in alignment with core principles (keyword check). (Decision: approve)"
-        else:
-            response_content = "Thought: The user wants a plan.\nFinal Answer:\nToto je jednoduchý plán:\n1. Definuj funkci `add(a, b)`.\n2. Funkce bude brát dva argumenty.\n3. Funkce vrátí součet a + b."
+        # This is a planner prompt. The planner task in the application always
+        # requires an ethical review, so we always return the full response
+        # to make the mock more robust for UI testing.
+        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
     else:
         response_content = "General mock response."
 

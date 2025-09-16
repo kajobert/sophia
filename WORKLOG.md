@@ -1,3 +1,26 @@
+**Timestamp:** 2025-09-16 06:39:00
+**Agent:** Jules
+**Task ID:** robust-planner-mock
+
+**Cíl Úkolu:**
+- Vylepšit mockovací logiku v `core/mocks.py`, aby spolehlivěji simulovala očekávaný výstup `PlannerAgenta` pro účely testování a vývoje webového rozhraní.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza Problému:** Bylo zjištěno, že stávající mockovací funkce sice obsahovala logiku pro generování dvoudílné odpovědi (plán + etická revize), ale tato logika byla závislá na vnořené podmínce, která se mohla ukázat jako nespolehlivá.
+2.  **Zjednodušení a Zpřesnění Logiky:** Funkce `mock_litellm_completion_handler` v `core/mocks.py` byla upravena. Byla odstraněna vnořená podmínka. Nyní platí, že jakýkoliv prompt, který obsahuje klíčová slova "plán" nebo "plan", je považován za prompt pro `PlannerAgenta` a funkce **vždy** vrátí kompletní dvoudílnou odpověď.
+3.  **Vylepšení Textu Odpovědi:** Text mockované odpovědi byl upraven tak, aby lépe odpovídal příkladu ze zadání a byl srozumitelnější.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tímto zjednodušením se mock stává robustnější a méně náchylný k chybám způsobeným komplexními prompty generovanými frameworkem `crewai`.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 05:41:00
 **Agent:** Jules
 **Task ID:** web-ui-final-fixes
