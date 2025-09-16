@@ -20,3 +20,4 @@ pytest
 pydantic
 google-generativeai
 memorisdk
+crewai-tools
