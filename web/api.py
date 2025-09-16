@@ -1,40 +1,55 @@
-from flask import Flask, request, jsonify, send_from_directory
 import sys
 import os
+import uuid
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
-# Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z `memory`
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# This is a hack to ensure the application can find the 'core' and 'agents' modules
+# In a real-world scenario, this project should be structured as a proper Python package
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from memory.advanced_memory import AdvancedMemory
+# Only import what is absolutely necessary at the module level
+from core.context import SharedContext
 
-app = Flask(__name__, static_folder='ui')
+app = FastAPI()
 
-@app.route('/')
-def serve_ui():
+# Allow all origins for simplicity, as the frontend will be a local file.
+# In a production environment, this should be restricted to the actual frontend URL.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+class ChatRequest(BaseModel):
+    prompt: str
+
+@app.post("/chat")
+async def chat(request: ChatRequest):
     """
-    Servíruje hlavní HTML soubor pro uživatelské rozhraní.
+    Endpoint to receive a prompt and return a plan from the PlannerAgent.
     """
-    return send_from_directory(app.static_folder, 'index.html')
-
-@app.route('/start_task', methods=['POST'])
-def start_task():
-    """
-    API endpoint pro přidání nového úkolu do fronty.
-    Očekává JSON payload s klíčem 'task_description'.
-    """
-    data = request.get_json()
-    if not data or 'task_description' not in data:
-        return jsonify({"error": "Missing 'task_description' in request body"}), 400
-
-    task_description = data['task_description']
+    # --- Lazy Loading ---
+    # Import the agent here to prevent slow startup and import-time side effects.
+    from agents.planner_agent import PlannerAgent
 
     try:
-        memory = AdvancedMemory()
-        task_id = memory.add_task(task_description)
-        memory.close()
-        return jsonify({"message": "Task added successfully", "task_id": task_id}), 201
-    except Exception as e:
-        return jsonify({"error": f"Failed to add task: {str(e)}"}), 500
+        # 1. Create a context for the request
+        session_id = str(uuid.uuid4())
+        context = SharedContext(session_id=session_id, original_prompt=request.prompt)
 
-if __name__ == '__main__':
-    app.run(debug=False, port=5001)
+        # 2. Instantiate and run the PlannerAgent
+        planner_agent = PlannerAgent()
+        updated_context = planner_agent.run_task(context)
+
+        # 3. Extract the results from the context payload
+        plan = updated_context.payload.get('plan', 'No plan generated.')
+        ethical_review = updated_context.payload.get('ethical_review', 'No ethical review conducted.')
+
+        return {"plan": plan, "ethical_review": ethical_review}
+    except Exception as e:
+        # Return a more detailed error message for debugging
+        return {"error": f"An error occurred: {str(e)}"}
