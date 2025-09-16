@@ -1,0 +1,31 @@
+# Konfigurace pro Sophia V4 - TESTOVACÍ VERZE
+
+# Databáze pro epizodickou paměť a úkoly
+database:
+  db_host: "localhost"
+  db_port: 5432
+  db_user: "test_user"
+  db_password: "test_password"
+  db_name: "test_db"
+
+logging:
+  guardian_log: "logs/guardian_test.log"
+  sophia_main_log: "logs/sophia_main_test.log"
+
+# Nastavení životního cyklu
+lifecycle:
+  waking_duration_seconds: 1
+  sleeping_duration_seconds: 1
+
+# Konfigurace pro Large Language Models (LLM)
+llm_models:
+  primary_llm:
+    provider: "mock"
+    model_name: "mock-model"
+    temperature: 0.1
+    verbose: False
+
+# Konfigurace pro Intelligent Guardian
+guardian:
+  cpu_threshold: 99.0
+  ram_threshold: 99.0

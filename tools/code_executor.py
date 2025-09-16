@@ -14,7 +14,7 @@ import os
 import subprocess
 from typing import Type
 from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
+from crewai.tools import BaseTool
 
 # Define the absolute path for the sandbox directory to ensure security
 SANDBOX_DIR = os.path.abspath("sandbox")
