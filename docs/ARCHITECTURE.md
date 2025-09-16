@@ -55,8 +55,10 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
     * **Funkce:** Kromě reakce na pád bude proaktivně monitorovat zdraví systému (CPU, RAM) a provádět "měkké" restarty nebo varování, aby se předešlo selhání.
 
 * **Komunikace a Databáze (Robustní Fronta)**:
-    * **Technologie:** `PostgreSQL`, `psycopg2-binary`
-    * **Funkce:** Nahradí `SQLite` jako hlavní databázi pro epizodickou paměť a úkolovou frontu. Tím se eliminuje problém se souběhem a umožní plynulá komunikace mezi `web/api.py` a `main.py` v reálném čase.
+    * **Technologie:** `PostgreSQL`, `psycopg2-binary`, `SharedContext`
+    * **Funkce:**
+        * `PostgreSQL` nahradí `SQLite` jako hlavní databázi pro epizodickou paměť a úkolovou frontu.
+        * Pro přenos dat mezi agenty a procesy je zaveden `SharedContext` objekt (`core/context.py`), který funguje jako standardizovaná datová sběrnice. Detailní popis tohoto konceptu je v `docs/CONCEPTS.md`.
 
 * **`memory/` (Pokročilá Paměť)**:
     * **Technologie:** Externí knihovna jako `GibsonAI/memori`
