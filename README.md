@@ -153,7 +153,7 @@ Tato architektura výrazně zvyšuje robustnost a rozšiřitelnost systému pro 
 
 ## 📈 Roadmapa
 
-Kompletní roadmapu včetně integrace Aider IDE agenta najdeš v [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md).
+Kompletní roadmapu včetně integrace Aider IDE agenta najdeš v [`docs/ROADMAP_NEXUS_V1.md`](./docs/ROADMAP_NEXUS_V1.md).
 
 ## 🛠️ Technologický Stack
 
