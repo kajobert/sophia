@@ -28,6 +28,10 @@ Tato pravidla jsou absolutní a musí být dodržena v každém úkolu. Jsou vý
 - **Pravidlo:** Před vytvořením jakéhokoliv Pull Requestu (PR) jsi POVINEN spustit na své změny revizní skript `run_review.py` (např. `python run_review.py main TVOJE_VETEV`). PR smí být vytvořen a odevzdán pouze v případě, že skript vrátí výsledek "PASS".
 - **Důvod:** Tímto krokem přebíráš plnou zodpovědnost za kvalitu a kompletnost své práce a šetříš čas celému týmu.
 
+**6. Správa Závislostí (Metoda "requirements.in"):**
+- **Pravidlo:** Soubor `requirements.txt` je považován za "lock file", tedy za přesný otisk funkčního prostředí. Nikdy se neupravuje ručně. Pro definici hlavních závislostí se používá minimalistický soubor (např. `requirements.in`, nebo v našem případě jsme ho vytvořili dočasně přímo v `requirements.txt`). Finální `requirements.txt` se generuje z čistého prostředí pomocí `pip freeze`.
+- **Důvod:** Předcházíme tím "peklu závislostí" (dependency hell) a zajišťujeme, že naše prostředí je vždy 100% reprodukovatelné a bez konfliktů.
+
 ---
 
 ## O Projektu
