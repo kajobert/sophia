@@ -1219,6 +1219,34 @@
 Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia V3. Každý AI programátor je povinen zde dokumentovat svou práci.
 
 ---
+**Timestamp:** 2025-09-16 14:34:00
+**Agent:** Jules
+**Task ID:** dependency-hell-resolution
+
+**Cíl Úkolu:**
+- Definitivně vyřešit chronické problémy se závislostmi a vytvořit stabilní, reprodukovatelné prostředí.
+
+**Postup a Klíčové Kroky:**
+1.  **Identifikace Problému:** Po sérii selhání `pip install` bylo zjištěno, že soubor `requirements.txt` obsahuje mnoho "natvrdo" pinovaných verzí, které jsou ve vzájemném konfliktu.
+2.  **Iterativní Pokusy:** Bylo provedeno několik pokusů o opravu jednotlivých konfliktů (např. `pytest`, `torch`, `litellm`, `protobuf`, `pytz`), ale oprava jednoho konfliktu vždy odhalila další.
+3.  **Změna Strategie:** Bylo rozhodnuto opustit metodu záplatování a přistoupit k radikálnímu, ale správnému řešení.
+4.  **Vytvoření Minimalistického Seznamu:** Provedena analýza kódu a identifikovány pouze skutečné, top-level závislosti projektu.
+5.  **Přepsání `requirements.txt`:** Původní soubor byl kompletně přepsán novým, minimalistickým seznamem, který dal `pip`u volnost najít kompatibilní verze.
+6.  **Finální Vygenerování:** Operátor (kajobert) na základě tohoto minimalistického souboru v čistém virtuálním prostředí vygeneroval nový, plně pinovaný a 100% konzistentní `requirements.txt` pomocí `pip freeze`.
+7.  **Zrychlení Instalace:** Problém s timeoutem při vytváření snapshotu byl vyřešen doporučením použít moderní a rychlejší instalátor `uv` (`uv pip install -r requirements.txt`).
+
+**Problémy a Překážky:**
+- Původní `requirements.txt` byl v takovém stavu, že se stal neopravitelným. Hlavní konflikty byly mezi `google-ai-generativelanguage` (vyžaduje `protobuf<5`) a `mem0ai` (vyžaduje `protobuf>=5.29`), což je neřešitelný rozpor.
+
+**Navržené Řešení:**
+- Přestat se snažit opravit rozbitý soubor a místo toho ho vygenerovat znovu od základů, na základě skutečných potřeb projektu.
+
+**Nápady a Postřehy:**
+- Tento proces je klíčovou lekcí ve správě závislostí. Soubor `requirements.txt` by se měl ideálně generovat z jednoduššího souboru (jako `requirements.in`), který definuje pouze hlavní závislosti. Tímto se předejde budoucím konfliktům.
+- Na základě této zkušenosti bylo do `CODE_OF_CONDUCT.md` přidáno nové "Zlaté pravidlo" o správě závislostí.
+
+**Stav:** Dokončeno
+---
 
 ### Šablona Záznamu
 
