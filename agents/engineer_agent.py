@@ -1,5 +1,5 @@
 from crewai import Agent
-from core.llm_config import llm
+import core.llm_config
 from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool
 from tools.code_executor import ExecutePythonScriptTool
 
@@ -22,7 +22,7 @@ class EngineerAgent:
             backstory=(
                 "Jsem Engineer, tvůrce a realizátor. Převádím plány do funkčního kódu, testuji a refaktoruji. Pracuji pouze v sandboxu, kde je vše bezpečné."
             ),
-            llm=llm,
+            llm=core.llm_config.llm,
             tools=[write_file_tool, read_file_tool, list_dir_tool, execute_script_tool],
             verbose=True,
             allow_delegation=False,
