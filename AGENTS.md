@@ -51,6 +51,8 @@ Tvé první zadání najdeš v souboru `docs/PROJECT_SOPHIA_V4.md`, začni Fáz�
 
 Tento agent má za úkol kontrolovat, zda jsou technické změny v kódu doprovázeny odpovídajícími aktualizacemi v dokumentaci, konkrétně v souboru `WORKLOG.md`. Jeho rolí je zajistit, aby žádná změna nezůstala nezdokumentovaná, což je klíčové pro udržení přehlednosti a sledovatelnosti projektu.
 
+**Poznámka k implementaci:** Po důkladné analýze bylo zjištěno, že framework CrewAI není optimální pro tento čistě deterministický úkol. Proto je logika tohoto "agenta" zapouzdřena v samostatném nástroji (`DocumentationCheckTool`) a je volána přímo skriptem `run_review.py`, nikoli prostřednictvím plného cyklu agenta.
+
 ---
 
 ## Nový agent: Aider IDE Agent
