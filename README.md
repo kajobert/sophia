@@ -112,14 +112,22 @@ Pro přepnutí na LangChain wrapper stačí odkomentovat příslušný řádek v
 
 ## �🧪 Testování
 
-Pro spuštění všech testů (pytest i unittest) použijte:
+Systém je vybaven robustní sadou testů pro zajištění stability a spolehlivosti.
+
+### Spuštění Testů
+Pro spuštění kompletní sady testů (včetně unit a integračních testů) použijte následující příkaz z kořenového adresáře projektu:
 ```bash
-PYTHONPATH=. pytest tests/
+PYTHONPATH=. python3 -m pytest
 ```
-Pokud chcete spustit pouze unittest testy:
-```bash
-PYTHONPATH=. python3 -m unittest discover tests
-```
+Tento příkaz automaticky najde a spustí všechny testy.
+
+### Testovací Prostředí
+Testy jsou navrženy tak, aby běžely v izolovaném prostředí bez nutnosti reálných API klíčů nebo produkční konfigurace. To je zajištěno mechanismem v `tests/conftest.py`, který automaticky:
+1.  Nastaví proměnnou prostředí `SOPHIA_ENV=test`.
+2.  Přiměje aplikaci načíst testovací konfiguraci z `config_test.yaml`.
+3.  Mockuje veškerá volání na LLM, aby se zabránilo skutečným API dotazům.
+
+Díky tomu jsou testy rychlé, spolehlivé a bezpečné.
 
 
 ### Orchestrace tvorby (CrewAI):
