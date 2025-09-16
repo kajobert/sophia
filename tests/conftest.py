@@ -17,8 +17,14 @@ def mock_litellm_completion(*args, **kwargs):
     prompt_lower = prompt.lower()
 
     response_content = ""
-    # Check for the more specific prompt (engineer's) first.
-    if "kód" in prompt_lower or "code" in prompt_lower:
+    # Check for the tester's prompt first.
+    if "otestuj" in prompt_lower or "test" in prompt_lower:
+        response_content = """
+Thought: The user wants me to test the code. I will confirm it's functional.
+Final Answer: Kód je funkční a splňuje všechny požadavky.
+"""
+    # Then check for the engineer's prompt.
+    elif "kód" in prompt_lower or "code" in prompt_lower:
         response_content = """
 Thought: The user wants code based on the plan. I will provide a Python code block.
 Final Answer:

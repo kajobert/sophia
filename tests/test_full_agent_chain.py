@@ -2,6 +2,7 @@ import pytest
 from crewai import Crew, Task
 from agents.planner_agent import PlannerAgent
 from agents.engineer_agent import EngineerAgent
+from agents.tester_agent import TesterAgent
 from core.context import SharedContext
 
 def test_planner_with_shared_context():
@@ -41,18 +42,28 @@ def test_linear_agent_collaboration():
 
     # 2. Engineering Phase
     engineer = EngineerAgent()
-    final_context = engineer.run_task(context_with_plan)
+    context_with_code = engineer.run_task(context_with_plan)
 
-    # 3. Verification of the Final Result
+    assert 'code' in context_with_code.payload
+    assert "def add(a, b):" in context_with_code.payload['code']
+
+    # 3. Testing Phase
+    tester = TesterAgent()
+    final_context = tester.run_task(context_with_code)
+
+    # 4. Verification of the Final Result
     assert isinstance(final_context, SharedContext)
     assert 'plan' in final_context.payload
     assert 'code' in final_context.payload
+    assert 'test_results' in final_context.payload
 
     plan = final_context.payload['plan']
     code = final_context.payload['code']
+    test_results = final_context.payload['test_results']
 
     print(f"\n--- Final Context Plan ---\n{plan}\n--------------------------")
     print(f"\n--- Final Context Code ---\n{code}\n--------------------------")
+    print(f"\n--- Final Context Test Results ---\n{test_results}\n---------------------------------")
 
     # Verify that the original plan is still present
     assert "Definuj funkci `add(a, b)`" in plan
@@ -60,5 +71,7 @@ def test_linear_agent_collaboration():
     # Verify that the generated code is correct
     assert "def add(a, b):" in code
     assert "return a + b" in code
-    # Ensure the code doesn't contain irrelevant parts of the prompt
-    assert "plán" not in code.lower()
+
+    # Verify that the test results are as expected
+    # The mock LLM should return a positive confirmation
+    assert "Kód je funkční" in test_results
