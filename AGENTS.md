@@ -24,6 +24,10 @@ Tato pravidla jsou absolutní a musí být dodržena v každém úkolu. Jsou vý
 - **Pravidlo:** Každá změna v kódu (`.py` soubory) musí být doprovázena záznamem v `WORKLOG.md`. Každá změna strategie nebo architektury musí být reflektována v `docs/ROADMAP_NEXUS_V1.md` a dalších relevantních dokumentech.
 - **Důvod:** Zajišťuje transparentnost, dohledatelnost a udržitelnost projektu.
 
+**5. Povinná Seberevize před Odevzdáním:**
+- **Pravidlo:** Před vytvořením jakéhokoliv Pull Requestu (PR) jsi POVINEN spustit na své změny revizní skript `run_review.py` (např. `python run_review.py main TVOJE_VETEV`). PR smí být vytvořen a odevzdán pouze v případě, že skript vrátí výsledek "PASS".
+- **Důvod:** Tímto krokem přebíráš plnou zodpovědnost za kvalitu a kompletnost své práce a šetříš čas celému týmu.
+
 ---
 
 ## O Projektu
