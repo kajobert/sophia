@@ -1,3 +1,83 @@
+## Guardian Healthcheck & Watchdog (návrh a plán)
+
+Guardian je watchdog, který chrání běh, integritu a bezpečnost Sophia systému.
+
+### Co hlídá:
+- **Redis** (cache, Celery): dostupnost, odpověď na PING
+- **Celery worker**: běží, odpovídá na ping/task
+- **FastAPI backend**: běží, odpovídá na health endpoint
+- **Audit log**: je zapisovatelný, není příliš velký
+- **Disková kapacita**: dostatek místa pro logy a data
+- **LLM API klíč**: validita, případně limit
+- **Konfigurační soubory, .env, secrets**: existují, nejsou poškozené
+- **Sandbox integrita**: detekce neautorizovaných změn
+- **Paměť/RAM, CPU**: není přetížení
+- **Logy**: detekce opakovaných chyb
+
+### Akce při selhání:
+- Zapsat do guardian.log a audit.log
+- Restartovat službu (docker/systemd/subprocess)
+- Odeslat notifikaci (email, webhook)
+- Volitelně: fallback režim, safe mode, automatický repair
+
+### Architektura:
+- Každá kontrola je samostatná funkce (check_redis, check_celery, ...)
+- Hlavní smyčka periodicky volá všechny kontroly a loguje výsledky
+- Výsledky: OK, WARNING, ERROR + detail
+- Konfigurovatelné intervaly, akce, notifikace
+- Možnost ručního spuštění všech kontrol (diagnostika)
+
+### Implementační plán (MVP):
+1. Základní framework guardian.py (smyčka, logování)
+2. check_redis (PING), check_celery (task ping), check_backend (HTTP GET /), check_audit_log (zápis, velikost), check_disk (volné místo), check_llm_key (volitelně)
+3. Akce při selhání: log, restart, notifikace
+4. Rozšiřitelnost: snadné přidání dalších kontrol
+
+## Asynchronní generování odpovědí (Celery + Redis)
+
+Pro škálovatelné a neblokující generování odpovědí LLM je použit Celery s Redis brokerem.
+
+### Jak to funguje?
+1. Frontend nebo klient zavolá `/chat-async` s promptem (POST, JSON: {"message": ...})
+2. Backend zadá požadavek do Celery fronty, vrátí `task_id`.
+3. Klient periodicky dotazuje `/chat-result/{task_id}`.
+4. Po dokončení workeru vrací endpoint odpověď LLM nebo chybu.
+
+### Spuštění Celery workeru
+
+V kořeni projektu spusť:
+```bash
+celery -A services.celery_worker.celery_app worker --loglevel=info
+```
+Redis musí běžet na adrese z proměnné prostředí `REDIS_URL` (výchozí: redis://localhost:6379/0).
+
+### Příklad API volání
+
+```http
+POST /chat-async
+{
+  "message": "Ahoj, kdo jsi?"
+}
+
+Odpověď:
+{
+  "task_id": "...celery-task-id..."
+}
+
+GET /chat-result/{task_id}
+
+Odpověď:
+{
+  "status": "success",
+  "reply": "Sophia říká: ..."
+}
+```
+
+### Výhody
+- Backend není blokován generováním odpovědi
+- Lze škálovat více workerů, oddělit API a LLM workload
+- Redis lze využít i pro cache a další background jobs
+
 # Sophia V4 – Dokumentace backendu (stav k 2025-09-16)
 
 ## Architektura a hlavní principy

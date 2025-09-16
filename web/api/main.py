@@ -1,4 +1,5 @@
 from services.audit_service import log_event
+from fastapi import BackgroundTasks
 
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Body
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -11,6 +12,8 @@ from services.token_service import create_refresh_token, verify_refresh_token
 from services.roles import require_role, ROLE_ADMIN, ROLE_USER, get_user_role
 from services.user_service import get_current_user, set_user_session, clear_user_session
 from services.chat_service import generate_reply
+from services.llm_cache import get_cached_reply, set_cached_reply
+from services.celery_worker import celery_app
 
 GOOGLE_CLIENT_ID = sophia_config.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = sophia_config.GOOGLE_CLIENT_SECRET
@@ -21,7 +24,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # --- Refresh session endpoint ---
 @app.post('/refresh')
-async def refresh_session(request: Request, refresh_token: str = Body(..., embed=True)):
+async def refresh_session(request: Request, background_tasks: BackgroundTasks, refresh_token: str = Body(..., embed=True)):
     """Obnoví session pomocí refresh tokenu. Vydá nový refresh token a nastaví session."""
     try:
         payload = verify_refresh_token(refresh_token)
@@ -29,10 +32,10 @@ async def refresh_session(request: Request, refresh_token: str = Body(..., embed
         user = {"email": user_id, "name": user_id}
         set_user_session(request, user)
         new_refresh = create_refresh_token(user_id)
-        log_event("refresh", user)
+        background_tasks.add_task(log_event, "refresh", user)
         return {"message": "Session obnovena", "refresh_token": new_refresh}
     except Exception as e:
-        log_event("refresh_failed", None, str(e))
+        background_tasks.add_task(log_event, "refresh_failed", None, str(e))
         raise HTTPException(status_code=401, detail=f"Invalid refresh token: {str(e)}")
 # --- Testovací login endpoint (pouze pro testy) ---
 @app.post('/test-login')
@@ -75,16 +78,16 @@ async def login(request: Request):
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 @app.get('/auth')
-async def auth(request: Request):
+async def auth(request: Request, background_tasks: BackgroundTasks):
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as error:
-        log_event("login_failed", None, str(error))
+        background_tasks.add_task(log_event, "login_failed", None, str(error))
         return JSONResponse({"error": str(error)}, status_code=400)
     user = await oauth.google.parse_id_token(request, token)
     # Uložení identity do session
     request.session['user'] = dict(user)
-    log_event("login", user, "Google OAuth2")
+    background_tasks.add_task(log_event, "login", user, "Google OAuth2")
     return RedirectResponse(url='/me')
 
 
@@ -99,14 +102,15 @@ async def me(request: Request):
 
 @app.post('/logout')
 @require_role(ROLE_USER)
-async def logout(request: Request):
+async def logout(request: Request, background_tasks: BackgroundTasks):
     """Odhlásí uživatele (vymaže session)."""
     user = request.session.get('user')
-    log_event("logout", user)
+    background_tasks.add_task(log_event, "logout", user)
     clear_user_session(request)
     return {"message": "Odhlášení úspěšné"}
 
-# --- Dummy chat endpoint ---
+
+# --- Synchronous chat endpoint (původní) ---
 from pydantic import BaseModel
 
 class ChatMessage(BaseModel):
@@ -115,8 +119,33 @@ class ChatMessage(BaseModel):
 @app.post('/chat')
 async def chat(msg: ChatMessage, request: Request):
     user = request.session.get('user')
+    cached = get_cached_reply(msg.message, user)
+    if cached:
+        return {"reply": cached}
     reply = generate_reply(msg.message, user)
+    set_cached_reply(msg.message, user, reply)
     return {"reply": reply}
+
+# --- Asynchronní chat endpoint přes Celery ---
+@app.post('/chat-async')
+async def chat_async(msg: ChatMessage, request: Request):
+    user = request.session.get('user')
+    # user může být None (veřejný chat)
+    task = celery_app.send_task("llm.generate_reply", args=[msg.message, user])
+    return {"task_id": task.id}
+
+# Endpoint pro vyzvednutí výsledku
+@app.get('/chat-result/{task_id}')
+async def chat_result(task_id: str):
+    result = celery_app.AsyncResult(task_id)
+    if result.state == "PENDING":
+        return {"status": "pending"}
+    elif result.state == "SUCCESS":
+        return {"status": "success", "reply": result.result}
+    elif result.state == "FAILURE":
+        return {"status": "failure", "error": str(result.result)}
+    else:
+        return {"status": result.state}
 
 # --- Dummy upload endpoint (zatím nefunkční) ---
 from fastapi import File, UploadFile
