@@ -1,3 +1,34 @@
+**Timestamp:** 2025-09-16 01:05:00
+**Agent:** Jules
+**Task ID:** 2.1 - Vytvoření Spouštěcího Skriptu pro Reviewer Agenta
+
+**Cíl Úkolu:**
+- Vytvořit spouštěcí skript `run_review.py`, který bude schopen načíst dva soubory, porovnat je, a výsledek porovnání (diff) předat "Reviewer Agentovi" k analýze.
+- Původní záměr byl použít plný framework CrewAI pro demonstraci integrace.
+
+**Postup a Klíčové Kroky:**
+1.  **Vytvoření Testovacích Souborů:** Vytvořen adresář `review_test/` a v něm soubory `test_v1.py` a `test_v2.py` pro účely testování.
+2.  **První Pokus (Plná Integrace CrewAI):** Implementován `run_review.py` tak, aby inicializoval `ReviewerAgentWrapper` a spouštěl `Crew.kickoff()`.
+3.  **Debugging (Pokus 1 - Chyba Závislostí):** Narazil jsem na `ModuleNotFoundError` pro `crewai_tools`. Problém byl vyřešen instalací `pip install crewai-tools` a přidáním do `requirements.txt`.
+4.  **Debugging (Pokus 2 - Chyba Importu):** Následovala chyba `ImportError`, protože `@tool` dekorátor se má importovat z `crewai.tools`, nikoli `crewai_tools`. Toto bylo opraveno.
+5.  **Debugging (Pokus 3 - Chyba Autentizace):** Po opravě importů nastala chyba `google.auth.exceptions.DefaultCredentialsError`. Agent se pokoušel inicializovat LLM, i když ho jeho nástroj nepotřeboval.
+6.  **Debugging (Pokus 4 - Mockování LLM):** Implementováno mockování `litellm.completion`, aby se předešlo volání reálného LLM. To vedlo k sérii hlubokých interních chyb ve frameworku CrewAI (`AttributeError`, `ValueError: No valid task outputs available`), které se nepodařilo vyřešit ani pomocí stateful mocků a různých konfigurací.
+7.  **Architektonické Rozhodnutí:** Po vyčerpání všech možností pro opravu integrace s CrewAI bylo rozhodnuto, že framework není vhodný pro tento čistě deterministický úkol. Jeho vnitřní logika je příliš pevně svázána s přítomností a rozhodováním LLM.
+8.  **Refaktoring Nástroje:** Logika "Reviewer Agenta" byla refaktorována do samostatné třídy `DocumentationCheckTool` dědící z `crewai.tools.BaseTool`. Tím je logika stále zapouzdřena jako znovupoužitelný "nástroj".
+9.  **Finální Implementace `run_review.py`:** Skript byl přepsán tak, aby importoval pouze `DocumentationCheckTool` a volal jeho metodu `_run()` přímo. Tento přístup je jednoduchý, robustní a funkční.
+10. **Finální Ověření:** Finální skript byl úspěšně otestován a vrátil očekávaný výsledek "FAIL".
+
+**Problémy a Překážky:**
+- Framework CrewAI se ukázal jako nevhodný pro spouštění agentů, jejichž nástroje jsou plně deterministické a nevyžadují rozhodování LLM. Pokusy o mockování LLM vedly k nestabilitě a interním chybám frameworku, které nebylo možné v daném prostředí spolehlivě vyřešit.
+
+**Navržené Řešení:**
+- Přijetí pragmatického přístupu: místo snahy "hackovat" framework bylo rozhodnuto o jeho obejití pro tento specifický případ. Logika zůstává zapouzdřena v `BaseTool` třídě, což umožňuje její budoucí použití v rámci CrewAI, pokud by to bylo potřeba v jiném kontextu. Pro účely validačního skriptu je však přímé volání mnohem čistší a spolehlivější.
+
+**Nápady a Postřehy:**
+- Je důležité rozpoznat, kdy je nástroj (v tomto případě CrewAI) použit mimo svůj zamýšlený účel. Snaha vynutit jeho použití může vést ke zbytečně komplexním a křehkým řešením. Někdy je nejlepší řešení to nejjednodušší.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-15 22:12:00
 **Agent:** Jules
 **Task ID:** e2e-test-environment-finalization
@@ -267,10 +298,6 @@
 - Všechny nové nástroje a integrace musí respektovat univerzální async/sync rozhraní a správně detekovat kontext.
 - Dokumentace a příklady použití budou aktualizovány, aby bylo jasné, jak nástroje správně volat v různých prostředích.
 
-**Nápady a Postřehy:**
-- Tento vzor výrazně zvyšuje robustnost a rozšiřitelnost systému, umožňuje bezpečné použití v různých agentních frameworcích a minimalizuje riziko chyb při integraci nových nástrojů.
-- Jasné chybové hlášky urychlují debugging a onboarding nových vývojářů.
-
 **Stav:** Dokončeno
 **Timestamp:** 2025-09-14 11:31:00
 **Agent:** Jules
@@ -284,7 +311,7 @@
 2.  **Oprava `get_next_task`**: Metoda byla refaktorována tak, aby prohledávala přímo tabulku `chat_history` místo `long_term_memory`, čímž se odstranila race condition způsobená zpožděním při zpracování paměti.
 3.  **Oprava `MemoryReaderTool`**: Nástroj byl upraven tak, aby správně fungoval v asynchronním prostředí `crewai` přejmenováním `_run` na `_arun` a odstraněním vnořeného volání `asyncio.run()`.
 4.  **Aktualizace Testů**: Testy byly upraveny tak, aby reflektovaly všechny výše uvedené změny a ověřovaly správné asynchronní chování.
-5.  **Finální Ověření**: Všechny unit testy prošly. Uživatel potvrdil, že jeho testovací skript nyní také funguje správně.
+5.  **Finální Ověření**: Všechny jednotkové testy prošly. Uživatel potvrdil, že jeho testovací skript nyní také funguje správně.
 
 **Problémy a Překážky:**
 - Bylo nutné zkombinovat několik oprav (asynchronní `main`, oprava race condition, oprava asynchronního nástroje) k dosažení plně funkčního stavu.
@@ -360,6 +387,7 @@
 - Tento komplexní bug odhalil důležitost hlubokého porozumění toku dat v externích knihovnách a nutnost konzistentního přístupu k datům napříč celou aplikací.
 
 **Stav:** Dokončeno
+
 ---
 **Timestamp:** 2025-09-14 10:13:00
 **Agent:** Jules
@@ -641,7 +669,7 @@
 **Stav:** Dokončeno
 
 ---
-**Timestamp:** 2025-09-14 01:46:13
+**Timestamp:** 2025-09-13 14:15:04
 **Agent:** Jules
 **Task ID:** 7.3 - Refaktoring Konfigurace LLM
 
