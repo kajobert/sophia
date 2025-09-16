@@ -1,5 +1,4 @@
 from crewai import Agent, Task, Crew
-import core.llm_config
 from core.context import SharedContext
 from tools.ethical_reviewer import EthicalReviewTool
 
@@ -7,7 +6,7 @@ class PlannerAgent:
     """
     A wrapper class for the Planner agent.
     """
-    def __init__(self):
+    def __init__(self, llm):
         self.agent = Agent(
             role="Master Planner",
             goal="Vytvářet komplexní, podrobné a proveditelé plány pro zadané úkoly a cíle. "
@@ -18,7 +17,7 @@ class PlannerAgent:
                 "krok-za-krokem plánů. Sleduji každý detail, předvídám možné překážky a zajišťuji, "
                 "že cesta k cíli je co nejefektivnější. Bez mého plánu vládne chaos; s mým plánem je úspěch nevyhnutelný."
             ),
-            llm=core.llm_config.get_llm(),
+            llm=llm,
             tools=[EthicalReviewTool()],
             verbose=True,
             allow_delegation=False,
