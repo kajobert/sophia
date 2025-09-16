@@ -2,50 +2,64 @@ import pytest
 from crewai import Crew, Task
 from agents.planner_agent import PlannerAgent
 from agents.engineer_agent import EngineerAgent
+from core.context import SharedContext
 
-def test_linear_agent_collaboration():
+def test_planner_with_shared_context():
     """
-    Testuje E2E spolupráci agentů v jednoduchém lineárním řetězci.
-    Díky conftest.py se tento test spustí s mockovaným LLM, který simuluje
-    odpovědi pro plánování a kódování.
+    Tests the PlannerAgent's integration with the SharedContext.
     """
-    # 1. Vytvoření instancí agentů
-    planner_agent = PlannerAgent().get_agent()
+    # 1. Vytvoření instance agenta a kontextu
+    planner = PlannerAgent()
+    prompt = "Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla."
+    context = SharedContext(session_id="test_session", original_prompt=prompt)
+
+    # 2. Spuštění úkolu
+    updated_context = planner.run_task(context)
+
+    # 3. Ověření výsledku
+    assert isinstance(updated_context, SharedContext)
+    assert 'plan' in updated_context.payload
+    # Mock LLM should return a specific plan
+    assert "Definuj funkci `add(a, b)`" in updated_context.payload['plan']
+    print(f"\n--- Planner Result ---\n{updated_context.payload['plan']}\n------------------------")
+
+
+def test_linear_agent_collaboration_with_context():
+    """
+    Testuje E2E spolupráci agentů s využitím SharedContext.
+    Planner nejprve vytvoří plán do kontextu, Engineer ho pak použije.
+    """
+    # 1. Fáze Plánování
+    planner = PlannerAgent()
+    prompt = "Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla."
+    context = SharedContext(session_id="test_session_e2e", original_prompt=prompt)
+
+    context_with_plan = planner.run_task(context)
+
+    assert "Definuj funkci `add(a, b)`" in context_with_plan.payload['plan']
+
+    # 2. Fáze Inženýringu
     engineer_agent = EngineerAgent().get_agent()
 
-    # 2. Vytvoření úkolů pro agenty
-    planning_task = Task(
-        description="Vytvoř plán pro jednoduchou funkci 'add(a, b)', která sčítá dvě čísla.",
-        agent=planner_agent,
-        expected_output="Podrobný plán krok za krokem."
-    )
-
-    # Inženýrský úkol závisí na výsledku plánovacího úkolu.
-    # Jeho výstup použije jako kontext.
+    # Inženýrský úkol nyní používá plán z kontextu.
     coding_task = Task(
-        description="Na základě plánu vytvoř kód v Pythonu.",
+        description=f"Na základě tohoto plánu vytvoř kód v Pythonu: {context_with_plan.payload['plan']}",
         agent=engineer_agent,
-        context=[planning_task],
         expected_output="Funkční a okomentovaný kód v Pythonu."
     )
 
-    # 3. Sestavení a spuštění Crew
+    # Spustíme pouze inženýrský úkol
     crew = Crew(
-        agents=[planner_agent, engineer_agent],
-        tasks=[planning_task, coding_task],
-        verbose=True # Verbose pro logování průběhu
+        agents=[engineer_agent],
+        tasks=[coding_task],
+        verbose=True
     )
 
     result = crew.kickoff()
 
-    # 4. Ověření výsledku
-    # `crew.kickoff()` vrací výsledek posledního úkolu v řetězci.
-    # Náš mock by měl pro inženýrský úkol vrátit kód.
+    # 3. Ověření konečného výsledku
     print(f"\n--- Final Crew Result ---\n{result}\n------------------------")
-
     assert result is not None
-    # The result object has a 'raw' attribute containing the string output
     assert "def add(a, b):" in result.raw
     assert "return a + b" in result.raw
-    # Můžeme také ověřit, že se nevrací plán
     assert "plán" not in result.raw.lower()
