@@ -77,6 +77,10 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
         * Adapter je inicializován v `core/llm_config.py` dle konfigurace v `config.yaml` a předáván agentům jako `llm=llm`.
         * Přepnutí na jiného providera (např. OpenAI, LangChain) je možné úpravou konfigurace a jednoho řádku v `llm_config.py`.
 
+        * **Quality Assurance Tým (Reviewer Agent):**
+            * Pro zajištění kvality a udržitelnosti je zaveden `Reviewer Agent`.
+            * **Funkce:** Tento agent automaticky kontroluje, zda jsou změny v kódu (`.py` soubory) doprovázeny odpovídajícími změnami v dokumentaci (`WORKLOG.md`). Působí jako automatizovaný recenzent, který vynucuje disciplínu v dokumentaci.
+
 
 * **`/sandbox` (Izolované Prostředí)**:
     * **Funkce:** Bezpečný a izolovaný adresář, kde mohou agenti volně vytvářet, upravovat a spouštět soubory a kód, aniž by ovlivnili zbytek systému. Slouží jako testovací pole pro všechny tvůrčí úkoly.
