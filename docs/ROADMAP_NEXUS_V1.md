@@ -27,7 +27,7 @@ Tento dokument definuje aktuální strategický plán pro vývoj projektu Sophia
 
 **Cíl:** Otevřít Sophii světu, naučit ji komunikovat a používat nástroje.
 
-- **[ ] Úkol 3.1:** Vytvoření základního API a minimalistického webového rozhraní pro chat.
+- **[x] Úkol 3.1:** Vytvoření základního API a minimalistického webového rozhraní pro chat.
 - **[ ] Úkol 3.2:** Implementace mechanismu pro používání nástrojů (čtení/zápis souborů).
 - **[ ] Úkol 3.3:** Rozšíření sady nástrojů o základní systémové příkazy.
 
