@@ -4,6 +4,8 @@ import uuid
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # This is a hack to ensure the application can find the 'core' and 'agents' modules
 # In a real-world scenario, this project should be structured as a proper Python package
@@ -26,6 +28,10 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     prompt: str
+
+@app.get("/", response_class=FileResponse)
+async def read_index():
+    return "web/ui/index.html"
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
@@ -53,3 +59,6 @@ async def chat(request: ChatRequest):
     except Exception as e:
         # Return a more detailed error message for debugging
         return {"error": f"An error occurred: {str(e)}"}
+
+# Tento řádek připojí celý adresář a umožní např. budoucí načítání stylů
+app.mount("/", StaticFiles(directory="web/ui"), name="ui")
