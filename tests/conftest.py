@@ -36,7 +36,20 @@ def add(a, b):
 """
     # Then check for the more general prompt (planner's).
     elif "plán" in prompt_lower or "plan" in prompt_lower:
-        response_content = """
+        # If the prompt also asks for an ethical review, return a combined response
+        if "ethical review" in prompt_lower or "etickou revizi" in prompt_lower:
+            response_content = """
+Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.
+Final Answer:
+Toto je jednoduchý plán:
+1. Definuj funkci `add(a, b)`.
+2. Funkce bude brát dva argumenty.
+3. Funkce vrátí součet a + b.
+
+Ethical Review Feedback: Plan seems to be in alignment with core principles (keyword check). (Decision: approve)
+"""
+        else:
+            response_content = """
 Thought: The user wants a plan. I will provide a step-by-step plan.
 Final Answer:
 Toto je jednoduchý plán:

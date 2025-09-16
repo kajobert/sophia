@@ -1,6 +1,7 @@
 from crewai import Agent, Task, Crew
 import core.llm_config
 from core.context import SharedContext
+from tools.ethical_reviewer import EthicalReviewTool
 
 class PlannerAgent:
     """
@@ -18,6 +19,7 @@ class PlannerAgent:
                 "že cesta k cíli je co nejefektivnější. Bez mého plánu vládne chaos; s mým plánem je úspěch nevyhnutelný."
             ),
             llm=core.llm_config.llm,
+            tools=[EthicalReviewTool()],
             verbose=True,
             allow_delegation=False,
             max_iter=5
@@ -33,10 +35,18 @@ class PlannerAgent:
         Returns:
             The updated shared context with the plan in the payload.
         """
+        # Úprava popisu úkolu tak, aby zahrnoval použití Ethical Review Tool
+        task_description = (
+            f"Analyzuj tento požadavek: '{context.original_prompt}'.\n"
+            "1. Vytvoř podrobný, krok-za-krokem plán pro splnění tohoto požadavku.\n"
+            "2. Použij 'Ethical Review Tool' k analýze vytvořeného plánu a zhodnocení jeho etických dopadů.\n"
+            "Výstup musí obsahovat jak plán, tak i výsledek etické revize."
+        )
+
         planning_task = Task(
-            description=context.original_prompt,
+            description=task_description,
             agent=self.agent,
-            expected_output="Podrobný plán krok za krokem."
+            expected_output="Finální odpověď musí obsahovat podrobný plán a kompletní, nezkrácenou etickou revizi."
         )
 
         crew = Crew(
@@ -48,8 +58,22 @@ class PlannerAgent:
         result = crew.kickoff()
 
         # The result from kickoff() might be a complex object, we store the raw string
-        plan = result.raw if hasattr(result, 'raw') else str(result)
+        output = result.raw if hasattr(result, 'raw') else str(result)
+
+        # Rozparsování výstupu na plán a etickou revizi
+        # Očekáváme, že revize začíná klíčovou frází "Ethical Review Feedback:"
+        review_keyword = "Ethical Review Feedback:"
+        if review_keyword in output:
+            parts = output.split(review_keyword, 1)
+            plan = parts[0].strip()
+            ethical_review = review_keyword + parts[1].strip()
+        else:
+            # Fallback, pokud klíčové slovo není nalezeno
+            plan = output
+            ethical_review = "Ethical review not found in the output."
+
         context.payload['plan'] = plan
+        context.payload['ethical_review'] = ethical_review
 
         return context
 

@@ -75,3 +75,8 @@ def test_linear_agent_collaboration():
     # Verify that the test results are as expected
     # The mock LLM should return a positive confirmation
     assert "Kód je funkční" in test_results
+
+    # Verify that the ethical review is present
+    assert 'ethical_review' in final_context.payload
+    assert final_context.payload['ethical_review']
+    assert "Ethical Review Feedback:" in final_context.payload['ethical_review']
