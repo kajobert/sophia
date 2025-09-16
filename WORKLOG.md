@@ -1,3 +1,27 @@
+**Timestamp:** 2025-09-16 05:41:00
+**Agent:** Jules
+**Task ID:** web-ui-final-fixes
+
+**Cíl Úkolu:**
+- Opravit pád webového serveru v testovacím režimu (`SOPHIA_ENV=test`).
+- Odstranit napevno zakódovanou URL adresu z frontendu a nahradit ji relativní cestou.
+
+**Postup a Klíčové Kroky:**
+1.  **Sjednocení Mockování:** Do souboru `web/api.py` byl přidán blok kódu, který se spustí pouze v případě, že je `SOPHIA_ENV` nastaveno na `test`. Tento blok dynamicky "patchne" funkci `litellm.completion` pomocí `unittest.mock.patch` a nahradí ji mockovací funkcí z `core.mocks`. Tím je zajištěno, že `uvicorn` server se v testovacím režimu chová identicky jako prostředí `pytest` a nepadá na chybějícím API klíči.
+2.  **Univerzální API Adresa:** V souboru `web/ui/index.html` byla v JavaScriptu nalezena funkce `fetch`. Její první argument byl změněn z absolutní adresy `http://127.0.0.1:8000/chat` na relativní `'/chat'`. Tím je zajištěno, že frontend bude vždy volat API na stejné adrese a portu, ze kterých byl načten.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly. Postupovalo se přesně podle zadání.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Podmíněné mockování přímo v `api.py` je pragmatické řešení, které výrazně usnadňuje lokální vývoj a testování webového rozhraní bez nutnosti spoléhat se na reálné API.
+- Použití relativních cest v API voláních je základní best practice pro tvorbu přenositelných webových aplikací.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 05:02:00
 **Agent:** Jules
 **Task ID:** llm-factory-refactoring

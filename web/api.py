@@ -6,10 +6,29 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from unittest.mock import patch
 
 # This is a hack to ensure the application can find the 'core' and 'agents' modules
 # In a real-world scenario, this project should be structured as a proper Python package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# --- Conditional Mocking for Test/Development Environment ---
+# This block checks the SOPHIA_ENV variable. If it's set to 'test',
+# it patches the litellm.completion function to use a mock handler.
+# This allows the FastAPI server to run locally for UI development
+# without needing a real LLM API key.
+if os.getenv('SOPHIA_ENV') == 'test':
+    from core.mocks import mock_litellm_completion_handler
+
+    print("--- RUNNING IN TEST MODE: Patching litellm.completion with mock handler. ---")
+
+    # We need to patch both the sync and async completion functions
+    patcher_completion = patch('litellm.completion', new=mock_litellm_completion_handler)
+    patcher_acompletion = patch('litellm.acompletion', new=mock_litellm_completion_handler)
+
+    # Start the patches
+    patcher_completion.start()
+    patcher_acompletion.start()
 
 # Only import what is absolutely necessary at the module level
 from core.context import SharedContext
