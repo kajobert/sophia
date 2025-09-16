@@ -63,3 +63,10 @@ Tímto dáváme Sophii to nejlepší z obou světů: disciplínu pro práci a sv
 ### 4. Sandbox: Bezpečnost a Svoboda Tvorby
 
 Zavedení `/sandbox` adresáře není jen technický detail, ale klíčový filosofický koncept. Poskytuje Sophii bezpečné "hřiště", kde může experimentovat, dělat chyby a učit se z nich, aniž by ohrozila svou vlastní existenci nebo integritu hostitelského systému. Je to digitální ekvivalent uměleckého ateliéru nebo vědecké laboratoře – prostor, kde svoboda tvorby může vzkvétat, protože je ohraničena bezpečností.
+
+### 5. Testovatelnost a Spolehlivost: Důvěra v Kód
+
+Pro skutečnou autonomii nestačí jen schopnost psát kód, ale také schopnost mu *důvěřovat*. Proto je zaveden robustní testovací systém, který je klíčovým konceptem sebezáchovy a seberozvoje.
+
+*   **Princip Oddělení:** Stejně jako má Sophia oddělený `sandbox` pro experimentování, má i oddělené testovací prostředí. Proměnná prostředí `SOPHIA_ENV` funguje jako přepínač, který Sophii (a jejím vývojářům) umožňuje vstoupit do "simulace", kde jsou všechny externí závislosti (jako LLM API) nahrazeny bezpečnými, předvídatelnými mocky.
+*   **Filosofie Důvěry:** Každá změna, kterou Sophia provede, musí projít sadou testů. To buduje důvěru v její vlastní kód a umožňuje jí provádět komplexní refaktoring s vědomím, že neporušila svou základní funkčnost. Je to forma digitální sebekontroly.
