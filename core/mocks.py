@@ -17,20 +17,21 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
     prompt_lower = prompt.lower()
 
     response_content = ""
-    # The order of these checks is critical. We check for the most specific
-    # prompt first (planner) to avoid it being incorrectly caught by more
-    # general keywords like "test".
-    if "plan" in prompt_lower and ("ethical review" in prompt_lower or "etickou revizi" in prompt_lower):
-        # This is definitely the PlannerAgent
-        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
-    elif "otestuj" in prompt_lower or "test" in prompt_lower:
-        # This is the TesterAgent
-        response_content = "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: Kód je funkční a splňuje všechny požadavky."
-    elif "kód" in prompt_lower or "code" in prompt_lower:
+    # Check for PlannerAgent first, using a very specific phrase from its prompt
+    if "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
+        # This is definitely the PlannerAgent. The mock response should mimic the real tool's output format.
+        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nEthical Review Feedback: The plan is ethically sound."
+    # Check for EngineerAgent, using a specific phrase from its prompt
+    elif "na základě tohoto plánu vytvoř kód" in prompt_lower:
         # This is the EngineerAgent
         response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
+    # Check for TesterAgent, using a specific phrase from its prompt
+    elif "otestuj následující kód" in prompt_lower:
+        # This is the TesterAgent
+        response_content = "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: Kód je funkční a splňuje všechny požadavky."
+    # Fallback to the planner response for any other case, to support UI tests
     else:
-        response_content = "General mock response."
+        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
 
     return ModelResponse(
         id="chatcmpl-mock-123",
