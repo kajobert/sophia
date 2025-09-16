@@ -17,15 +17,18 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
     prompt_lower = prompt.lower()
 
     response_content = ""
-    if "otestuj" in prompt_lower or "test" in prompt_lower:
+    # The order of these checks is critical. We check for the most specific
+    # prompt first (planner) to avoid it being incorrectly caught by more
+    # general keywords like "test".
+    if "plan" in prompt_lower and ("ethical review" in prompt_lower or "etickou revizi" in prompt_lower):
+        # This is definitely the PlannerAgent
+        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
+    elif "otestuj" in prompt_lower or "test" in prompt_lower:
+        # This is the TesterAgent
         response_content = "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: Kód je funkční a splňuje všechny požadavky."
     elif "kód" in prompt_lower or "code" in prompt_lower:
+        # This is the EngineerAgent
         response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
-    elif "plán" in prompt_lower or "plan" in prompt_lower:
-        # This is a planner prompt. The planner task in the application always
-        # requires an ethical review, so we always return the full response
-        # to make the mock more robust for UI testing.
-        response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
     else:
         response_content = "General mock response."
 
