@@ -17,8 +17,16 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
     prompt_lower = prompt.lower()
 
     response_content = ""
+
+    # Check if this is the second step of a tool use, where the tool output is in the prompt.
+    # This is the most reliable way to detect a follow-up call.
+    if "content of" in prompt_lower or "has been written successfully" in prompt_lower:
+        # The prompt now contains the output of the tool.
+        # We instruct the agent to simply state this as its final answer.
+        response_content = f"Thought: The tool has been executed and I have the result. I will now formulate the final answer based on the tool's output.\nFinal Answer: {prompt}"
+
     # Check for PlannerAgent first, using a very specific phrase from its prompt
-    if "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
+    elif "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
         # This is definitely the PlannerAgent. The mock response should mimic the real tool's output format.
         response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nEthical Review Feedback: The plan is ethically sound."
     # Check for EngineerAgent, using a specific phrase from its prompt
@@ -29,6 +37,39 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
     elif "otestuj následující kód" in prompt_lower:
         # This is the TesterAgent
         response_content = "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: Kód je funkční a splňuje všechny požadavky."
+    # Check for the file system integration test
+    elif "use the write file tool to create a file named" in prompt_lower:
+        # This is the integration test. We need to simulate a multi-step tool usage.
+        import re
+        # Extract file_path and content from the prompt
+        path_match = re.search(r"named '(.*?)'", prompt)
+        content_match = re.search(r"content: '(.*?)'", prompt)
+
+        if path_match and content_match:
+            file_path = path_match.group(1)
+            content = content_match.group(1)
+
+            response_content = (
+                "Thought: The user wants me to write a file and then read it. I will start by using the 'Write File' tool.\n"
+                f"Action: Write File\n"
+                f"Action Input: {{\"file_path\": \"{file_path}\", \"content\": \"{content}\"}}"
+            )
+        else:
+            response_content = "Thought: I was asked to write a file for the integration test, but I couldn't parse the file path or content from the prompt."
+
+    elif "use the read file tool to read the file" in prompt_lower:
+        import re
+        path_match = re.search(r"named '(.*?)'", prompt)
+        if path_match:
+            file_path = path_match.group(1)
+            response_content = (
+                "Thought: The user wants me to read a file. I will use the 'Read File' tool.\n"
+                f"Action: Read File\n"
+                f"Action Input: {{\"file_path\": \"{file_path}\"}}"
+            )
+        else:
+            response_content = "Thought: I was asked to read a file for the integration test, but I couldn't parse the file path from the prompt."
+
     # Fallback to the planner response for any other case, to support UI tests
     else:
         response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nAnd here is the ethical review: The plan is ethically sound."
