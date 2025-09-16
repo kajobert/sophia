@@ -13,7 +13,7 @@ def run_sync_or_async(coro):
 import os
 from typing import Type, List
 from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
+from crewai.tools import BaseTool
 
 # Define the absolute path for the sandbox directory to ensure security
 # This makes the check robust, regardless of the current working directory.
