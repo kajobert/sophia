@@ -1,3 +1,42 @@
+**Timestamp:** 2025-09-15 22:12:00
+**Agent:** Jules
+**Task ID:** e2e-test-environment-finalization
+
+**Cíl Úkolu:**
+- Vytvořit 100% spolehlivé testovací prostředí a dokončit E2E integrační test pro spolupráci agentů.
+- Vyřešit přetrvávající chyby `GEMINI_API_KEY` a nestabilitu testů.
+
+**Postup a Klíčové Kroky:**
+1.  **Vytvoření Testovací Konfigurace:** Vytvořen soubor `config_test.yaml`, který obsahuje oddělenou konfiguraci pro testy (mock provider, dummy hodnoty).
+2.  **Dynamické Načítání Konfigurace:** Upraven `core/llm_config.py` tak, aby načítal `config_test.yaml` pokud je proměnná prostředí `SOPHIA_ENV` nastavena na `test`. Tím je zajištěno, že testy nikdy nepoužijí produkční konfiguraci.
+3.  **Globální Nastavení Pytestu:** Vytvořen soubor `tests/conftest.py`, který se stal centrálním bodem pro řízení testovacího prostředí:
+    - Pomocí `pytest_configure` se na úplném začátku nastaví `SOPHIA_ENV=test`.
+    - Pomocí `autouse` a `function-scoped` fixture je pro každý test mockována funkce `litellm.completion`. Tento přístup je mnohem robustnější než mockování jednotlivých LLM adaptérů, protože zachytí jakýkoliv pokus o volání LLM.
+4.  **Implementace E2E Testu:** Vytvořen nový test `tests/test_full_agent_chain.py`, který ověřuje spolupráci `PlannerAgent` a `EngineerAgent` v jednom řetězci.
+5.  **Oprava Nástrojů (Tools):** Během testování byla odhalena nekompatibilita custom nástrojů s `crewai`. Všechny třídy nástrojů v `tools/` byly opraveny tak, aby dědily z `crewai.tools.BaseTool` místo `langchain_core.tools.BaseTool`.
+6.  **Oprava Importů v Agentech:** Odhalen a opraven problém s importy v souborech agentů (`from core.llm_config import llm`), které bránily správnému fungování monkeypatchingu. Importy byly změněny na `import core.llm_config`, aby se vždy pracovalo s aktuálním, potenciálně mockovaným objektem.
+7.  **Finální Ověření:** Všechny testy (27) nyní procházejí úspěšně a spolehlivě.
+
+**Problémy a Překážky:**
+- Debugging byl extrémně náročný, protože se řetězilo několik na sobě nezávislých chyb:
+    1.  Nesprávný obsah `config_test.yaml`.
+    2.  `ImportError` kvůli smazanému, ale stále používanému `tests/mocks.py`.
+    3.  `ScopeMismatch` chyba v `pytest` fixture (`session` vs. `function`).
+    4.  `ValidationError` od Pydantic kvůli nesprávné bázové třídě pro nástroje.
+    5.  `AuthenticationError`, protože `crewai` obcházelo původní mock a volalo `litellm` s neplatnými parametry.
+    6.  Chybná logika v mocku, která vracela stejnou odpověď pro oba agenty.
+    7.  Chybná aserce v testu, která nepracovala se správným atributem `result.raw`.
+
+**Navržené Řešení:**
+- Systematický, krok-za-krokem debugging každé chyby.
+- Klíčovým řešením byla změna strategie mockování – místo snahy podstrčit `crewai` falešný LLM objekt bylo mnohem efektivnější mockovat funkci `litellm.completion`, na kterou se `crewai` interně spoléhá.
+
+**Nápady a Postřehy:**
+- Tento úkol je perfektní ukázkou, jak je důležité mockovat na správné hranici abstrakce. Snaha mockovat interní detaily komplexní knihovny je křehká; mockování jejího rozhraní s okolním světem (`litellm`) je robustní.
+- Stabilní testovací prostředí je naprosto zásadní pro efektivní vývoj.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-15 13:18:00
 **Agent:** Jules
 **Task ID:** documentation-nexus-roadmap-v1

@@ -159,20 +159,17 @@ You should now see log output from both the Guardian and the main Sophia process
 
 ## 🧪 Running Tests
 
+To ensure the integrity and stability of the codebase, run the complete test suite.
 
-
-To ensure the integrity of the codebase, run all tests using **pytest** (doporučeno):
-
+### How to Run Tests
+From the root directory of the project, execute the following command:
 ```bash
-PYTHONPATH=. pytest tests/
+PYTHONPATH=. python3 -m pytest
 ```
+This command uses `pytest` to automatically discover and run all tests in the `tests/` directory.
 
-This will automatically discover and run all tests (pytest i unittest) in the `tests` directory.
-
-If you want to run only unittest tests (without pytest fixtures), you can use:
-```bash
-PYTHONPATH=. python3 -m unittest discover tests
-```
+### About the Test Environment
+The project is configured to run tests in a safe, isolated environment. You do **not** need a real API key for the tests to pass. The test setup in `tests/conftest.py` automatically handles mocking of all external services.
 
 ---
 
