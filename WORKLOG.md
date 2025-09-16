@@ -1,3 +1,29 @@
+**Timestamp:** 2025-09-16 01:18:00
+**Agent:** Jules
+**Task ID:** documentation-unification
+
+**Cíl Úkolu:**
+- Sjednotit projektovou dokumentaci tak, aby `docs/ROADMAP_NEXUS_V1.md` byl jediným zdrojem pravdy o strategické roadmapě.
+- Odstranit všechny odkazy na zastaralý dokument `PROJECT_SOPHIA_V4.md`.
+
+**Postup a Klíčové Kroky:**
+1.  **Archivace Staré Roadmpy:** Soubor `docs/PROJECT_SOPHIA_V4.md` byl přejmenován na `docs/PROJECT_SOPHIA_V4_ARCHIVED.md`, aby bylo jasné, že již není aktivní.
+2.  **Aktualizace `AGENTS.md`:** Všechny odkazy na starou roadmapu byly nahrazeny odkazy na `docs/ROADMAP_NEXUS_V1.md`. Okolní text byl upraven pro konzistenci.
+3.  **Aktualizace `README.md`:** Odkaz na roadmapu v hlavním `README.md` byl opraven.
+4.  **Kontrola Konzistence:** Pomocí `grep` byly prohledány všechny `.md` soubory. Byly nalezeny a opraveny odkazy ve starém plánovacím souboru `PLAN_V3_to_V4_repair.md`. Jediný zbývající odkaz je v `WORKLOG.md`, což je přijatelné jako historický záznam.
+5.  **Zápis do WORKLOGu:** Tato akce byla zdokumentována v tomto záznamu.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Udržování konzistentní a aktuální dokumentace je klíčové pro efektivní práci a předejití nedorozuměním.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 01:05:00
 **Agent:** Jules
 **Task ID:** 2.1 - Vytvoření Spouštěcího Skriptu pro Reviewer Agenta
