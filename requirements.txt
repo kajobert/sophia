@@ -12,7 +12,6 @@ litellm
 tiktoken
 anthropic
 python-dotenv
-Flask
 psycopg2-binary
 psutil
 langgraph
@@ -21,3 +20,5 @@ pydantic
 google-generativeai
 memorisdk
 crewai-tools
+fastapi
+uvicorn

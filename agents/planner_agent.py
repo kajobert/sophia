@@ -18,7 +18,7 @@ class PlannerAgent:
                 "krok-za-krokem plánů. Sleduji každý detail, předvídám možné překážky a zajišťuji, "
                 "že cesta k cíli je co nejefektivnější. Bez mého plánu vládne chaos; s mým plánem je úspěch nevyhnutelný."
             ),
-            llm=core.llm_config.llm,
+            llm=core.llm_config.get_llm(),
             tools=[EthicalReviewTool()],
             verbose=True,
             allow_delegation=False,

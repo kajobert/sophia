@@ -1,3 +1,37 @@
+**Timestamp:** 2025-09-16 03:34:00
+**Agent:** Jules
+**Task ID:** Fáze 3.1 - Vytvoření Základního Webového API a UI
+
+**Cíl Úkolu:**
+- Vytvořit a propojit jednoduchý FastAPI server a HTML stránku pro základní chat se Sophií.
+- Umožnit interakci operátora s `PlannerAgentem` přes webové rozhraní.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza Stávajícího Stavu:** Zjištěno, že adresář `web/` již existuje a obsahuje starou implementaci založenou na Flasku pro správu úkolů. Bylo rozhodnuto tyto soubory přepsat.
+2.  **Aktualizace Závislostí:** Do `requirements.txt` byly přidány knihovny `fastapi` a `uvicorn`. Zároveň byla odstraněna již nepotřebná knihovna `Flask`.
+3.  **Implementace FastAPI Serveru:**
+    *   Kompletně přepsán soubor `web/api.py`.
+    *   Byla vytvořena nová FastAPI aplikace s POST endpointem `/chat`.
+    *   Endpoint přijímá JSON `{"prompt": "..."}`.
+    *   Logika endpointu vytváří `SharedContext`, volá `PlannerAgent.run_task()` a vrací výsledek (`plan` a `ethical_review`) jako JSON.
+    *   Přidána CORS middleware pro bezproblémovou komunikaci s lokálním HTML souborem.
+4.  **Vytvoření Uživatelského Rozhraní:**
+    *   Kompletně přepsán soubor `web/ui/index.html`.
+    *   Byla vytvořena jednoduchá HTML stránka s textovým polem pro prompt, tlačítkem a `<pre>` elementem pro zobrazení odpovědi.
+    *   Přidán JavaScript kód, který pomocí `fetch()` posílá požadavek na API a zobrazuje formátovanou JSON odpověď.
+
+**Problémy a Překážky:**
+- Během úvodní explorace se vyskytly problémy s nástrojem `read_file`, který vracel nekonzistentní obsah souborů, což ztěžovalo analýzu. Problém byl překonán systematickým ověřováním a důvěrou v poslední platný výstup nástroje.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Nové webové rozhraní představuje významný krok k interaktivitě Sophie.
+- Nahrazení starého Flask API za nové FastAPI je v souladu s moderními postupy a zjednodušuje asynchronní operace.
+
+**Stav:** Probíhá
+---
 **Timestamp:** 2025-09-16 03:17:00
 **Agent:** Jules
 **Task ID:** ethos-module-integration
