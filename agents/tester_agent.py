@@ -1,5 +1,4 @@
 from crewai import Agent, Task, Crew
-from core.llm_config import llm
 from tools.file_system import ReadFileTool, ListDirectoryTool
 from tools.code_executor import RunUnitTestsTool
 from core.context import SharedContext
@@ -8,7 +7,7 @@ class TesterAgent:
     """
     A wrapper class for the Tester agent.
     """
-    def __init__(self):
+    def __init__(self, llm):
         # Vytvoření instancí nástrojů
         read_file_tool = ReadFileTool()
         list_dir_tool = ListDirectoryTool()
