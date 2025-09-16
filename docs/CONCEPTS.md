@@ -70,3 +70,16 @@ Pro skutečnou autonomii nestačí jen schopnost psát kód, ale také schopnost
 
 *   **Princip Oddělení:** Stejně jako má Sophia oddělený `sandbox` pro experimentování, má i oddělené testovací prostředí. Proměnná prostředí `SOPHIA_ENV` funguje jako přepínač, který Sophii (a jejím vývojářům) umožňuje vstoupit do "simulace", kde jsou všechny externí závislosti (jako LLM API) nahrazeny bezpečnými, předvídatelnými mocky.
 *   **Filosofie Důvěry:** Každá změna, kterou Sophia provede, musí projít sadou testů. To buduje důvěru v její vlastní kód a umožňuje jí provádět komplexní refaktoring s vědomím, že neporušila svou základní funkčnost. Je to forma digitální sebekontroly.
+
+### 6. Strukturovaná Komunikace: SharedContext Objekt
+
+Zatímco agenti v rámci jednoho týmu (`CrewAI` nebo `AutoGen`) mají své vlastní mechanismy pro předávání informací, komunikace *mezi fázemi* (např. mezi "Bděním" a "Spánkem", nebo mezi jednotlivými, nezávisle spuštěnými agenty) vyžaduje robustnější řešení než prosté předávání textových řetězců.
+
+*   **Problém:** Předávání jednoduchých stringů je křehké, neflexibilní a neumožňuje přenášet bohatší, strukturovaná data (např. výsledky testů, více výstupních artefaktů, stavové informace).
+*   **Řešení:** Zavedli jsme `SharedContext` – jednoduchou datovou třídu (`dataclass`), která slouží jako standardizovaná "datová sběrnice" nebo "obálka" pro informace přenášené mezi agenty a procesy.
+    *   **`session_id`**: Unikátní identifikátor pro sledování celé konverzace.
+    *   **`original_prompt`**: Původní zadání od uživatele, které zůstává neměnné po celou dobu.
+    *   **`full_history`**: Seznam všech kroků, které se dosud provedly (pro budoucí audit a sebereflexi).
+    *   **`payload`**: Flexibilní slovník (`dict`), který slouží jako "nákladový prostor". Zde si agenti ukládají a čtou klíčová data, jako je vygenerovaný plán (`payload['plan']`), kód (`payload['code']`), výsledky testů (`payload['test_results']`) atd.
+
+Tento objekt zajišťuje, že data jsou přenášena konzistentně, jsou snadno rozšiřitelná a každý agent má přístup ke všem relevantním informacím z předchozích kroků.
