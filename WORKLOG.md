@@ -1,3 +1,27 @@
+**Timestamp:** 2025-09-16 01:37:00
+**Agent:** Jules
+**Task ID:** golden-rules-documentation
+
+**Cíl Úkolu:**
+- Vylepšit klíčový dokument `AGENTS.md` o novou sekci "Zlatá Pravidla Vývoje", která kodifikuje nejdůležitější architektonické principy a lessons learned.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza Požadavku:** Prostudován požadavek na přidání nové, vysoce viditelné sekce do `AGENTS.md`.
+2.  **Úprava `AGENTS.md`:** Do souboru `AGENTS.md` byla hned pod hlavní nadpis vložena nová sekce "Zlatá Pravidla Vývoje (Závazný Kodex)" s přesně definovaným obsahem.
+3.  **Zápis do WORKLOGu:** Tato změna byla zdokumentována v tomto záznamu v souboru `WORKLOG.md`.
+4.  **Ověření:** Změny v obou souborech (`AGENTS.md`, `WORKLOG.md`) byly ověřeny přečtením jejich obsahu po úpravě.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Kodifikace těchto pravidel na takto viditelném místě je vynikající krok k prevenci opakujících se chyb a zefektivnění práce všech agentů.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 01:18:00
 **Agent:** Jules
 **Task ID:** documentation-unification
