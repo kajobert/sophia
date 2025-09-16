@@ -1,3 +1,33 @@
+**Timestamp:** 2025-09-16 02:38:00
+**Agent:** Jules
+**Task ID:** engineer-agent-shared-context
+
+**Cíl Úkolu:**
+- Refaktorovat `EngineerAgent` tak, aby plně využíval `SharedContext` pro příjem plánu a předávání vygenerovaného kódu.
+- Aktualizovat navazující E2E test pro ověření nového toku dat.
+
+**Postup a Klíčové Kroky:**
+1.  **Refaktoring `EngineerAgent`:**
+    *   Do třídy `EngineerAgent` v souboru `agents/engineer_agent.py` byla přidána nová metoda `run_task(self, context: SharedContext)`.
+    *   Tato metoda interně vezme plán z `context.payload['plan']`, spustí `Crew` s úkolem vygenerovat kód.
+    *   Výsledný kód je poté uložen do `context.payload['code']`.
+    *   Metoda vrací upravený `context`, který nyní obsahuje jak plán, tak kód.
+2.  **Aktualizace E2E Testu:**
+    *   V souboru `tests/test_full_agent_chain.py` byl upraven test `test_linear_agent_collaboration_with_context` (přejmenován na `test_linear_agent_collaboration`).
+    *   Test nyní nevolá `EngineerAgent().get_agent()` a manuálně nesestavuje `Task`. Místo toho vytváří instanci `EngineerAgent` a volá její novou metodu `run_task(context)`.
+    *   Byly přidány aserce (`assert`), které ověřují, že finální objekt kontextu obsahuje jak původní plán, tak nově vygenerovaný kód, čímž je potvrzen správný tok dat.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly. Proces byl přímočarý.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Tento refaktoring je dalším krokem k vytvoření jednotného a robustního komunikačního protokolu mezi agenty. `SharedContext` se osvědčuje jako efektivní "datová sběrnice".
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 02:33:00
 **Agent:** Jules
 **Task ID:** self-review-rule
