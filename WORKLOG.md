@@ -1,3 +1,149 @@
+# 2025-09-16: Refaktoring backendu, RBAC, refresh tokeny, audit logování
+**Timestamp:** 2025-09-16 10:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-fastapi-refactor
+
+**Cíl Úkolu:**
+- Přepsat backend z Flask na FastAPI, zajistit asynchronní provoz, OpenAPI dokumentaci a lepší škálovatelnost.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen nový FastAPI backend v `web/api/main.py`.
+2. Přidány všechny klíčové endpointy: /chat (veřejný), /me, /login, /auth, /logout, /refresh, /test-login, /upload.
+3. Implementována CORS ochrana, session cookies, bezpečné uložení identity.
+4. Ověřena kompatibilita s frontendem a testy.
+
+**Problémy a Překážky:**
+- Migrace session managementu z Flask na FastAPI vyžadovala úpravu práce s cookies a závislostmi.
+
+**Navržené Řešení:**
+- Využití knihoven starlette, fastapi, authlib pro session a OAuth2.
+
+**Nápady a Postřehy:**
+- FastAPI výrazně zjednodušuje správu endpointů a dokumentaci.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-16 11:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-config-centralization
+
+**Cíl Úkolu:**
+- Centralizovat konfiguraci backendu do jednoho modulu, umožnit dynamické přepínání testovacího režimu a správu admin emailů.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen modul `core/config.py`.
+2. Všechny proměnné prostředí, cesty, admin emaily a test mode přesunuty do configu.
+3. Refaktorovány všechny služby a endpointy na použití configu.
+
+**Problémy a Překážky:**
+- Nutnost zajistit, aby test mode byl vždy detekován dynamicky (ne při importu).
+
+**Navržené Řešení:**
+- Funkce `is_test_mode()` místo statické proměnné.
+
+**Nápady a Postřehy:**
+- Centralizace výrazně zlepšila testovatelnost a přehlednost kódu.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-16 12:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-rbac-roles
+
+**Cíl Úkolu:**
+- Implementovat role-based access control (RBAC), rozlišit role admin, user, guest a chránit endpointy podle role.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen modul `services/roles.py` s dekorátory pro ochranu endpointů.
+2. Role určována podle emailu v session a admin emailů z configu.
+3. Ochrana endpointů /me, /upload, /logout, /refresh.
+
+**Problémy a Překážky:**
+- Nutnost správně řešit fallback v testovacím režimu.
+
+**Navržené Řešení:**
+- Dekorátory automaticky povolují přístup v test mode.
+
+**Nápady a Postřehy:**
+- RBAC je snadno rozšiřitelný o další role/práva.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-16 13:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-refresh-token
+
+**Cíl Úkolu:**
+- Implementovat refresh tokeny (JWT) pro bezpečné prodloužení session bez nutnosti opětovného loginu.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen modul `services/token_service.py` pro generování a ověřování JWT refresh tokenů.
+2. Endpoint `/refresh` umožňuje obnovit session pomocí platného tokenu.
+3. Testy ověřují správné fungování i selhání (expirace, neplatný token).
+
+**Problémy a Překážky:**
+- Správné nastavení expirace a bezpečné uložení secretu.
+
+**Navržené Řešení:**
+- Secret a expirace v configu, JWT knihovna s validací.
+
+**Nápady a Postřehy:**
+- Refresh tokeny výrazně zlepšují UX i bezpečnost.
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-16 14:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-audit-logging
+
+**Cíl Úkolu:**
+- Logovat všechny bezpečnostní akce (login, logout, refresh, selhání) do auditního logu.
+
+**Postup a Klíčové Kroky:**
+1. Vytvořen modul `services/audit_service.py` s funkcí `log_event()`.
+2. Všechny klíčové endpointy volají log_event při loginu, logoutu, refreshi i selhání.
+3. Logy jsou ve formátu JSON lines v `logs/audit.log` (timestamp, akce, email, detail).
+4. Ověřeno testy, že logování probíhá správně.
+
+**Problémy a Překážky:**
+- Nutnost logovat i selhání (neplatný login, refresh).
+
+**Navržené Řešení:**
+- Try/except bloky a logování chybových stavů.
+
+**Nápady a Postřehy:**
+- Audit log je připraven na rozšíření (další akce, monitoring, alerty).
+
+**Stav:** Dokončeno
+
+---
+**Timestamp:** 2025-09-16 15:00:00
+**Agent:** GitHub Copilot
+**Task ID:** backend-api-testing
+
+**Cíl Úkolu:**
+- Otestovat všechny nové backend funkce (RBAC, refresh, audit) včetně testovacího režimu.
+
+**Postup a Klíčové Kroky:**
+1. Rozšířen testovací soubor `tests/web_api/test_api_basic.py` o scénáře pro login, logout, refresh, ochranu endpointů a audit.
+2. Testy ověřují i selhání (neplatný refresh token, přístup bez role).
+3. Všechny testy procházejí, projekt je stabilní.
+
+**Problémy a Překážky:**
+- Nutnost dynamicky přepínat test mode a správně mockovat session.
+
+**Navržené Řešení:**
+- Test mode detekován vždy dynamicky, session mockována v testu.
+
+**Nápady a Postřehy:**
+- Testy výrazně zvyšují důvěru v bezpečnost a robustnost backendu.
+
+**Stav:** Dokončeno
+
 # 2025-09-15: Implementace Google OAuth2, ochrana API a automatizace testů
 - Backend přepsán na Flask, implementováno bezpečné přihlášení přes Google OAuth2 pomocí Authlib
 - Přidán endpoint `/api/login/google` (zahájení OAuth2 flow) a `/api/auth/callback` (zpracování odpovědi od Google, uložení identity do session)

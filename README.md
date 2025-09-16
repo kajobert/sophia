@@ -1,3 +1,71 @@
+# Sophia V4 – Dokumentace backendu (stav k 2025-09-16)
+
+## Architektura a hlavní principy
+
+- **FastAPI backend** – asynchronní, škálovatelný, s automatickou OpenAPI dokumentací
+- **Centralizovaná konfigurace** v `core/config.py` (všechny proměnné prostředí, cesty, admin emaily)
+- **Oddělená business logika** v adresáři `services/` (uživatelé, role, chat, tokeny, audit)
+- **Role-based access control (RBAC)** – role `admin`, `user`, `guest` určují přístup k endpointům
+- **OAuth2 (Google)** – bezpečné přihlášení, identita v session
+- **Refresh tokeny (JWT)** – dlouhodobé přihlášení bez nutnosti opětovného loginu
+- **Auditní logování** – všechny bezpečnostní akce (login, logout, refresh, selhání) se logují do `logs/audit.log`
+
+## Hlavní endpointy a jejich ochrana
+
+| Endpoint         | Přístup         | Popis |
+|------------------|-----------------|-------|
+| `/chat`          | veřejný         | Chat s AI, i bez přihlášení |
+| `/me`            | user/admin      | Info o přihlášeném uživateli a jeho roli |
+| `/login`         | veřejný         | Zahájení OAuth2 loginu |
+| `/auth`          | veřejný         | Callback z OAuth2, nastaví session, loguje login |
+| `/logout`        | user/admin      | Odhlášení, vymaže session, loguje logout |
+| `/refresh`       | veřejný         | Obnova session pomocí refresh tokenu (JWT), loguje refresh |
+| `/test-login`    | test mode only  | Pro testy, nastaví session na testovacího uživatele |
+| `/upload`        | user/admin      | (Demo) upload souboru, chráněno |
+
+## Role a jejich význam
+
+- **admin** – plný přístup, určeno podle emailu v `SOPHIA_ADMIN_EMAILS`
+- **user** – každý přihlášený přes OAuth2
+- **guest** – kdokoliv bez přihlášení
+
+## Bezpečnostní mechanismy
+
+- **Session cookies** – pro běžné API, chráněné endpointy
+- **Refresh tokeny (JWT)** – endpoint `/refresh`, bezpečné prodloužení přihlášení
+- **Auditní logování** – všechny klíčové akce a selhání do `logs/audit.log` (JSON lines)
+- **Dekorátory pro ochranu endpointů** – snadné rozšíření o další role/práva
+
+## Testování
+
+- Všechny klíčové scénáře jsou pokryty v `tests/web_api/test_api_basic.py`
+- Testovací režim (`SOPHIA_TEST_MODE=1`) umožňuje bezpečné testování bez reálného OAuth2
+- Testy ověřují login, logout, refresh, ochranu endpointů i audit
+
+## Složky a moduly
+
+- `core/config.py` – konfigurace, role adminů, dynamický test mode
+- `services/user_service.py` – správa session a uživatelů
+- `services/roles.py` – RBAC, dekorátory, určení role
+- `services/token_service.py` – generování a ověřování refresh tokenů (JWT)
+- `services/audit_service.py` – logování bezpečnostních akcí
+- `services/chat_service.py` – logika chatu
+
+## Auditní logy
+
+Každý záznam obsahuje:
+- UTC timestamp
+- typ akce (`login`, `logout`, `refresh`, `login_failed`, `refresh_failed`...)
+- email uživatele (pokud je znám)
+- detail (např. chybová hláška)
+
+Logy jsou v `logs/audit.log` ve formátu JSON lines (každý řádek jeden záznam).
+
+## Další rozvoj
+
+- Možnost přidat další role, jemnější práva, rozšířit audit
+- Připravena podpora pro škálování, více backend instancí, mobilní klienty
+- Snadná integrace s dalšími OAuth2 providery
 
 ## 🔐 Autentizace a přihlášení (Google OAuth2)
 

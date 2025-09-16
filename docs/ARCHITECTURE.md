@@ -1,3 +1,37 @@
+# Backend V4 – aktuální architektura (stav k 2025-09-16)
+
+## Klíčové vlastnosti backendu
+- **FastAPI** – asynchronní, škálovatelný backend s OpenAPI dokumentací
+- **Centralizovaná konfigurace** v `core/config.py` (všechny proměnné prostředí, cesty, admin emaily, test mode)
+- **Oddělená business logika** v `services/` (uživatelé, role, chat, tokeny, audit)
+- **Role-based access control (RBAC)** – role `admin`, `user`, `guest` určují přístup k endpointům (viz `services/roles.py`)
+- **OAuth2 (Google)** – bezpečné přihlášení, identita v session
+- **Refresh tokeny (JWT)** – endpoint `/refresh`, bezpečné prodloužení přihlášení bez nutnosti opětovného loginu (viz `services/token_service.py`)
+- **Auditní logování** – všechny bezpečnostní akce (login, logout, refresh, selhání) se logují do `logs/audit.log` (viz `services/audit_service.py`)
+
+## Hlavní endpointy a jejich ochrana
+
+| Endpoint         | Přístup         | Popis |
+|------------------|-----------------|-------|
+| `/chat`          | veřejný         | Chat s AI, i bez přihlášení |
+| `/me`            | user/admin      | Info o přihlášeném uživateli a jeho roli |
+| `/login`         | veřejný         | Zahájení OAuth2 loginu |
+| `/auth`          | veřejný         | Callback z OAuth2, nastaví session, loguje login |
+| `/logout`        | user/admin      | Odhlášení, vymaže session, loguje logout |
+| `/refresh`       | veřejný         | Obnova session pomocí refresh tokenu (JWT), loguje refresh |
+| `/test-login`    | test mode only  | Pro testy, nastaví session na testovacího uživatele |
+| `/upload`        | user/admin      | (Demo) upload souboru, chráněno |
+
+## Auditní logy
+
+Každý záznam obsahuje:
+- UTC timestamp
+- typ akce (`login`, `logout`, `refresh`, `login_failed`, `refresh_failed`...)
+- email uživatele (pokud je znám)
+- detail (např. chybová hláška)
+
+Logy jsou v `logs/audit.log` ve formátu JSON lines (každý řádek jeden záznam).
+
 ### Autentizace a ochrana API – příklad toku
 
 1. Uživatel klikne na „Přihlásit se“ (frontend).

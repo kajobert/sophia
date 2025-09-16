@@ -1,3 +1,18 @@
+# Příklad proměnných prostředí pro backend (doplněno 2025-09-16)
+
+Do .env nebo prostředí nastavte:
+
+```
+GOOGLE_CLIENT_ID=...           # OAuth2 client ID
+GOOGLE_CLIENT_SECRET=...       # OAuth2 client secret
+SOPHIA_SECRET_KEY=...          # Tajný klíč pro session
+SOPHIA_ADMIN_EMAILS=admin@example.com,další@admin.cz
+SOPHIA_REFRESH_SECRET=...      # Tajný klíč pro refresh tokeny (JWT)
+SOPHIA_AUDIT_LOG_PATH=logs/audit.log  # Cesta k auditnímu logu
+SOPHIA_TEST_MODE=0             # 1 = testovací režim (umožní test login)
+GEMINI_API_KEY=...             # Klíč pro Google Gemini API
+```
+
 ## 🔐 Přihlášení a ochrana API
 
 Po spuštění backendu a frontendu otevřete webovou aplikaci. Při prvním vstupu budete vyzváni k přihlášení přes Google (OAuth2). Po úspěšném přihlášení můžete používat všechny funkce. Pokud se odhlásíte nebo session vyprší, budete opět vyzváni k přihlášení.

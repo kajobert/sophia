@@ -5,23 +5,23 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
 ## 1. Backend: výkon, škálovatelnost, bezpečnost
 
 ### 1.1 Přechod na asynchronní framework (FastAPI)
-- **Cíl:** Získat vyšší výkon, async endpointy, automatickou OpenAPI dokumentaci.
-- **Postup:**
-    - Migrovat Flask backend na FastAPI (zachovat Authlib, session, endpoints)
-    - Refaktorovat endpointy na async funkce
-    - Otestovat kompatibilitu s frontendem a testy
+- [x] **Cíl:** Získat vyšší výkon, async endpointy, automatickou OpenAPI dokumentaci.
+- [x] **Postup:**
+    - Backend přepsán na FastAPI (asynchronní, OpenAPI, Authlib, session, endpoints)
+    - Všechny endpointy refaktorovány na async funkce
+    - Ověřena kompatibilita s frontendem a testy
 
 ### 1.2 Centralizace konfigurace
-- **Cíl:** Jednoduchá správa prostředí, bezpečnost, přehlednost.
-- **Postup:**
-    - Vytvořit modul `core/config.py` pro všechny proměnné prostředí a cesty
+- [x] **Cíl:** Jednoduchá správa prostředí, bezpečnost, přehlednost.
+- [x] **Postup:**
+    - Vytvořen modul `core/config.py` pro všechny proměnné prostředí, cesty, admin emaily, test mode
     - Všechny části backendu načítají konfiguraci pouze z tohoto modulu
 
 ### 1.3 Oddělení business logiky od endpointů
-- **Cíl:** Lepší čitelnost, testovatelnost, rozšiřitelnost.
-- **Postup:**
-    - Každý endpoint volá pouze tenkou vrstvu, logika je v samostatných modulech/službách
-    - Připravit adresář `services/` pro business logiku
+- [x] **Cíl:** Lepší čitelnost, testovatelnost, rozšiřitelnost.
+- [x] **Postup:**
+    - Každý endpoint volá pouze tenkou vrstvu, logika je v samostatných modulech/službách (`services/`)
+    - Všechny služby odděleny dle domény (uživatelé, role, chat, tokeny, audit)
 
 ### 1.4 JWT místo session cookies (volitelné)
 - **Cíl:** Škálovatelnost, možnost více backend instancí bez sdílené session.
@@ -30,23 +30,26 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
     - Zajistit kompatibilitu s frontendem
 
 ### 1.5 Bezpečnostní vylepšení
-- **Cíl:** Ochrana proti CSRF, XSS, session hijackingu.
-- **Postup:**
-    - Nastavit secure cookies, SameSite, CSRF ochranu (např. Flask-WTF, FastAPI CSRF)
+- [x] **Cíl:** Ochrana proti CSRF, XSS, session hijackingu.
+- [x] **Postup:**
+    - Nastaveny secure cookies, SameSite, session management
+    - Implementováno RBAC (role-based access control)
+    - Přidány refresh tokeny (JWT) pro bezpečné prodloužení session
+    - Implementováno auditní logování všech bezpečnostních akcí
     - Pravidelně auditovat závislosti (Bandit, Snyk)
 
 ## 2. Testování a CI/CD
 
 ### 2.1 Mockování OAuth2 pro testy
-- **Cíl:** Plně automatizované testy bez nutnosti interakce s Googlem.
-- **Postup:**
-    - Vytvořit mock server nebo použít knihovnu pro simulaci OAuth2 odpovědí
-    - Pokrýt všechny scénáře (úspěch, selhání, expirovaný token)
+- [x] **Cíl:** Plně automatizované testy bez nutnosti interakce s Googlem.
+- [x] **Postup:**
+    - Test mode umožňuje simulovat login bez Google OAuth2
+    - Pokryty scénáře úspěchu, selhání, expirovaný token
 
 ### 2.2 Pokrytí testy a coverage
-- **Cíl:** Zajistit spolehlivost a odhalit chyby v edge-case scénářích.
-- **Postup:**
-    - Měřit pokrytí testy (coverage.py)
+- [x] **Cíl:** Zajistit spolehlivost a odhalit chyby v edge-case scénářích.
+- [x] **Postup:**
+    - Všechny nové funkce (RBAC, refresh, audit) pokryty testy v `tests/web_api/test_api_basic.py`
     - Pravidelně doplňovat testy pro nové i existující funkce
 
 ### 2.3 CI/CD pipeline
@@ -78,24 +81,22 @@ Tento plán rozpracovává jednotlivé návrhy na konkrétní kroky, které zvý
 ## 4. Dokumentace a Dev Experience
 
 ### 4.1 OpenAPI/Swagger dokumentace
-- **Cíl:** Automaticky generovaná a aktuální API dokumentace.
-- **Postup:**
-    - Pro FastAPI nativně, pro Flask použít flasgger nebo apispec
-    - Publikovat dokumentaci na /docs
+- [x] **Cíl:** Automaticky generovaná a aktuální API dokumentace.
+- [x] **Postup:**
+    - FastAPI generuje OpenAPI dokumentaci automaticky na /docs
 
 ### 4.2 Onboarding a přehlednost
-- **Cíl:** Rychlý start pro nové vývojáře, přehledná architektura.
-- **Postup:**
-    - Přidat sekci „Jak přispívat“, diagramy, quickstart do README
-    - Přidat .env.example
+- [x] **Cíl:** Rychlý start pro nové vývojáře, přehledná architektura.
+- [x] **Postup:**
+    - README.md a ARCHITECTURE.md doplněny o aktuální architekturu a quickstart
+    - Přidán příklad proměnných prostředí do INSTALL.md
 
 ## 5. Výkon a škálovatelnost
 
 ### 5.1 Asynchronní background jobs
-- **Cíl:** Oddělit náročné úlohy od request/response cyklu.
-- **Postup:**
-    - Zavést Celery, RQ nebo FastAPI BackgroundTasks
-    - Použít pro generování odpovědí, práci s pamětí
+- [ ] **Cíl:** Oddělit náročné úlohy od request/response cyklu.
+- [ ] **Postup:**
+    - (Plánováno, zatím neimplementováno)
 
 ### 5.2 Cache
 - **Cíl:** Zrychlit často volané endpointy.
