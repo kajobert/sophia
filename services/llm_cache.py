@@ -1,12 +1,19 @@
+
 import os
 import redis
 import hashlib
 import json
+from memory.inmemory_redis import InMemoryRedisMock
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 CACHE_TTL = int(os.environ.get("LLM_CACHE_TTL", 3600))  # default 1 hodina
 
-redis_client = redis.Redis.from_url(REDIS_URL)
+def get_redis_client():
+    if os.environ.get("SOPHIA_TEST_MODE") == "1":
+        return InMemoryRedisMock()
+    return redis.Redis.from_url(REDIS_URL)
+
+redis_client = get_redis_client()
 
 def make_cache_key(prompt, user=None):
     # Hashujeme prompt + user email (pokud je)
@@ -20,9 +27,11 @@ def get_cached_reply(prompt, user=None):
     val = redis_client.get(key)
     if val:
         try:
+            if isinstance(val, bytes):
+                val = val.decode("utf-8")
             return json.loads(val)
         except Exception:
-            return val.decode("utf-8")
+            return val
     return None
 
 def set_cached_reply(prompt, user, reply):

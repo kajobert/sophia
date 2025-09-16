@@ -1,3 +1,4 @@
+
 import os
 import yaml
 from dotenv import load_dotenv
@@ -7,19 +8,38 @@ from core.gemini_llm_adapter import GeminiLLMAdapter
 # Načtení proměnných prostředí ze souboru .env
 load_dotenv()
 
-# --- Načtení globální konfigurace ---
+# --- Robustní načtení globální konfigurace ---
 CONFIG_FILE = "config.yaml"
+config = None
+config_paths_tried = []
+
+
 try:
-    with open(CONFIG_FILE, 'r') as f:
-        config = yaml.safe_load(f)
+    # 1. Zkus aktuální pracovní adresář
+    cwd_path = os.path.abspath(CONFIG_FILE)
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    module_path = os.path.join(module_dir, CONFIG_FILE)
+    root_path = os.path.abspath(os.path.join(module_dir, '..', CONFIG_FILE))
+    config_paths_tried = [cwd_path, module_path, root_path]
+
+    if os.path.exists(cwd_path):
+        with open(cwd_path, 'r') as f:
+            config = yaml.safe_load(f)
+    elif os.path.exists(module_path):
+        with open(module_path, 'r') as f:
+            config = yaml.safe_load(f)
+    elif os.path.exists(root_path):
+        with open(root_path, 'r') as f:
+            config = yaml.safe_load(f)
+    else:
+        raise FileNotFoundError()
     if not config:
         raise ValueError("Konfigurační soubor je prázdný.")
-except (FileNotFoundError, yaml.YAMLError) as e:
-    raise ValueError(f"Chyba při načítání konfiguračního souboru '{CONFIG_FILE}': {e}")
+except Exception as e:
+    raise ValueError(f"Chyba při načítání konfiguračního souboru '{CONFIG_FILE}'. Hledané cesty: {config_paths_tried}. Chyba: {e}")
 
 # --- Konfigurace primárního LLM ---
 llm_config = config.get('llm_models', {}).get('primary_llm')
-
 if not llm_config:
     raise ValueError("V konfiguračním souboru chybí sekce 'llm_models.primary_llm'.")
 
@@ -30,7 +50,6 @@ if not api_key:
 
 provider = llm_config.get('provider')
 # Inicializace LLM na základě konfigurace
-# V budoucnu zde může být logika pro výběr providera (google, openai, atd.)
 if provider == 'google':
     llm = GeminiLLMAdapter(
         model=llm_config.get('model_name', 'gemini-2.5-flash'),
