@@ -89,3 +89,9 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
     * **Technologie:** `google-generativeai`
     * **Funkce:** Zajišťuje jednotné rozhraní pro všechny agenty a snadnou rozšiřitelnost na další LLM providery.
 
+* **Testování a Spolehlivost (Robustní Testovací Prostředí)**:
+    * **Technologie:** `pytest`, `monkeypatch`
+    * **Funkce:** Systém je navržen pro maximální testovatelnost a spolehlivost.
+        * **`SOPHIA_ENV`:** Proměnná prostředí, která přepíná mezi `production` a `test` režimem.
+        * **`config_test.yaml`:** Oddělený konfigurační soubor, který se používá v `test` režimu. Umožňuje definovat specifické parametry pro testy (např. mockované LLM providery, jiné databázové spojení).
+        * **`tests/conftest.py`:** Centrální bod pro řízení testů. Automaticky nastavuje `SOPHIA_ENV=test` a mockuje všechny externí služby (např. LLM volání) na úrovni `litellm.completion`, což zajišťuje, že testy jsou rychlé, izolované a nikdy neprovádějí reálné API volání.
