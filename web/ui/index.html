@@ -1,58 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sophia Task Interface</title>
+    <title>Sophia Chat UI</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .container { max-width: 600px; margin: auto; }
-        input[type="text"] { width: 70%; padding: 8px; }
-        button { padding: 8px 12px; }
-        #results { margin-top: 1em; padding: 1em; border: 1px solid #ccc; background-color: #f9f9f9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        h1 { text-align: center; }
+        .chat-container { display: flex; gap: 10px; margin-bottom: 1rem; }
+        #prompt-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        #send-button { padding: 10px 20px; border: none; background-color: #007bff; color: white; border-radius: 5px; cursor: pointer; }
+        #send-button:hover { background-color: #0056b3; }
+        #response-container { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 15px; white-space: pre-wrap; word-wrap: break-word; }
+        .loader { text-align: center; display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Creator's Interface</h1>
-        <p>Submit a new task for Sophia to process.</p>
-        <input type="text" id="taskInput" placeholder="Enter task description...">
-        <button onclick="submitTask()">Submit Task</button>
-        <div id="results"></div>
+
+    <h1>Sophia Chat Interface</h1>
+    <p>Zadejte úkol pro Sophii. Odpoví vám agent plánovač.</p>
+
+    <div class="chat-container">
+        <input type="text" id="prompt-input" placeholder="Např. 'Vytvoř webovou stránku...'"/>
+        <button id="send-button">Odeslat</button>
     </div>
 
-    <script>
-        async function submitTask() {
-            const taskInput = document.getElementById('taskInput');
-            const resultsDiv = document.getElementById('results');
-            const taskDescription = taskInput.value;
+    <div class="loader">
+        <p>Čekám na odpověď...</p>
+    </div>
 
-            if (!taskDescription) {
-                resultsDiv.innerHTML = 'Error: Task description cannot be empty.';
+    <h2>Odpověď:</h2>
+    <pre id="response-container">Zde se zobrazí odpověď od API...</pre>
+
+    <script>
+        const promptInput = document.getElementById('prompt-input');
+        const sendButton = document.getElementById('send-button');
+        const responseContainer = document.getElementById('response-container');
+        const loader = document.querySelector('.loader');
+
+        sendButton.addEventListener('click', sendMessage);
+        promptInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function sendMessage() {
+            const prompt = promptInput.value;
+            if (!prompt) {
+                alert('Zadejte prosím text promptu.');
                 return;
             }
 
+            loader.style.display = 'block';
+            responseContainer.textContent = '';
+            sendButton.disabled = true;
+
             try {
-                const response = await fetch('/start_task', {
+                // The server should be running on localhost port 8000
+                const response = await fetch('http://127.0.0.1:8000/chat', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ task_description: taskDescription })
+                    body: JSON.stringify({ prompt: prompt }),
                 });
 
-                const result = await response.json();
+                const data = await response.json();
 
                 if (response.ok) {
-                    resultsDiv.innerHTML = `Success: ${result.message} (ID: ${result.task_id})`;
-                    taskInput.value = ''; // Clear input field
+                    // Format the JSON nicely for display in the <pre> tag
+                    responseContainer.textContent = JSON.stringify(data, null, 2);
                 } else {
-                    resultsDiv.innerHTML = `Error: ${result.error}`;
+                    responseContainer.textContent = `Chyba: ${data.error || 'Neznámá chyba'}`;
                 }
             } catch (error) {
-                resultsDiv.innerHTML = `Network Error: Could not connect to the API. ${error}`;
+                console.error('Chyba při komunikaci s API:', error);
+                responseContainer.textContent = `Došlo k chybě při připojování k API. Je server spuštěn? \n\n${error}`;
+            } finally {
+                loader.style.display = 'none';
+                sendButton.disabled = false;
+                promptInput.value = ''; // Clear the input
             }
         }
     </script>
+
 </body>
 </html>
