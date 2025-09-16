@@ -4,7 +4,7 @@ import React from "react";
 export default function Login({ onSkip, onLogin }) {
   const handleLogin = () => {
     if (onLogin) onLogin();
-    window.location.href = "/api/login";
+    window.location.href = "/api/login/google";
   };
   return (
     <div style={{ textAlign: "center" }}>

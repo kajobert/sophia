@@ -27,6 +27,56 @@ oauth.register(
         'scope': 'openid email profile'
     }
 )
+
+
+from functools import wraps
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not get_current_user():
+            return jsonify({"detail": "Not authenticated"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+# Chat endpoint (dummy odpověď)
+@app.route('/api/chat', methods=['POST'])
+@login_required
+def api_chat():
+    data = request.get_json()
+    msg = data.get('message', '').strip() if data else ''
+    if not msg:
+        return jsonify({"error": "Chybí zpráva"}), 400
+    # Dummy odpověď
+    return jsonify({"response": f"Sophia říká: {msg}"})
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
+import sys
+import os
+
+# Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z `memory`
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from memory.advanced_memory import AdvancedMemory
+
+from authlib.integrations.flask_client import OAuth
+
+app = Flask(__name__, static_folder='ui')
+app.secret_key = os.environ.get("SOPHIA_SECRET_KEY", "dev-secret")
+
+# OAuth2 konfigurace
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "demo-google-client-id")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "demo-google-client-secret")
+GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url=GOOGLE_DISCOVERY_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 def get_current_user():
     # Demo: uživatel je v session pod klíčem 'user', jinak None
     return session.get("user")
@@ -82,12 +132,22 @@ def api_logout():
     session.pop('user', None)
     return jsonify({"message": "Odhlášení úspěšné"})
 
+
+
+# Hlavní React chat UI (public/index.html)
 @app.route('/')
-def serve_ui():
-    """
-    Servíruje hlavní HTML soubor pro uživatelské rozhraní.
-    """
-    return send_from_directory(app.static_folder, 'index.html')
+def serve_react_ui():
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'ui', 'public'), 'index.html')
+
+# Statické soubory pro React (bundle.js, atd.)
+@app.route('/bundle.js')
+def serve_bundle():
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'ui', 'dist'), 'bundle.js')
+
+# Creator's Interface na /creator
+@app.route('/creator')
+def serve_creator():
+    return send_from_directory(os.path.join(os.path.dirname(__file__), 'ui'), 'index.html')
 
 
 from functools import wraps
