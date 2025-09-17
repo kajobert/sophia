@@ -1,5 +1,5 @@
 from crewai import Agent, Task, Crew
-from tools.file_system import ReadFileTool, ListDirectoryTool
+from tools.file_system import ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import RunUnitTestsTool
 from core.context import SharedContext
 from core.agent_config import load_agent_config
@@ -49,10 +49,13 @@ class TesterAgent:
             verbose=False
         )
 
-        result = crew.kickoff()
+        try:
+            result = crew.kickoff()
+            test_results = result.raw if hasattr(result, 'raw') else str(result)
+            context.payload['test_results'] = test_results
+        except FileSystemError as e:
+            context.payload['test_results'] = f"Test failed: {e}"
 
-        test_results = result.raw if hasattr(result, 'raw') else str(result)
-        context.payload['test_results'] = test_results
         return context
 
     def get_agent(self):
