@@ -79,10 +79,23 @@ class MockGeminiLLMAdapter(LLM):
         super().__init__(model_name=model, **kwargs)
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None, **kwargs: Any) -> str:
-        raise NotImplementedError(
-            "This mock adapter is not meant to be called directly. "
-            "The mocking is handled by monkeypatching `litellm.completion`."
-        )
+        """
+        This is the core of the mock. It intercepts the call that crewAI makes
+        and returns a canned response based on the prompt content, simulating
+        the behavior of a real LLM.
+        """
+        # This logic is a simplified version of the pytest mock handler.
+        prompt_lower = prompt.lower()
+
+        if "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
+            return "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nEthical Review Feedback: The plan is ethically sound."
+        elif "na základě tohoto plánu vytvoř kód" in prompt_lower:
+            return "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\nprint('Hello, World!')\n```"
+        elif "otestuj tento kód" in prompt_lower:
+            return "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: The code is functional and meets all requirements."
+        else:
+            # Default fallback response
+            return "Thought: I have received a prompt that I don't have a specific canned response for. I will provide a generic answer.\nFinal Answer: This is a generic mock response."
 
     @property
     def _llm_type(self) -> str:
