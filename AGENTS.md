@@ -13,20 +13,28 @@ Pracujeme v modelu **TRIAD**, který je založen na synergii tří entit:
 
 ## Zlatá Pravidla a Kodex Chování
 
-Všechna závazná pravidla, kódovací standardy a technické pokyny jsou definovány v souboru [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md). Jsi povinen se jimi řídit. Přečti si ho pokaždé, když začínáš novou session.
+Jsi povinen se řídit všemi pravidly, kódovacími standardy a technickými pokyny definovanými v tomto dokumentu a v souborech roadmapy.
+
+---
+
+## Technické Pokyny
+
+### Správa Závislostí (pip-tools)
+
+Tento projekt používá `pip-tools` pro zajištění reprodukovatelného prostředí.
+
+*   **NEUPRAVUJ `requirements.txt` ručně.** Tento soubor je generován automaticky.
+*   **Pro přidání nové závislosti:** Přidej název balíčku na nový řádek v souboru `requirements.in`.
+*   **Pro aktualizaci `requirements.txt`:** Po úpravě `requirements.in` spusť v terminálu následující příkaz, který soubor `requirements.txt` přegeneruje:
+    ```bash
+    .venv/bin/pip-compile requirements.in --output-file requirements.txt
+    ```
 
 ---
 
 ## Aktuální Úkol
 
-**Cíl:** Implementovat mechanismus pro používání nástrojů.
-
-**Kontext:** Toto je **Úkol 3.2** z naší hlavní roadmapy. Cílem je umožnit agentům používat nástroje pro interakci se systémem, jako je čtení a zápis souborů.
-
-**Klíčové Soubory:**
-*   `docs/ROADMAP_NEXUS_V1.md` (pro strategický kontext)
-*   `tools/file_system.py` (pravděpodobné místo pro implementaci)
-*   `tests/test_file_system_tool.py` (pro ověření funkčnosti)
+Tvůj aktuální úkol je definován v konverzaci s operátorem a v relevantních souborech roadmapy. Vždy se řiď nejnovějším plánem, který jsi vytvořil a který byl schválen.
 
 ---
 

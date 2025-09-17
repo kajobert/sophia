@@ -1,0 +1,17 @@
+# This file contains the direct dependencies of the project.
+# It is used by pip-compile to generate requirements.txt, which includes all transitive dependencies.
+
+# --- Core Application ---
+fastapi
+uvicorn
+crewai
+python-dotenv
+litellm
+google-generativeai
+
+# --- Testing ---
+pytest
+httpx
+
+# --- Development Tools ---
+pip-tools
