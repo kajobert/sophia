@@ -1,3 +1,27 @@
+**Timestamp:** 2025-09-17 00:56:00
+**Agent:** Jules
+**Task ID:** Fáze 4.1: Autonomní upgrade (Druhý pokus)
+
+**Cíl Úkolu:**
+- Opatrně ověřit chování prostředí a provést malou, bezpečnou a ověřitelnou úpravu kódu pomocí `aider` CLI, aniž by došlo k inicializaci nového git repozitáře.
+
+**Postup a Klíčové Kroky:**
+1.  **Ověření Prostředí:** Proveden "sanity check" vytvořením, přečtením a smazáním dočasného souboru. `git status` potvrdil, že operace nemají vedlejší účinky.
+2.  **Plánování:** Vytvořen podrobný plán, který zahrnuje použití `aider` CLI přímo, nikoliv přes `AiderAgent` třídu, která je pevně svázána se zakázaným adresářem `/sandbox`.
+3.  **Dokumentace:** Založen tento záznam v `WORKLOG.md` před zahájením úprav kódu.
+
+**Problémy a Překážky:**
+- První pokus o tento úkol selhal kvůli `git init` v `/sandbox`.
+- `AiderAgent` je navržen pro práci v `/sandbox`, což je v konfliktu se zadáním.
+
+**Navržené Řešení:**
+- Přímé použití `aider` CLI na soubory v `/app`, čímž se obejde problematická `AiderAgent` třída a zároveň se splní cíl úkolu (ověřit, jak `aider` funguje v tomto kontextu).
+
+**Nápady a Postřehy:**
+- Je klíčové pečlivě číst a respektovat varování operátora ohledně specifik prostředí.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-16 10:31:00
 **Agent:** Jules
 **Task ID:** final-mock-logic-improvement
