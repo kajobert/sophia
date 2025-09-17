@@ -19,7 +19,7 @@ Tento dokument definuje aktuální strategický plán pro vývoj projektu Sophia
     - **[x]** Sjednocení servírování (Static Files)
     - **[x]** Vytvoření 'Továrny na LLM'
     - **[x]** Vytvoření automatizovaného E2E testu pro UI
-- **[ ] Úkol 3.2:** Implementace mechanismu pro používání nástrojů
+- **[x] Úkol 3.2:** Implementace mechanismu pro používání nástrojů
 
 ### FÁZE 4: Autonomie a Sebezdokonalování [ČEKÁ NA REALIZACI]
 - **[ ] Úkol 4.1:** Provedení prvního plně autonomního upgradu vlastního kódu.

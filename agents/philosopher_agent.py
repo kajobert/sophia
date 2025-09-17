@@ -3,7 +3,6 @@
 Agent Filosofa (PhilosopherAgent) pro Sophii.
 Jeho úkolem je sebereflexe, analýza minulých událostí a generování vhledů.
 """
-
 from crewai import Agent
 from tools.memory_tools import MemoryReaderTool
 from core.agent_config import load_agent_config
