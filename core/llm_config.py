@@ -1,3 +1,14 @@
+def get_llm():
+    """
+    Vrací instanci inicializovaného LLM (globální proměnná llm).
+    Pokud není validní, zaloguje a vyhodí chybu.
+    """
+    global llm
+    if llm is None:
+        print("[get_llm] Chyba: llm je None!")
+        raise ValueError("LLM instance není inicializována (llm is None)")
+    print(f"[get_llm] Vrací instanci typu: {type(llm)}")
+    return llm
 
 import os
 import yaml

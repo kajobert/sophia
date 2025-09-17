@@ -106,43 +106,42 @@ def login_required(f):
 def api_chat():
     data = request.get_json()
     msg = data.get('message', '').strip() if data else ''
-    if not msg:
-        return jsonify({"error": "Chybí zpráva"}), 400
-    return jsonify({"response": f"Sophia říká: {msg}"})
-
-"""
-# --- Nový endpoint: Sophia plánování a kódování (FastAPI logika) ---
-#@app.route('/api/plan_and_code', methods=['POST'])
-#@login_required
-#def plan_and_code():
-#    data = request.get_json()
-#    prompt = data.get('prompt', '').strip() if data else ''
-#    if not prompt:
-#        return jsonify({"error": "Chybí prompt"}), 400
-#    try:
-#        session_id = str(uuid.uuid4())
-#        context = SharedContext(session_id=session_id, original_prompt=prompt)
-#        llm_instance = get_llm()
-#        planner_agent = PlannerAgent(llm=llm_instance)
-#        context_with_plan = planner_agent.run_task(context)
-#        engineer_agent = EngineerAgent(llm=llm_instance)
-#        final_context = engineer_agent.run_task(context_with_plan)
-#        output_text = final_context.payload.get('code', '')
-#        file_path_match = re.search(r"['\"](sandbox\/[^'\"]+)['\"]", output_text)
-#        file_path = file_path_match.group(1) if file_path_match else "No file path found"
-#        return jsonify({
-#            "status": "success",
-#            "message": "EngineerAgent successfully executed the plan.",
-#            "file_path": file_path,
-#            "final_context": {
-#                "plan": final_context.payload.get('plan'),
-#                "code_output": output_text,
-#                "ethical_review": final_context.payload.get('ethical_review')
-#            }
+    """
+    # --- Nový endpoint: Sophia plánování a kódování (FastAPI logika) ---
+    @app.route('/api/plan_and_code', methods=['POST'])
+    @login_required
+    def plan_and_code():
+        data = request.get_json()
+        prompt = data.get('prompt', '').strip() if data else ''
+        if not prompt:
+            return jsonify({"error": "Chybí prompt"}), 400
+        try:
+            session_id = str(uuid.uuid4())
+            context = SharedContext(session_id=session_id, original_prompt=prompt)
+            llm_instance = get_llm()
+            planner_agent = PlannerAgent(llm=llm_instance)
+            context_with_plan = planner_agent.run_task(context)
+            engineer_agent = EngineerAgent(llm=llm_instance)
+            final_context = engineer_agent.run_task(context_with_plan)
+            output_text = final_context.payload.get('code', '')
+            file_path_match = re.search(r"['\"](sandbox\/[^'\"]+)['\"]", output_text)
+            file_path = file_path_match.group(1) if file_path_match else "No file path found"
+            return jsonify({
+                "status": "success",
+                "message": "EngineerAgent successfully executed the plan.",
+                "file_path": file_path,
+                "final_context": {
+                    "plan": final_context.payload.get('plan'),
+                    "code_output": output_text,
+                    "ethical_review": final_context.payload.get('ethical_review')
+                }
+            })
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    """
 #        })
 #    except Exception as e:
 #        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-"""
 
 # Google OAuth2 login endpoint
 @app.route('/api/login/google')
