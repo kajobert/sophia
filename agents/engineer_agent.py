@@ -1,5 +1,5 @@
 from crewai import Agent, Task, Crew
-from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool
+from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import ExecutePythonScriptTool
 from core.context import SharedContext
 from core.agent_config import load_agent_config
@@ -50,12 +50,15 @@ class EngineerAgent:
             verbose=False
         )
 
-        result = crew.kickoff()
-
-        if hasattr(result, 'raw'):
-            generated_code = result.raw
-        else:
-            generated_code = str(result)
+        try:
+            result = crew.kickoff()
+            if hasattr(result, 'raw'):
+                generated_code = result.raw
+            else:
+                generated_code = str(result)
+        except FileSystemError as e:
+            print(f"EngineerAgent encountered a critical file system error: {e}")
+            raise
 
         context.payload['code'] = generated_code
         return context

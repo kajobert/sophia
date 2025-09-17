@@ -1,3 +1,28 @@
+**Timestamp:** 2025-09-17 15:52:59
+**Agent:** Jules
+**Task ID:** robust-error-handling
+
+**Cíl Úkolu:**
+- Refaktorovat `EngineerAgent` a `TesterAgent` pro robustní zpracování `FileSystemError` výjimek, přechod od kontroly řetězců k modernímu a spolehlivému zpracování chyb.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza:** Prostudován soubor `tools/file_system.py` pro potvrzení typů vyhazovaných výjimek.
+2.  **Refaktoring `EngineerAgent`:** Metoda `run_task` byla upravena tak, aby obalila volání `crew.kickoff()` blokem `try...except FileSystemError`. V případě chyby je výjimka zalogována a znovu vyhozena (`raise`), což zastaví běh s jasnou chybou.
+3.  **Refaktoring `TesterAgent`:** Metoda `run_task` byla upravena obdobně, ale v `except` bloku je chyba zachycena a informace o ní je zapsána do `context.payload['test_results']`, jak je požadováno pro očekávaná selhání.
+4.  **Vytvoření Unit Testu:** Do `tests/test_agent_file_system_integration.py` byl přidán nový test `test_engineer_agent_handles_filesystem_error`. Tento test pomocí `unittest.mock.patch` simuluje, že `crew.kickoff()` vyhodí `FileSystemError`, a ověřuje (`assertRaises`), že `EngineerAgent` tuto výjimku správně propaguje dál.
+5.  **Ověření:** Všechny testy (35) prošly úspěšně, což potvrzuje správnost implementace a absenci regresí.
+
+**Problémy a Překážky:**
+- Během testování byla odhalena drobná chyba v novém unit testu (`TypeError` kvůli chybějícímu argumentu v konstruktoru `SharedContext`), která byla okamžitě opravena.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Přechod na explicitní zpracování výjimek namísto parsování chybových řetězců činí agenty mnohem robustnějšími a jejich chování předvídatelnějším. Nový test zajišťuje, že tato robustnost zůstane zachována i v budoucnu.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-17 15:07:00
 **Agent:** Jules
 **Task ID:** Roadmap 1.1 - Refactoring and fixing orchestration in `main.py`
