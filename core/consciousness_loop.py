@@ -1,30 +1,45 @@
-
 """
-Orchestrátor tvorby: Planner -> Engineer -> Tester -> zpětná vazba
+Orchestrátor autonomního vylepšení.
+Spustí AiderAgenta s úkolem pro autonomní úpravu kódu v sandboxu.
 """
-from agents.planner_agent import PlannerAgent
-from agents.engineer_agent import EngineerAgent
-from agents.tester_agent import TesterAgent
+import os
+import sys
 
-def orchestrate_task(task_description):
-	# 1. Plánování
-	plan = PlannerAgent.llm(task_description)
-	print(f"[PLANNER] Plán: {plan}")
+# Přidání cesty k `agents` modulu
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-	# 2. Implementace
-	code_result = EngineerAgent.llm(plan)
-	print(f"[ENGINEER] Výsledek implementace: {code_result}")
+from agents.aider_agent import AiderAgent
 
-	# 3. Testování
-	test_result = TesterAgent.llm(plan)
-	print(f"[TESTER] Výsledek testů: {test_result}")
+def orchestrate_self_improvement():
+    """
+    Orchestruje jeden cyklus autonomního vylepšení.
+    """
+    print("--- Starting Autonomous Self-Improvement Cycle ---")
+    try:
+        # Načtení úkolu z prompt souboru
+        prompt_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'prompts', 'self_improve_task_1.txt'))
+        with open(prompt_path, 'r') as f:
+            task_description = f.read()
 
-	# 4. Zpětná vazba a případná revize
-	if "fail" in str(test_result).lower() or "error" in str(test_result).lower():
-		print("[LOOP] Testy selhaly, vracím úkol inženýrovi k revizi.")
-		# V reálné implementaci by zde byl cyklus revize
-	else:
-		print("[LOOP] Úkol úspěšně dokončen.")
+        print(f"Loaded task: {task_description.strip()}")
+
+        # Vytvoření instance AiderAgenta
+        aider_agent = AiderAgent()
+
+        # Spuštění úlohy
+        print("Invoking AiderAgent to propose changes...")
+        result = aider_agent.propose_change(description=task_description)
+
+        print(f"AiderAgent finished successfully. Result: {result}")
+        print("--- Autonomous Self-Improvement Cycle Finished ---")
+        return True
+
+    except FileNotFoundError:
+        print(f"Error: Prompt file not found at {prompt_path}")
+        return False
+    except Exception as e:
+        print(f"An error occurred during the self-improvement cycle: {e}")
+        return False
 
 if __name__ == "__main__":
-	orchestrate_task("Vytvoř funkci pro součet dvou čísel a napiš k ní unit test.")
+    orchestrate_self_improvement()

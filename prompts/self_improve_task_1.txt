@@ -1,0 +1,1 @@
+Create a new file `sandbox/utils.py` and add a Python function `get_project_version()` that reads the version from a new file `sandbox/VERSION` (defaulting to '1.0.0') and returns it as a string. Also create the `sandbox/VERSION` file and put '1.0.0' in it.

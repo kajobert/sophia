@@ -11,6 +11,12 @@ import json
 import os
 from typing import Any, Dict, Optional
 
+# Přidání cesty k `tools` modulu
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from tools.ethical_reviewer import EthicalReviewTool
+
 AIDER_CLI_PATH = "aider"  # předpokládá se v $PATH, případně upravit
 SANDBOX_PATH = os.path.abspath("./sandbox")
 
@@ -44,6 +50,48 @@ class AiderAgent:
         return result
 
     def _audit_change(self):
-        """Audituje změny v sandboxu (git log, validace Ethos modulem)."""
-        # TODO: Integrace s Ethos modulem, review, git log atd.
-        pass
+        """Audituje změny v sandboxu (git diff, validace Ethos modulem)."""
+        try:
+            # Fáze 1: Přidání všech změn do stage pro audit
+            subprocess.run(["git", "add", "."], cwd=self.sandbox_path, check=True)
+
+            # Fáze 2: Získání diffu změn v sandboxu
+            diff_process = subprocess.run(
+                ["git", "diff", "--staged"],
+                cwd=self.sandbox_path,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            change_diff = diff_process.stdout
+
+            if not change_diff.strip():
+                print("No changes to audit.")
+                return
+
+            # Fáze 3: Etická revize
+            ethical_reviewer = EthicalReviewTool()
+            review_result = ethical_reviewer._run(plan=f"Review the following code changes:\n\n{change_diff}")
+            print(f"Ethical Review Result: {review_result}")
+
+            # Fáze 4: Rozhodnutí
+            if "decision: pass" not in review_result.lower():
+                # Pokud revize selže, vrátíme změny zpět
+                print(f"Ethical review failed. Reverting changes. Reason: {review_result}")
+                subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=self.sandbox_path, check=True)
+                raise RuntimeError(f"Ethical review failed. Changes reverted.")
+
+            # Fáze 5: Commit, pokud revize projde
+            print("Ethical review passed. Committing changes.")
+            subprocess.run(["git", "commit", "-m", "Autonomously generated change"], cwd=self.sandbox_path, check=True)
+
+        except subprocess.CalledProcessError as e:
+            # Pokud jakýkoliv git příkaz selže, revertujeme
+            print(f"A git command failed during audit. Reverting changes. Error: {e.stderr}")
+            subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=self.sandbox_path, check=True)
+            raise RuntimeError(f"A git command failed during the audit process. Changes reverted.")
+        except Exception as e:
+            # Jakákoliv jiná chyba by měla také vést k vrácení změn
+            print(f"An unexpected error occurred during audit. Reverting changes. Error: {e}")
+            subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=self.sandbox_path, check=True)
+            raise RuntimeError(f"An unexpected error occurred during audit. Changes reverted.")
