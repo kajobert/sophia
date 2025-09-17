@@ -2,8 +2,9 @@ import unittest
 import os
 import shutil
 from crewai import Task, Crew
+import unittest.mock
 from agents.engineer_agent import EngineerAgent
-from tools.file_system import SANDBOX_DIR
+from tools.file_system import SANDBOX_DIR, FileSystemError, PathOutsideSandboxError
 from core.llm_config import get_llm  # Import the factory function
 
 class TestAgentFileSystemIntegration(unittest.TestCase):
@@ -77,6 +78,30 @@ class TestAgentFileSystemIntegration(unittest.TestCase):
         # Verification: Check if the agent's final output contains the content of the file.
         # This works because our improved mock now echoes the tool output back in the final answer.
         self.assertIn(test_content, result.raw, "Agent's final answer should contain the file content.")
+
+    @unittest.mock.patch('crewai.Crew.kickoff')
+    def test_engineer_agent_run_task_handles_filesystem_error(self, mock_kickoff):
+        """
+        Tests if the EngineerAgent's run_task method correctly handles a
+        FileSystemError raised by crew.kickoff() and re-raises it.
+        This directly tests the try...except block in the wrapper.
+        """
+        # Configure the mock to raise a specific FileSystemError
+        mock_kickoff.side_effect = PathOutsideSandboxError("Mocked kickoff failed as intended for test.")
+
+        # Set up the agent and a dummy context
+        llm = get_llm()
+        engineer_wrapper = EngineerAgent(llm=llm)
+        class DummyContext:
+            payload = {'plan': "Any plan will do, as kickoff is mocked."}
+
+        # Assert that calling run_task raises the expected exception
+        with self.assertRaises(FileSystemError, msg="EngineerAgent.run_task should re-raise FileSystemError from kickoff."):
+            engineer_wrapper.run_task(DummyContext())
+
+        # Verify that kickoff was called once
+        mock_kickoff.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

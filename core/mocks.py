@@ -29,22 +29,27 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
         response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
     elif "otestuj tento kód" in prompt_lower:
         response_content = "Thought: The user wants me to test the code. I will confirm it's functional.\nFinal Answer: Kód je funkční a splňuje všechny požadavky."
-    elif "use the write file tool to create a file named" in prompt_lower:
+    # This mock is for the EngineerAgent trying to use the WriteFileTool.
+    # It's designed to be flexible enough to handle various phrasings.
+    elif "write a file" in prompt_lower or "create a file named" in prompt_lower:
         import re
-        path_match = re.search(r"named '(.*?)'", prompt)
-        content_match = re.search(r"content: '(.*?)'", prompt)
+        # Regex to find file path and content, tolerant of different phrasings and case-insensitive.
+        path_match = re.search(r"file\s+(?:to|named)\s+'([^']*)'", prompt, re.IGNORECASE)
+        content_match = re.search(r"(?:with\s+)?content:?\s+'([^']*)'", prompt, re.IGNORECASE)
 
         if path_match and content_match:
             file_path = path_match.group(1)
             content = content_match.group(1)
 
+            # This is the structured output crewAI expects for a tool call.
             response_content = (
-                "Thought: The user wants me to write a file and then read it. I will start by using the 'Write File' tool.\n"
+                "Thought: The user wants me to write a file. I will use the 'Write File' tool.\n"
                 f"Action: Write File\n"
                 f"Action Input: {{\"file_path\": \"{file_path}\", \"content\": \"{content}\"}}"
             )
         else:
-            response_content = "Thought: I was asked to write a file for the integration test, but I couldn't parse the file path or content from the prompt."
+            # Fallback for the generic "create code" prompt if parsing fails
+            response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
 
     elif "use the read file tool to read the file" in prompt_lower:
         import re

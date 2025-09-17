@@ -1,5 +1,5 @@
 from crewai import Agent, Task, Crew
-from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool
+from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import ExecutePythonScriptTool
 from core.context import SharedContext
 from core.agent_config import load_agent_config
@@ -31,6 +31,7 @@ class EngineerAgent:
     def run_task(self, context: SharedContext) -> SharedContext:
         """
         Takes a SharedContext object with a 'plan' and executes the engineering task.
+        If a FileSystemError occurs, it is caught and re-raised to halt execution.
         """
         plan = context.payload.get('plan')
         if not plan:
@@ -50,15 +51,21 @@ class EngineerAgent:
             verbose=False
         )
 
-        result = crew.kickoff()
+        try:
+            result = crew.kickoff()
+            if hasattr(result, 'raw'):
+                generated_code = result.raw
+            else:
+                generated_code = str(result)
 
-        if hasattr(result, 'raw'):
-            generated_code = result.raw
-        else:
-            generated_code = str(result)
-
-        context.payload['code'] = generated_code
-        return context
+            context.payload['code'] = generated_code
+            return context
+        except FileSystemError as e:
+            # Re-raise the exception to be handled by the higher-level orchestrator.
+            # This is critical because a failure in the engineer's task (e.g., can't write a file)
+            # should stop the entire chain.
+            print(f"EngineerAgent failed with a file system error: {e}")
+            raise e
 
     def get_agent(self):
         """Returns the underlying crewAI Agent instance."""
