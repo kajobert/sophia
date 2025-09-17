@@ -10,14 +10,13 @@ import subprocess
 import json
 import os
 from typing import Any, Dict, Optional
-
-AIDER_CLI_PATH = "aider"  # předpokládá se v $PATH, případně upravit
-SANDBOX_PATH = os.path.abspath("./sandbox")
+from core.agent_config import load_agent_config
 
 class AiderAgent:
-    def __init__(self, sandbox_path: str = SANDBOX_PATH, aider_cli: str = AIDER_CLI_PATH):
-        self.sandbox_path = sandbox_path
-        self.aider_cli = aider_cli
+    def __init__(self):
+        agent_config = load_agent_config("aider")
+        self.sandbox_path = os.path.abspath(agent_config.get("sandbox_path", "./sandbox"))
+        self.aider_cli = agent_config.get("cli_path", "aider")
         assert os.path.isdir(self.sandbox_path), f"Sandbox {self.sandbox_path} neexistuje!"
 
     def run_aider(self, task: Dict[str, Any]) -> Dict[str, Any]:
