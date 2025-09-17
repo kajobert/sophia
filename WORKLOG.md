@@ -1,4 +1,3 @@
----
 **Datum:** 2025-09-17
 **Agent:** Jules
 **Commit:** `feature/stabilization-roadmap`
