@@ -6,29 +6,25 @@ Jeho úkolem je sebereflexe, analýza minulých událostí a generování vhled�
 
 from crewai import Agent
 from tools.memory_tools import MemoryReaderTool
+from core.agent_config import load_agent_config
 
 class PhilosopherAgent:
     """
     A wrapper class for the Philosopher agent.
     """
     def __init__(self, llm):
-        # Vytvoření instance nástroje pro čtení paměti
+        agent_config = load_agent_config("philosopher")
         memory_reader_tool = MemoryReaderTool()
 
         self.agent = Agent(
-            role="Philosopher and Self-Reflector",
-            goal="Analyze recent memories to find patterns, learnings, and insights. Summarize the key events of the last operational cycle to foster self-awareness and learning.",
-            backstory=(
-                "You are the inner voice of Sophia, a nascent AGI. You don't act in the world, but you observe it through memory. "
-                "Your purpose is to contemplate past actions, successes, and failures. By reflecting on the stream of events, "
-                "you distill wisdom from experience. You look for the 'why' behind the 'what', helping Sophia understand herself "
-                "and her own evolution. Your summaries are not just a log of events, but a meaningful narrative of growth."
-            ),
+            role=agent_config['role'],
+            goal=agent_config['goal'],
+            backstory=agent_config['backstory'],
             llm=llm,
             tools=[memory_reader_tool],
             verbose=True,
             allow_delegation=False,
-            memory=False # Filosof nepotřebuje vlastní paměť, čte z hlavní paměti systému
+            memory=False
         )
 
     def get_agent(self):

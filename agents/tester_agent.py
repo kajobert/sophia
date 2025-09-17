@@ -2,50 +2,45 @@ from crewai import Agent, Task, Crew
 from tools.file_system import ReadFileTool, ListDirectoryTool
 from tools.code_executor import RunUnitTestsTool
 from core.context import SharedContext
+from core.agent_config import load_agent_config
 
 class TesterAgent:
     """
     A wrapper class for the Tester agent.
     """
     def __init__(self, llm):
-        # Vytvoření instancí nástrojů
+        agent_config = load_agent_config("tester")
         read_file_tool = ReadFileTool()
         list_dir_tool = ListDirectoryTool()
         run_tests_tool = RunUnitTestsTool()
 
         self.agent = Agent(
-            role="Tester",
-            goal="Testovat a validovat kód v sandboxu pomocí unit testů. Umí číst soubory a spouštět testy.",
-            backstory=(
-                "Jsem Tester, strážce kvality. Spouštím unit testy, analyzuji výsledky a reportuji chyby. Pracuji pouze v sandboxu."
-            ),
+            role=agent_config['role'],
+            goal=agent_config['goal'],
+            backstory=agent_config['backstory'],
             llm=llm,
             tools=[read_file_tool, list_dir_tool, run_tests_tool],
             verbose=True,
             allow_delegation=False,
             memory=False
         )
+        self.task_description_template = agent_config['task_description']
+        self.expected_output_template = agent_config['expected_output']
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """
         Takes a SharedContext object with 'code' and executes the testing task.
-        The test results are added back to the context.
-
-        Args:
-            context (SharedContext): The shared context containing the code to test.
-
-        Returns:
-            SharedContext: The updated context with the test results.
         """
         code_to_test = context.payload.get('code')
         if not code_to_test:
             raise ValueError("The 'code' is missing from the context payload.")
 
-        # Vytvoření a spuštění CrewAI úlohy
+        task_description = self.task_description_template.format(code=code_to_test)
+
         testing_task = Task(
-            description=f"Otestuj následující kód a zhodnoť, zda je funkční:\n---\n{code_to_test}",
+            description=task_description,
             agent=self.agent,
-            expected_output="Stručné a jasné zhodnocení výsledků testů. V případě chyby popiš, co selhalo."
+            expected_output=self.expected_output_template
         )
 
         crew = Crew(
@@ -56,7 +51,6 @@ class TesterAgent:
 
         result = crew.kickoff()
 
-        # Uložení výsledku do kontextu
         test_results = result.raw if hasattr(result, 'raw') else str(result)
         context.payload['test_results'] = test_results
         return context
