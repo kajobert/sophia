@@ -17,7 +17,11 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
 
     response_content = ""
 
-    if "content of" in prompt_lower or "has been written successfully" in prompt_lower:
+    # This condition is designed to catch the "observation" step in crewai.
+    # When a tool runs, its output is passed back to the LLM as the next prompt.
+    # This mock logic identifies such prompts (based on content from integration tests)
+    # and makes the agent's final answer simply be that observation.
+    if "this is a readable test file" in prompt_lower or "hello from the integration test" in prompt_lower:
         response_content = f"Thought: The tool has been executed and I have the result. I will now formulate the final answer based on the tool's output.\nFinal Answer: {prompt}"
     elif "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
         response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nEthical Review Feedback: The plan is ethically sound."
