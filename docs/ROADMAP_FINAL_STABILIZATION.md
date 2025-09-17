@@ -21,15 +21,15 @@ Tato roadmapa nahrazuje všechny předchozí plány a stává se **primárním t
 
 **Cíl:** Integrovat kvalitní, již připravené změny z existujících PR a přizpůsobit zbytek kódu tak, aby byl s nimi kompatibilní.
 
-*   **[ ] Úkol 1.1: Sloučit PR `feat/web-file-write-chain`**
+*   **[x] Úkol 1.1: Sloučit PR `feat/web-file-write-chain`**
     *   **Akce:** Provést `git merge` větve `feat/web-file-write-chain` do `master`.
     *   **Výsledek:** Orchestrace agentů `Planner -> Engineer` bude funkční ve `web/api.py`.
 
-*   **[ ] Úkol 1.2: Sloučit PR `phase-4-1-aider-test`**
+*   **[x] Úkol 1.2: Sloučit PR `phase-4-1-aider-test`**
     *   **Akce:** Provést `git merge` větve `phase-4-1-aider-test` do `master`.
     *   **Výsledek:** Nástroje v `tools/file_system.py` budou refaktorované, robustnější a budou používat vlastní výjimky.
 
-*   **[ ] Úkol 1.3: Adaptace agentů na nové nástroje**
+*   **[x] Úkol 1.3: Adaptace agentů na nové nástroje**
     *   **Problém:** Agenti, kteří používají `FileSystemTool`, nyní musí být schopni zpracovat výjimky místo kontroly chybových stringů.
     *   **Zadání:** Upravit kód v `agents/engineer_agent.py` a dalších relevantních agentech. Místo kontroly `if "Error:" in result:` implementovat `try...except FileSystemError:` bloky pro robustní ošetření chyb.
     *   **Akceptační kritérium:** Agenti správně reagují na výjimky vyhozené z nástrojů.
