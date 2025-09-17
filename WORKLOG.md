@@ -1,4 +1,36 @@
+**Timestamp:** 2025-09-17 15:07:00
+**Agent:** Jules
+**Task ID:** Roadmap 1.1 - Refactoring and fixing orchestration in `main.py`
 
+**Cíl Úkolu:**
+- Kompletně přepsat logiku zpracování úkolů v `main.py`, aby správně využívala `SharedContext` a řetězila agenty `Planner` -> `Engineer` -> `Tester`.
+
+**Postup a Klíčové Kroky:**
+1.  **Analýza a Plánování:** Provedena důkladná analýza stávajícího kódu a agentů. Byl vytvořen podrobný plán refaktoringu.
+2.  **Refaktoring `main.py`:**
+    - Soubor `main.py` byl kompletně přepsán.
+    - Byla implementována nová asynchronní funkce `main()`.
+    - Je vytvořena instance `SharedContext` pro simulovaný úkol.
+    - Je vytvořena instance LLM pomocí tovární funkce `get_llm()`.
+    - Jsou vytvořeny instance agentů `PlannerAgent`, `EngineerAgent` a `TesterAgent`.
+3.  **Implementace Orchestrace:**
+    - Byl implementován řetězec volání agentů: `planner.run_task` -> `engineer.run_task` -> `tester.run_task`.
+    - Každé volání je správně zabaleno do `await asyncio.to_thread()`, aby se předešlo blokování asynchronní smyčky.
+    - Po každém kroku je logován aktuální stav `SharedContext.payload`, což umožňuje sledovat tok dat.
+4.  **Dokumentace:** Změny byly zdokumentovány v tomto záznamu.
+
+**Problémy a Překážky:**
+- Žádné významné problémy se nevyskytly. Analýza byla klíčová pro hladký průběh.
+
+**Navržené Řešení:**
+- N/A
+
+**Nápady a Postřehy:**
+- Nová architektura v `main.py` je nyní čistá, robustní a plně v souladu s definovanou architekturou projektu. Je připravena na další rozšiřování.
+
+**Stav:** Dokončeno
+
+---
 **Timestamp:** 2025-09-17 14:27:00
 **Agent:** Jules
 **Task ID:** stabilization-analysis-and-roadmap
