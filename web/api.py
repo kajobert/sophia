@@ -31,7 +31,8 @@ if os.getenv('SOPHIA_ENV') == 'test':
     patcher_acompletion.start()
 
 # Only import what is absolutely necessary at the module level
-from core.context import SharedContext
+from core.orchestrator import AgentOrchestrator
+import logging
 
 app = FastAPI()
 
@@ -45,6 +46,16 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# --- Singleton Orchestrator Instance ---
+# We create one instance of the orchestrator when the app starts.
+# This is more efficient than creating it on every request.
+try:
+    orchestrator = AgentOrchestrator()
+except Exception as e:
+    logging.critical(f"Failed to initialize AgentOrchestrator at startup: {e}")
+    orchestrator = None
+
+
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -52,52 +63,29 @@ class ChatRequest(BaseModel):
 async def read_index():
     return "web/ui/index.html"
 
-from core.llm_config import get_llm
-from agents.planner_agent import PlannerAgent
-from agents.engineer_agent import EngineerAgent
-import re
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
     """
-    Endpoint to receive a prompt, run the PlannerAgent and then the EngineerAgent,
+    Endpoint to receive a prompt, run the full agent orchestration,
     and return a structured response.
     """
+    if not orchestrator:
+        return {"error": "The agent orchestrator is not available due to an initialization error."}
+
     try:
-        # 1. Create a context for the request
-        session_id = str(uuid.uuid4())
-        context = SharedContext(session_id=session_id, original_prompt=request.prompt)
-        llm_instance = get_llm()
+        final_context = await orchestrator.run_orchestration(request.prompt)
 
-        # 2. Instantiate and run the PlannerAgent
-        planner_agent = PlannerAgent(llm=llm_instance)
-        context_with_plan = planner_agent.run_task(context)
-
-        # 3. Instantiate and run the EngineerAgent
-        engineer_agent = EngineerAgent(llm=llm_instance)
-        final_context = engineer_agent.run_task(context_with_plan)
-
-        # 4. Extract file path from the engineer's output
-        # The output might contain a sentence like "I have written the content to 'sandbox/test.txt'".
-        # We use regex to find the path within single or double quotes.
-        output_text = final_context.payload.get('code', '')
-        file_path_match = re.search(r"['\"](sandbox\/[^'\"]+)['\"]", output_text)
-        file_path = file_path_match.group(1) if file_path_match else "No file path found"
-
-        # 5. Return a structured success response
+        # Return a structured success response with the full payload
         return {
             "status": "success",
-            "message": "EngineerAgent successfully executed the plan.",
-            "file_path": file_path,
-            "final_context": {
-                "plan": final_context.payload.get('plan'),
-                "code_output": output_text,
-                "ethical_review": final_context.payload.get('ethical_review')
-            }
+            "message": "Orchestration completed.",
+            "session_id": final_context.session_id,
+            "final_context": final_context.payload
         }
     except Exception as e:
-        # Return a more detailed error message for debugging
-        return {"error": f"An error occurred: {str(e)}"}
+        logging.error(f"An error occurred during chat orchestration: {e}", exc_info=True)
+        return {"error": f"An unexpected error occurred: {str(e)}"}
 
 # Tento řádek připojí celý adresář a umožní např. budoucí načítání stylů
 app.mount("/", StaticFiles(directory="web/ui"), name="ui")
