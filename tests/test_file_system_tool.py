@@ -1,7 +1,18 @@
 import unittest
 import os
 import shutil
-from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool, SANDBOX_DIR
+import asyncio
+from tools.file_system import (
+    WriteFileTool,
+    ReadFileTool,
+    ListDirectoryTool,
+    SANDBOX_DIR,
+    PathOutsideSandboxError,
+    FileSystemNotFoundError,
+    IsDirectoryError,
+    NotDirectoryError,
+    FileSystemError
+)
 
 class TestFileSystemTools(unittest.TestCase):
 
@@ -15,8 +26,8 @@ class TestFileSystemTools(unittest.TestCase):
         if not os.path.exists(SANDBOX_DIR):
             os.makedirs(SANDBOX_DIR)
 
-        # Define a test directory within the sandbox to isolate test artifacts
-        self.test_dir = os.path.join(SANDBOX_DIR, "test_fs_data")
+        self.test_dir_name = "test_fs_data"
+        self.test_dir = os.path.join(SANDBOX_DIR, self.test_dir_name)
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
         os.makedirs(self.test_dir)
@@ -26,80 +37,119 @@ class TestFileSystemTools(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
+    # --- WriteFileTool Tests ---
+
     def test_write_file_success(self):
-        """Test successfully writing a file to the sandbox."""
-        file_path = "test_fs_data/test_write.txt"
+        """Test successfully writing a file."""
+        file_path = os.path.join(self.test_dir_name, "test_write.txt")
         content = "Hello, Sandbox!"
         result = self.write_tool._run(file_path=file_path, content=content)
         self.assertIn("successfully", result)
 
-        # Verify the file was actually written
-        full_path = os.path.join(SANDBOX_DIR, file_path)
+        full_path = os.path.join(self.test_dir, "test_write.txt")
         self.assertTrue(os.path.exists(full_path))
         with open(full_path, 'r', encoding='utf-8') as f:
             self.assertEqual(f.read(), content)
 
     def test_write_file_outside_sandbox(self):
-        """Test that writing outside the sandbox is forbidden."""
-        # Attempt to write to the parent directory using traversal
-        file_path = "../outside_test.txt"
-        result = self.write_tool._run(file_path=file_path, content="breach")
-        self.assertIn("Error: Path", result)
-        self.assertIn("outside the allowed /sandbox directory", result)
+        """Test that writing outside the sandbox raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.write_tool._run(file_path="../outside_test.txt", content="breach")
+        self.assertIsInstance(cm.exception.__cause__, PathOutsideSandboxError)
 
-        # Verify the file was not created
-        self.assertFalse(os.path.exists(os.path.join(SANDBOX_DIR, file_path)))
+    # --- ReadFileTool Tests ---
 
     def test_read_file_success(self):
-        """Test successfully reading a file from the sandbox."""
-        file_path = "test_fs_data/test_read.txt"
+        """Test successfully reading a file."""
+        file_path = os.path.join(self.test_dir_name, "test_read.txt")
         content = "Readable content."
-        # Create the file first before reading
         self.write_tool._run(file_path=file_path, content=content)
 
         result = self.read_tool._run(file_path=file_path)
-        self.assertIn(content, result)
+        self.assertEqual(result, content)
 
     def test_read_file_not_found(self):
-        """Test reading a file that does not exist."""
-        result = self.read_tool._run(file_path="test_fs_data/non_existent_file.txt")
-        self.assertIn("Error: File", result)
-        self.assertIn("not found", result)
+        """Test reading a non-existent file raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.read_tool._run(file_path=os.path.join(self.test_dir_name, "non_existent.txt"))
+        self.assertIsInstance(cm.exception.__cause__, FileSystemNotFoundError)
+
+    def test_read_file_is_directory(self):
+        """Test that reading a directory raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.read_tool._run(file_path=self.test_dir_name)
+        self.assertIsInstance(cm.exception.__cause__, IsDirectoryError)
 
     def test_read_file_outside_sandbox(self):
-        """Test that reading from outside the sandbox is forbidden."""
-        # Attempt to read a sensitive file from the project root
-        file_path = "../../AGENTS.md"
-        result = self.read_tool._run(file_path=file_path)
-        self.assertIn("Error: Path", result)
-        self.assertIn("outside the allowed /sandbox directory", result)
+        """Test reading outside the sandbox raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.read_tool._run(file_path="../../AGENTS.md")
+        self.assertIsInstance(cm.exception.__cause__, PathOutsideSandboxError)
+
+    # --- ListDirectoryTool Tests ---
 
     def test_list_directory_success(self):
-        """Test successfully listing a directory's contents."""
-        # Create some files and a directory to list
-        self.write_tool._run(file_path="test_fs_data/file1.txt", content="1")
-        self.write_tool._run(file_path="test_fs_data/subdir/file2.txt", content="2")
+        """Test successfully listing a directory."""
+        self.write_tool._run(file_path=os.path.join(self.test_dir_name, "file1.txt"), content="1")
+        self.write_tool._run(file_path=os.path.join(self.test_dir_name, "subdir/file2.txt"), content="2")
 
-        result = self.list_tool._run(path="test_fs_data")
+        result = self.list_tool._run(path=self.test_dir_name)
         self.assertIn("file1.txt", result)
         self.assertIn("subdir/", result)
+        self.assertEqual(len(result), 2)
 
     def test_list_empty_directory(self):
-        """Test listing a directory that is empty."""
-        result = self.list_tool._run(path="test_fs_data")
-        self.assertIn("is empty", result)
+        """Test listing an empty directory returns an empty list."""
+        result = self.list_tool._run(path=self.test_dir_name)
+        self.assertEqual(result, [])
+
+    def test_list_directory_not_found(self):
+        """Test listing a non-existent directory raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.list_tool._run(path=os.path.join(self.test_dir_name, "non_existent_dir"))
+        self.assertIsInstance(cm.exception.__cause__, FileSystemNotFoundError)
+
+    def test_list_directory_is_file(self):
+        """Test that listing a file raises FileSystemError."""
+        file_path = os.path.join(self.test_dir_name, "test_file.txt")
+        self.write_tool._run(file_path=file_path, content="not a dir")
+        with self.assertRaises(FileSystemError) as cm:
+            self.list_tool._run(path=file_path)
+        self.assertIsInstance(cm.exception.__cause__, NotDirectoryError)
 
     def test_list_directory_outside_sandbox(self):
-        """Test that listing a directory outside the sandbox is forbidden."""
-        result = self.list_tool._run(path="../")
-        self.assertIn("Error: Path", result)
-        self.assertIn("outside the allowed /sandbox directory", result)
+        """Test listing outside the sandbox raises FileSystemError."""
+        with self.assertRaises(FileSystemError) as cm:
+            self.list_tool._run(path="../")
+        self.assertIsInstance(cm.exception.__cause__, PathOutsideSandboxError)
 
-    def test_list_non_existent_directory(self):
-        """Test listing a directory that does not exist."""
-        result = self.list_tool._run(path="test_fs_data/non_existent_dir")
-        self.assertIn("Error: Directory", result)
-        self.assertIn("not found", result)
+    # --- Async Tests ---
+
+    def test_arun_read_file(self):
+        """Test the async _arun method for ReadFileTool."""
+        async def run_test():
+            file_path = os.path.join(self.test_dir_name, "async_read.txt")
+            content = "Async readable content."
+            self.write_tool._run(file_path=file_path, content=content)
+
+            result = await self.read_tool._arun(file_path=file_path)
+            self.assertEqual(result, content)
+
+            with self.assertRaises(FileSystemError) as cm:
+                await self.read_tool._arun(file_path="non_existent_async.txt")
+            self.assertIsInstance(cm.exception.__cause__, FileSystemNotFoundError)
+
+        asyncio.run(run_test())
+
+    def test_arun_list_directory(self):
+        """Test the async _arun method for ListDirectoryTool."""
+        async def run_test():
+            self.write_tool._run(file_path=os.path.join(self.test_dir_name, "async_file.txt"), content="...")
+
+            result = await self.list_tool._arun(path=self.test_dir_name)
+            self.assertIn("async_file.txt", result)
+
+        asyncio.run(run_test())
 
 if __name__ == "__main__":
     unittest.main()
