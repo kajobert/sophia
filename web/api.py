@@ -5,8 +5,65 @@ import os
 # Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z `memory`
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from memory.advanced_memory import AdvancedMemory
+# --- Importy a cesty ---
+import sys
+import os
+import uuid
+import re
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
+from functools import wraps
 
+# Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z core, agents, memory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# --- Testovací mockování LLM (z FastAPI části) ---
+from unittest.mock import patch
+if os.getenv('SOPHIA_ENV') == 'test':
+    from core.mocks import mock_litellm_completion_handler
+    print("--- RUNNING IN TEST MODE: Patching litellm.completion with mock handler. ---")
+    patcher_completion = patch('litellm.completion', new=mock_litellm_completion_handler)
+    patcher_acompletion = patch('litellm.acompletion', new=mock_litellm_completion_handler)
+    patcher_completion.start()
+    patcher_acompletion.start()
+
+
+# --- Sophia core a agents importy s automatickým hledáním ---
+import importlib
+import glob
+def try_import(module_name, class_names=None):
+    try:
+        mod = importlib.import_module(module_name)
+        if class_names:
+            return tuple(getattr(mod, name) for name in class_names)
+        return mod
+    except ModuleNotFoundError as e:
+        # Automatické hledání cesty
+        mod_path = module_name.replace('.', os.sep)
+        candidates = glob.glob(f"**/{mod_path}.py", recursive=True)
+        if candidates:
+            found_path = os.path.abspath(os.path.dirname(candidates[0]))
+            if found_path not in sys.path:
+                sys.path.insert(0, found_path)
+            try:
+                mod = importlib.import_module(module_name)
+                if class_names:
+                    return tuple(getattr(mod, name) for name in class_names)
+                return mod
+            except Exception as e2:
+                raise ImportError(f"Nepodařilo se importovat {module_name} ani po přidání {found_path}: {e2}")
+        raise ImportError(f"Modul {module_name} nenalezen: {e}")
+
+# Importy s fallbackem
+"""
+SharedContext, = try_import('core.context', ['SharedContext'])
+get_llm, = try_import('core.llm_config', ['get_llm'])
+PlannerAgent, = try_import('agents.planner_agent', ['PlannerAgent'])
+EngineerAgent, = try_import('agents.engineer_agent', ['EngineerAgent'])
+"""
+AdvancedMemory, = try_import('memory.advanced_memory', ['AdvancedMemory'])
+
+# --- Flask app a OAuth ---
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__, static_folder='ui')
@@ -28,8 +85,11 @@ oauth.register(
     }
 )
 
+# --- Uživatelská session ---
+def get_current_user():
+    return session.get("user")
 
-from functools import wraps
+# --- Login required dekorátor ---
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -38,7 +98,9 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# Chat endpoint (dummy odpověď)
+# --- API endpointy ---
+
+# Dummy chat endpoint (původní)
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def api_chat():
@@ -46,41 +108,41 @@ def api_chat():
     msg = data.get('message', '').strip() if data else ''
     if not msg:
         return jsonify({"error": "Chybí zpráva"}), 400
-    # Dummy odpověď
     return jsonify({"response": f"Sophia říká: {msg}"})
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
-import sys
-import os
 
-# Přidání cesty k hlavnímu adresáři projektu, aby bylo možné importovat moduly z `memory`
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from memory.advanced_memory import AdvancedMemory
-
-from authlib.integrations.flask_client import OAuth
-
-app = Flask(__name__, static_folder='ui')
-app.secret_key = os.environ.get("SOPHIA_SECRET_KEY", "dev-secret")
-
-# OAuth2 konfigurace
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "demo-google-client-id")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "demo-google-client-secret")
-GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-
-oauth = OAuth(app)
-oauth.register(
-    name='google',
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    server_metadata_url=GOOGLE_DISCOVERY_URL,
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
-)
-def get_current_user():
-    # Demo: uživatel je v session pod klíčem 'user', jinak None
-    return session.get("user")
-
+"""
+# --- Nový endpoint: Sophia plánování a kódování (FastAPI logika) ---
+#@app.route('/api/plan_and_code', methods=['POST'])
+#@login_required
+#def plan_and_code():
+#    data = request.get_json()
+#    prompt = data.get('prompt', '').strip() if data else ''
+#    if not prompt:
+#        return jsonify({"error": "Chybí prompt"}), 400
+#    try:
+#        session_id = str(uuid.uuid4())
+#        context = SharedContext(session_id=session_id, original_prompt=prompt)
+#        llm_instance = get_llm()
+#        planner_agent = PlannerAgent(llm=llm_instance)
+#        context_with_plan = planner_agent.run_task(context)
+#        engineer_agent = EngineerAgent(llm=llm_instance)
+#        final_context = engineer_agent.run_task(context_with_plan)
+#        output_text = final_context.payload.get('code', '')
+#        file_path_match = re.search(r"['\"](sandbox\/[^'\"]+)['\"]", output_text)
+#        file_path = file_path_match.group(1) if file_path_match else "No file path found"
+#        return jsonify({
+#            "status": "success",
+#            "message": "EngineerAgent successfully executed the plan.",
+#            "file_path": file_path,
+#            "final_context": {
+#                "plan": final_context.payload.get('plan'),
+#                "code_output": output_text,
+#                "ethical_review": final_context.payload.get('ethical_review')
+#            }
+#        })
+#    except Exception as e:
+#        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+"""
 
 # Google OAuth2 login endpoint
 @app.route('/api/login/google')
@@ -94,7 +156,6 @@ def auth_callback():
     token = oauth.google.authorize_access_token()
     userinfo = token.get('userinfo')
     if not userinfo:
-        # Pokud userinfo není v tokenu, získej ho explicitně
         resp = oauth.google.get('userinfo')
         userinfo = resp.json()
     if not userinfo or not userinfo.get('email'):
@@ -104,10 +165,9 @@ def auth_callback():
         "email": userinfo.get('email', ''),
         "avatar": userinfo.get('picture', '')
     }
-    # Po přihlášení přesměrovat na frontend (kořen)
     return redirect('/')
 
-# Demo login pro testování (ponechán pro fallback/testy)
+# Demo login pro testování
 @app.route('/api/login', methods=['POST'])
 def api_login():
     data = request.get_json()
@@ -132,8 +192,6 @@ def api_logout():
     session.pop('user', None)
     return jsonify({"message": "Odhlášení úspěšné"})
 
-
-
 # Hlavní React chat UI (public/index.html)
 @app.route('/')
 def serve_react_ui():
@@ -149,16 +207,7 @@ def serve_bundle():
 def serve_creator():
     return send_from_directory(os.path.join(os.path.dirname(__file__), 'ui'), 'index.html')
 
-
-from functools import wraps
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not get_current_user():
-            return jsonify({"detail": "Not authenticated"}), 401
-        return f(*args, **kwargs)
-    return decorated
-
+# Přidání tasku do paměti
 @app.route('/start_task', methods=['POST'])
 @login_required
 def start_task():
@@ -174,6 +223,7 @@ def start_task():
     except Exception as e:
         return jsonify({"error": f"Failed to add task: {str(e)}"}), 500
 
+# --- Spuštění serveru ---
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
