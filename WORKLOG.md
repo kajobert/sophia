@@ -1,3 +1,15 @@
+---
+**Datum:** 2025-09-17
+**Agent:** Jules
+**Commit:** `feature/stabilization-roadmap`
+**Popis:** Dokončení Fází 2 a 3 ze stabilizační roadmapy.
+
+**Provedené změny:**
+1.  **Sjednocení orchestrace (Úkol 2.1):** Vytvořen centrální modul `core/orchestrator.py`, který sjednocuje logiku spouštění agentů. Refaktorovány `main.py` a `web/api.py`, aby ho používaly.
+2.  **Stabilizace testů (Úkol 2.2):** Vytvořen skript `run_web_server.py` pro spolehlivé spouštění serveru. Přidán nový integrační test `tests/test_api.py`, který ověřuje funkčnost API.
+3.  **Správa závislostí (Úkol 3.1):** Zavedeny `pip-tools`. Vytvořen `requirements.in` a z něj vygenerován `requirements.txt` pro 100% reprodukovatelnost prostředí.
+4.  **Automatizace kvality (Úkol 3.2):** Nastaveny `pre-commit` hooky s `black` a `ruff` pro automatickou kontrolu a formátování kódu.
+5.  **Sjednocení dokumentace (Úkol 3.3):** Aktualizován `AGENTS.md`, aby se stal jediným zdrojem pravidel pro agenta.
 **Timestamp:** 2025-09-17 15:52:59
 **Agent:** Jules
 **Task ID:** robust-error-handling
