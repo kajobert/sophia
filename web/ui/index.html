@@ -68,11 +68,20 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    // Format the JSON nicely for display in the <pre> tag
-                    responseContainer.textContent = JSON.stringify(data, null, 2);
+                if (response.ok && data.status === 'success') {
+                    // Create a more readable, structured output
+                    let output = `Stav: ${data.status}\n`;
+                    output += `Zpráva: ${data.message}\n`;
+                    output += `Soubor: ${data.file_path}\n\n`;
+                    output += `--- Detailní kontext ---\n`;
+                    output += `Plán:\n${data.final_context.plan}\n\n`;
+                    output += `Výstup kódu:\n${data.final_context.code_output}\n\n`;
+                    output += `Etická kontrola:\n${data.final_context.ethical_review}`;
+
+                    responseContainer.textContent = output;
                 } else {
-                    responseContainer.textContent = `Chyba: ${data.error || 'Neznámá chyba'}`;
+                    // Display error from API or a generic error
+                    responseContainer.textContent = `Chyba: ${data.error || JSON.stringify(data)}`;
                 }
             } catch (error) {
                 console.error('Chyba při komunikaci s API:', error);

@@ -72,7 +72,11 @@ class MockGeminiLLMAdapter(LLM):
     """
     A mock LLM adapter for testing. It is compatible with LangChain and crewAI.
     """
-    model_name: str = "mock-gemini-for-crewai"
+    model_name: str
+
+    def __init__(self, model: str = "mock-gemini-for-crewai", **kwargs: Any):
+        # Pass the model_name to the Pydantic model's __init__
+        super().__init__(model_name=model, **kwargs)
 
     def _call(self, prompt: str, stop: Optional[List[str]] = None, **kwargs: Any) -> str:
         raise NotImplementedError(
