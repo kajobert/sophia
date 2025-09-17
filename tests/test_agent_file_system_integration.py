@@ -1,20 +1,20 @@
 import unittest
 import os
 import shutil
+from unittest.mock import patch
 from crewai import Task, Crew
 from agents.engineer_agent import EngineerAgent
-from tools.file_system import SANDBOX_DIR
-from core.llm_config import get_llm  # Import the factory function
+from tools.file_system import SANDBOX_DIR, FileSystemError
+from core.llm_config import get_llm
+from core.context import SharedContext
 
 class TestAgentFileSystemIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up a clean sandbox environment for each test."""
-        # The get_llm() function will return a mock LLM because conftest.py
-        # sets the SOPHIA_ENV='test' environment variable.
         llm = get_llm()
-        engineer_wrapper = EngineerAgent(llm=llm)
-        self.agent = engineer_wrapper.get_agent()
+        self.engineer_wrapper = EngineerAgent(llm=llm)
+        self.agent = self.engineer_wrapper.get_agent()
 
         # Ensure the sandbox directory exists and is clean
         if not os.path.exists(SANDBOX_DIR):
@@ -77,6 +77,22 @@ class TestAgentFileSystemIntegration(unittest.TestCase):
         # Verification: Check if the agent's final output contains the content of the file.
         # This works because our improved mock now echoes the tool output back in the final answer.
         self.assertIn(test_content, result.raw, "Agent's final answer should contain the file content.")
+
+    def test_engineer_agent_handles_filesystem_error(self):
+        """
+        Tests if the EngineerAgent correctly catches and re-raises FileSystemError.
+        """
+        # Patch the crew.kickoff method to simulate a file system error
+        with patch('crewai.Crew.kickoff', side_effect=FileSystemError("Simulated write error")):
+            # Create a dummy context for the agent
+            context = SharedContext(
+                session_id="test_session",
+                original_prompt="Test prompt",
+                payload={"plan": "Write a file that will cause an error."}
+            )
+            # Assert that running the task raises the expected exception
+            with self.assertRaises(FileSystemError):
+                self.engineer_wrapper.run_task(context)
 
 if __name__ == '__main__':
     unittest.main()
