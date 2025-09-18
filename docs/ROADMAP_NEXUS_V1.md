@@ -21,6 +21,9 @@ Tento dokument definuje aktuální strategický plán pro vývoj projektu Sophia
     - **[x]** Vytvoření automatizovaného E2E testu pro UI
 - **[x] Úkol 3.2:** Implementace mechanismu pro používání nástrojů
 
-### FÁZE 4: Autonomie a Sebezdokonalování [ČEKÁ NA REALIZACI]
+### FÁZE 4: Autonomie a Sebezdokonalování [INFRASTRUKTURA DOKONČENA]
 - **[x] Úkol 4.1:** Provedení prvního plně autonomního upgradu vlastního kódu. **[INFRASTRUKTURA HOTOVA]**
 - **[x] Úkol 4.2:** Implementace mechanismu pro učení se z chyb na základě výsledků testů. **[INFRASTRUKTURA HOTOVA]**
+
+### FÁZE 5: Cesta k Soběstačnosti [ČEKÁ NA REALIZACI]
+- Podrobný plán pro tuto fázi je definován v dokumentu [ROADMAP_PHASE_5.md](./ROADMAP_PHASE_5.md).
