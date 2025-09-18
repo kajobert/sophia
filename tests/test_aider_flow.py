@@ -6,11 +6,9 @@ from web.api import app
 
 class TestAiderFlow(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
         self.test_file_path = "sandbox/test_file.txt"
-        # Ensure sandbox directory exists
+        # Ensure sandbox directory exists and create a dummy file for tests
         os.makedirs(os.path.dirname(self.test_file_path), exist_ok=True)
-        # Create a dummy file in the sandbox for the test
         with open(self.test_file_path, "w") as f:
             f.write("Initial content.")
 
@@ -23,14 +21,16 @@ class TestAiderFlow(unittest.TestCase):
     def test_chat_routes_to_aider_agent_on_modify_command(self, mock_propose_change):
         """
         Tests that a prompt with the 'modify file' command is correctly
-        routed to the AiderAgent.
+        routed to the AiderAgent. Using the TestClient as a context manager
+        ensures that the application's lifespan events (startup/shutdown) are handled.
         """
         # Arrange
         mock_propose_change.return_value = {"status": "success", "message": "Change proposed by mock."}
         prompt = f"modify file `{self.test_file_path}`: a new line of text"
 
         # Act
-        response = self.client.post("/chat", json={"prompt": prompt})
+        with TestClient(app) as client:
+            response = client.post("/chat", json={"prompt": prompt})
 
         # Assert
         # 1. Check API response
@@ -48,15 +48,14 @@ class TestAiderFlow(unittest.TestCase):
 
     def test_chat_routes_to_standard_flow_on_normal_prompt(self):
         """
-        Tests that a normal prompt is routed to the standard orchestration flow,
-        not the AiderAgent. We can verify this by checking the payload which
-        should contain a 'plan' from the PlannerAgent.
+        Tests that a normal prompt is routed to the standard orchestration flow.
         """
         # Arrange
         prompt = "Tell me a joke."
 
         # Act
-        response = self.client.post("/chat", json={"prompt": prompt})
+        with TestClient(app) as client:
+            response = client.post("/chat", json={"prompt": prompt})
 
         # Assert
         self.assertEqual(response.status_code, 200)

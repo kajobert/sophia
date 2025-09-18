@@ -547,6 +547,7 @@ zstandard==0.25.0
 
 
 authlib
+itsdangerous
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
