@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if os.getenv('SOPHIA_ENV') == 'test':
     from core.mocks import mock_litellm_completion_handler
 
-    print("--- RUNNING IN TEST MODE: Patching litellm.completion with mock handler. ---")
+    print("--- RUNNING IN TEST MODE: Patching services with mock handlers. ---")
 
     # We need to patch both the sync and async completion functions
     patcher_completion = patch('litellm.completion', new=mock_litellm_completion_handler)
@@ -29,6 +29,20 @@ if os.getenv('SOPHIA_ENV') == 'test':
     # Start the patches
     patcher_completion.start()
     patcher_acompletion.start()
+
+    # --- Mock AdvancedMemory to prevent live DB connection during tests ---
+    class MockAdvancedMemory:
+        def __init__(self, config_path='config.yaml', user_id="sophia"):
+            print("--- API Server: MockAdvancedMemory initialized ---")
+        async def add_memory(self, content, mem_type, metadata=None):
+            print(f"--- API Server: Mocked add_memory called with content: '{content}' ---")
+            return "mock_chat_id_api_123"
+        def close(self):
+            pass
+
+    patcher_memory = patch('memory.advanced_memory.AdvancedMemory', new=MockAdvancedMemory)
+    patcher_memory.start()
+    # --- End of mocking block ---
 
 # Only import what is absolutely necessary at the module level
 from core.orchestrator import AgentOrchestrator
