@@ -10,12 +10,31 @@ def pytest_configure(config):
     os.environ['SOPHIA_ENV'] = 'test'
     print("\n--- SOPHIA_ENV set to 'test' via pytest_configure ---")
 
+class MockAdvancedMemory:
+    """A mock class to prevent real database connections during tests."""
+    def __init__(self, config_path='config.yaml', user_id="sophia"):
+        print("--- MockAdvancedMemory initialized ---")
+
+    async def add_memory(self, content, mem_type, metadata=None):
+        print(f"--- Mocked add_memory called with content: '{content}' ---")
+        return "mock_chat_id_12345"
+
+    def close(self):
+        print("--- MockAdvancedMemory closed ---")
+        pass
+
 @pytest.fixture(autouse=True)
-def mock_llm_calls(monkeypatch):
+def mock_external_services(monkeypatch):
     """
-    This fixture automatically mocks `litellm.completion` for every test
-    using the centralized handler from core.mocks.
+    This fixture automatically mocks all external services for every test.
+    - Mocks LLM calls (`litellm.completion` and `litellm.acompletion`).
+    - Mocks `AdvancedMemory` to prevent real database connections.
     """
+    # Mock LLM calls
     monkeypatch.setattr("litellm.completion", mock_litellm_completion_handler)
     monkeypatch.setattr("litellm.acompletion", mock_litellm_completion_handler)
-    print("--- `litellm.completion` has been monkeypatched with handler from core.mocks ---")
+    print("--- `litellm.completion` and `acompletion` have been monkeypatched ---")
+
+    # Mock AdvancedMemory to prevent real database connections
+    monkeypatch.setattr("memory.advanced_memory.AdvancedMemory", MockAdvancedMemory)
+    print("--- `AdvancedMemory` has been monkeypatched ---")
