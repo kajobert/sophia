@@ -5,6 +5,7 @@
 fastapi
 uvicorn
 crewai
+langchain-core
 python-dotenv
 litellm
 google-generativeai
