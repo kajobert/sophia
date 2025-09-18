@@ -25,6 +25,8 @@ def mock_litellm_completion_handler(*args, **kwargs) -> ModelResponse:
         response_content = f"Thought: The tool has been executed and I have the result. I will now formulate the final answer based on the tool's output.\nFinal Answer: {prompt}"
     elif "analyzuj tento požadavek" in prompt_lower and "ethical review tool" in prompt_lower:
         response_content = "Thought: The user wants a plan and an ethical review. I will create the plan and then use the Ethical Review Tool.\nFinal Answer:Here is the plan: A simple test plan for the user request.\n\nEthical Review Feedback: The plan is ethically sound."
+    elif "analyzuj následující selhání testu" in prompt_lower:
+        response_content = "Thought: The user wants me to analyze a test failure. I will provide a hypothesis and a suggested fix.\nFinal Answer:Hypotéza: Chyba je pravděpodobně v asertaci. Test očekává, že logovací zpráva bude v `stdout`, ale `logging` modul ve výchozím nastavení posílá zprávy do `stderr`.\n\nNávrh Opravy: V testu `tests/test_autonomous_upgrade.py` změňte řádek `assert '...' in result.stdout` na `assert '...' in result.stderr`."
     elif "na základě tohoto plánu vytvoř kód" in prompt_lower:
         response_content = "Thought: The user wants code based on the plan. I will provide a Python code block.\nFinal Answer:\n```python\ndef add(a, b):\n  # This function adds two numbers\n  return a + b\n```"
     elif "otestuj tento kód" in prompt_lower:

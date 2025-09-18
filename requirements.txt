@@ -366,7 +366,14 @@ pyproject-hooks==1.2.0
     #   build
     #   pip-tools
 pytest==8.4.2
+    # via
+    #   -r requirements.in
+    #   pytest-json-report
+    #   pytest-metadata
+pytest-json-report==1.5.0
     # via -r requirements.in
+pytest-metadata==3.1.1
+    # via pytest-json-report
 python-dateutil==2.9.0.post0
     # via
     #   kubernetes
@@ -513,7 +520,7 @@ yarl==1.20.1
     # via aiohttp
 zipp==3.23.0
     # via importlib-metadata
-
+authlib
 # The following packages are considered to be unsafe in a requirements file:
 # pip
 # setuptools
