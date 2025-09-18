@@ -15,3 +15,4 @@ logs/*.log
 memory/*.db
 memory/*.db-journal
 memory/*_db/
+.aider*
