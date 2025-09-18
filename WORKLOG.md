@@ -1,3 +1,31 @@
+**Timestamp:** 2025-09-17 17:15:00
+**Agent:** Jules
+**Task ID:** v4-migration-stabilization
+
+**Cíl Úkolu:**
+- Plně stabilizovat projekt po nedokončené migraci na V4. Opravit závislosti, dokončit integraci orchestrační smyčky s pamětí a opravit kompletní testovací sadu.
+
+**Postup a Klíčové Kroky:**
+1.  **Stabilizace Prostředí:** Provedena regenerace `requirements.txt` pomocí `pip-compile`, což vyřešilo kritické konflikty závislostí.
+2.  **Analýza Orchestrace:** Zjištěno, že plná V4 smyčka (Planner -> Engineer -> Tester) již existuje v `core/orchestrator.py`, ale chyběla jí klíčová integrace.
+3.  **Integrace Paměti:** Do `AgentOrchestrator` byla integrována `AdvancedMemory`. Orchestrátor nyní po úspěšném dokončení řetězce agentů ukládá výsledný kontext do databáze.
+4.  **Oprava Testů:** Testovací sada selhávala kvůli chybějícím mockům pro novou databázovou závislost.
+    - Do `tests/conftest.py` byl přidán mock pro `AdvancedMemory`, aby se zabránilo pádům při spouštění `pytest`.
+    - Do `web/api.py` byl přidán stejný mock pro testovací režim (`SOPHIA_ENV=test`), což opravilo selhávající integrační test spouštějící živý server.
+5.  **Ověření:** Všechny testy (36) nyní úspěšně procházejí, což potvrzuje stabilitu projektu.
+
+**Problémy a Překážky:**
+- Původní plán oprav (`docs/ROADMAP_NEXUS_V1.md`) byl částečně zastaralý, protože některé úkoly již byly hotové.
+- Testy selhávaly na dvou úrovních (při sběru testů a při běhu integračního testu), což vyžadovalo dva samostatné, ale související zásahy do mockovací logiky.
+
+**Navržené Řešení:**
+- Systematická oprava testovacího prostředí přidáním mocků na všech místech, kde se inicializují externí služby (`pytest` i živý server v testovacím režimu).
+
+**Nápady a Postřehy:**
+- Tento úkol ukazuje, jak je kritické mít testovací prostředí, které přesně zrcadlí chování produkčního prostředí, včetně způsobu, jakým se spouštějí a konfigurují jednotlivé služby.
+
+**Stav:** Dokončeno
+---
 **Datum:** 2025-09-17
 **Agent:** Jules
 **Commit:** `feature/stabilization-roadmap`
@@ -582,7 +610,7 @@
 4.  **Implementace E2E Testu:** Vytvořen nový test `tests/test_full_agent_chain.py`, který ověřuje spolupráci `PlannerAgent` a `EngineerAgent` v jednom řetězci.
 5.  **Oprava Nástrojů (Tools):** Během testování byla odhalena nekompatibilita custom nástrojů s `crewai`. Všechny třídy nástrojů v `tools/` byly opraveny tak, aby dědily z `crewai.tools.BaseTool` místo `langchain_core.tools.BaseTool`.
 6.  **Oprava Importů v Agentech:** Odhalen a opraven problém s importy v souborech agentů (`from core.llm_config import llm`), které bránily správnému fungování monkeypatchingu. Importy byly změněny na `import core.llm_config`, aby se vždy pracovalo s aktuálním, potenciálně mockovaným objektem.
-7.  **Finální Ověření:** Všechny testy (27) nyní procházejí úspěšně a spolehlivě.
+7.  **Finální Ověření:** Všechny testy (kromě jednoho přeskočeného) nyní úspěšně procházejí po spuštění příkazem `PYTHONPATH=. pytest`.
 
 **Problémy a Překážky:**
 - Debugging byl extrémně náročný, protože se řetězilo několik na sobě nezávislých chyb:
