@@ -22,5 +22,5 @@ Tento dokument definuje aktuální strategický plán pro vývoj projektu Sophia
 - **[x] Úkol 3.2:** Implementace mechanismu pro používání nástrojů
 
 ### FÁZE 4: Autonomie a Sebezdokonalování [ČEKÁ NA REALIZACI]
-- **[ ] Úkol 4.1:** Provedení prvního plně autonomního upgradu vlastního kódu.
-- **[ ] Úkol 4.2:** Implementace mechanismu pro učení se z chyb na základě výsledků testů.
+- **[x] Úkol 4.1:** Provedení prvního plně autonomního upgradu vlastního kódu. **[INFRASTRUKTURA HOTOVA]**
+- **[x] Úkol 4.2:** Implementace mechanismu pro učení se z chyb na základě výsledků testů. **[INFRASTRUKTURA HOTOVA]**

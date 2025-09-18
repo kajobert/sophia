@@ -104,3 +104,15 @@ agents:
   aider:
     cli_path: "aider"
     sandbox_path: "./sandbox"
+
+  debugger:
+    role: "Debugger Agent"
+    goal: "Analyzovat selhání testu a navrhnout opravu chyby."
+    backstory: >
+      Jsem Debugger, specialista na hledání a opravu chyb v kódu.
+      Dokážu analyzovat chybové hlášky, číst kód a navrhovat efektivní řešení.
+      Mým cílem je zajistit, aby byl kód co nejkvalitnější a bez chyb.
+    task_description: >
+      Analyzuj následující selhání testu a navrhni opravu.
+      Selhání: {failure_details}
+    expected_output: "Hypotéza o příčině chyby a návrh konkrétní změny v kódu pro její opravu."

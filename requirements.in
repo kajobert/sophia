@@ -12,6 +12,7 @@ google-generativeai
 # --- Testing ---
 pytest
 httpx
+pytest-json-report
 
 # --- Development Tools ---
 pip-tools
