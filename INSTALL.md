@@ -175,9 +175,9 @@ The project is configured to run tests in a safe, isolated environment. You do *
 
 ## 🧠 Další možnosti spuštění (pro vývojáře)
 
-- Orchestrace tvorby (CrewAI):
+- Spuštění jednoho orchestračního cyklu (bez Guardiana):
 	```bash
-	python3 -m core.consciousness_loop
+	python3 main.py
 	```
 - Kreativní brainstorming (AutoGen):
 	```bash
