@@ -6,6 +6,7 @@ from core.llm_config import get_llm
 from agents.planner_agent import PlannerAgent
 from agents.engineer_agent import EngineerAgent
 from agents.tester_agent import TesterAgent
+from memory.advanced_memory import AdvancedMemory
 
 class AgentOrchestrator:
     """
@@ -21,7 +22,8 @@ class AgentOrchestrator:
             self.planner = PlannerAgent(self.llm)
             self.engineer = EngineerAgent(self.llm)
             self.tester = TesterAgent(self.llm)
-            logging.info("AgentOrchestrator initialized successfully with all agents.")
+            self.memory = AdvancedMemory()
+            logging.info("AgentOrchestrator initialized successfully with all agents and memory.")
         except Exception as e:
             logging.error(f"Critical error during AgentOrchestrator initialization: {e}")
             raise
@@ -64,6 +66,15 @@ class AgentOrchestrator:
             logging.info("--- Running Tester ---")
             context = await asyncio.to_thread(self.tester.run_task, context)
             logging.info("Tester finished successfully.")
+
+            # Step 4: Save result to memory
+            logging.info("--- Saving Orchestration Result to Memory ---")
+            await self.memory.add_memory(
+                content=f"Orchestration completed for prompt: {context.original_prompt}",
+                mem_type="ORCHESTRATION_RESULT",
+                metadata=context.payload
+            )
+            logging.info("Orchestration result saved to memory.")
 
         except Exception as e:
             logging.error(f"An error occurred during agent orchestration: {e}", exc_info=True)
