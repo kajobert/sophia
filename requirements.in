@@ -9,6 +9,7 @@ langchain-core
 python-dotenv
 litellm
 google-generativeai
+psycopg2-binary
 
 # --- Testing ---
 pytest
