@@ -1,3 +1,5 @@
+# Ignorovat složku node (node_modules, repozitáře, knihovny apod.)
+node/
 # Environment variables
 .env
 
