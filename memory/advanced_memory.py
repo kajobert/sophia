@@ -61,48 +61,8 @@ class AdvancedMemory:
                 return memory
         return None
 
-    async def read_last_n_memories(self, n=10, mem_type: str = None):
-        """
-        Reads the last N memories. If mem_type is provided, it filters by memory type.
-        """
-        if mem_type is None:
-            return self.memori.get_conversation_history(limit=n)
-
-        session = self.memori.db_manager.SessionLocal()
-        try:
-            # This query is designed to be compatible with PostgreSQL's JSONB format
-            # and return data in a structure similar to memori.get_conversation_history
-            query = text("""
-                SELECT
-                    chat_id,
-                    user_input,
-                    ai_output,
-                    timestamp,
-                    metadata_json as metadata,
-                    model
-                FROM chat_history
-                WHERE namespace = :namespace
-                  AND metadata_json->>'memory_type' = :mem_type
-                ORDER BY timestamp DESC
-                LIMIT :n
-            """)
-            result = session.execute(query, {'namespace': self.user_id, 'mem_type': mem_type, 'n': n})
-
-            # Convert rows to a list of dictionaries
-            memories = [
-                {
-                    "chat_id": row.chat_id,
-                    "user_input": row.user_input,
-                    "ai_output": row.ai_output,
-                    "timestamp": row.timestamp.isoformat(),
-                    "metadata": row.metadata,
-                    "model": row.model,
-                }
-                for row in result
-            ]
-            return memories
-        finally:
-            session.close()
+    async def read_last_n_memories(self, n=10):
+        return self.memori.get_conversation_history(limit=n)
 
     async def add_task(self, description):
         """

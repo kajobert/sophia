@@ -333,8 +333,6 @@ protobuf==5.29.5
     #   onnxruntime
     #   opentelemetry-proto
     #   proto-plus
-psycopg2-binary==2.9.10
-    # via -r requirements.in
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
@@ -546,6 +544,9 @@ zipp==3.23.0
     # via importlib-metadata
 zstandard==0.25.0
     # via langsmith
+
+
+authlib
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

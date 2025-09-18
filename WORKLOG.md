@@ -1,39 +1,28 @@
-**Timestamp:** 2025-09-18 04:59:00
+**Timestamp:** 2025-09-18 09:41:00
 **Agent:** Jules
-**Task ID:** 5.1 - Conversational Memory
+**Task ID:** 5.2 - Activate Fully Autonomous Code Modifications
 
 **Cíl Úkolu:**
-- Implementovat první část Fáze 5: Vylepšení Konverzační Paměti a Učení z Dialogu.
-- Umožnit Sophii vést kontextuální dialog a pamatovat si minulé konverzace.
+- Umožnit Sophii přijímat a provádět instrukce k úpravě kódu z chatovacího rozhraní.
 
 **Postup a Klíčové Kroky:**
-1.  **Analýza a Plánování:** Vytvořen podrobný plán kroků, který zahrnoval úpravu orchestrátoru, vylepšení paměťových nástrojů a napsání nového testu.
-2.  **Rozlišení Typu Promptu:** Do `core/orchestrator.py` byla přidána logika `_is_task_oriented`, která na základě klíčových slov rozlišuje mezi příkazem k úpravě kódu a běžnou konverzací.
-3.  **Integrace `PhilosopherAgent`a:** Orchestrátor byl upraven tak, aby pro konverzace volal `PhilosopherAgent`a namísto standardního řetězce Planner->Engineer->Tester.
-4.  **Vylepšení Nástrojů Paměti:**
-    - `memory/advanced_memory.py` bylo rozšířeno o možnost filtrovat paměťové záznamy podle typu (`mem_type`).
-    - Nástroj `tools/memory_tools.py` byl refaktorován s použitím `@tool` dekorátoru z `crewai.tools` a byla do něj přidána podpora pro filtrování podle `mem_type`.
-5.  **Ukládání Konverzací:** Do `core/orchestrator.py` byla přidána logika, která po každé odpovědi od `PhilosopherAgent`a uloží celý dialog (dotaz i odpověď) do paměti s typem `CONVERSATION`.
-6.  **Robustní Testování:**
-    - Vytvořen nový testovací soubor `tests/test_conversational_flow.py`.
-    - Během testování byla odhalena a opravena řada hlubokých problémů v testovacím prostředí, včetně chybějící databázové závislosti (`psycopg2-binary`) a nesprávné inicializace FastAPI aplikace v testech.
-    - `web/api.py` bylo refaktorováno pro použití `lifespan` manažeru, což je robustnější způsob správy zdrojů a řeší problémy s mockováním v testech.
-    - Testy byly opraveny tak, aby správně reflektovaly strukturu odpovědi z `crewai`.
-7.  **Dokumentace:** Aktualizován `WORKLOG.md` a `docs/ROADMAP_PHASE_5.md`.
+1.  Provedena revize `agents/aider_agent.py` a bylo stanoveno, že se jedná o správnou, znovupoužitelnou komponentu pro tento úkol.
+2.  Upraven `core/orchestrator.py` přidáním nové primární metody `route_prompt`.
+3.  Tento směrovač používá regulární výraz k detekci promptů ve formátu "modify file `file.py`: <instructions>".
+4.  Pokud je nalezena shoda, orchestrátor extrahuje cesty k souborům a instrukce a volá novou metodu `run_code_modification`, která následně spouští `AiderAgent.propose_change`.
+5.  Pokud není nalezena shoda, prompt je předán standardnímu pracovnímu postupu `run_orchestration` (Planner->Engineer->Tester).
+6.  Aktualizován `web/api.py`, aby volal novou metodu `orchestrator.route_prompt`, čímž se nová logika napojila na chatovací UI.
+7.  Vytvořena nová testovací sada `tests/test_aider_flow.py` pro ověření logiky směrování. Test mockuje skutečné volání `aider` CLI a potvrzuje, že orchestrátor volá správného agenta se správnými parametry.
 
 **Problémy a Překážky:**
-- Debugging testů byl extrémně náročný a odhalil několik skrytých problémů:
-    1.  Chyba `pydantic.ValidationError` způsobená nekompatibilitou mezi `langchain_core.tools` a `crewai.tools`.
-    2.  Chybějící databázový ovladač `psycopg2-binary`, který bránil inicializaci, i když byla databáze mockována.
-    3.  Nesprávné pořadí inicializace aplikace a `pytest` fixtures, což vedlo k tomu, že mocky nebyly aplikovány. Problém byl vyřešen refaktoringem `web/api.py` na `lifespan` manager.
-    4.  Několikrát nesprávně opravená aserce v testu kvůli nepochopení přesné struktury `CrewOutput` objektu.
+- Počáteční chybné tvrzení v novém testu (`assertIsNone` místo `assertEqual((), ...)`) bylo rychle identifikováno a opraveno.
 
 **Navržené Řešení:**
-- Systematický a trpělivý debugging, který postupně odhalil a opravil všechny vrstvy problémů od závislostí, přes architekturu API až po samotnou logiku testu.
+- Oprava tvrzení v testovacím souboru.
 
 **Nápady a Postřehy:**
-- Tento úkol ukázal, jak je důležité mít robustní a spolehlivé testovací prostředí. Refaktoring `web/api.py` na `lifespan` manager je klíčovým vylepšením pro budoucí testovatelnost.
-- Práce s frameworky jako `crewai` vyžaduje pečlivé čtení dokumentace a pochopení jejich interních datových struktur.
+- Vrstva směrování v orchestrátoru je efektivní způsob, jak spravovat různé typy úkolů (např. plánování vs. přímé provádění).
+- Použití jasného, strukturovaného formátu promptu (jako "modify file `...`: ...") usnadňuje parsování a spolehlivé spouštění specifického chování agentů.
 
 **Stav:** Dokončeno
 ---

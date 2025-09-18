@@ -13,7 +13,7 @@ Tato fáze je přímou odpovědí na vizi operátora: dosáhnout stavu, kdy Soph
 
 ## 2. Rozpis Úkolů
 
-### **[x] Úkol 5.1: Vylepšení Konverzační Paměti a Učení z Dialogu**
+### **[ ] Úkol 5.1: Vylepšení Konverzační Paměti a Učení z Dialogu**
 -   **Cíl:** Umožnit Sophii vést přirozený, kontextuální dialog a učit se z našich rozhovorů o seberozvoji. Tím bude vyřešen problém se "zapomínáním" mezi interakcemi.
 -   **Klíčové Kroky:**
     1.  Upravit `web/api.py` a hlavní orchestrační logiku tak, aby dokázala rozlišit mezi "úkolem" (např. úprava kódu) a "konverzací". To může být realizováno například analýzou promptu.
