@@ -2,31 +2,31 @@ from crewai import Agent, Task, Crew
 from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import ExecutePythonScriptTool
 from core.context import SharedContext
-from core.agent_config import load_agent_config
+from core.llm_config import llm
 
 class EngineerAgent:
     """
     A wrapper class for the Engineer agent.
     """
     def __init__(self, llm):
-        agent_config = load_agent_config("engineer")
         write_file_tool = WriteFileTool()
         read_file_tool = ReadFileTool()
         list_dir_tool = ListDirectoryTool()
         execute_script_tool = ExecutePythonScriptTool()
 
         self.agent = Agent(
-            role=agent_config['role'],
-            goal=agent_config['goal'],
-            backstory=agent_config['backstory'],
+            role="Engineer",
+            goal="Implementovat, upravovat a refaktorovat kód v sandboxu dle zadání. Umí bezpečně číst, zapisovat a spouštět kód.",
+            backstory=(
+                "Jsem Engineer, tvůrce a realizátor. Převádím plány do funkčního kódu, testuji a refaktoruji. "
+                "Pracuji pouze v sandboxu, kde je vše bezpečné."
+            ),
             llm=llm,
             tools=[write_file_tool, read_file_tool, list_dir_tool, execute_script_tool],
             verbose=True,
             allow_delegation=False,
             memory=False
         )
-        self.task_description_template = agent_config['task_description']
-        self.expected_output_template = agent_config['expected_output']
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """
@@ -36,12 +36,12 @@ class EngineerAgent:
         if not plan:
             raise ValueError("The 'plan' is missing from the context payload.")
 
-        task_description = self.task_description_template.format(plan=plan)
+        task_description = f"Implement the following plan:\n\n{plan}"
 
         coding_task = Task(
             description=task_description,
             agent=self.agent,
-            expected_output=self.expected_output_template
+            expected_output="The final, complete code that implements the plan. No extra chatter."
         )
 
         crew = Crew(

@@ -2,30 +2,29 @@ from crewai import Agent, Task, Crew
 from tools.file_system import ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import RunUnitTestsTool
 from core.context import SharedContext
-from core.agent_config import load_agent_config
+from core.llm_config import llm
 
 class TesterAgent:
     """
     A wrapper class for the Tester agent.
     """
     def __init__(self, llm):
-        agent_config = load_agent_config("tester")
         read_file_tool = ReadFileTool()
         list_dir_tool = ListDirectoryTool()
         run_tests_tool = RunUnitTestsTool()
 
         self.agent = Agent(
-            role=agent_config['role'],
-            goal=agent_config['goal'],
-            backstory=agent_config['backstory'],
+            role="Tester",
+            goal="Testovat a validovat kód v sandboxu pomocí unit testů. Umí číst soubory a spouštět testy.",
+            backstory=(
+                "Jsem Tester, strážce kvality. Spouštím unit testy, analyzuji výsledky a reportuji chyby. Pracuji pouze v sandboxu."
+            ),
             llm=llm,
             tools=[read_file_tool, list_dir_tool, run_tests_tool],
             verbose=True,
             allow_delegation=False,
             memory=False
         )
-        self.task_description_template = agent_config['task_description']
-        self.expected_output_template = agent_config['expected_output']
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """
@@ -35,12 +34,12 @@ class TesterAgent:
         if not code_to_test:
             raise ValueError("The 'code' is missing from the context payload.")
 
-        task_description = self.task_description_template.format(code=code_to_test)
+        task_description = f"The following code has been implemented or changed:\n\n```\n{code_to_test}\n```\n\nYour task is to run all relevant unit tests to verify its correctness and ensure no regressions were introduced. Analyze the test results and provide a summary."
 
         testing_task = Task(
             description=task_description,
             agent=self.agent,
-            expected_output=self.expected_output_template
+            expected_output="A summary of the test results. If all tests pass, confirm that. If any tests fail, provide the complete error output and a brief analysis of the failure."
         )
 
         crew = Crew(
