@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, mock_open, AsyncMock
 from memory.advanced_memory import AdvancedMemory
+from tools.memory_tools import MemoryReaderTool
 from datetime import datetime
 import json
 import asyncio
@@ -63,6 +64,34 @@ database:
             self.mock_session.commit.assert_called_once()
             self.mock_session.close.assert_called_once()
         asyncio.run(run_test())
+
+    @patch('tools.memory_tools.AdvancedMemory')
+    def test_memory_reader_tool_arun(self, MockAdvancedMemory):
+        async def run_test():
+            mock_memory_instance = MockAdvancedMemory.return_value
+            test_time = datetime(2025, 1, 1, 12, 30, 0)
+            mock_memory_instance.read_last_n_memories = AsyncMock(return_value=[{"chat_id": "1", "timestamp": test_time, "user_input": "Test with datetime"}])
+            tool = MemoryReaderTool()
+            result_json = await tool._arun(n=1)
+            result_data = json.loads(result_json)
+            self.assertEqual(len(result_data), 1)
+            self.assertEqual(result_data[0]['timestamp'], test_time.isoformat())
+            mock_memory_instance.read_last_n_memories.assert_called_once_with(n=1, mem_type=None)
+        asyncio.run(run_test())
+
+    @patch('tools.memory_tools.AdvancedMemory')
+    def test_memory_reader_tool_run(self, MockAdvancedMemory):
+        mock_memory_instance = MockAdvancedMemory.return_value
+        test_time = datetime(2025, 1, 1, 12, 30, 0)
+        # We need to mock the async method, as _run will call it
+        mock_memory_instance.read_last_n_memories = AsyncMock(return_value=[{"chat_id": "1", "timestamp": test_time, "user_input": "Test with datetime"}])
+        tool = MemoryReaderTool()
+        # Call the synchronous _run method
+        result_json = tool._run(n=1)
+        result_data = json.loads(result_json)
+        self.assertEqual(len(result_data), 1)
+        self.assertEqual(result_data[0]['timestamp'], test_time.isoformat())
+        mock_memory_instance.read_last_n_memories.assert_called_once_with(n=1, mem_type=None)
 
 if __name__ == '__main__':
     unittest.main()

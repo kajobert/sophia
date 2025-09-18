@@ -1,23 +1,28 @@
 from crewai import Agent, Task, Crew
 from core.context import SharedContext
-from core.agent_config import load_agent_config
+from core.llm_config import llm
 
 class ArchitectAgent:
     """
     A wrapper class for the Architect agent.
     """
     def __init__(self, llm):
-        agent_config = load_agent_config("architect")
         self.agent = Agent(
-            role=agent_config['role'],
-            goal=agent_config['goal'],
-            backstory=agent_config['backstory'],
+            role="Software Architect",
+            goal="Design a detailed, robust, and scalable software architecture based on the provided system description.",
+            backstory="You are a seasoned Software Architect with years of experience in designing complex, scalable, and maintainable systems. You think in terms of components, modules, data flows, and technology stacks.",
             llm=llm,
             verbose=True,
             allow_delegation=False
         )
-        self.task_description_template = agent_config['task_description']
-        self.expected_output_template = agent_config['expected_output']
+        self.task_description_template = (
+            "Based on the following system description, design a comprehensive software architecture. "
+            "System Description: {system_description}"
+        )
+        self.expected_output_template = (
+            "A detailed architecture document outlining the main components, their responsibilities, "
+            "the data flow between them, and the recommended technology stack."
+        )
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """

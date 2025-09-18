@@ -1,72 +1,82 @@
+def get_llm():
+    """
+    Vrací instanci inicializovaného LLM (globální proměnná llm).
+    Pokud není validní, zaloguje a vyhodí chybu.
+    """
+    global llm
+    if llm is None:
+        print("[get_llm] Chyba: llm je None!")
+        raise ValueError("LLM instance není inicializována (llm is None)")
+    print(f"[get_llm] Vrací instanci typu: {type(llm)}")
+    return llm
+
 import os
 import yaml
 from dotenv import load_dotenv
 from core.gemini_llm_adapter import GeminiLLMAdapter
-from core.mocks import MockGeminiLLMAdapter
+# from langchain_google_genai import ChatGoogleGenerativeAI  # fallback do budoucna
 
 # Načtení proměnných prostředí ze souboru .env
 load_dotenv()
 
-def load_config():
-    """
-    Načte konfigurační soubor. Hledá 'config_test.yaml' (pokud SOPHIA_ENV='test')
-    nebo 'config.yaml' v několika možných lokacích.
-    """
-    is_test_env = os.getenv('SOPHIA_ENV') == 'test'
-    config_file = 'config_test.yaml' if is_test_env else 'config.yaml'
-
-    # --- Robustní načtení globální konfigurace (převzato z forku) ---
-    config = None
-    paths_to_try = [
-        os.path.abspath(config_file), # 1. Aktuální pracovní adresář
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), config_file), # 2. Adresář modulu
-        os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', config_file)) # 3. Kořenový adresář projektu
-    ]
-
-    for path in paths_to_try:
-        if os.path.exists(path):
-            try:
-                with open(path, 'r') as f:
-                    config = yaml.safe_load(f)
-                if config:
-                    print(f"Konfigurační soubor '{config_file}' úspěšně načten z: {path}")
-                    return config
-            except yaml.YAMLError as e:
-                raise ValueError(f"Chyba při načítání konfiguračního souboru '{path}': {e}")
-
-    # Pokud se soubor nenajde a jsme v testu, vrátíme dummy config
-    if is_test_env:
-        print(f"Warning: Test config '{config_file}' not found in {paths_to_try}. Using dummy config.")
-        return {'llm_models': {'primary_llm': {'provider': 'mock', 'model_name': 'mock-model'}}}
-
-    raise FileNotFoundError(f"Konfigurační soubor '{config_file}' nebyl nalezen v žádné z prohledávaných cest: {paths_to_try}")
+# --- Robustní načtení globální konfigurace ---
+CONFIG_FILE = "config.yaml"
+config = None
+config_paths_tried = []
 
 
-def get_llm():
-    """
-    Tovární funkce, která vrací správnou instanci LLM adaptéru
-    na základě proměnné prostředí SOPHIA_ENV.
-    """
-    config = load_config()
-    primary_llm_config = config.get('llm_models', {}).get('primary_llm')
-    if not primary_llm_config:
-        raise ValueError("V konfiguračním souboru chybí sekce 'llm_models.primary_llm'.")
+try:
+    # 1. Zkus aktuální pracovní adresář
+    cwd_path = os.path.abspath(CONFIG_FILE)
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    module_path = os.path.join(module_dir, CONFIG_FILE)
+    root_path = os.path.abspath(os.path.join(module_dir, '..', CONFIG_FILE))
+    config_paths_tried = [cwd_path, module_path, root_path]
 
-    model_name = primary_llm_config.get('model_name')
-
-    if os.getenv('SOPHIA_ENV') == 'test':
-        print("--- Running in TEST environment, providing Mock LLM ---")
-        return MockGeminiLLMAdapter(model=model_name)
+    if os.path.exists(cwd_path):
+        with open(cwd_path, 'r') as f:
+            config = yaml.safe_load(f)
+    elif os.path.exists(module_path):
+        with open(module_path, 'r') as f:
+            config = yaml.safe_load(f)
+    elif os.path.exists(root_path):
+        with open(root_path, 'r') as f:
+            config = yaml.safe_load(f)
     else:
-        print(f"--- Running in PRODUCTION environment, providing Real LLM: {model_name} ---")
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY environment variable not set.")
+        raise FileNotFoundError()
+    if not config:
+        raise ValueError("Konfigurační soubor je prázdný.")
+except Exception as e:
+    raise ValueError(f"Chyba při načítání konfiguračního souboru '{CONFIG_FILE}'. Hledané cesty: {config_paths_tried}. Chyba: {e}")
 
-        return GeminiLLMAdapter(
-            model=model_name,
+# --- Konfigurace primárního LLM ---
+llm_config = config.get('llm_models', {}).get('primary_llm')
+if not llm_config:
+    raise ValueError("V konfiguračním souboru chybí sekce 'llm_models.primary_llm'.")
+
+# --- Inicializace LLM ---
+llm = None
+
+# V testovacím režimu LLM neinicializujeme, testy si ho mockují samy.
+if os.getenv('SOPHIA_TEST_MODE') == '1':
+    print("Testovací režim aktivní, LLM se neincializuje.")
+else:
+    # Získání API klíče z proměnných prostředí
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("API klíč pro LLM (GEMINI_API_KEY) nebyl nalezen v .env souboru.")
+
+    provider = llm_config.get('provider')
+    # Inicializace LLM na základě konfigurace
+    if provider == 'google':
+        llm = GeminiLLMAdapter(
+            model=llm_config.get('model_name', 'gemini-1.5-flash'),
             api_key=api_key,
-            temperature=primary_llm_config.get('temperature', 0.7),
-            max_tokens=primary_llm_config.get('max_tokens', 2048),
-            verbose=primary_llm_config.get('verbose', False)
+            temperature=llm_config.get('temperature', 0.7),
+            max_tokens=llm_config.get('max_tokens', 2048),
+            verbose=llm_config.get('verbose', False)
         )
+        print(f"LLM provider '{provider}' byl úspěšně inicializován s modelem '{llm_config.get('model_name')}'.")
+    else:
+        # V budoucnu zde může být podpora pro další providery
+        raise ValueError(f"Neznámý nebo nepodporovaný provider LLM: {provider}")

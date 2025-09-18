@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: web/api/Dockerfile
+    container_name: sophia-backend
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./web/api/.env
+    volumes:
+      - ./web/api:/app
+      - ./sandbox:/sandbox
+    depends_on:
+      - db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./web/ui
+    container_name: sophia-frontend
+    ports:
+      - "3001:3000"
+    working_dir: /app
+    volumes:
+      - ./web/ui:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: npm run start
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:13
+    container_name: sophia-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sophia_user
+      POSTGRES_PASSWORD: sophia_password
+      POSTGRES_DB: sophia_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - sophia_pgdata:/var/lib/postgresql/data
+
+volumes:
+  sophia_pgdata:

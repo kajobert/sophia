@@ -1,22 +1,24 @@
+"""
+AiderAgent: Wrapper pro Aider IDE jako autonomní evoluční motor Sophia V4
+
+- Komunikuje s Aider IDE přes CLI (subprocess)
+- Omezuje všechny operace na /sandbox
+- Validuje a auditovat změny (git log, Ethos module)
+- Protokol úkolů: JSON přes stdin/stdout (příprava na REST)
+"""
 import subprocess
 import json
 import os
 from typing import Any, Dict, Optional
-from core.agent_config import load_agent_config
+
+AIDER_CLI_PATH = "aider"  # předpokládá se v $PATH, případně upravit
+SANDBOX_PATH = os.path.abspath("./sandbox")
 
 class AiderAgent:
-    """
-    Wrapper pro Aider IDE.
-    - Komunikuje s Aider IDE přes CLI (subprocess) pomocí JSON-RPC.
-    - Omezuje všechny operace na /sandbox.
-    """
-    def __init__(self):
-        agent_config = load_agent_config("aider")
-        self.sandbox_path = os.path.abspath(agent_config.get("sandbox_path", "./sandbox"))
-        self.aider_cli = agent_config.get("cli_path", "aider")
-
-        if not os.path.isdir(self.sandbox_path):
-            raise FileNotFoundError(f"Adresář sandboxu '{self.sandbox_path}' neexistuje!")
+    def __init__(self, sandbox_path: str = SANDBOX_PATH, aider_cli: str = AIDER_CLI_PATH):
+        self.sandbox_path = sandbox_path
+        self.aider_cli = aider_cli
+        assert os.path.isdir(self.sandbox_path), f"Sandbox {self.sandbox_path} neexistuje!"
 
     def run_aider(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Spustí Aider CLI s úkolem (JSON stdin), vrací výstup (JSON stdout)."""
@@ -43,5 +45,20 @@ class AiderAgent:
 
     def _audit_change(self):
         """Audituje změny v sandboxu (git log, validace Ethos modulem)."""
-        # TODO: Integrace s Ethos modulem, review, git log atd.
-        pass
+        import subprocess
+        from core.ethos_module import EthosModule
+
+        # Získání posledního commitu v sandboxu
+        try:
+            git_log = subprocess.check_output([
+                "git", "--no-pager", "log", "-1", "--pretty=%B"
+            ], cwd=self.sandbox_path, text=True)
+        except Exception as e:
+            raise RuntimeError(f"Nelze získat git log v sandboxu: {e}")
+
+        # Validace commit message Ethos modulem
+        ethos = EthosModule()
+        result = ethos.evaluate(git_log.strip())
+        if result['decision'] != 'approve':
+            raise RuntimeError(f"Změna v sandboxu nebyla eticky schválena: {result['feedback']}")
+        # TODO: Možnost review jiným agentem (Philosopher/Architect) lze přidat zde

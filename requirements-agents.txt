@@ -1,0 +1,9 @@
+# Experimentální a agentní závislosti pro Sophia (AI, CrewAI, AutoGen, LangChain, Gemini, ...)
+crewai
+autogen
+langgraph
+langchain
+langchain-google-genai
+google-generativeai
+memorisdk
+# Další knihovny pro agenty, testy, experimenty

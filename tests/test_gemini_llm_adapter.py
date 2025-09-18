@@ -22,11 +22,12 @@ def test_llm_adapter_initialization_uses_env_var():
         adapter = GeminiLLMAdapter(model="test-model")
         mock_configure.assert_called_once_with(api_key="env-key")
 
-def test_llm_adapter_call():
-    """Testuje metodu _call a ověřuje, že volá správnou metodu Gemini API."""
+def test_llm_adapter_call_and_token_usage():
+    """Testuje metodu _call, ověřuje volání Gemini API a sledování tokenů."""
 
     mock_api_response = MagicMock()
     mock_api_response.text = "Mocked response"
+    mock_api_response.usage_metadata = {"total_tokens": 42}
 
     with patch('google.generativeai.configure'), \
          patch('google.generativeai.GenerativeModel') as mock_model_class:
@@ -44,12 +45,14 @@ def test_llm_adapter_call():
         assert call_args[0] == "Test prompt"
 
         assert result == "Mocked response"
+        assert adapter.get_token_usage() == 42
 
 def test_llm_adapter_call_handles_blocked_response():
     """Testuje, jak se adaptér chová, když je odpověď z API blokována."""
     mock_api_response = MagicMock()
     type(mock_api_response).text = PropertyMock(side_effect=ValueError)
     mock_api_response.prompt_feedback = "Safety reasons"
+    mock_api_response.usage_metadata = {"total_tokens": 10}
 
     with patch('google.generativeai.configure'), \
          patch('google.generativeai.GenerativeModel') as mock_model_class:
@@ -63,3 +66,4 @@ def test_llm_adapter_call_handles_blocked_response():
 
         assert "Error: Response from Gemini API was blocked" in result
         assert "Safety reasons" in result
+        assert adapter.get_token_usage() == 10

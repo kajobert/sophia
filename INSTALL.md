@@ -1,4 +1,41 @@
+# Příklad proměnných prostředí pro backend (doplněno 2025-09-16)
+
+Do .env nebo prostředí nastavte:
+
+```
+GOOGLE_CLIENT_ID=...           # OAuth2 client ID
+GOOGLE_CLIENT_SECRET=...       # OAuth2 client secret
+SOPHIA_SECRET_KEY=...          # Tajný klíč pro session
+SOPHIA_ADMIN_EMAILS=admin@example.com,další@admin.cz
+SOPHIA_REFRESH_SECRET=...      # Tajný klíč pro refresh tokeny (JWT)
+SOPHIA_AUDIT_LOG_PATH=logs/audit.log  # Cesta k auditnímu logu
+SOPHIA_TEST_MODE=0             # 1 = testovací režim (umožní test login)
+GEMINI_API_KEY=...             # Klíč pro Google Gemini API
+```
+
+## 🔐 Přihlášení a ochrana API
+
+Po spuštění backendu a frontendu otevřete webovou aplikaci. Při prvním vstupu budete vyzváni k přihlášení přes Google (OAuth2). Po úspěšném přihlášení můžete používat všechny funkce. Pokud se odhlásíte nebo session vyprší, budete opět vyzváni k přihlášení.
+
+- **Chráněné endpointy:** `/api/chat`, `/api/upload`, `/api/files` a další vyžadují přihlášení.
+- **Testování přihlášení:** Po přihlášení zkuste zavolat `/api/me` – vrátí informace o uživateli. Pokud nejste přihlášeni, vrátí 401.
+
 # Installation and Setup Guide for Sophia V4
+
+## 🌐 Frontend (web/ui)
+
+1. Otevři terminál v adresáři `web/ui/`
+2. Spusť:
+	npm install
+	npm run start
+
+3. Pro spuštění testů:
+	npm test
+
+4. Pro build produkční verze:
+	npm run build
+
+Výstupní build bude v `web/ui/dist/`
 # ---
 # Aider IDE (Evoluční motor Sophia)
 # ---
@@ -159,25 +196,28 @@ You should now see log output from both the Guardian and the main Sophia process
 
 ## 🧪 Running Tests
 
-To ensure the integrity and stability of the codebase, run the complete test suite.
 
-### How to Run Tests
-From the root directory of the project, execute the following command:
+
+To ensure the integrity of the codebase, run all tests using **pytest** (doporučeno):
+
 ```bash
-PYTHONPATH=. python3 -m pytest
+PYTHONPATH=. pytest tests/
 ```
-This command uses `pytest` to automatically discover and run all tests in the `tests/` directory.
 
-### About the Test Environment
-The project is configured to run tests in a safe, isolated environment. You do **not** need a real API key for the tests to pass. The test setup in `tests/conftest.py` automatically handles mocking of all external services.
+This will automatically discover and run all tests (pytest i unittest) in the `tests` directory.
+
+If you want to run only unittest tests (without pytest fixtures), you can use:
+```bash
+PYTHONPATH=. python3 -m unittest discover tests
+```
 
 ---
 
 ## 🧠 Další možnosti spuštění (pro vývojáře)
 
-- Spuštění jednoho orchestračního cyklu (bez Guardiana):
+- Orchestrace tvorby (CrewAI):
 	```bash
-	python3 main.py
+	python3 -m core.consciousness_loop
 	```
 - Kreativní brainstorming (AutoGen):
 	```bash

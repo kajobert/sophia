@@ -2,7 +2,7 @@ import os
 import asyncio
 from typing import Type, List
 from pydantic import BaseModel, Field
-from crewai.tools import BaseTool
+from langchain_core.tools import BaseTool
 
 # --- Custom Exceptions ---
 
