@@ -29,26 +29,31 @@ if os.getenv('SOPHIA_ENV') == 'test':
     # Start the patches
     patcher_completion.start()
     patcher_acompletion.start()
-
-    # --- Mock AdvancedMemory to prevent live DB connection during tests ---
-    class MockAdvancedMemory:
-        def __init__(self, config_path='config.yaml', user_id="sophia"):
-            print("--- API Server: MockAdvancedMemory initialized ---")
-        async def add_memory(self, content, mem_type, metadata=None):
-            print(f"--- API Server: Mocked add_memory called with content: '{content}' ---")
-            return "mock_chat_id_api_123"
-        def close(self):
-            pass
-
-    patcher_memory = patch('memory.advanced_memory.AdvancedMemory', new=MockAdvancedMemory)
-    patcher_memory.start()
     # --- End of mocking block ---
 
-# Only import what is absolutely necessary at the module level
 from core.orchestrator import AgentOrchestrator
 import logging
+from contextlib import asynccontextmanager
+from fastapi import Request
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan manager for the FastAPI app.
+    It handles the initialization of the AgentOrchestrator on startup.
+    """
+    print("--- FastAPI app startup ---")
+    try:
+        app.state.orchestrator = AgentOrchestrator()
+        print("--- AgentOrchestrator initialized successfully ---")
+    except Exception as e:
+        logging.critical(f"Failed to initialize AgentOrchestrator at startup: {e}", exc_info=True)
+        app.state.orchestrator = None
+    yield
+    print("--- FastAPI app shutdown ---")
+    app.state.orchestrator = None
+
+app = FastAPI(lifespan=lifespan)
 
 # Allow all origins for simplicity, as the frontend will be a local file.
 # In a production environment, this should be restricted to the actual frontend URL.
@@ -60,16 +65,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# --- Singleton Orchestrator Instance ---
-# We create one instance of the orchestrator when the app starts.
-# This is more efficient than creating it on every request.
-try:
-    orchestrator = AgentOrchestrator()
-except Exception as e:
-    logging.critical(f"Failed to initialize AgentOrchestrator at startup: {e}")
-    orchestrator = None
-
-
 class ChatRequest(BaseModel):
     prompt: str
 
@@ -79,16 +74,22 @@ async def read_index():
 
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: Request):
     """
     Endpoint to receive a prompt, run the full agent orchestration,
     and return a structured response.
     """
+    orchestrator = request.app.state.orchestrator
     if not orchestrator:
         return {"error": "The agent orchestrator is not available due to an initialization error."}
 
     try:
-        final_context = await orchestrator.run_orchestration(request.prompt)
+        chat_request_data = await request.json()
+        prompt = chat_request_data.get('prompt')
+        if not prompt:
+            return {"error": "Prompt is missing from request body."}
+
+        final_context = await orchestrator.run_orchestration(prompt)
 
         # Return a structured success response with the full payload
         return {
