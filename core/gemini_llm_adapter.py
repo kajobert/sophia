@@ -8,14 +8,14 @@ from langchain_core.language_models.llms import LLM
 
 class GeminiLLMAdapter(LLM):
     """
-    LangChain-kompatibilní wrapper pro Google Gemini API.
+    LangChain-kompatibilní wrapper pro Google Gemini API s podporou sledování tokenů.
     """
     model_name: str
     temperature: float = 0.7
     max_tokens: int = 2048
 
-    # Interní google-generativeai model
     _model: Any = None
+    _last_token_usage: int = 0
 
     def __init__(
         self,
@@ -25,16 +25,15 @@ class GeminiLLMAdapter(LLM):
         max_tokens: int = 2048,
         **kwargs: Any
     ):
-        # Všechny fieldy musí být předány do super().__init__ pro Pydantic validaci
         super().__init__(model_name=model, temperature=temperature, max_tokens=max_tokens, **kwargs)
 
-        # Konfigurace a inicializace klienta
         final_api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not final_api_key:
             raise ValueError("GEMINI_API_KEY musí být poskytnut buď jako argument, nebo nastaven jako proměnná prostředí.")
 
         genai.configure(api_key=final_api_key)
         self._model = genai.GenerativeModel(self.model_name)
+        self._last_token_usage = 0
 
     def _call(
         self,
@@ -43,9 +42,8 @@ class GeminiLLMAdapter(LLM):
         **kwargs: Any
     ) -> str:
         """
-        Zavolá Gemini model a vrátí textovou odpověď.
+        Zavolá Gemini model, vrátí textovou odpověď a zaznamená počet použitých tokenů.
         """
-        # Argument `stop` se u Gemini modelů řeší jinak, zde ho pro jednoduchost ignorujeme.
         generation_config = {
             "temperature": self.temperature,
             "max_output_tokens": self.max_tokens,
@@ -53,15 +51,25 @@ class GeminiLLMAdapter(LLM):
 
         response = self._model.generate_content(prompt, generation_config=generation_config)
 
+        # Zaznamenání počtu tokenů
+        usage = getattr(response, "usage_metadata", None)
+        if usage and isinstance(usage, dict):
+            self._last_token_usage = usage.get("total_tokens", 0)
+        else:
+            self._last_token_usage = 0
+
         # Zpracování odpovědi
         try:
             return response.text
         except ValueError:
             # Pokud odpověď neobsahuje text (např. byla blokována), vrátíme prázdný string nebo informaci o chybě.
-            # Zde můžeme logovat `response.prompt_feedback` pro více detailů.
             return f"Error: Response from Gemini API was blocked. Reason: {response.prompt_feedback}"
         except Exception as e:
             return f"An unexpected error occurred: {e}"
+
+    def get_token_usage(self) -> int:
+        """Vrací počet tokenů použitých při posledním volání."""
+        return self._last_token_usage
 
     @property
     def _llm_type(self) -> str:

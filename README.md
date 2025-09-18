@@ -1,3 +1,177 @@
+## Guardian Healthcheck & Watchdog (návrh a plán)
+
+Guardian je watchdog, který chrání běh, integritu a bezpečnost Sophia systému.
+
+### Co hlídá:
+- **Redis** (cache, Celery): dostupnost, odpověď na PING
+- **Celery worker**: běží, odpovídá na ping/task
+- **FastAPI backend**: běží, odpovídá na health endpoint
+- **Audit log**: je zapisovatelný, není příliš velký
+- **Disková kapacita**: dostatek místa pro logy a data
+- **LLM API klíč**: validita, případně limit
+- **Konfigurační soubory, .env, secrets**: existují, nejsou poškozené
+- **Sandbox integrita**: detekce neautorizovaných změn
+- **Paměť/RAM, CPU**: není přetížení
+- **Logy**: detekce opakovaných chyb
+
+### Akce při selhání:
+- Zapsat do guardian.log a audit.log
+- Restartovat službu (docker/systemd/subprocess)
+- Odeslat notifikaci (email, webhook)
+- Volitelně: fallback režim, safe mode, automatický repair
+
+### Architektura:
+- Každá kontrola je samostatná funkce (check_redis, check_celery, ...)
+- Hlavní smyčka periodicky volá všechny kontroly a loguje výsledky
+- Výsledky: OK, WARNING, ERROR + detail
+- Konfigurovatelné intervaly, akce, notifikace
+- Možnost ručního spuštění všech kontrol (diagnostika)
+
+### Implementační plán (MVP):
+1. Základní framework guardian.py (smyčka, logování)
+2. check_redis (PING), check_celery (task ping), check_backend (HTTP GET /), check_audit_log (zápis, velikost), check_disk (volné místo), check_llm_key (volitelně)
+3. Akce při selhání: log, restart, notifikace
+4. Rozšiřitelnost: snadné přidání dalších kontrol
+
+## Asynchronní generování odpovědí (Celery + Redis)
+
+Pro škálovatelné a neblokující generování odpovědí LLM je použit Celery s Redis brokerem.
+
+### Jak to funguje?
+1. Frontend nebo klient zavolá `/chat-async` s promptem (POST, JSON: {"message": ...})
+2. Backend zadá požadavek do Celery fronty, vrátí `task_id`.
+3. Klient periodicky dotazuje `/chat-result/{task_id}`.
+4. Po dokončení workeru vrací endpoint odpověď LLM nebo chybu.
+
+### Spuštění Celery workeru
+
+V kořeni projektu spusť:
+```bash
+celery -A services.celery_worker.celery_app worker --loglevel=info
+```
+Redis musí běžet na adrese z proměnné prostředí `REDIS_URL` (výchozí: redis://localhost:6379/0).
+
+### Příklad API volání
+
+```http
+POST /chat-async
+{
+  "message": "Ahoj, kdo jsi?"
+}
+
+Odpověď:
+{
+  "task_id": "...celery-task-id..."
+}
+
+GET /chat-result/{task_id}
+
+Odpověď:
+{
+  "status": "success",
+  "reply": "Sophia říká: ..."
+}
+```
+
+### Výhody
+- Backend není blokován generováním odpovědi
+- Lze škálovat více workerů, oddělit API a LLM workload
+- Redis lze využít i pro cache a další background jobs
+
+# Sophia V4 – Dokumentace backendu (stav k 2025-09-16)
+
+## Architektura a hlavní principy
+
+- **FastAPI backend** – asynchronní, škálovatelný, s automatickou OpenAPI dokumentací
+- **Centralizovaná konfigurace** v `core/config.py` (všechny proměnné prostředí, cesty, admin emaily)
+- **Oddělená business logika** v adresáři `services/` (uživatelé, role, chat, tokeny, audit)
+- **Role-based access control (RBAC)** – role `admin`, `user`, `guest` určují přístup k endpointům
+- **OAuth2 (Google)** – bezpečné přihlášení, identita v session
+- **Refresh tokeny (JWT)** – dlouhodobé přihlášení bez nutnosti opětovného loginu
+- **Auditní logování** – všechny bezpečnostní akce (login, logout, refresh, selhání) se logují do `logs/audit.log`
+
+## Hlavní endpointy a jejich ochrana
+
+| Endpoint         | Přístup         | Popis |
+|------------------|-----------------|-------|
+| `/chat`          | veřejný         | Chat s AI, i bez přihlášení |
+| `/me`            | user/admin      | Info o přihlášeném uživateli a jeho roli |
+| `/login`         | veřejný         | Zahájení OAuth2 loginu |
+| `/auth`          | veřejný         | Callback z OAuth2, nastaví session, loguje login |
+| `/logout`        | user/admin      | Odhlášení, vymaže session, loguje logout |
+| `/refresh`       | veřejný         | Obnova session pomocí refresh tokenu (JWT), loguje refresh |
+| `/test-login`    | test mode only  | Pro testy, nastaví session na testovacího uživatele |
+| `/upload`        | user/admin      | (Demo) upload souboru, chráněno |
+
+## Role a jejich význam
+
+- **admin** – plný přístup, určeno podle emailu v `SOPHIA_ADMIN_EMAILS`
+- **user** – každý přihlášený přes OAuth2
+- **guest** – kdokoliv bez přihlášení
+
+## Bezpečnostní mechanismy
+
+- **Session cookies** – pro běžné API, chráněné endpointy
+- **Refresh tokeny (JWT)** – endpoint `/refresh`, bezpečné prodloužení přihlášení
+- **Auditní logování** – všechny klíčové akce a selhání do `logs/audit.log` (JSON lines)
+- **Dekorátory pro ochranu endpointů** – snadné rozšíření o další role/práva
+
+## Testování
+
+- Všechny klíčové scénáře jsou pokryty v `tests/web_api/test_api_basic.py`
+- Testovací režim (`SOPHIA_TEST_MODE=1`) umožňuje bezpečné testování bez reálného OAuth2
+- Testy ověřují login, logout, refresh, ochranu endpointů i audit
+
+## Složky a moduly
+
+- `core/config.py` – konfigurace, role adminů, dynamický test mode
+- `services/user_service.py` – správa session a uživatelů
+- `services/roles.py` – RBAC, dekorátory, určení role
+- `services/token_service.py` – generování a ověřování refresh tokenů (JWT)
+- `services/audit_service.py` – logování bezpečnostních akcí
+- `services/chat_service.py` – logika chatu
+
+## Auditní logy
+
+Každý záznam obsahuje:
+- UTC timestamp
+- typ akce (`login`, `logout`, `refresh`, `login_failed`, `refresh_failed`...)
+- email uživatele (pokud je znám)
+- detail (např. chybová hláška)
+
+Logy jsou v `logs/audit.log` ve formátu JSON lines (každý řádek jeden záznam).
+
+## Další rozvoj
+
+- Možnost přidat další role, jemnější práva, rozšířit audit
+- Připravena podpora pro škálování, více backend instancí, mobilní klienty
+- Snadná integrace s dalšími OAuth2 providery
+
+## 🔐 Autentizace a přihlášení (Google OAuth2)
+
+Sophia používá bezpečné přihlášení přes Google OAuth2.
+
+### Jak to funguje?
+1. Uživatel klikne na „Přihlásit se“ (frontend).
+2. Frontend přesměruje na `/api/login` (backend), backend zahájí OAuth2 flow (Google).
+3. Po úspěšném přihlášení Google přesměruje na `/api/auth`, backend získá identitu uživatele (jméno, email, avatar) a uloží ji do session.
+4. Backend nastaví session cookie, uživatel je přesměrován zpět na frontend.
+5. Všechny chráněné API endpointy vyžadují přihlášení (session cookie).
+
+### Proměnné prostředí
+- `GOOGLE_CLIENT_ID` – Client ID vaší Google OAuth2 aplikace
+- `GOOGLE_CLIENT_SECRET` – Client Secret vaší Google OAuth2 aplikace
+- `SOPHIA_SECRET_KEY` – tajný klíč pro session (nutné pro produkci)
+
+### Ukázka identity uživatele v session
+```json
+{
+  "name": "Jan Novák",
+  "email": "jan.novak@gmail.com",
+  "avatar": "https://lh3.googleusercontent.com/..."
+}
+```
+
 <p align="center">
   <img src="SOPHIA-logo.png" alt="Sophia Project Logo" width="150">
 </p>
@@ -26,99 +200,41 @@ Sophia je experimentální projekt s cílem vytvořit **první AMI na světě**.
 
 ### 🧬 Klíčové Koncepty
 
-Projekt je rozdělen do evolučních fází, které na sebe navazují.
-
-#### **V3: Vědomé Jádro (Dokončeno)**
-- **Guardian Protocol:** Imunitní systém zajišťující přežití a odolnost.
-- **Evolving Memory:** Dynamická paměť, kde vzpomínky sílí a blednou.
-- **Ethos Core:** Funkční etické jádro pro základní rozhodování.
-- **Self-Reflection Loop:** Schopnost "snít" a reflektovat své minulé akce.
-
 - **Constitutional AI:** Sofistikované svědomí založené na vnitřním dialogu (kritika -> revize, LangGraph, `core/ethos_module.py`).
 - **Hybrid Agent Model:** Dva specializované týmy agentů – disciplinovaný (`CrewAI`: Planner, Engineer, Tester) pro práci a kreativní (`AutoGen`: Philosopher, Architect) pro růst a brainstorming.
 - **Proactive Guardian:** Inteligentní monitoring zdraví systému pro předcházení pádům (`guardian.py`, `psutil`).
-- **Autonomous Creator:** Cílová schopnost samostatně plánovat, psát, testovat a nasazovat kód v bezpečném sandboxu (`main.py` a `core/orchestrator.py`).
+- **Autonomous Creator:** Cílová schopnost samostatně plánovat, psát, testovat a nasazovat kód v bezpečném sandboxu (`core/consciousness_loop.py`).
 - **AutoGen Team:** Kreativní brainstorming a generování strategií v rámci "spánkové" fáze (`agents/autogen_team.py`).
 - **Aider IDE Agent:** Autonomní evoluční motor – samostatný agent, který umožňuje Sophii samostatně navrhovat, upravovat a refaktorovat vlastní kód v sandboxu. Umožňuje skutečnou autonomní evoluci schopností. Viz roadmapa Fáze 13 (evoluční workflow).
-- **Reviewer Agent:** Specializovaný agent pro kontrolu kvality, který ověřuje, zda jsou změny v kódu doprovázeny odpovídající aktualizací dokumentace (`WORKLOG.md`), a tím zajišťuje udržitelnost a transparentnost projektu.
 
 ## 🚀 Jak Začít
-
----
-
-## 🛠️ Evoluční motor Sophia: Aider IDE
-
-Aider IDE je autonomní nástroj, který umožňuje Sophii (skrze agenta AiderAgent) samostatně refaktorovat, opravovat a vylepšovat kód v sandboxu. Je klíčový pro skutečnou evoluci schopností.
-
-### Instalace Aider CLI
-- Doporučeno: `pip install aider-chat`
-- Alternativně: `pip install git+https://github.com/paul-gauthier/aider.git`
-- Ověření: `aider --help`
-
-### Použití v rámci Sophia
-- Všechny změny AiderAgent provádí pouze v adresáři `/sandbox`.
-- Změny jsou auditované (git log), validované testy a etickým modulem.
-- Nikdy nespouštějte Aider CLI mimo sandbox.
-- Všechny změny lze revertovat pomocí git.
-
-Podrobný návod najdeš v [`INSTALL.md`](./INSTALL.md).
-
 
 Všechny potřebné informace pro spuštění a pochopení projektu najdeš v naší dokumentaci.
 
 * **Instalace a Spuštění:** [`INSTALL.md`](./INSTALL.md)
-* [Strategická Roadmapa (Nexus v1.0)](docs/ROADMAP_NEXUS_V1.md) - Aktuální plán našeho vývoje.
+* **Kompletní Roadmapa:** [`docs/PROJECT_SOPHIA_V4.md`](./docs/PROJECT_SOPHIA_V4.md)
 * **Technická Architektura:** [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 * **Hlubší Koncepty:** [`docs/CONCEPTS.md`](./docs/CONCEPTS.md)
 
-
-
 ## 🧠 Příklady použití
 
-## � Integrace LLM: GeminiLLMAdapter
-
-Sophia V4 využívá vlastní adapter `GeminiLLMAdapter` pro přímou integraci s Google Gemini API (přes knihovnu `google-generativeai`).
-
-- **Výhody:**
-  - Robustní, rychlá a budoucí-proof integrace bez závislosti na nestabilních LangChain wrapperech.
-  - Plně kompatibilní s CrewAI orchestrace agentů (předává se jako `llm=llm` všem agentům).
-  - Snadná možnost přepnutí zpět na LangChain wrapper v budoucnu (stačí změnit inicializaci v `core/llm_config.py`).
-
-### Konfigurace
-
-V souboru `config.yaml` nastavte sekci:
-
-```yaml
-llm_models:
-  primary_llm:
-    provider: "google"
-    model_name: "gemini-2.5-flash"
-    temperature: 0.7
-    verbose: True
+### Orchestrace tvorby (CrewAI):
+```bash
+python3 -m core.consciousness_loop
+```
+### Kreativní brainstorming (AutoGen):
+```bash
+python3 -m agents.autogen_team
 ```
 
-API klíč vložte do `.env` jako `GEMINI_API_KEY="..."`.
-
-### Použití v kódu
-
-LLM je inicializován v `core/llm_config.py` a importován do všech agentů:
-
-```python
-from core.llm_config import llm
-```
-
-Všechny agenty (Planner, Engineer, Philosopher, Tester) používají tento adapter automaticky.
-
-Pro přepnutí na LangChain wrapper stačí odkomentovat příslušný řádek v `llm_config.py` a upravit provider/model.
-
-## �🧪 Testování
+## 🧪 Testování
 
 Systém je vybaven robustní sadou testů pro zajištění stability a spolehlivosti.
 
 ### Spuštění Testů
 Pro spuštění kompletní sady testů (včetně unit a integračních testů) použijte následující příkaz z kořenového adresáře projektu:
 ```bash
-PYTHONPATH=. python3 -m pytest
+PYTHONPATH=. pytest tests/
 ```
 Tento příkaz automaticky najde a spustí všechny testy.
 
@@ -130,36 +246,22 @@ Testy jsou navrženy tak, aby běžely v izolovaném prostředí bez nutnosti re
 
 Díky tomu jsou testy rychlé, spolehlivé a bezpečné.
 
+## 🌐 Webové rozhraní (React UI)
 
-### Orchestrace tvorby (CrewAI):
-```bash
-# Spustí jeden plný cyklus (Planner -> Engineer -> Tester)
-python3 main.py
-```
-### Kreativní brainstorming (AutoGen):
-```bash
-python3 -m agents.autogen_team
-```
+Frontendová SPA aplikace je v adresáři `web/ui/`.
 
-## ⚙️ Architektura Nástrojů (univerzální async/sync)
-
-Všechny klíčové nástroje (paměť, souborový systém, exekuce kódu) jsou nyní navrženy s univerzálním rozhraním pro synchronní i asynchronní použití. To znamená:
-
-- **Kompatibilita:** Bezpečně fungují jak v CrewAI (synchronní agenty), tak v AutoGen (asynchronní agenty).
-- **Rozhraní:** Každý nástroj implementuje `run_sync`, `run_async`, `__call__`, `_run`/`_arun` a používá helper `run_sync_or_async`.
-- **Chybové hlášky:** Pokud je nástroj volán v nesprávném kontextu, vrací jasnou a srozumitelnou chybu s návodem.
-- **Testováno:** Všechny testy procházejí, hlavní smyčka běží stabilně.
-
-Tato architektura výrazně zvyšuje robustnost a rozšiřitelnost systému pro budoucí vývoj.
-
-## 📈 Roadmapa
-
-Kompletní roadmapu včetně integrace Aider IDE agenta najdeš v [`docs/ROADMAP_NEXUS_V1.md`](./docs/ROADMAP_NEXUS_V1.md).
+- Vývoj: viz `web/ui/README.md`
+- Testování: `npm test` v `web/ui/` (Jest, Testing Library)
+- Build: `npm run build` v `web/ui/`
+- Hlavní komponenty: Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager
+- Komunikace s backendem přes REST API (`/api/`)
 
 ## 🛠️ Technologický Stack
 
 -   **Jazyk:** Python
 -   **AI Frameworky:** CrewAI, AutoGen, LangGraph, LangChain
+-   **Backend:** FastAPI
+-   **Frontend:** React (SPA, `web/ui/`)
 -   **Databáze:** PostgreSQL
 -   **Prostředí:** Git, Docker
 
