@@ -1,11 +1,3 @@
-"""
-AiderAgent: Wrapper pro Aider IDE jako autonomní evoluční motor Sophia V4
-
-- Komunikuje s Aider IDE přes CLI (subprocess)
-- Omezuje všechny operace na /sandbox
-- Validuje a auditovat změny (git log, Ethos module)
-- Protokol úkolů: JSON přes stdin/stdout (příprava na REST)
-"""
 import subprocess
 import json
 import os
@@ -13,11 +5,18 @@ from typing import Any, Dict, Optional
 from core.agent_config import load_agent_config
 
 class AiderAgent:
+    """
+    Wrapper pro Aider IDE.
+    - Komunikuje s Aider IDE přes CLI (subprocess) pomocí JSON-RPC.
+    - Omezuje všechny operace na /sandbox.
+    """
     def __init__(self):
         agent_config = load_agent_config("aider")
         self.sandbox_path = os.path.abspath(agent_config.get("sandbox_path", "./sandbox"))
         self.aider_cli = agent_config.get("cli_path", "aider")
-        assert os.path.isdir(self.sandbox_path), f"Sandbox {self.sandbox_path} neexistuje!"
+
+        if not os.path.isdir(self.sandbox_path):
+            raise FileNotFoundError(f"Adresář sandboxu '{self.sandbox_path}' neexistuje!")
 
     def run_aider(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Spustí Aider CLI s úkolem (JSON stdin), vrací výstup (JSON stdout)."""
