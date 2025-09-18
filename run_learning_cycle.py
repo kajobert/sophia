@@ -67,6 +67,8 @@ def main():
 
         logging.info("--- Analýza od Debugger Agenta ---")
         logging.info(analysis)
+        print("\n--- Analýza od Debugger Agenta ---")
+        print(analysis)
         logging.info("------------------------------------")
 
     except Exception as e:
