@@ -1449,7 +1449,26 @@ Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia
 - První verze UI umožňuje rychlé testování a iteraci, napojení na backend bude následovat.
 
 **Stav:** Dokončeno
+---
+**Timestamp:** 2025-09-15 02:00:00
+**Agent:** GitHub Copilot
+**Task ID:** llm-adapter-integration
 
+**Cíl Úkolu:**
+- Navrhnout, implementovat a plně integrovat robustní LLM adapter (GeminiLLMAdapter) pro všechny agenty Sophia V4.
+- Zajistit snadnou vyměnitelnost, testovatelnost a kompatibilitu s CrewAI a orchestrace agentů.
+- Aktualizovat dokumentaci a ověřit funkčnost v celém projektu.
+
+**Postup a Poznámky:**
+- Navržen a implementován `core/gemini_llm_adapter.py` s jednotným rozhraním (__call__, get_token_usage).
+- Adapter plně integrován do `core/llm_config.py` a používán všemi agenty (Planner, Engineer, Philosopher, Tester).
+- Přidány a úspěšně spuštěny testy pro GeminiLLMAdapter (`tests/test_gemini_llm_adapter.py`).
+- Přidána závislost `google-generativeai` do requirements.txt.
+- Aktualizována dokumentace: README.md, INSTALL.md, ARCHITECTURE.md, CONCEPTS.md.
+- Ověřena možnost snadného přepnutí na LangChain wrapper v budoucnu.
+- Všechny testy procházejí, projekt je připraven pro další rozvoj a PR.
+
+**Stav:** Dokončeno
 ---
 **Timestamp:** 2025-09-15 14:10:00
 **Agent:** GitHub Copilot
@@ -1505,23 +1524,3 @@ Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia
 **Stav:** [Probíhá / Dokončeno / Zablokováno]
 ```
 
----
-**Timestamp:** 2025-09-15 02:00:00
-**Agent:** GitHub Copilot
-**Task ID:** llm-adapter-integration
-
-**Cíl Úkolu:**
-- Navrhnout, implementovat a plně integrovat robustní LLM adapter (GeminiLLMAdapter) pro všechny agenty Sophia V4.
-- Zajistit snadnou vyměnitelnost, testovatelnost a kompatibilitu s CrewAI a orchestrace agentů.
-- Aktualizovat dokumentaci a ověřit funkčnost v celém projektu.
-
-**Postup a Poznámky:**
-- Navržen a implementován `core/gemini_llm_adapter.py` s jednotným rozhraním (__call__, get_token_usage).
-- Adapter plně integrován do `core/llm_config.py` a používán všemi agenty (Planner, Engineer, Philosopher, Tester).
-- Přidány a úspěšně spuštěny testy pro GeminiLLMAdapter (`tests/test_gemini_llm_adapter.py`).
-- Přidána závislost `google-generativeai` do requirements.txt.
-- Aktualizována dokumentace: README.md, INSTALL.md, ARCHITECTURE.md, CONCEPTS.md.
-- Ověřena možnost snadného přepnutí na LangChain wrapper v budoucnu.
-- Všechny testy procházejí, projekt je připraven pro další rozvoj a PR.
-
-**Stav:** Dokončeno
