@@ -1,33 +1,57 @@
-# /tools/memory_tools.py
-"""
-Nástroje pro interakci s pamětí Sophie.
-"""
-from crewai.tools import tool
-from memory.advanced_memory import AdvancedMemory
-import json
-from core.utils import CustomJSONEncoder
+import threading
+import os
 import asyncio
-from typing import Optional
+import json
+from typing import Type, Optional
+from pydantic import BaseModel, Field
+from langchain_core.tools import BaseTool
+from memory.advanced_memory import AdvancedMemory
+from core.utils import CustomJSONEncoder
 
-def run_sync_in_new_loop(coro):
+def run_sync_or_async(coro):
     """
-    Spustí coroutine v nové událostní smyčce.
-    Je to bezpečný způsob, jak volat async kód ze sync kontextu v CrewAI.
-    """
-    return asyncio.run(coro)
-
-@tool("Memory Reader")
-def read_memory(n: int = 10, mem_type: Optional[str] = None) -> str:
-    """
-    Reads the N most recent entries from the memory.
-    You can optionally filter by `mem_type` to get specific types of memories,
-    such as 'CONVERSATION' for past dialogues or 'ORCHESTRATION_RESULT' for task outcomes.
+    Safely runs a coroutine from a sync context by creating a new event loop
+    or using the existing one if in a different thread.
     """
     try:
-        memory = AdvancedMemory()
-        # Since CrewAI runs in a sync context, we need to run the async method in a new event loop.
-        recent_memories = run_sync_in_new_loop(memory.read_last_n_memories(n=n, mem_type=mem_type))
-        memory.close()
-        return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
-    except Exception as e:
-        return f"Error reading memory: {e}"
+        loop = asyncio.get_running_loop()
+        if threading.current_thread() is threading.main_thread():
+            raise RuntimeError("Cannot call sync tool in a running async loop. Use the async version (`_arun`).")
+        future = asyncio.run_coroutine_threadsafe(coro, loop)
+        return future.result()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+class MemoryReaderToolInput(BaseModel):
+    """Pydantic model for MemoryReaderTool input."""
+    n: int = Field(10, description="The number of recent memories to read.")
+    mem_type: Optional[str] = Field(None, description="Optional memory type to filter by (e.g., 'TASK', 'CONVERSATION').")
+
+class MemoryReaderTool(BaseTool):
+    name: str = "Memory Reader"
+    description: str = (
+        "Reads the N most recent entries from the memory. Can optionally filter by memory type "
+        "to get specific types of memories, such as 'CONVERSATION' for past dialogues or 'TASK' for task outcomes."
+    )
+    args_schema: Type[BaseModel] = MemoryReaderToolInput
+
+    def _run(self, n: int = 10, mem_type: Optional[str] = None) -> str:
+        """Synchronous execution of the tool."""
+        try:
+            memory = AdvancedMemory()
+            # Use the helper to run the async method from a sync context
+            recent_memories = run_sync_or_async(memory.read_last_n_memories(n=n, mem_type=mem_type))
+            memory.close()
+            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
+        except Exception as e:
+            return f"Error reading memory: {e}"
+
+    async def _arun(self, n: int = 10, mem_type: Optional[str] = None) -> str:
+        """Asynchronous execution of the tool."""
+        try:
+            memory = AdvancedMemory()
+            recent_memories = await memory.read_last_n_memories(n=n, mem_type=mem_type)
+            memory.close()
+            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
+        except Exception as e:
+            return f"Error reading memory: {e}"
