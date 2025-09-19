@@ -38,17 +38,8 @@ def load_config():
 
 def reset_repository():
     """Provede 'git reset --hard HEAD' pro obnovení repozitáře."""
-    try:
-        log_message("Pokouším se obnovit repozitář do čistého stavu (git reset --hard HEAD)...")
-        result = subprocess.run(["git", "reset", "--hard", "HEAD"], check=True, capture_output=True, text=True)
-        log_message(f"Repozitář úspěšně obnoven. stdout: {result.stdout.strip()}")
-        return True
-    except subprocess.CalledProcessError as e:
-        log_message(f"CHYBA: Obnovení repozitáře selhalo! Chyba: {e.stderr.strip()}")
-        return False
-    except FileNotFoundError:
-        log_message("CHYBA: Příkaz 'git' nebyl nalezen. Ujistěte se, že je Git nainstalován a v PATH.")
-        return False
+    log_message("Guardian's reset_repository is disabled. Skipping git reset.")
+    pass
 
 def main():
     """Hlavní funkce Strážce, která spouští a monitoruje main.py."""
