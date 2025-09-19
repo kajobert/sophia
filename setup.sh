@@ -1,47 +1,66 @@
 #!/bin/bash
 
-# Tento skript provede základní nastavení vývojového prostředí pro projekt Sophia.
-# Zastaví provádění, pokud jakýkoliv příkaz selže.
+# ==============================================================================
+# Instalační a Ověřovací Skript pro Projekt Sophia
+#
+# Tento skript provede kompletní nastavení lokálního vývojového prostředí.
+# Zastaví provádění, pokud jakýkoliv příkaz selže (set -e).
+# ==============================================================================
+
 set -e
 
-echo "--- Starting Sophia Environment Setup ---"
+echo "--- Zahájení Nastavení Prostředí pro Sophii ---"
 
-# 1. Kontrola verze Pythonu
-echo "INFO: Checking Python version..."
+# --- Krok 1: Kontrola Požadavků ---
+echo "INFO: Kontroluji verzi Pythonu..."
 python3 --version
-# Zde by mohla být přidána kontrola na minimální verzi, např. 3.12
+# V budoucnu zde může být přidána kontrola na minimální požadovanou verzi (např. 3.12).
 
-# 2. Vytvoření virtuálního prostředí
+# --- Krok 2: Vytvoření Virtuálního Prostředí ---
+# Použití virtuálního prostředí je klíčové pro izolaci závislostí projektu.
 if [ ! -d ".venv" ]; then
-    echo "INFO: Creating Python virtual environment in .venv..."
+    echo "INFO: Vytvářím virtuální prostředí v adresáři .venv..."
     python3 -m venv .venv
 else
-    echo "INFO: Virtual environment .venv already exists."
+    echo "INFO: Virtuální prostředí .venv již existuje."
 fi
 
-# 3. Aktivace virtuálního prostředí
-echo "INFO: Activating virtual environment..."
+# --- Krok 3: Aktivace Virtuálního Prostředí ---
+echo "INFO: Aktivuji virtuální prostředí..."
 source .venv/bin/activate
 
-# 4. Instalace závislostí
-echo "INFO: Installing dependencies from requirements.txt..."
-echo "TIP: For a much faster installation, consider using 'uv'. Install it with 'pip install uv' and then run 'uv pip install -r requirements.txt'."
-pip install -r requirements.txt
-
-# 5. Vytvoření .env souboru z příkladu
-if [ -f ".env.example" ] && [ ! -f ".env" ]; then
-    echo "INFO: Found .env.example, copying to .env..."
-    cp .env.example .env
-    echo "ACTION: Please fill in your GEMINI_API_KEY in the .env file."
+# --- Krok 4: Instalace Závislostí ---
+# Skript preferuje moderní a rychlý instalátor `uv`. Pokud není nalezen,
+# použije standardní `pip`.
+echo "INFO: Instaluji závislosti ze souboru requirements.txt..."
+if command -v uv &> /dev/null; then
+    echo "INFO: Detekován 'uv'. Používám ho pro rychlou instalaci."
+    uv pip install -r requirements.txt
 else
-    echo "INFO: .env file already exists or .env.example not found."
+    echo "WARNING: Příkaz 'uv' nebyl nalezen. Používám standardní 'pip'."
+    echo "TIP: Pro výrazně rychlejší instalaci zvažte instalaci 'uv' (pip install uv)."
+    pip install -r requirements.txt
 fi
 
-# 6. Spuštění ověřovacích testů
-echo "--- Running Verification Tests ---"
-echo "INFO: This will verify that the environment is set up correctly."
+# --- Krok 5: Vytvoření .env Souboru ---
+# Tento soubor obsahuje citlivé údaje, jako jsou API klíče.
+if [ -f ".env.example" ] && [ ! -f ".env" ]; then
+    echo "INFO: Nalezen .env.example, kopíruji ho do .env..."
+    cp .env.example .env
+    echo "AKCE: Prosím, doplňte požadované API klíče do souboru .env."
+else
+    echo "INFO: Soubor .env již existuje nebo .env.example nebyl nalezen."
+fi
+
+# --- Krok 6: Spuštění Ověřovacích Testů ---
+# Tento krok je kritický pro ověření, že je prostředí správně nastaveno
+# a všechny komponenty spolupracují, jak mají.
+echo ""
+echo "--- Spouštím Ověřovací Testy ---"
 PYTHONPATH=. pytest
 
+# --- Dokončení ---
 echo ""
-echo "✅ SUCCESS: Environment setup complete."
-echo "You can now explore the project. See README.md for guidance on where to start."
+echo "✅ ÚSPĚCH: Nastavení prostředí bylo úspěšně dokončeno."
+echo "Nyní máte připravené lokální prostředí pro vývoj."
+echo "Pro spuštění celého projektu (včetně webového rozhraní) doporučujeme použít Docker. Více informací naleznete v QUICKSTART.md."
