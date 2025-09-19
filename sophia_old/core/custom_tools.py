@@ -1,5 +1,4 @@
 import os
-import re
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 from crewai_tools import SerperDevTool as CrewaiSerperDevTool
@@ -10,6 +9,7 @@ _last_read_path = None
 _last_write = (None, None)
 
 # --- Tool Classes ---
+
 
 class FileReadTool(BaseTool):
     name: str = "FileReadTool"
@@ -22,18 +22,22 @@ class FileReadTool(BaseTool):
             return f"Skipped: FileReadTool already read {file_path} in this session."
         _last_read_path = file_path
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             return f"Error reading file {file_path}: {e}"
+
 
 class FileWriteToolSchema(BaseModel):
     file_path: str = Field(..., description="The path to the file to write to.")
     content: str = Field(..., description="The content to write to the file.")
 
+
 class FileWriteTool(BaseTool):
     name: str = "FileWriteTool"
-    description: str = "Writes content to a specified file. Overwrites existing content."
+    description: str = (
+        "Writes content to a specified file. Overwrites existing content."
+    )
     args_schema: type[BaseModel] = FileWriteToolSchema
 
     def _run(self, file_path: str, content: str) -> str:
@@ -44,19 +48,23 @@ class FileWriteTool(BaseTool):
         _last_write = (file_path, content)
         try:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return f"Successfully wrote to file: {file_path}."
         except Exception as e:
             return f"Error writing to file {file_path}: {e}"
 
+
 class FileEditToolSchema(BaseModel):
     file_path: str = Field(..., description="The path to the file to edit.")
     content: str = Field(..., description="The content to append to the file.")
 
+
 class FileEditTool(BaseTool):
     name: str = "FileEditTool"
-    description: str = "Appends content to a specified file, always starting on a new line."
+    description: str = (
+        "Appends content to a specified file, always starting on a new line."
+    )
     args_schema: type[BaseModel] = FileEditToolSchema
 
     def _run(self, file_path: str, content: str) -> str:
@@ -64,19 +72,22 @@ class FileEditTool(BaseTool):
         try:
             last_line = None
             if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     lines = f.readlines()
                     if lines:
-                        last_line = lines[-1].rstrip('\n')
+                        last_line = lines[-1].rstrip("\n")
             if last_line == content:
-                return f"Skipped append: last line already matches content in {file_path}."
+                return (
+                    f"Skipped append: last line already matches content in {file_path}."
+                )
 
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'a', encoding='utf-8') as f:
-                f.write('\n' + content)
+            with open(file_path, "a", encoding="utf-8") as f:
+                f.write("\n" + content)
             return f"Successfully appended to file: {file_path}."
         except Exception as e:
             return f"Error appending to file {file_path}: {e}"
+
 
 class DirectoryListingTool(BaseTool):
     name: str = "DirectoryListingTool"
@@ -91,6 +102,7 @@ class DirectoryListingTool(BaseTool):
         except Exception as e:
             return f"An error occurred while reading the directory: {e}"
 
+
 class DirectoryCreationTool(BaseTool):
     name: str = "DirectoryCreationTool"
     description: str = "Creates a new directory at the specified path."
@@ -99,11 +111,14 @@ class DirectoryCreationTool(BaseTool):
         """Creates a new directory."""
         try:
             os.makedirs(directory_path, exist_ok=True)
-            return f"Directory '{directory_path}' created successfully or already exists."
+            return (
+                f"Directory '{directory_path}' created successfully or already exists."
+            )
         except OSError as e:
             return f"Failed to create directory '{directory_path}': {e}"
         except Exception as e:
             return f"An unexpected error occurred while creating directory '{directory_path}': {e}"
+
 
 class MemoryInspectionTool(BaseTool):
     name: str = "MemoryInspectionTool"
@@ -113,6 +128,7 @@ class MemoryInspectionTool(BaseTool):
         """Displays the content of the LTM."""
         try:
             import asyncio
+
             # Ensure there's a running event loop
             try:
                 asyncio.get_running_loop()
@@ -121,11 +137,11 @@ class MemoryInspectionTool(BaseTool):
                 asyncio.set_event_loop(loop)
 
             ltm = LongTermMemory()
-            all_documents = ltm.collection.get(include=['documents', 'metadatas'])
-            if all_documents and all_documents.get('documents'):
+            all_documents = ltm.collection.get(include=["documents", "metadatas"])
+            if all_documents and all_documents.get("documents"):
                 formatted_output = "Long-Term Memory (LTM) Content:\n"
-                for i, doc in enumerate(all_documents['documents']):
-                    metadata = all_documents['metadatas'][i]
+                for i, doc in enumerate(all_documents["documents"]):
+                    metadata = all_documents["metadatas"][i]
                     formatted_output += f"--- Document {i+1} ---\n"
                     formatted_output += f"Content: {doc}\n"
                     formatted_output += f"Metadata: {metadata}\n"
@@ -135,6 +151,7 @@ class MemoryInspectionTool(BaseTool):
                 return "Long-term memory (LTM) is empty or contains no documents."
         except Exception as e:
             return f"Error during memory inspection: {e}"
+
 
 class WebSearchTool(BaseTool):
     name: str = "WebSearchTool"
@@ -149,7 +166,9 @@ class WebSearchTool(BaseTool):
         except Exception as e:
             return f"Web search failed: {e}"
 
+
 from memory.episodic_memory import EpisodicMemory
+
 
 class EpisodicMemoryReaderTool(BaseTool):
     name: str = "EpisodicMemoryReaderTool"

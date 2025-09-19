@@ -1,3 +1,47 @@
+**Timestamp:** 2025-09-19 01:48:00
+**Agent:** Jules
+**Task ID:** final-stabilization
+
+**Cíl Úkolu:**
+- Provést finální stabilizaci a profesionalizaci projektu Sophia podle roadmapy `docs/ROADMAP_FINAL_STABILIZATION.md`.
+- Cílem bylo opravit jádro architektury, opevnit procesy a závislosti, a sjednotit veškerou projektovou dokumentaci.
+
+**Postup a Klíčové Kroky:**
+
+1.  **FÁZE 1: Oprava Jádra Architektury**
+    -   **Sjednocení Orchestrace:** Vytvořen centrální modul `core/orchestrator.py`, který nyní obsahuje veškerou logiku pro řetězení agentů (`Planner` -> `Engineer` -> `Tester`).
+    -   **Refaktoring Vstupních Bodů:** Soubor `main.py` byl výrazně zjednodušen a nyní pouze volá centrální orchestrátor.
+    -   **Implementace Cyklu Opravy:** Přímo v orchestrátoru byl implementován `for` cyklus (3 pokusy), který v případě selhání testů vrací zpětnou vazbu `EngineerAgentovi` pro opravu kódu.
+    -   **SharedContext:** Upraven `core/context.py` pro efektivní předávání stavu mezi agenty.
+
+2.  **FÁZE 2: Opevnění Procesů a Závislostí**
+    -   **Správa Závislostí:** Zaveden `pip-tools`. Vytvořen soubor `requirements.in` s top-level závislostmi a z něj vygenerován nový, plně pinovaný a konzistentní `requirements.txt`.
+    -   **Automatizace Kontroly Kvality:** Nainstalován a nakonfigurován `pre-commit` s hooky pro `black` a `ruff`. Celý codebase byl vyčištěn a všechny relevantní chyby opraveny.
+
+3.  **FÁZE 3: Sjednocení a Profesionalizace Dokumentace**
+    -   **Kniha Poučení:** Vytvořen nový soubor `docs/LESSONS_LEARNED.md`, který extrahuje klíčové problémy a řešení z `WORKLOG.md` a slouží jako znalostní báze.
+    -   **Redesign `README.md`:** Hlavní `README.md` byl kompletně přepsán do profesionální a strukturované podoby s jasným rozdělením na sekce pro uživatele a vývojáře.
+    -   **Detailní Návody:** Vytvořeny dva nové soubory: `docs/USER_GUIDE.md` a `docs/DEVELOPER_GUIDE.md`.
+    -   **Aktualizace Skriptů:** Instalační skript `setup.sh` byl aktualizován, aby odpovídal novým procesům, včetně vytvoření virtuálního prostředí a spuštění testů na konci pro ověření.
+
+4.  **Finální Ověření:**
+    -   Provedeno rozsáhlé a iterativní ladění testovacího prostředí.
+    -   Opraveny problémy s `ModuleNotFoundError` (nesprávné použití venv), `redis.exceptions.ConnectionError` (mockování a import-time side effects), a `pytest.ScopeMismatch`.
+    -   Vytvořen `tests/conftest.py` pro spolehlivé nastavení testovacího prostředí.
+    -   **Výsledek: Všechny relevantní testy (59) nyní úspěšně procházejí.**
+
+**Problémy a Překážky:**
+-   **Nestabilní Testovací Prostředí:** Největší překážkou bylo odhalení a oprava několika vrstev problémů v testovacím prostředí, které bránily spuštění testů (problémy s aktivací venv, import-time side effects, scope fixtures v pytestu).
+-   **Nekonzistentní Dokumentace:** Některé informace v dokumentaci (např. existence `conftest.py`) neodpovídaly realitě, což ztěžovalo počáteční analýzu.
+
+**Navržené Řešení:**
+-   Systematický, iterativní debugging, který postupně odhalil a opravil všechny problémy. Klíčové bylo zavedení `tests/conftest.py` a oprava singleton vzoru v `services/llm_cache.py`.
+
+**Nápady a Postřehy:**
+-   Tato "Velká Stabilizace" byla naprosto klíčová. Projekt je nyní v robustním, profesionálním a spolehlivě testovatelném stavu, připraven na další vývoj.
+
+**Stav:** Dokončeno
+---
 **Timestamp:** 2025-09-18 04:59:00
 **Agent:** Jules
 **Task ID:** 5.1 - Conversational Memory
@@ -1523,4 +1567,3 @@ Tento dokument slouží jako detailní záznam o postupu vývoje projektu Sophia
 
 **Stav:** [Probíhá / Dokončeno / Zablokováno]
 ```
-

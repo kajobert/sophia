@@ -1,12 +1,14 @@
-
 from langchain.tools import BaseTool
 from memory.long_term_memory import LongTermMemory
+
 
 def ltm_write_tool(memory_text: str) -> str:
     """Zapíše textový vstup jako vzpomínku do Dlouhodobé Paměti (LTM)"""
     # memory_text může být předán jako dict (pokud invoke), nebo přímo jako string
     if isinstance(memory_text, dict):
-        memory_text = memory_text.get("memory_text") or next(iter(memory_text.values()), "")
+        memory_text = memory_text.get("memory_text") or next(
+            iter(memory_text.values()), ""
+        )
     if not memory_text:
         return "LtmWriteTool: Chybí text ke zpracování."
     ltm = LongTermMemory()

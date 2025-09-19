@@ -1,23 +1,32 @@
 import asyncio
 import threading
+
+
+import os
+import subprocess
+from typing import Type
+
+from langchain_core.tools import BaseTool
+from pydantic import BaseModel, Field
+
+
 # Helper pro univerzální volání sync/async
 def run_sync_or_async(coro):
     try:
         loop = asyncio.get_running_loop()
         if threading.current_thread() is threading.main_thread():
-            raise RuntimeError("Nelze volat synchronní nástroj v běžící async smyčce. Použijte async variantu nebo run_async().")
+            raise RuntimeError(
+                "Nelze volat synchronní nástroj v běžící async smyčce. Použijte async variantu nebo run_async()."
+            )
         future = asyncio.run_coroutine_threadsafe(coro, loop)
         return future.result()
     except RuntimeError:
         return asyncio.run(coro)
-import os
-import subprocess
-from typing import Type
-from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
+
 
 # Define the absolute path for the sandbox directory to ensure security
 SANDBOX_DIR = os.path.abspath("sandbox")
+
 
 def _is_within_sandbox(path: str) -> bool:
     """
@@ -29,17 +38,30 @@ def _is_within_sandbox(path: str) -> bool:
     # Check if the resolved path starts with the sandbox directory's path
     return absolute_path.startswith(SANDBOX_DIR)
 
+
 # --- Input Schemas for Tools ---
+
 
 class ExecutePythonScriptInput(BaseModel):
     """Input for ExecutePythonScriptTool."""
-    file_path: str = Field(..., description="The path to the Python script to be executed, relative to the sandbox directory.")
+
+    file_path: str = Field(
+        ...,
+        description="The path to the Python script to be executed, relative to the sandbox directory.",
+    )
+
 
 class RunUnitTestsInput(BaseModel):
     """Input for RunUnitTestsTool."""
-    test_file_path: str = Field(..., description="The path to the test file to be run with unittest, relative to the sandbox directory.")
+
+    test_file_path: str = Field(
+        ...,
+        description="The path to the test file to be run with unittest, relative to the sandbox directory.",
+    )
+
 
 # --- Tool Implementations ---
+
 
 class ExecutePythonScriptTool(BaseTool):
     name: str = "Execute Python Script"
@@ -51,18 +73,20 @@ class ExecutePythonScriptTool(BaseTool):
         full_path = os.path.join(SANDBOX_DIR, file_path)
 
         if not _is_within_sandbox(full_path):
-            return f"Error: Path '{file_path}' is outside the allowed /sandbox directory."
+            return (
+                f"Error: Path '{file_path}' is outside the allowed /sandbox directory."
+            )
         if not os.path.exists(full_path):
             return f"Error: Script file '{file_path}' not found in the sandbox."
-        if not file_path.endswith('.py'):
+        if not file_path.endswith(".py"):
             return f"Error: File '{file_path}' is not a Python script."
         try:
             process = subprocess.run(
-                ['python3', full_path],
+                ["python3", full_path],
                 capture_output=True,
                 text=True,
                 timeout=30,
-                check=False
+                check=False,
             )
             stdout = process.stdout
             stderr = process.stderr
@@ -90,7 +114,9 @@ class ExecutePythonScriptTool(BaseTool):
             except RuntimeError:
                 pass
             if loop and loop.is_running():
-                raise RuntimeError("ExecutePythonScriptTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun().")
+                raise RuntimeError(
+                    "ExecutePythonScriptTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun()."
+                )
             return self.run_sync(file_path)
         except Exception as e:
             return f"Error executing Python script: {e}"
@@ -100,6 +126,7 @@ class ExecutePythonScriptTool(BaseTool):
 
     async def _arun(self, file_path: str) -> str:
         return await self.run_async(file_path)
+
 
 class RunUnitTestsTool(BaseTool):
     name: str = "Run Unit Tests"
@@ -114,15 +141,15 @@ class RunUnitTestsTool(BaseTool):
             return f"Error: Path '{test_file_path}' is outside the allowed /sandbox directory."
         if not os.path.exists(full_path):
             return f"Error: Test file '{test_file_path}' not found in the sandbox."
-        if not test_file_path.endswith('.py'):
+        if not test_file_path.endswith(".py"):
             return f"Error: File '{test_file_path}' is not a Python file."
         try:
             process = subprocess.run(
-                ['python3', '-m', 'unittest', full_path],
+                ["python3", "-m", "unittest", full_path],
                 capture_output=True,
                 text=True,
                 timeout=60,
-                check=False
+                check=False,
             )
             output = f"--- Unittest Output for {test_file_path} ---\n"
             if process.stdout:
@@ -146,7 +173,9 @@ class RunUnitTestsTool(BaseTool):
             except RuntimeError:
                 pass
             if loop and loop.is_running():
-                raise RuntimeError("RunUnitTestsTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun().")
+                raise RuntimeError(
+                    "RunUnitTestsTool: Detekováno async prostředí, použijte await tool.run_async() nebo _arun()."
+                )
             return self.run_sync(test_file_path)
         except Exception as e:
             return f"Error running unit tests: {e}"

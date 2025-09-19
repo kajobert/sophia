@@ -10,5 +10,5 @@ memory_consolidation_task = Task(
     expected_output=(
         "Jeden klíčový poznatek ve formě stručného textového řetězce, připravený k uložení do dlouhodobé paměti."
     ),
-    agent=memory_agent
+    agent=memory_agent,
 )

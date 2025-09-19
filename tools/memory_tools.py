@@ -1,5 +1,4 @@
 import threading
-import os
 import asyncio
 import json
 from typing import Type, Optional
@@ -7,6 +6,7 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
 from memory.advanced_memory import AdvancedMemory
 from core.utils import CustomJSONEncoder
+
 
 def run_sync_or_async(coro):
     """
@@ -16,16 +16,24 @@ def run_sync_or_async(coro):
     try:
         loop = asyncio.get_running_loop()
         if threading.current_thread() is threading.main_thread():
-            raise RuntimeError("Cannot call sync tool in a running async loop. Use the async version (`_arun`).")
+            raise RuntimeError(
+                "Cannot call sync tool in a running async loop. Use the async version (`_arun`)."
+            )
         future = asyncio.run_coroutine_threadsafe(coro, loop)
         return future.result()
     except RuntimeError:
         return asyncio.run(coro)
 
+
 class MemoryReaderToolInput(BaseModel):
     """Pydantic model for MemoryReaderTool input."""
+
     n: int = Field(10, description="The number of recent memories to read.")
-    mem_type: Optional[str] = Field(None, description="Optional memory type to filter by (e.g., 'TASK', 'CONVERSATION').")
+    mem_type: Optional[str] = Field(
+        None,
+        description="Optional memory type to filter by (e.g., 'TASK', 'CONVERSATION').",
+    )
+
 
 class MemoryReaderTool(BaseTool):
     name: str = "Memory Reader"
@@ -40,9 +48,13 @@ class MemoryReaderTool(BaseTool):
         try:
             memory = AdvancedMemory()
             # Use the helper to run the async method from a sync context
-            recent_memories = run_sync_or_async(memory.read_last_n_memories(n=n, mem_type=mem_type))
+            recent_memories = run_sync_or_async(
+                memory.read_last_n_memories(n=n, mem_type=mem_type)
+            )
             memory.close()
-            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
+            return json.dumps(
+                recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder
+            )
         except Exception as e:
             return f"Error reading memory: {e}"
 
@@ -52,6 +64,8 @@ class MemoryReaderTool(BaseTool):
             memory = AdvancedMemory()
             recent_memories = await memory.read_last_n_memories(n=n, mem_type=mem_type)
             memory.close()
-            return json.dumps(recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder)
+            return json.dumps(
+                recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder
+            )
         except Exception as e:
             return f"Error reading memory: {e}"

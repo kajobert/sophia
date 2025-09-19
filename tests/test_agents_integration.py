@@ -1,16 +1,16 @@
+import os
 import pytest
+from tools.code_executor import ExecutePythonScriptTool, RunUnitTestsTool
+from tools.file_system import ListDirectoryTool, ReadFileTool, WriteFileTool
 
 # Dočasně přeskočeno kvůli chybě metaclass conflict v langchain-google-genai a Pydantic v2
-pytest.skip("Test dočasně přeskočen: metaclass conflict v langchain-google-genai a Pydantic v2. Sledujte upstream.", allow_module_level=True)
-
-import pytest
-from agents.engineer_agent import EngineerAgent
-from agents.tester_agent import TesterAgent
-from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool
-from tools.code_executor import ExecutePythonScriptTool, RunUnitTestsTool
-import os
+pytest.skip(
+    "Test dočasně přeskočen: metaclass conflict v langchain-google-genai a Pydantic v2. Sledujte upstream.",
+    allow_module_level=True,
+)
 
 SANDBOX_DIR = os.path.abspath("sandbox")
+
 
 @pytest.fixture(scope="module")
 def setup_sandbox():
@@ -21,6 +21,7 @@ def setup_sandbox():
         fpath = os.path.join(SANDBOX_DIR, fname)
         if os.path.exists(fpath):
             os.remove(fpath)
+
 
 def test_engineer_and_tester_workflow(setup_sandbox):
     # Engineer vytvoří jednoduchý Python skript

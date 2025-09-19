@@ -2,8 +2,9 @@ import sqlite3
 import datetime
 import os
 
+
 class EpisodicMemory:
-    def __init__(self, db_path='memory/episodic_log.sqlite'):
+    def __init__(self, db_path="memory/episodic_log.sqlite"):
         self.db_path = db_path
         # Ensure the directory exists
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
@@ -13,7 +14,8 @@ class EpisodicMemory:
     def create_table(self):
         """Creates the events table if it doesn't exist."""
         with self.conn:
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT NOT NULL,
@@ -23,9 +25,17 @@ class EpisodicMemory:
                     output TEXT,
                     status TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
-    def add_event(self, agent_name: str, action: str, input_data: str, output_data: str, status: str):
+    def add_event(
+        self,
+        agent_name: str,
+        action: str,
+        input_data: str,
+        output_data: str,
+        status: str,
+    ):
         """Adds a new event to the database."""
         timestamp = datetime.datetime.now().isoformat()
         # Ensure input and output are strings
@@ -33,10 +43,13 @@ class EpisodicMemory:
         output_str = str(output_data)
 
         with self.conn:
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 INSERT INTO events (timestamp, agent_name, action, input, output, status)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (timestamp, agent_name, action, input_str, output_str, status))
+            """,
+                (timestamp, agent_name, action, input_str, output_str, status),
+            )
 
     def close(self):
         """Closes the database connection."""

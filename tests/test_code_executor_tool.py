@@ -4,8 +4,8 @@ import shutil
 from tools.code_executor import ExecutePythonScriptTool, RunUnitTestsTool
 from tools.file_system import WriteFileTool, SANDBOX_DIR
 
-class TestCodeExecutorTools(unittest.TestCase):
 
+class TestCodeExecutorTools(unittest.TestCase):
     def setUp(self):
         """Set up the test environment before each test."""
         self.executor_tool = ExecutePythonScriptTool()
@@ -64,7 +64,9 @@ if __name__ == '__main__':
     def test_run_unit_tests_outside_sandbox(self):
         """Test that running tests outside the sandbox is forbidden."""
         # This file doesn't have to be a valid test; the path check should fail first.
-        result = self.unittest_tool._run(test_file_path="../../tests/test_file_system_tool.py")
+        result = self.unittest_tool._run(
+            test_file_path="../../tests/test_file_system_tool.py"
+        )
         self.assertIn("Error: Path", result)
         self.assertIn("outside the allowed /sandbox directory", result)
 
@@ -73,6 +75,7 @@ if __name__ == '__main__':
         result = self.executor_tool._run(file_path="test_exec_data/non_existent.py")
         self.assertIn("Error: Script file", result)
         self.assertIn("not found", result)
+
 
 if __name__ == "__main__":
     unittest.main()
