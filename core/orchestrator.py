@@ -1,50 +1,40 @@
-import asyncio
 import os
 import importlib
 import inspect
-from crewai import Task
+import logging
 from core.context import SharedContext
 from agents.planner_agent import PlannerAgent
-from agents.engineer_agent import EngineerAgent
-from agents.tester_agent import TesterAgent
-from agents.aider_agent import AiderAgent
 from tools.base_tool import BaseTool
 
-import logging
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class Orchestrator:
     """
-    Central orchestrator for running the agentic workflow (Planner -> Engineer -> Tester)
-    with a retry loop.
+    Central orchestrator to execute plans, handle failures, and trigger a cognitive cycle for plan correction.
     """
 
-    MAX_RETRIES = 3
+    MAX_REPAIR_ATTEMPTS = 3
 
-    def __init__(self):
-        self.planner = PlannerAgent()
-        self.engineer = EngineerAgent()
-        self.tester = TesterAgent()
-        self.aider = AiderAgent()
+    def __init__(self, llm):
+        # The LLM is passed to the planner for plan generation and correction.
+        self.planner = PlannerAgent(llm)
         self.tools = self._load_tools()
 
     def _load_tools(self) -> dict:
         """
-        Dynamically loads all tools from the 'tools' directory that inherit from BaseTool.
+        Dynamically loads all tool classes from the 'tools' directory that inherit from BaseTool.
+        The key is the class name.
         """
         tools = {}
         tools_dir = "tools"
         for filename in os.listdir(tools_dir):
             if filename.endswith(".py") and not filename.startswith("__"):
-                module_name = f"{tools_dir}.{filename[:-3]}"
+                module_name = f"tools.{filename[:-3]}"
                 try:
                     module = importlib.import_module(module_name)
                     for name, cls in inspect.getmembers(module, inspect.isclass):
-                        if issubclass(cls, BaseTool) and cls is not BaseTool:
+                        # Ensure it's a tool, not a base class or other import
+                        if issubclass(cls, BaseTool) and cls is not BaseTool and not inspect.isabstract(cls):
                             try:
                                 tools[name] = cls()
                                 logging.info(f"Successfully loaded tool: {name}")
@@ -54,99 +44,89 @@ class Orchestrator:
                     logging.error(f"Failed to load module {module_name}: {e}")
         return tools
 
-    async def execute_task(self, context: SharedContext, task_description: str):
-        logging.info(f"Orchestrator starting task: {task_description}")
+    def execute_plan(self, context: SharedContext):
+        """
+        Executes a plan from the shared context, handling failures and repairs.
+        """
+        repair_attempts = 0
+        while repair_attempts < self.MAX_REPAIR_ATTEMPTS:
+            if not context.current_plan or not isinstance(context.current_plan, list):
+                logging.error("No valid plan to execute. Aborting.")
+                context.feedback = "Execution aborted: No plan provided."
+                return context
 
-        # Pass the loaded tools to the context
-        context.available_tools = self.tools
+            plan_successful = True
+            for step in context.current_plan:
+                try:
+                    tool_name = step.get("tool_name")
+                    parameters = step.get("parameters", {})
 
-        # 1. Plánování
-        planning_task = Task(
-            description=f"Analyze the following user request and create a detailed, step-by-step execution plan. The user's request is: '{task_description}'",
-            agent=self.planner,
-            expected_output="A list of actionable steps to be executed by other agents.",
-        )
-        logging.info("Spouštím PlannerAgenta pro vytvoření plánu...")
-        try:
-            plan = await asyncio.to_thread(planning_task.execute)
-            context.plan = plan
-            logging.info(f"Plánovač vytvořil plán:\n{plan}")
-        except Exception as e:
-            logging.error(f"CHYBA: Selhání při zpracování úkolu PlannerAgentem: {e}")
-            context.feedback = f"Planner failed: {e}"
-            return context
+                    if tool_name not in self.tools:
+                        raise ValueError(f"Tool '{tool_name}' not found.")
 
-        # 2. Implementace a Testování s cyklem pro opravy
-        for i in range(self.MAX_RETRIES):
-            logging.info(
-                f"Pokus o implementaci a testování č. {i + 1}/{self.MAX_RETRIES}"
-            )
+                    tool_instance = self.tools[tool_name]
 
-            # 2a. Implementace (Engineer nebo AiderAgent)
-            try:
-                if any(
-                    word in task_description.lower()
-                    for word in [
-                        "refaktoruj",
-                        "oprav",
-                        "vylepši",
-                        "refactor",
-                        "fix",
-                        "improve",
-                    ]
-                ):
-                    logging.info(
-                        "Detekován úkol pro AiderAgent (refaktorace/oprava/vylepšení)..."
+                    logging.info(f"Executing step {step.get('step_id')}: {step.get('description')} with tool {tool_name}")
+
+                    # Execute the tool and get the result
+                    result = tool_instance.execute(**parameters)
+
+                    # Update context
+                    context.last_step_output = {"status": "success", "result": result}
+                    context.step_history.append({
+                        "step_id": step.get("step_id"),
+                        "description": step.get("description"),
+                        "tool_name": tool_name,
+                        "parameters": parameters,
+                        "output": context.last_step_output
+                    })
+                    logging.info(f"Step {step.get('step_id')} completed successfully. Result: {result}")
+
+                except Exception as e:
+                    logging.error(f"Step {step.get('step_id')} failed: {e}")
+                    plan_successful = False
+
+                    # --- DEBUGGING AND REPAIR LOOP ---
+                    context.last_step_output = {"status": "error", "error": str(e)}
+                    context.step_history.append({
+                         "step_id": step.get("step_id"),
+                         "description": step.get("description"),
+                         "tool_name": step.get("tool_name"),
+                         "output": context.last_step_output
+                    })
+
+                    # Trigger the planner to repair the plan
+                    logging.info("Calling PlannerAgent to repair the plan...")
+
+                    # We need to create a new context for the planner to avoid leaking state
+                    # The planner needs the original prompt, the failed plan, and the error context
+                    repair_context = SharedContext(
+                        original_prompt=f"The previous plan failed. Please create a new plan to achieve the original goal. Original goal: {context.original_prompt}. Failed plan: {context.current_plan}. The step that failed was '{step.get('description')}' with the error: {str(e)}",
+                        session_id=context.session_id
                     )
-                    # AiderAgent might not fit the standard task.execute() model, needs careful implementation
-                    # For now, we assume a similar interface for simplicity in the orchestrator
-                    # In a real scenario, this might need a different call pattern
-                    context.code = await asyncio.to_thread(
-                        self.aider.propose_change,
-                        description=task_description,
-                        context=context,
-                    )
-                    logging.info(f"AiderAgent výsledek: {context.code}")
-                else:
-                    logging.info("Spouštím EngineerAgenta pro implementaci...")
-                    engineer_task = Task(
-                        description=f"Based on the following plan, implement the code. Previous feedback (if any): {context.feedback}\n\nPlan:\n{context.plan}",
-                        agent=self.engineer,
-                        expected_output="Implemented code in sandbox.",
-                    )
-                    context.code = await asyncio.to_thread(engineer_task.execute)
-                    logging.info(f"EngineerAgent výsledek: {context.code}")
-            except Exception as e:
-                logging.error(f"CHYBA: Implementační agent selhal: {e}")
-                context.feedback = f"Implementation agent failed: {e}"
-                # This is a critical failure, no point in retrying if the agent itself crashes
-                break
 
-            # 2b. Testování
-            logging.info("Spouštím TesterAgenta...")
-            try:
-                tester_task = Task(
-                    description=f"Otestuj nově implementovaný/refaktorovaný kód v sandboxu pomocí unit testů. Kód k otestování:\n\n{context.code}",
-                    agent=self.tester,
-                    expected_output="Výsledek testů (PASS nebo FAIL s detaily).",
-                )
-                test_result = await asyncio.to_thread(tester_task.execute)
-                context.test_results = str(test_result)
-                logging.info(f"TesterAgent výsledek: {context.test_results}")
+                    # The planner returns the context with the new plan in the 'payload'
+                    repaired_context = self.planner.run_task(repair_context)
+                    new_plan = repaired_context.payload.get("plan")
 
-                if "pass" in context.test_results.lower():
-                    logging.info("Testy úspěšné, úkol dokončen.")
-                    context.feedback = "Task successfully completed."
-                    return context
-                else:
-                    logging.warning("Testy selhaly, připravuji další pokus.")
-                    context.feedback = f"Tests failed. Please fix the code. Test results:\n{context.test_results}"
+                    if new_plan:
+                        logging.info("Received a new plan from the planner. Restarting execution.")
+                        context.current_plan = new_plan
+                        # Clear history for the new plan execution
+                        context.step_history = []
+                        repair_attempts += 1
+                        # Break the inner loop to restart with the new plan
+                        break
+                    else:
+                        logging.error("Planner failed to provide a new plan. Aborting.")
+                        context.feedback = "Execution aborted: Planner failed to repair the plan."
+                        return context
 
-            except Exception as e:
-                logging.error(f"CHYBA: TesterAgent selhal: {e}")
-                context.feedback = f"Tester agent failed: {e}"
-                # If the tester itself crashes, we should probably stop.
-                break
+            if plan_successful:
+                logging.info("Plan executed successfully.")
+                context.feedback = "Plan executed successfully."
+                return context
 
-        logging.error(f"Úkol selhal po {self.MAX_RETRIES} pokusech.")
+        logging.error(f"Failed to execute plan after {self.MAX_REPAIR_ATTEMPTS} repair attempts.")
+        context.feedback = f"Execution failed after {self.MAX_REPAIR_ATTEMPTS} repair attempts."
         return context
