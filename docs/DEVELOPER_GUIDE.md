@@ -43,6 +43,15 @@ Sophia je navržena jako modulární, multi-agentní systém s odděleným webov
 
 -   **`web/` (Webové Rozhraní):**
     -   `api/`: Backend postavený na `FastAPI`, který poskytuje REST API pro komunikaci s frontendem.
+        -   **Správa Úkolů:**
+            -   `POST /api/v1/tasks`: Přijímá JSON s popisem úkolu (`{"prompt": "..."}`), asynchronně spouští `Orchestrator.execute_plan()` a okamžitě vrací unikátní `task_id`.
+            -   `GET /api/v1/tasks/{task_id}`: Vrací aktuální stav a historii konkrétního úkolu.
+        -   **Real-time Notifikace (WebSockets):**
+            -   `GET /api/v1/tasks/{task_id}/ws`: WebSocket endpoint, na který se frontend připojuje pro sledování průběhu úkolu v reálném čase.
+            -   **Protokol:** Po připojení backend odesílá JSON zprávy s následující strukturou:
+                -   `{"type": "step_update", "step_id": ..., "description": ..., "status": ..., "output": ...}`: Informace o stavu konkrétního kroku.
+                -   `{"type": "plan_feedback", "feedback": "..."}`: Finální zpráva po dokončení (nebo selhání) celého plánu.
+                -   `{"type": "plan_repaired", "new_plan": ...}`: Zpráva o tom, že plán byl opraven a bude spuštěn znovu.
     -   `ui/`: Frontend napsaný v `Reactu`, který slouží jako uživatelské rozhraní.
 
 ### Technologický Stack

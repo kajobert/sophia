@@ -2,9 +2,11 @@ import os
 import importlib
 import inspect
 import logging
+import asyncio
 from core.context import SharedContext
 from agents.planner_agent import PlannerAgent
 from tools.base_tool import BaseTool
+from web.api.websocket_manager import manager
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -44,15 +46,16 @@ class Orchestrator:
                     logging.error(f"Failed to load module {module_name}: {e}")
         return tools
 
-    def execute_plan(self, context: SharedContext):
+    async def execute_plan(self, context: SharedContext):
         """
-        Executes a plan from the shared context, handling failures and repairs.
+        Executes a plan from the shared context, handling failures and repairs, and broadcasting updates.
         """
         repair_attempts = 0
         while repair_attempts < self.MAX_REPAIR_ATTEMPTS:
             if not context.current_plan or not isinstance(context.current_plan, list):
                 logging.error("No valid plan to execute. Aborting.")
                 context.feedback = "Execution aborted: No plan provided."
+                await manager.broadcast({"type": "plan_feedback", "feedback": context.feedback}, context.session_id)
                 return context
 
             plan_successful = True
@@ -73,14 +76,18 @@ class Orchestrator:
 
                     # Update context
                     context.last_step_output = {"status": "success", "result": result}
-                    context.step_history.append({
+                    current_step_data = {
                         "step_id": step.get("step_id"),
                         "description": step.get("description"),
                         "tool_name": tool_name,
                         "parameters": parameters,
                         "output": context.last_step_output
-                    })
+                    }
+                    context.step_history.append(current_step_data)
                     logging.info(f"Step {step.get('step_id')} completed successfully. Result: {result}")
+
+                    # Broadcast success
+                    await manager.broadcast({"type": "step_update", **current_step_data}, context.session_id)
 
                 except Exception as e:
                     logging.error(f"Step {step.get('step_id')} failed: {e}")
@@ -88,45 +95,48 @@ class Orchestrator:
 
                     # --- DEBUGGING AND REPAIR LOOP ---
                     context.last_step_output = {"status": "error", "error": str(e)}
-                    context.step_history.append({
+                    failed_step_data = {
                          "step_id": step.get("step_id"),
                          "description": step.get("description"),
                          "tool_name": step.get("tool_name"),
                          "output": context.last_step_output
-                    })
+                    }
+                    context.step_history.append(failed_step_data)
+
+                    # Broadcast failure
+                    await manager.broadcast({"type": "step_update", **failed_step_data}, context.session_id)
 
                     # Trigger the planner to repair the plan
                     logging.info("Calling PlannerAgent to repair the plan...")
 
-                    # We need to create a new context for the planner to avoid leaking state
-                    # The planner needs the original prompt, the failed plan, and the error context
                     repair_context = SharedContext(
                         original_prompt=f"The previous plan failed. Please create a new plan to achieve the original goal. Original goal: {context.original_prompt}. Failed plan: {context.current_plan}. The step that failed was '{step.get('description')}' with the error: {str(e)}",
                         session_id=context.session_id
                     )
 
-                    # The planner returns the context with the new plan in the 'payload'
                     repaired_context = self.planner.run_task(repair_context)
                     new_plan = repaired_context.payload.get("plan")
 
                     if new_plan:
                         logging.info("Received a new plan from the planner. Restarting execution.")
                         context.current_plan = new_plan
-                        # Clear history for the new plan execution
                         context.step_history = []
                         repair_attempts += 1
-                        # Break the inner loop to restart with the new plan
+                        await manager.broadcast({"type": "plan_repaired", "new_plan": new_plan}, context.session_id)
                         break
                     else:
                         logging.error("Planner failed to provide a new plan. Aborting.")
                         context.feedback = "Execution aborted: Planner failed to repair the plan."
+                        await manager.broadcast({"type": "plan_feedback", "feedback": context.feedback}, context.session_id)
                         return context
 
             if plan_successful:
                 logging.info("Plan executed successfully.")
                 context.feedback = "Plan executed successfully."
+                await manager.broadcast({"type": "plan_feedback", "feedback": context.feedback}, context.session_id)
                 return context
 
         logging.error(f"Failed to execute plan after {self.MAX_REPAIR_ATTEMPTS} repair attempts.")
         context.feedback = f"Execution failed after {self.MAX_REPAIR_ATTEMPTS} repair attempts."
+        await manager.broadcast({"type": "plan_feedback", "feedback": context.feedback}, context.session_id)
         return context
