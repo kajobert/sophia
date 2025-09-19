@@ -1,59 +1,54 @@
-# Uživatelský Průvodce
+# 📘 Uživatelský Průvodce pro Projekt Sophia
 
-Vítejte v projektu Sophia! Tento průvodce vás provede nejjednodušším způsobem, jak Sophii spustit a začít s ní komunikovat přes webové rozhraní.
+Vítejte! Tento průvodce je určen pro vás, koncové uživatele, kteří chtějí komunikovat se Sophií a využívat její schopnosti prostřednictvím webového rozhraní.
 
-## Předpoklady
+Pokud jste zde poprvé a potřebujete pomoc se zprovozněním projektu, podívejte se prosím nejprve na **[🚀 QUICKSTART.md](../QUICKSTART.md)**.
 
-- Nainstalovaný **Docker** a **Docker Compose**.
-- Základní znalost příkazové řádky (terminálu).
+## Co je Sophia?
 
-## Spuštění Pomocí Docker Compose (Doporučená Metoda)
+Z uživatelského pohledu je Sophia inteligentní partnerka pro dialog. Můžete s ní vést běžnou konverzaci, zadávat jí úkoly, nebo se jí ptát na složité filosofické otázky. Jejím cílem je nejen odpovídat, ale také se z vašich interakcí učit a porozumět světu lépe.
 
-Toto je nejjednodušší a nejspolehlivější způsob, jak spustit celý ekosystém Sophie, včetně backendu, frontendu a všech potřebných služeb.
+## Přihlášení
 
-### Krok 1: Získání Projektu
+Při první návštěvě webového rozhraní budete vyzváni k přihlášení.
 
-Naklonujte si repozitář projektu z GitHubu na váš lokální počítač:
-```bash
-git clone <URL_REPOZITARE>
-cd <NAZEV_SLOZKY_REPOZITARE>
-```
+-   **Přihlášení přes Google:** Klikněte na tlačítko pro přihlášení přes Google. Tím propojíte svůj účet a umožníte Sophii, aby si pamatovala vaše minulé konverzace a preference.
 
-### Krok 2: Konfigurace
+## Popis Rozhraní
 
-Před prvním spuštěním je potřeba nastavit API klíč pro jazykový model Gemini.
+Po přihlášení se vám zobrazí hlavní obrazovka, která je rozdělena do několika částí.
 
-1.  Najděte soubor `.env.example` v hlavním adresáři projektu.
-2.  Zkopírujte ho a přejmenujte kopii na `.env`.
-3.  Otevřete soubor `.env` a vložte svůj API klíč od Google Gemini:
-    ```
-    GEMINI_API_KEY=VASE_TAJNE_API_HESLO
-    ```
+### Hlavní Menu (Levý Panel)
 
-### Krok 3: Spuštění Kontejnerů
+Na levé straně obrazovky naleznete hlavní menu, které slouží k navigaci mezi jednotlivými funkcemi aplikace:
 
-V hlavním adresáři projektu spusťte následující příkaz. Docker Compose automaticky stáhne potřebné obrazy a spustí všechny služby.
+-   **💬 Chat:** Hlavní okno pro konverzaci se Sophií.
+-   **📂 Files (Soubory):** Zde budete moci nahrávat soubory, se kterými má Sophia pracovat (tato funkce je ve vývoji).
+-   **👤 Profile (Profil):** Informace o vašem uživatelském účtu.
+-   **⚙️ Settings (Nastavení):** Možnosti pro přizpůsobení chování aplikace.
+-   **🔔 Notifications (Notifikace):** Upozornění od systému.
+-   **헬 Helpdesk:** Centrum nápovědy.
 
-```bash
-docker-compose up --build
-```
+### Konverzační Okno (Chat)
 
-Tento příkaz může při prvním spuštění trvat několik minut, protože se stahují a sestavují všechny potřebné komponenty.
+Toto je srdce aplikace, kde probíhá veškerá komunikace.
 
-### Krok 4: Otevření Webového Rozhraní
+1.  **Vstupní pole:** Do textového pole ve spodní části obrazovky napište svou zprávu, dotaz nebo úkol.
+2.  **Odeslání:** Stiskněte Enter nebo klikněte na tlačítko pro odeslání.
+3.  **Odpověď:** Vaše zpráva se zobrazí v okně chatu a Sophia po chvíli odpoví. Historie vaší konverzace zůstává viditelná, takže se můžete snadno vracet k předchozím tématům.
 
-Po úspěšném spuštění všech kontejnerů:
+## Řešení Běžných Problémů
 
-1.  Otevřete váš webový prohlížeč.
-2.  Přejděte na adresu: `http://localhost:3000`
+-   **Aplikace neodpovídá:** Ujistěte se, že všechny Docker kontejnery běží správně (viz `QUICKSTART.md`). Zkontrolujte logy v terminálu, kde jste spustili `docker compose up`.
+-   **Chyba při přihlášení:** Ověřte, že máte správně nastavené API klíče v souboru `.env`.
 
-Měli byste vidět hlavní stránku webového rozhraní Sophie. Nyní můžete začít chatovat!
+---
+<br>
 
-## Zastavení Aplikace
+<p align="center">
+  ---
+</p>
 
-Pro zastavení všech běžících kontejnerů se vraťte do terminálu, kde jste spustili `docker-compose up`, a stiskněte `Ctrl + C`.
-
-Pokud chcete kontejnery i smazat, použijte příkaz:
-```bash
-docker-compose down
-```
+<p align="center">
+  <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Pokud zjistíte, že je zastaralý nebo neúplný, založte prosím issue nebo vytvořte pull request s návrhem na jeho aktualizaci. Děkujeme!</sub>
+</p>
