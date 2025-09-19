@@ -250,3 +250,51 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
     * **Technologie:** `google-generativeai`
     * **Funkce:** Zajišťuje jednotné rozhraní pro všechny agenty a snadnou rozšiřitelnost na další LLM providery.
 
+### 2.2. Kognitivní Cyklus a Řešení Problémů (EPIC 2)
+
+Základem autonomie Sophie je kognitivní cyklus implementovaný v `core/orchestrator.py`. Tento cyklus umožňuje Sophii nejen slepě vykonávat kroky, ale také inteligentně reagovat na chyby, opravovat své plány a iterativně se přibližovat k cíli.
+
+**Kroky Kognitivního Cyklu:**
+
+1.  **Plánování (PlannerAgent):**
+    * Na začátku každého úkolu je zavolán `PlannerAgent`.
+    * Jeho úkolem je transformovat abstraktní cíl (např. "přidej novou funkci a otestuj ji") na konkrétní, strojově čitelný plán.
+    * **Výstupem je vždy validní JSON**, který představuje pole kroků.
+
+    **Příklad JSON Plánu:**
+    ```json
+    [
+        {
+            "step_id": 1,
+            "description": "Přečti obsah souboru 'main.py'.",
+            "tool_name": "ReadFileTool",
+            "parameters": {
+                "file_path": "main.py"
+            }
+        },
+        {
+            "step_id": 2,
+            "description": "Napiš nový kód do souboru 'new_feature.py'.",
+            "tool_name": "WriteFileTool",
+            "parameters": {
+                "file_path": "new_feature.py",
+                "content": "def my_new_feature():\\n  return True"
+            }
+        }
+    ]
+    ```
+
+2.  **Exekuce (Orchestrator):**
+    * `Orchestrator` přijme JSON plán a začne ho vykonávat krok po kroku.
+    * Pro každý krok dynamicky identifikuje a zavolá příslušný nástroj (`tool_name`) s danými parametry (`parameters`).
+    * Všechny nástroje jsou načteny při startu a jsou dostupné v `orchestrator.tools`.
+
+3.  **Detekce Chyby a Oprava (Debugovací Smyčka):**
+    * **Pokud jakýkoliv krok selže** (např. soubor neexistuje, kód se nespustí), `Orchestrator` přeruší exekuci.
+    * Zabalí kontext chyby: původní cíl, neúspěšný plán, krok, který selhal, a konkrétní chybovou hlášku.
+    * **Znovu zavolá `PlannerAgenta`** s tímto chybovým kontextem a požádá ho o *opravu plánu*.
+    * `PlannerAgent` vytvoří nový, opravený plán, který se snaží chybu obejít (např. pokud čtení souboru selhalo, nový plán může nejprve soubor vytvořit).
+    * `Orchestrator` zahodí starý plán, přijme nový a **spustí exekuci od začátku nového plánu**.
+    * Tento cyklus (exekuce -> chyba -> oprava -> nová exekuce) se může opakovat (s limitem `MAX_REPAIR_ATTEMPTS`), dokud není úkol úspěšně dokončen nebo dokud plánovač selže.
+
+Tento mechanismus dává Sophii robustnost a schopnost autonomně řešit nepředvídatelné problémy, což je klíčový krok k dosažení plné autonomie.
