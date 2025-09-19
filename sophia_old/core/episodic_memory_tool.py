@@ -1,5 +1,5 @@
- 
 import os
+
 
 def episodic_memory_summary_tool(num_events: int = 20) -> str:
     """Načte a sumarizuje poslední události z episodic_memory.log. Vrací stručný přehled klíčových událostí pro konsolidaci do LTM."""
@@ -18,5 +18,3 @@ def episodic_memory_summary_tool(num_events: int = 20) -> str:
         return summary
     except Exception as e:
         return f"Chyba při čtení episodic_memory.log: {e}"
-
-

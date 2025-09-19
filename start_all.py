@@ -2,20 +2,39 @@
 """
 Sophia Starter: Spustí všechny klíčové služby (Redis, backend, Celery, Guardian) a monitoruje je.
 """
+
 import subprocess
 import time
 import os
-import signal
-import sys
 
 # --- Nastavení příkazů ---
 
 REDIS_CMD = ["redis-server"]
-BACKEND_CMD = ["dotenv", "run", "--", "uvicorn", "web.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
-CELERY_CMD = ["env", "PYTHONPATH=.", "celery", "-A", "services.celery_worker.celery_app", "worker", "--loglevel=info"]
+BACKEND_CMD = [
+    "dotenv",
+    "run",
+    "--",
+    "uvicorn",
+    "web.api.main:app",
+    "--reload",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8000",
+]
+CELERY_CMD = [
+    "env",
+    "PYTHONPATH=.",
+    "celery",
+    "-A",
+    "services.celery_worker.celery_app",
+    "worker",
+    "--loglevel=info",
+]
 GUARDIAN_CMD = ["env", "PYTHONPATH=.", "python3", "guardian.py"]
 
 processes = {}
+
 
 def is_running(process_name):
     try:
@@ -23,6 +42,7 @@ def is_running(process_name):
         return bool(out.strip())
     except subprocess.CalledProcessError:
         return False
+
 
 def start_process(name, cmd, cwd=None):
     print(f"[Starter] Spouštím {name}... ({' '.join(cmd)})")
@@ -32,6 +52,7 @@ def start_process(name, cmd, cwd=None):
     processes[name] = proc
     time.sleep(2)
     return proc
+
 
 def stop_all():
     print("[Starter] Ukončuji všechny spuštěné procesy...")
@@ -45,6 +66,7 @@ def stop_all():
         if proc.poll() is None:
             proc.kill()
     print("[Starter] Vše ukončeno.")
+
 
 def main():
     try:
@@ -72,6 +94,7 @@ def main():
         print("\n[Starter] Přerušeno uživatelem.")
     finally:
         stop_all()
+
 
 if __name__ == "__main__":
     main()

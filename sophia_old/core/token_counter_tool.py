@@ -2,13 +2,18 @@ import tiktoken
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
+
 class TokenCounterToolSchema(BaseModel):
     text: str = Field(..., description="The text to count tokens for.")
 
+
 class TokenCounterTool(BaseTool):
     """A tool to count the number of tokens in a given text."""
+
     name: str = "TokenCounterTool"
-    description: str = "Counts the number of tokens in a given text using the 'cl100k_base' encoding."
+    description: str = (
+        "Counts the number of tokens in a given text using the 'cl100k_base' encoding."
+    )
     args_schema: type[BaseModel] = TokenCounterToolSchema
 
     def _run(self, text: str) -> int:

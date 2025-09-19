@@ -1,3 +1,10 @@
+import hashlib
+import glob
+import re
+import socket
+import urllib.request
+
+
 # --- Funkce pro test: detekce crash v logu ---
 def check_backend_crash_log(log_path, lines=10):
     """Vrací dict s posledními řádky a nalezenými chybovými vzory (ImportError, Traceback)."""
@@ -14,6 +21,8 @@ def check_backend_crash_log(log_path, lines=10):
         return result
     except Exception:
         return result
+
+
 """
 Sophia Monitor: Pokročilé kontroly pro guardian.py
 
@@ -53,12 +62,7 @@ PLÁNOVANÉ A EXISTUJÍCÍ KONTROLY
 
 Každá kontrola by měla být samostatná funkce, snadno volatelná a testovatelná.
 """
-import hashlib
-import glob
-import os
-import re
-import socket
-import urllib.request
+
 
 def check_integrity():
     """Kontrola integrity všech .py, .yaml, .env, .sh, .txt v rootu, core/, agents/ (SHA256 hash)."""
@@ -80,6 +84,7 @@ def check_integrity():
             results[path] = None
     return results
 
+
 def scan_logs_for_errors(log_files=None, patterns=None, min_count=3):
     """Prohledá logy a detekuje opakované výskyty chybových hlášek."""
     if log_files is None:
@@ -99,6 +104,7 @@ def scan_logs_for_errors(log_files=None, patterns=None, min_count=3):
             continue
     return error_counts
 
+
 def check_internet_connectivity(url="https://www.google.com", timeout=5):
     try:
         urllib.request.urlopen(url, timeout=timeout)
@@ -106,12 +112,14 @@ def check_internet_connectivity(url="https://www.google.com", timeout=5):
     except Exception:
         return False
 
+
 def check_dns_resolution(host="www.google.com"):
     try:
         socket.gethostbyname(host)
         return True
     except Exception:
         return False
+
 
 # Další kontroly lze přidávat zde (CPU, disk, certifikáty, zálohy...)
 

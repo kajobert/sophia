@@ -1,12 +1,13 @@
 from crewai import Agent, Task, Crew
 from tools.memory_tools import MemoryReaderTool
 from core.context import SharedContext
-from core.llm_config import llm
+
 
 class PhilosopherAgent:
     """
     A wrapper class for the Philosopher agent.
     """
+
     def __init__(self, llm):
         memory_reader_tool = MemoryReaderTool()
 
@@ -23,7 +24,7 @@ class PhilosopherAgent:
             tools=[memory_reader_tool],
             verbose=True,
             allow_delegation=False,
-            memory=False
+            memory=False,
         )
 
     def reflect(self, context: SharedContext) -> SharedContext:
@@ -33,23 +34,19 @@ class PhilosopherAgent:
         task = Task(
             description="Read the most recent memories and provide a brief, insightful summary of the last operational cycle. Focus on key decisions, outcomes, and potential areas for improvement or learning.",
             agent=self.agent,
-            expected_output="A concise, reflective summary of the last cycle's events, highlighting key learnings or questions for future consideration."
+            expected_output="A concise, reflective summary of the last cycle's events, highlighting key learnings or questions for future consideration.",
         )
 
-        crew = Crew(
-            agents=[self.agent],
-            tasks=[task],
-            verbose=False
-        )
+        crew = Crew(agents=[self.agent], tasks=[task], verbose=False)
 
         result = crew.kickoff()
 
-        if hasattr(result, 'raw'):
+        if hasattr(result, "raw"):
             reflection = result.raw
         else:
             reflection = str(result)
 
-        context.payload['reflection'] = reflection
+        context.payload["reflection"] = reflection
         print(f"PHILOSOPHER'S REFLECTION:\n{reflection}")
         return context
 

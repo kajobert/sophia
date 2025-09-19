@@ -1,16 +1,17 @@
 from crewai import Agent, Task, Crew
 from core.context import SharedContext
-from core.llm_config import llm
+
 
 class PlannerAgent:
     """
     A wrapper class for the Planner agent.
     """
+
     def __init__(self, llm):
         self.agent = Agent(
             role="Master Planner",
             goal="Vytvářet komplexní, podrobné a proveditelné plány pro zadané úkoly a cíle. "
-                 "Každý plán musí být rozdělen na logické, postupné kroky.",
+            "Každý plán musí být rozdělen na logické, postupné kroky.",
             backstory=(
                 "Jsem Master Planner, entita zrozená z potřeby řádu a strategie. "
                 "Mým jediným účelem je analyzovat komplexní problémy a transformovat je do srozumitelných, "
@@ -21,7 +22,7 @@ class PlannerAgent:
             tools=[],  # EthicalReviewTool was removed as it's deprecated
             verbose=True,
             allow_delegation=False,
-            max_iter=5
+            max_iter=5,
         )
 
     def run_task(self, context: SharedContext) -> SharedContext:
@@ -42,20 +43,16 @@ class PlannerAgent:
         planning_task = Task(
             description=task_description,
             agent=self.agent,
-            expected_output=expected_output
+            expected_output=expected_output,
         )
 
-        crew = Crew(
-            agents=[self.agent],
-            tasks=[planning_task],
-            verbose=True
-        )
+        crew = Crew(agents=[self.agent], tasks=[planning_task], verbose=True)
 
         result = crew.kickoff()
 
-        plan = result.raw if hasattr(result, 'raw') else str(result)
+        plan = result.raw if hasattr(result, "raw") else str(result)
 
-        context.payload['plan'] = plan.strip()
+        context.payload["plan"] = plan.strip()
 
         return context
 

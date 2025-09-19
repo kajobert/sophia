@@ -11,11 +11,11 @@ from tools.file_system import (
     FileSystemNotFoundError,
     IsDirectoryError,
     NotDirectoryError,
-    FileSystemError
+    FileSystemError,
 )
 
-class TestFileSystemTools(unittest.TestCase):
 
+class TestFileSystemTools(unittest.TestCase):
     def setUp(self):
         """Set up the test environment before each test."""
         self.write_tool = WriteFileTool()
@@ -48,7 +48,7 @@ class TestFileSystemTools(unittest.TestCase):
 
         full_path = os.path.join(self.test_dir, "test_write.txt")
         self.assertTrue(os.path.exists(full_path))
-        with open(full_path, 'r', encoding='utf-8') as f:
+        with open(full_path, "r", encoding="utf-8") as f:
             self.assertEqual(f.read(), content)
 
     def test_write_file_outside_sandbox(self):
@@ -71,7 +71,9 @@ class TestFileSystemTools(unittest.TestCase):
     def test_read_file_not_found(self):
         """Test reading a non-existent file raises FileSystemError."""
         with self.assertRaises(FileSystemError) as cm:
-            self.read_tool._run(file_path=os.path.join(self.test_dir_name, "non_existent.txt"))
+            self.read_tool._run(
+                file_path=os.path.join(self.test_dir_name, "non_existent.txt")
+            )
         self.assertIsInstance(cm.exception.__cause__, FileSystemNotFoundError)
 
     def test_read_file_is_directory(self):
@@ -90,8 +92,12 @@ class TestFileSystemTools(unittest.TestCase):
 
     def test_list_directory_success(self):
         """Test successfully listing a directory."""
-        self.write_tool._run(file_path=os.path.join(self.test_dir_name, "file1.txt"), content="1")
-        self.write_tool._run(file_path=os.path.join(self.test_dir_name, "subdir/file2.txt"), content="2")
+        self.write_tool._run(
+            file_path=os.path.join(self.test_dir_name, "file1.txt"), content="1"
+        )
+        self.write_tool._run(
+            file_path=os.path.join(self.test_dir_name, "subdir/file2.txt"), content="2"
+        )
 
         result = self.list_tool._run(path=self.test_dir_name)
         self.assertIn("file1.txt", result)
@@ -106,7 +112,9 @@ class TestFileSystemTools(unittest.TestCase):
     def test_list_directory_not_found(self):
         """Test listing a non-existent directory raises FileSystemError."""
         with self.assertRaises(FileSystemError) as cm:
-            self.list_tool._run(path=os.path.join(self.test_dir_name, "non_existent_dir"))
+            self.list_tool._run(
+                path=os.path.join(self.test_dir_name, "non_existent_dir")
+            )
         self.assertIsInstance(cm.exception.__cause__, FileSystemNotFoundError)
 
     def test_list_directory_is_file(self):
@@ -127,6 +135,7 @@ class TestFileSystemTools(unittest.TestCase):
 
     def test_arun_read_file(self):
         """Test the async _arun method for ReadFileTool."""
+
         async def run_test():
             file_path = os.path.join(self.test_dir_name, "async_read.txt")
             content = "Async readable content."
@@ -143,13 +152,18 @@ class TestFileSystemTools(unittest.TestCase):
 
     def test_arun_list_directory(self):
         """Test the async _arun method for ListDirectoryTool."""
+
         async def run_test():
-            self.write_tool._run(file_path=os.path.join(self.test_dir_name, "async_file.txt"), content="...")
+            self.write_tool._run(
+                file_path=os.path.join(self.test_dir_name, "async_file.txt"),
+                content="...",
+            )
 
             result = await self.list_tool._arun(path=self.test_dir_name)
             self.assertIn("async_file.txt", result)
 
         asyncio.run(run_test())
+
 
 if __name__ == "__main__":
     unittest.main()

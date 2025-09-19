@@ -1,6 +1,5 @@
 import ast
 import os
-import pytest
 
 SRC_DIRS = ["agents", "core", "memory", "tools"]
 EXCEPTIONS = ["core/llm_config.py", "core/gemini_llm_adapter.py"]
@@ -31,12 +30,16 @@ def test_no_forbidden_llm_imports():
             if isinstance(node, ast.ImportFrom):
                 if node.module == "core.gemini_llm_adapter":
                     for n in node.names:
-                        assert n.name != "GeminiLLMAdapter", f"{file} nesmí importovat GeminiLLMAdapter přímo!"
+                        assert (
+                            n.name != "GeminiLLMAdapter"
+                        ), f"{file} nesmí importovat GeminiLLMAdapter přímo!"
             if isinstance(node, ast.Import):
                 for n in node.names:
                     assert n.name != "genai", f"{file} nesmí importovat genai přímo!"
             if isinstance(node, ast.Name):
-                assert node.id not in FORBIDDEN, f"{file} nesmí používat {node.id} přímo!"
+                assert (
+                    node.id not in FORBIDDEN
+                ), f"{file} nesmí používat {node.id} přímo!"
 
 
 def test_llm_import_pattern():
@@ -49,7 +52,8 @@ def test_llm_import_pattern():
         "agents/philosopher_agent.py",
         "agents/planner_agent.py",
         "agents/tester_agent.py",
-        "core/consciousness_loop.py"
+        "core/consciousness_loop.py",
+        "tools/worklog_compressor.py",  # This file mentions LLM in a comment, but doesn't use it.
     ]
 
     for file in files:
