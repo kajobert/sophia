@@ -1,21 +1,28 @@
-from services.audit_service import log_event
-from fastapi import BackgroundTasks
-
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Body
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
-from core import config as sophia_config
-from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth, OAuthError
-import os
-from services.token_service import create_refresh_token, verify_refresh_token
-from services.roles import require_role, ROLE_ADMIN, ROLE_USER, get_user_role
-from services.user_service import get_current_user, set_user_session, clear_user_session
-from services.chat_service import generate_reply
-from services.llm_cache import get_cached_reply, set_cached_reply
+from core import config as sophia_config
+from fastapi import (
+    BackgroundTasks,
+    Body,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
+from services.audit_service import log_event
 from services.celery_worker import celery_app
-import logging
-from contextlib import asynccontextmanager
+from services.roles import ROLE_USER, get_user_role, require_role
+from services.token_service import create_refresh_token, verify_refresh_token
+from services.user_service import (
+    clear_user_session,
+    get_current_user,
+    set_user_session,
+)
+from starlette.middleware.sessions import SessionMiddleware
 
 GOOGLE_CLIENT_ID = sophia_config.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = sophia_config.GOOGLE_CLIENT_SECRET
@@ -24,9 +31,14 @@ SECRET_KEY = sophia_config.SECRET_KEY
 app = FastAPI(title="Sophia Web API", version="0.1")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
+
 # --- Refresh session endpoint ---
-@app.post('/refresh')
-async def refresh_session(request: Request, background_tasks: BackgroundTasks, refresh_token: str = Body(..., embed=True)):
+@app.post("/refresh")
+async def refresh_session(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    refresh_token: str = Body(..., embed=True),
+):
     """Obnoví session pomocí refresh tokenu. Vydá nový refresh token a nastaví session."""
     try:
         payload = verify_refresh_token(refresh_token)
@@ -39,15 +51,20 @@ async def refresh_session(request: Request, background_tasks: BackgroundTasks, r
     except Exception as e:
         background_tasks.add_task(log_event, "refresh_failed", None, str(e))
         raise HTTPException(status_code=401, detail=f"Invalid refresh token: {str(e)}")
+
+
 # --- Testovací login endpoint (pouze pro testy) ---
-@app.post('/test-login')
+@app.post("/test-login")
 async def test_login(request: Request):
     """Nastaví session na testovacího uživatele. Povolit pouze v testovacím režimu!"""
     if not sophia_config.is_test_mode():
-        raise HTTPException(status_code=403, detail="Test login povolen jen v testovacím režimu")
-    user = {'name': 'Test User', 'email': 'test@example.com'}
+        raise HTTPException(
+            status_code=403, detail="Test login povolen jen v testovacím režimu"
+        )
+    user = {"name": "Test User", "email": "test@example.com"}
     set_user_session(request, user)
     return {"message": "Testovací přihlášení úspěšné", "user": user}
+
 
 # CORS pro vývoj (povolit localhost, později zpřísnit)
 app.add_middleware(
@@ -58,28 +75,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
     return {"message": "Sophia Web API is running."}
 
+
 # --- Google OAuth2 login ---
 oauth = OAuth(sophia_config.config)
 oauth.register(
-    name='google',
+    name="google",
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
 )
 
-@app.get('/login')
+
+@app.get("/login")
 async def login(request: Request):
-    redirect_uri = request.url_for('auth')
+    redirect_uri = request.url_for("auth")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@app.get('/auth')
+
+@app.get("/auth")
 async def auth(request: Request, background_tasks: BackgroundTasks):
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -88,13 +107,13 @@ async def auth(request: Request, background_tasks: BackgroundTasks):
         return JSONResponse({"error": str(error)}, status_code=400)
     user = await oauth.google.parse_id_token(request, token)
     # Uložení identity do session
-    request.session['user'] = dict(user)
+    request.session["user"] = dict(user)
     background_tasks.add_task(log_event, "login", user, "Google OAuth2")
-    return RedirectResponse(url='/me')
+    return RedirectResponse(url="/me")
 
 
 # --- Session management & user info ---
-@app.get('/me')
+@app.get("/me")
 @require_role(ROLE_USER)
 async def me(request: Request):
     """Vrací informace o přihlášeném uživateli (nebo 401 pokud není přihlášen)."""
@@ -102,31 +121,32 @@ async def me(request: Request):
     role = get_user_role(user)
     return {"user": user, "role": role}
 
-@app.post('/logout')
+
+@app.post("/logout")
 @require_role(ROLE_USER)
 async def logout(request: Request, background_tasks: BackgroundTasks):
     """Odhlásí uživatele (vymaže session)."""
-    user = request.session.get('user')
+    user = request.session.get("user")
     background_tasks.add_task(log_event, "logout", user)
     clear_user_session(request)
     return {"message": "Odhlášení úspěšné"}
 
 
 # --- Asynchronní chat endpoint přes Celery ---
-from pydantic import BaseModel
-
 class ChatMessage(BaseModel):
     message: str
 
-@app.post('/chat-async')
+
+@app.post("/chat-async")
 async def chat_async(msg: ChatMessage, request: Request):
-    user = request.session.get('user')
+    user = request.session.get("user")
     # user může být None (veřejný chat)
     task = celery_app.send_task("llm.generate_reply", args=[msg.message, user])
     return {"task_id": task.id}
 
+
 # Endpoint pro vyzvednutí výsledku
-@app.get('/chat-result/{task_id}')
+@app.get("/chat-result/{task_id}")
 async def chat_result(task_id: str):
     result = celery_app.AsyncResult(task_id)
     if result.state == "PENDING":
@@ -138,13 +158,19 @@ async def chat_result(task_id: str):
     else:
         return {"status": result.state}
 
-# --- Dummy upload endpoint (zatím nefunkční) ---
-from fastapi import File, UploadFile
 
-@app.post('/upload')
-async def upload_file(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+# --- Dummy upload endpoint (zatím nefunkční) ---
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...), user: dict = Depends(get_current_user)
+):
     # The user is now injected by the get_current_user dependency, which handles the 401 error.
     # Zatím pouze potvrzení přijetí souboru, neukládá se
-    return {"filename": file.filename, "status": "zatím neuloženo (demo)", "user": user["email"]}
+    return {
+        "filename": file.filename,
+        "status": "zatím neuloženo (demo)",
+        "user": user["email"],
+    }
+
 
 # Poznámka: Další endpoints a logika budou přidány v dalších krocích.

@@ -1,15 +1,18 @@
 """
 GeminiLLMAdapter: Adapter pro Google Gemini API, který je kompatibilní s LangChain a crewAI.
 """
+
 import os
 import google.generativeai as genai
 from typing import Any, List, Optional, Dict
 from langchain_core.language_models.llms import LLM
 
+
 class GeminiLLMAdapter(LLM):
     """
     LangChain-kompatibilní wrapper pro Google Gemini API s podporou sledování tokenů.
     """
+
     model_name: str
     temperature: float = 0.7
     max_tokens: int = 2048
@@ -23,23 +26,24 @@ class GeminiLLMAdapter(LLM):
         api_key: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        **kwargs: Any
+        **kwargs: Any,
     ):
-        super().__init__(model_name=model, temperature=temperature, max_tokens=max_tokens, **kwargs)
+        super().__init__(
+            model_name=model, temperature=temperature, max_tokens=max_tokens, **kwargs
+        )
 
         final_api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not final_api_key:
-            raise ValueError("GEMINI_API_KEY musí být poskytnut buď jako argument, nebo nastaven jako proměnná prostředí.")
+            raise ValueError(
+                "GEMINI_API_KEY musí být poskytnut buď jako argument, nebo nastaven jako proměnná prostředí."
+            )
 
         genai.configure(api_key=final_api_key)
         self._model = genai.GenerativeModel(self.model_name)
         self._last_token_usage = 0
 
     def _call(
-        self,
-        prompt: str,
-        stop: Optional[List[str]] = None,
-        **kwargs: Any
+        self, prompt: str, stop: Optional[List[str]] = None, **kwargs: Any
     ) -> str:
         """
         Zavolá Gemini model, vrátí textovou odpověď a zaznamená počet použitých tokenů.
@@ -49,7 +53,9 @@ class GeminiLLMAdapter(LLM):
             "max_output_tokens": self.max_tokens,
         }
 
-        response = self._model.generate_content(prompt, generation_config=generation_config)
+        response = self._model.generate_content(
+            prompt, generation_config=generation_config
+        )
 
         # Zaznamenání počtu tokenů
         usage = getattr(response, "usage_metadata", None)
@@ -79,4 +85,8 @@ class GeminiLLMAdapter(LLM):
     @property
     def _identifying_params(self) -> Dict[str, Any]:
         """Get the identifying parameters."""
-        return {"model_name": self.model_name, "temperature": self.temperature, "max_tokens": self.max_tokens}
+        return {
+            "model_name": self.model_name,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
