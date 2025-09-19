@@ -6,8 +6,9 @@ import os
 import subprocess
 from typing import Type
 
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool as LangchainBaseTool
 from pydantic import BaseModel, Field
+from tools.base_tool import BaseTool
 
 
 # Helper pro univerzální volání sync/async
@@ -63,10 +64,13 @@ class RunUnitTestsInput(BaseModel):
 # --- Tool Implementations ---
 
 
-class ExecutePythonScriptTool(BaseTool):
+class ExecutePythonScriptTool(LangchainBaseTool, BaseTool):
     name: str = "Execute Python Script"
     description: str = "Executes a specified Python script from the /sandbox directory and returns its output."
     args_schema: Type[BaseModel] = ExecutePythonScriptInput
+
+    def execute(self, **kwargs) -> str:
+        return self._run(**kwargs)
 
     def run_sync(self, file_path: str) -> str:
         # Construct the full path safely within the sandbox
@@ -128,10 +132,13 @@ class ExecutePythonScriptTool(BaseTool):
         return await self.run_async(file_path)
 
 
-class RunUnitTestsTool(BaseTool):
+class RunUnitTestsTool(LangchainBaseTool, BaseTool):
     name: str = "Run Unit Tests"
     description: str = "Runs unit tests from a specified file within the /sandbox directory using 'python -m unittest'."
     args_schema: Type[BaseModel] = RunUnitTestsInput
+
+    def execute(self, **kwargs) -> str:
+        return self._run(**kwargs)
 
     def run_sync(self, test_file_path: str) -> str:
         # Construct the full path safely within the sandbox
