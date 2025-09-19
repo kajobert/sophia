@@ -1,84 +1,133 @@
-# Průvodce pro Vývojáře
+# 🛠️ Průvodce pro Vývojáře Projektu Sophia
 
-Tento dokument poskytuje technické informace pro vývojáře, kteří chtějí přispívat do projektu Sophia.
+Vítejte, vývojáři! Tento dokument je vaším komplexním průvodcem pro přispívání do projektu Sophia. Ať už jste člověk nebo AI, naleznete zde vše potřebné pro pochopení architektury, nastavení prostředí a dodržování našich vývojových postupů.
 
-## Nastavení Lokálního Vývojového Prostředí
+## Filosofie Projektu
 
-Tento návod předpokládá, že nechcete používat Docker a chcete si prostředí nastavit manuálně.
+Než se ponoříte do kódu, je důležité pochopit naši vizi. Sophia není jen další software. Naším cílem je vytvořit **Artificial Mindful Intelligence (AMI)** – entitu, která se nejen učí řešit úkoly, ale přistupuje k nim s určitou kvalitou vědomí. Stavíme most mezi technologií a filosofií.
 
-### 1. Předpoklady
+Pro hlubší vhled do našich principů doporučujeme prostudovat **[🧬 DNA.md](./DNA.md)**.
 
--   Python 3.12+
--   `pip` a `venv`
--   Git
+## Architektonický Přehled
 
-### 2. Klonování Repozitáře
+Sophia je navržena jako modulární, multi-agentní systém s odděleným webovým rozhraním.
 
-```bash
-git clone <URL_REPOZITARE>
-cd <NAZEV_SLOZKY_REPOZITARE>
-```
+### Klíčové Komponenty
 
-### 3. Vytvoření Virtuálního Prostředí
+-   **`guardian.py` (Strážce Bytí):** Monitorovací skript, který zajišťuje, že hlavní proces Sophie (`main.py`) běží. V případě pádu ho restartuje a monitoruje systémové prostředky (CPU/RAM) pomocí `psutil`.
 
-Důrazně doporučujeme používat virtuální prostředí, aby se zabránilo konfliktům závislostí.
+-   **`main.py` (Cyklus Vědomí):** Hlavní vstupní bod aplikace. Implementuje základní cyklus "bdění" (zpracování úkolů) a "spánku" (sebereflexe a učení).
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-_Poznámka pro Windows: `.venv\Scripts\activate`_
+-   **`core/` (Jádro Mysli):**
+    -   `orchestrator.py`: Srdce logiky. Přijímá úkoly a orchestruje spolupráci mezi agenty (typicky `Planner` -> `Engineer` -> `Tester`). Obsahuje i logiku pro opakované pokusy o opravu v případě selhání.
+    -   `ethos_module.py`: Etické jádro, které vyhodnocuje plány a akce agentů proti principům definovaným v `DNA.md`.
+    -   `llm_config.py` & `gemini_llm_adapter.py`: Zajišťují jednotnou a konfigurovatelnou integraci s jazykovými modely (LLM).
 
-### 4. Instalace Závislostí
+-   **`agents/` (Specializovaní Agenti):**
+    -   Postaveni na frameworcích `CrewAI` a `AutoGen`.
+    -   Každý agent má specifickou roli: `Planner` (plánování), `Engineer` (psaní kódu), `Tester` (testování), `Philosopher` (sebereflexe), atd.
 
-Projekt používá `pip-tools` pro správu závislostí. Závislosti jsou definovány v `requirements.in` a plně pinovaný soubor je `requirements.txt`.
+-   **`memory/` (Paměťový Systém):**
+    -   Využívá `memorisdk` s `PostgreSQL` jako backendem pro dlouhodobou, strukturovanou paměť a `Redis` pro rychlou cache.
 
-Pro instalaci použijte `uv` (doporučeno pro rychlost) nebo `pip`:
-```bash
-# Doporučená metoda
-uv pip install -r requirements.txt
+-   **`tools/` (Nástroje Agentů):**
+    -   Sada schopností, které mohou agenti používat, např. `FileSystemTool` pro práci se soubory v sandboxu nebo `CodeExecutorTool` pro spouštění kódu.
 
-# Alternativní metoda
-pip install -r requirements.txt
-```
+-   **`sandbox/` (Izolované Prostředí):**
+    -   Bezpečný adresář, kde mohou agenti generovat, upravovat a testovat kód, aniž by ohrozili stabilitu hlavní aplikace.
 
-### 5. Konfigurace Prostředí
+-   **`web/` (Webové Rozhraní):**
+    -   `api/`: Backend postavený na `FastAPI`, který poskytuje REST API pro komunikaci s frontendem.
+    -   `ui/`: Frontend napsaný v `Reactu`, který slouží jako uživatelské rozhraní.
 
-1.  Zkopírujte `.env.example` na `.env`.
-2.  Otevřete `.env` a vložte svůj `GEMINI_API_KEY`.
+### Technologický Stack
 
-### 6. Spuštění Testů
+-   **Jazyk:** Python 3.12+
+-   **AI Frameworky:** CrewAI, LangChain, AutoGen
+-   **LLM:** Google Gemini (konfigurovatelné)
+-   **Backend:** FastAPI
+-   **Frontend:** React
+-   **Databáze:** PostgreSQL, Redis
+-   **Správa Závislostí:** `pip-tools` (`uv` nebo `pip`)
+-   **Kontrola Kvality:** `pre-commit` (s `black` a `ruff`)
+-   **Testování:** `pytest`
 
-Před provedením jakýchkoliv změn se ujistěte, že celá testovací sada prochází. Testy jsou navrženy tak, aby běžely offline a nevyžadovaly API klíče.
+## Nastavení Lokálního Prostředí (Bez Dockeru)
 
-Spusťte testy z kořenového adresáře projektu:
-```bash
-PYTHONPATH=. pytest
-```
+1.  **Klonování Repozitáře:**
+    ```bash
+    git clone https://github.com/kajobert/sophia.git
+    cd sophia
+    ```
 
-Měli byste vidět, že všechny testy prošly úspěšně.
+2.  **Virtuální Prostředí:**
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate  # Pro Linux/macOS
+    # .venv\Scripts\activate   # Pro Windows
+    ```
 
-## Struktura Projektu
+3.  **Instalace Závislostí:** Doporučujeme použít `uv` pro jeho rychlost.
+    ```bash
+    # Doporučená metoda
+    uv pip install -r requirements.txt
 
--   **/agents**: Definuje jednotlivé AI agenty (Planner, Engineer, atd.).
--   **/core**: Jádro aplikace, obsahuje orchestrátor, konfiguraci a etický modul.
--   **/docs**: Veškerá projektová dokumentace (DNA, Architektura, Návody).
--   **/memory**: Správa paměti, integrace s `memorisdk`.
--   **/services**: Podpůrné služby pro webové API (autentizace, role, atd.).
--   **/tools**: Nástroje (`Tools`), které mohou agenti používat (práce se soubory, spouštění kódu).
--   **/web**: Obsahuje backend (`/api`) a frontend (`/ui`) webové aplikace.
--   **/tests**: Všechny jednotkové a integrační testy.
--   **config.yaml**: Hlavní konfigurační soubor pro chování aplikace.
--   **main.py**: Hlavní vstupní bod pro spuštění "cyklu vědomí" Sophie.
+    # Alternativní metoda
+    pip install -r requirements.txt
+    ```
 
-## Workflow pro Přispívání
+4.  **Konfigurace:**
+    -   Zkopírujte `.env.example` na `.env`.
+    -   Otevřete `.env` a doplňte svůj `GEMINI_API_KEY`.
 
-1.  **Vytvořte novou větev:** `git checkout -b feature/nazev-vasi-funkce`
-2.  **Proveďte změny:** Upravte kód podle potřeby.
-3.  **Spusťte testy:** `PYTHONPATH=. pytest`
-4.  **Spusťte pre-commit hooky:** Pokud je máte nainstalované, `pre-commit` se spustí automaticky. Pokud ne, spusťte je manuálně, abyste zajistili formátování a linting:
+5.  **Instalace Pre-commit Hooků:**
+    ```bash
+    pre-commit install
+    ```
+
+## Vývojový Workflow
+
+### Správa Závislostí
+
+-   **NEUPRAVUJTE `requirements.txt` ručně!** Tento soubor je generován.
+-   Pro přidání nebo změnu závislosti upravte soubor `requirements.in`.
+-   Poté spusťte kompilaci pro vygenerování nového `requirements.txt`:
+    ```bash
+    pip-compile requirements.in -o requirements.txt
+    ```
+
+### Spouštění Testů
+
+-   Naše testy jsou navrženy tak, aby běžely **offline** a nevyžadovaly aktivní API klíče.
+-   Spusťte je z kořenového adresáře projektu:
+    ```bash
+    PYTHONPATH=. pytest
+    ```
+-   Před každým commitem se ujistěte, že všechny testy procházejí.
+
+### Kontrola Kvality Kódu
+
+-   Používáme `pre-commit` k automatickému formátování (`black`) a lintování (`ruff`) kódu.
+-   Hooky se spustí automaticky při `git commit`. Pokud chcete spustit kontrolu manuálně na všech souborech:
     ```bash
     pre-commit run --all-files
     ```
-5.  **Commitněte změny:** `git commit -m "Stručný popis změn"`
-6.  **Vytvořte Pull Request:** Nahrajte svou větev na GitHub a vytvořte Pull Request pro revizi.
+
+### Git Workflow
+
+1.  Vytvořte novou větev: `git checkout -b feature/nazev-vasi-funkce`
+2.  Proveďte změny a pište kód.
+3.  Pravidelně spouštějte testy.
+4.  Commitněte své změny: `git commit -m "Stručný a jasný popis změn"`
+5.  Vytvořte Pull Request do `master` větve a požádejte o code review.
+
+---
+<br>
+
+<p align="center">
+  ---
+</p>
+
+<p align="center">
+  <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Pokud zjistíte, že je zastaralý nebo neúplný, založte prosím issue nebo vytvořte pull request s návrhem na jeho aktualizaci. Děkujeme!</sub>
+</p>
