@@ -2,7 +2,8 @@ import os
 import asyncio
 from typing import Type, List
 from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool as LangchainBaseTool
+from tools.base_tool import BaseTool
 
 # --- Custom Exceptions ---
 
@@ -42,8 +43,11 @@ class NotDirectoryError(FileSystemError):
 SANDBOX_DIR = os.path.abspath("sandbox")
 
 
-class FileSystemBaseTool(BaseTool):
+class FileSystemBaseTool(LangchainBaseTool, BaseTool):
     """Base tool for file system operations with sandbox validation."""
+
+    def execute(self, **kwargs) -> any:
+        raise NotImplementedError("This is a base class and should not be executed directly.")
 
     def _validate_path(self, file_path: str) -> str:
         """
@@ -96,10 +100,13 @@ class ListDirectoryInput(BaseModel):
 # --- Tool Implementations ---
 
 
-class WriteFileTool(FileSystemBaseTool):
+class WriteFileTool(FileSystemBaseTool, BaseTool):
     name: str = "Write File"
     description: str = "Writes content to a specified file within the /sandbox directory. Creates parent directories if they don't exist."
     args_schema: Type[BaseModel] = WriteFileInput
+
+    def execute(self, **kwargs) -> str:
+        return self._run(**kwargs)
 
     def _run(self, file_path: str, content: str) -> str:
         try:
@@ -115,12 +122,15 @@ class WriteFileTool(FileSystemBaseTool):
         return await asyncio.to_thread(self._run, file_path=file_path, content=content)
 
 
-class ReadFileTool(FileSystemBaseTool):
+class ReadFileTool(FileSystemBaseTool, BaseTool):
     name: str = "Read File"
     description: str = (
         "Reads the content of a specified file from the /sandbox directory."
     )
     args_schema: Type[BaseModel] = ReadFileInput
+
+    def execute(self, **kwargs) -> str:
+        return self._run(**kwargs)
 
     def _run(self, file_path: str) -> str:
         try:
@@ -146,12 +156,15 @@ class ReadFileTool(FileSystemBaseTool):
         return await asyncio.to_thread(self._run, file_path=file_path)
 
 
-class ListDirectoryTool(FileSystemBaseTool):
+class ListDirectoryTool(FileSystemBaseTool, BaseTool):
     name: str = "List Directory"
     description: str = (
         "Lists the contents of a specified directory within the /sandbox directory."
     )
     args_schema: Type[BaseModel] = ListDirectoryInput
+
+    def execute(self, **kwargs) -> str:
+        return self._run(**kwargs)
 
     def _run(self, path: str) -> List[str]:
         try:
