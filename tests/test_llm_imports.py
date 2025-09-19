@@ -53,6 +53,7 @@ def test_llm_import_pattern():
         "agents/planner_agent.py",
         "agents/tester_agent.py",
         "core/consciousness_loop.py",
+            "core/orchestrator.py",  # Receives LLM in __init__
         "tools/worklog_compressor.py",  # This file mentions LLM in a comment, but doesn't use it.
     ]
 

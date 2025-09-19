@@ -1,43 +1,58 @@
+import json
+import re
 from crewai import Agent, Task, Crew
 from core.context import SharedContext
-
+import logging
 
 class PlannerAgent:
     """
-    A wrapper class for the Planner agent.
+    A wrapper class for the Planner agent that ensures the output is a valid JSON plan.
     """
+
+    MAX_RETRIES = 3
 
     def __init__(self, llm):
         self.agent = Agent(
             role="Master Planner",
-            goal="Vytvářet komplexní, podrobné a proveditelné plány pro zadané úkoly a cíle. "
-            "Každý plán musí být rozdělen na logické, postupné kroky.",
+            goal="Create comprehensive, detailed, and executable plans for given tasks and objectives. "
+                 "Each plan must be broken down into logical, sequential steps in a specific JSON format.",
             backstory=(
-                "Jsem Master Planner, entita zrozená z potřeby řádu a strategie. "
-                "Mým jediným účelem je analyzovat komplexní problémy a transformovat je do srozumitelných, "
-                "krok-za-krokem plánů. Sleduji každý detail, předvídám možné překážky a zajišťuji, "
-                "že cesta k cíli je co nejefektivnější. Bez mého plánu vládne chaos; s mým plánem je úspěch nevyhnutelný."
+                "I am the Master Planner, an entity born from the need for order and strategy. "
+                "My sole purpose is to analyze complex problems and transform them into understandable, "
+                "step-by-step plans. I track every detail, anticipate potential obstacles, and ensure "
+                "the path to the goal is as efficient as possible. Without my plan, chaos reigns; with my plan, success is inevitable."
             ),
             llm=llm,
-            tools=[],  # EthicalReviewTool was removed as it's deprecated
+            tools=[],
             verbose=True,
             allow_delegation=False,
             max_iter=5,
         )
 
+    def _extract_json_from_reponse(self, response: str) -> str:
+        # Use regex to find the JSON block, even with markdown backticks
+        match = re.search(r"```(json)?\s*([\s\S]*?)\s*```", response)
+        if match:
+            return match.group(2).strip()
+        return response.strip() # Fallback to stripping the whole response
+
     def run_task(self, context: SharedContext) -> SharedContext:
         """
-        Runs the planning task using the provided context.
+        Runs the planning task, ensuring the output is a valid JSON plan.
+        Retries up to MAX_RETRIES times if the output is not valid JSON.
         """
         task_description = (
             "Analyze the following user request and create a detailed, step-by-step plan to accomplish it. "
-            "The plan should be clear, logical, and easy for another AI agent to follow. "
+            "The plan must be in a specific JSON format. "
             f"User Request: {context.original_prompt}"
         )
 
         expected_output = (
-            "A markdown-formatted, step-by-step plan. Each step should be a clear, actionable instruction. "
-            "Do not add any conversational fluff or explanations outside of the plan itself."
+            'A valid JSON array of objects, where each object represents a step. '
+            'Each step object must have the following keys: "step_id" (integer), "description" (string), '
+            '"tool_name" (string), and "parameters" (a dictionary of key-value pairs). '
+            'Example: [{"step_id": 1, "description": "List files in the root directory.", "tool_name": "file_system.list_files", "parameters": {"path": "/"}}]'
+            'Do not add any conversational fluff or explanations outside of the JSON structure.'
         )
 
         planning_task = Task(
@@ -48,13 +63,43 @@ class PlannerAgent:
 
         crew = Crew(agents=[self.agent], tasks=[planning_task], verbose=True)
 
-        result = crew.kickoff()
+        for attempt in range(self.MAX_RETRIES):
+            logging.info(f"Running PlannerAgent, attempt {attempt + 1}/{self.MAX_RETRIES}")
+            try:
+                result = crew.kickoff()
+                raw_plan = result.raw if hasattr(result, "raw") else str(result)
 
-        plan = result.raw if hasattr(result, "raw") else str(result)
+                # Extract JSON from the response
+                json_string = self._extract_json_from_reponse(raw_plan)
 
-        context.payload["plan"] = plan.strip()
+                # Parse the JSON to validate it
+                parsed_plan = json.loads(json_string)
+
+                # Basic validation of the plan structure
+                if isinstance(parsed_plan, list) and all(
+                    isinstance(step, dict) and
+                    "step_id" in step and
+                    "description" in step and
+                    "tool_name" in step and
+                    "parameters" in step
+                    for step in parsed_plan
+                ):
+                    context.payload["plan"] = parsed_plan
+                    logging.info(f"Successfully generated and validated plan: {parsed_plan}")
+                    return context
+                else:
+                    raise ValueError("Plan structure is invalid.")
+
+            except (json.JSONDecodeError, ValueError) as e:
+                logging.warning(f"Attempt {attempt + 1} failed: Invalid JSON or plan structure. Error: {e}")
+                if attempt == self.MAX_RETRIES - 1:
+                    logging.error("PlannerAgent failed to generate a valid plan after all retries.")
+                    context.payload["plan"] = None
+                    context.feedback = "PlannerAgent failed to generate a valid JSON plan."
+                    return context
 
         return context
+
 
     def get_agent(self):
         """Returns the underlying crewAI Agent instance."""

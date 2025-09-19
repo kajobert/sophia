@@ -19,7 +19,7 @@ Sophia je navržena jako modulární, multi-agentní systém s odděleným webov
 -   **`main.py` (Cyklus Vědomí):** Hlavní vstupní bod aplikace. Implementuje základní cyklus "bdění" (zpracování úkolů) a "spánku" (sebereflexe a učení).
 
 -   **`core/` (Jádro Mysli):**
-    -   `orchestrator.py`: Srdce logiky. Přijímá úkoly a orchestruje spolupráci mezi agenty (typicky `Planner` -> `Engineer` -> `Tester`). Obsahuje i logiku pro opakované pokusy o opravu v případě selhání.
+    -   `orchestrator.py`: Srdce kognitivní smyčky. Neprovádí úkoly přímo, ale exekuuje strukturované JSON plány vytvořené `PlannerAgentem`. Jeho klíčovou rolí je iterovat přes kroky plánu, volat příslušné nástroje a v případě selhání aktivovat **debugovací smyčku** – požádat plánovače o opravu plánu a spustit ho znovu.
     -   `ethos_module.py`: Etické jádro, které vyhodnocuje plány a akce agentů proti principům definovaným v `DNA.md`.
     -   `llm_config.py` & `gemini_llm_adapter.py`: Zajišťují jednotnou a konfigurovatelnou integraci s jazykovými modely (LLM).
 
