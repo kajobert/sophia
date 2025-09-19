@@ -31,7 +31,12 @@ Sophia je navržena jako modulární, multi-agentní systém s odděleným webov
     -   Využívá `memorisdk` s `PostgreSQL` jako backendem pro dlouhodobou, strukturovanou paměť a `Redis` pro rychlou cache.
 
 -   **`tools/` (Nástroje Agentů):**
-    -   Sada schopností, které mohou agenti používat, např. `FileSystemTool` pro práci se soubory v sandboxu nebo `CodeExecutorTool` pro spouštění kódu.
+    -   Sada schopností, které mohou agenti používat. Nástroje jsou navrženy jako modulární a znovupoužitelné komponenty.
+    -   **Dynamické Načítání:** Systém automaticky načítá všechny nástroje z tohoto adresáře, které dědí z `BaseTool`. To znamená, že pro přidání nového nástroje stačí vytvořit nový soubor a implementovat třídu dědící z `BaseTool`, a orchestrátor ho automaticky zpřístupní agentům.
+    -   **Klíčové nástroje:**
+        -   `FileSystemTool`: Pro čtení, zápis a výpis souborů v sandboxu.
+        -   `CodeExecutorTool`: Pro spouštění a testování kódu.
+        -   `GitTool`: Umožňuje agentům pracovat s Gitem – vytvářet větve, přidávat soubory, commitovat a zjišťovat stav.
 
 -   **`sandbox/` (Izolované Prostředí):**
     -   Bezpečný adresář, kde mohou agenti generovat, upravovat a testovat kód, aniž by ohrozili stabilitu hlavní aplikace.

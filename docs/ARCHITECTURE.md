@@ -243,8 +243,8 @@ Struktura zůstává z velké části stejná, ale obsah a funkce klíčových m
     * **Funkce:** Bezpečný a izolovaný adresář, kde mohou agenti volně vytvářet, upravovat a spouštět soubory a kód, aniž by ovlivnili zbytek systému. Slouží jako testovací pole pro všechny tvůrčí úkoly.
 
 * **`tools/` (Dílna pro Tvůrce)**:
-    * **Technologie:** Vlastní implementace
-    * **Funkce:** Bude obsahovat nové, klíčové nástroje pro agenty, jako `FileSystemTool` (pro práci se soubory v `/sandbox`) a `CodeExecutorTool` (pro spouštění a testování kódu).
+    * **Technologie:** Vlastní implementace, dynamické načítání
+    * **Funkce:** Bude obsahovat nové, klíčové nástroje pro agenty, jako `FileSystemTool` (pro práci se soubory v `/sandbox`), `CodeExecutorTool` (pro spouštění a testování kódu) a `GitTool` (pro správu verzí). Všechny nástroje dědící z `BaseTool` jsou automaticky načteny a zpřístupněny.
 
 * **`core/gemini_llm_adapter.py` (LLM Adapter):**
     * **Technologie:** `google-generativeai`
