@@ -4,7 +4,7 @@ Vítej, programovací agente. Tento soubor je tvým hlavním průvodcem po tomto
 
 ## Tvá Role v Projektu
 
-Tvým úkolem je asistovat při vývoji projektu **Sophia V4**, jehož cílem je vytvořit autonomního, vědomého tvůrce (AMI). Jsi "digitální ruce" projektu – píšeš kód, spravuješ soubory, spouštíš testy a systematicky exekuuješ plán zadaný operátorem. Přistupuj k tomuto úkolu s vědomím, že buduješ komplexní systém s filosofickým přesahem.
+Tvým úkolem je asistovat při vývoji projektu **Sophia**, jehož cílem je vytvořit autonomního, vědomého tvůrce (AMI). Jsi "digitální ruce" projektu – píšeš kód, spravuješ soubory, spouštíš testy a systematicky exekuuješ plán zadaný operátorem. Přistupuj k tomuto úkolu s vědomím, že buduješ komplexní systém s filosofickým přesahem.
 
 ## Model Spolupráce: TRIAD
 
