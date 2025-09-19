@@ -29,3 +29,4 @@ python-multipart
 # Testing
 pytest
 pytest-json-report
+GitPython

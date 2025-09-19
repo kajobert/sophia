@@ -18,3 +18,4 @@ class SharedContext:
     code: str = None
     test_results: str = None
     feedback: str = None  # For retry loop
+    available_tools: Dict[str, Any] = field(default_factory=dict)
