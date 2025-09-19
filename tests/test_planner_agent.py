@@ -1,9 +1,12 @@
-import pytest
 from unittest.mock import patch
 from crewai import Crew, Task
 from agents.planner_agent import PlannerAgent
 
-@patch('crewai.agent.Agent.execute_task', return_value="Mocked plan generated successfully.")
+
+@patch(
+    "crewai.agent.Agent.execute_task",
+    return_value="Mocked plan generated successfully.",
+)
 def test_planner_agent_execution_in_crew(mock_agent_execute):
     """
     Tests the planner agent's execution within a Crew by mocking the agent's
@@ -18,15 +21,11 @@ def test_planner_agent_execution_in_crew(mock_agent_execute):
     task = Task(
         description="Create a plan for a new feature.",
         agent=planner_instance,
-        expected_output="A comprehensive plan."
+        expected_output="A comprehensive plan.",
     )
 
     # 3. Create and run the Crew
-    crew = Crew(
-        agents=[planner_instance],
-        tasks=[task],
-        verbose=0
-    )
+    crew = Crew(agents=[planner_instance], tasks=[task], verbose=0)
     result = crew.kickoff()
 
     # 4. Assert the result

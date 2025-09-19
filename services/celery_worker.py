@@ -9,6 +9,7 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
 celery_app = Celery("sophia_llm", broker=REDIS_URL, backend=REDIS_URL)
 
+
 @celery_app.task(name="llm.generate_reply")
 def generate_llm_reply(prompt, user=None):
     # Nejprve zkusíme cache

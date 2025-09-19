@@ -2,12 +2,13 @@ from crewai import Agent, Task, Crew
 from tools.file_system import ReadFileTool, ListDirectoryTool, FileSystemError
 from tools.code_executor import RunUnitTestsTool
 from core.context import SharedContext
-from core.llm_config import llm
+
 
 class TesterAgent:
     """
     A wrapper class for the Tester agent.
     """
+
     def __init__(self, llm):
         read_file_tool = ReadFileTool()
         list_dir_tool = ListDirectoryTool()
@@ -23,14 +24,14 @@ class TesterAgent:
             tools=[read_file_tool, list_dir_tool, run_tests_tool],
             verbose=True,
             allow_delegation=False,
-            memory=False
+            memory=False,
         )
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """
         Takes a SharedContext object with 'code' and executes the testing task.
         """
-        code_to_test = context.payload.get('code')
+        code_to_test = context.payload.get("code")
         if not code_to_test:
             raise ValueError("The 'code' is missing from the context payload.")
 
@@ -39,21 +40,17 @@ class TesterAgent:
         testing_task = Task(
             description=task_description,
             agent=self.agent,
-            expected_output="A summary of the test results. If all tests pass, confirm that. If any tests fail, provide the complete error output and a brief analysis of the failure."
+            expected_output="A summary of the test results. If all tests pass, confirm that. If any tests fail, provide the complete error output and a brief analysis of the failure.",
         )
 
-        crew = Crew(
-            agents=[self.agent],
-            tasks=[testing_task],
-            verbose=False
-        )
+        crew = Crew(agents=[self.agent], tasks=[testing_task], verbose=False)
 
         try:
             result = crew.kickoff()
-            test_results = result.raw if hasattr(result, 'raw') else str(result)
-            context.payload['test_results'] = test_results
+            test_results = result.raw if hasattr(result, "raw") else str(result)
+            context.payload["test_results"] = test_results
         except FileSystemError as e:
-            context.payload['test_results'] = f"Test failed: {e}"
+            context.payload["test_results"] = f"Test failed: {e}"
 
         return context
 

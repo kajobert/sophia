@@ -2,7 +2,7 @@
 services/token_service.py
 Generování, ověřování a rotace refresh tokenů (JWT).
 """
-import os
+
 import time
 import jwt
 from core import config as sophia_config

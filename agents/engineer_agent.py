@@ -1,13 +1,19 @@
 from crewai import Agent, Task, Crew
-from tools.file_system import WriteFileTool, ReadFileTool, ListDirectoryTool, FileSystemError
+from tools.file_system import (
+    WriteFileTool,
+    ReadFileTool,
+    ListDirectoryTool,
+    FileSystemError,
+)
 from tools.code_executor import ExecutePythonScriptTool
 from core.context import SharedContext
-from core.llm_config import llm
+
 
 class EngineerAgent:
     """
     A wrapper class for the Engineer agent.
     """
+
     def __init__(self, llm):
         write_file_tool = WriteFileTool()
         read_file_tool = ReadFileTool()
@@ -25,14 +31,14 @@ class EngineerAgent:
             tools=[write_file_tool, read_file_tool, list_dir_tool, execute_script_tool],
             verbose=True,
             allow_delegation=False,
-            memory=False
+            memory=False,
         )
 
     def run_task(self, context: SharedContext) -> SharedContext:
         """
         Takes a SharedContext object with a 'plan' and executes the engineering task.
         """
-        plan = context.payload.get('plan')
+        plan = context.payload.get("plan")
         if not plan:
             raise ValueError("The 'plan' is missing from the context payload.")
 
@@ -41,18 +47,14 @@ class EngineerAgent:
         coding_task = Task(
             description=task_description,
             agent=self.agent,
-            expected_output="The final, complete code that implements the plan. No extra chatter."
+            expected_output="The final, complete code that implements the plan. No extra chatter.",
         )
 
-        crew = Crew(
-            agents=[self.agent],
-            tasks=[coding_task],
-            verbose=False
-        )
+        crew = Crew(agents=[self.agent], tasks=[coding_task], verbose=False)
 
         try:
             result = crew.kickoff()
-            if hasattr(result, 'raw'):
+            if hasattr(result, "raw"):
                 generated_code = result.raw
             else:
                 generated_code = str(result)
@@ -60,7 +62,7 @@ class EngineerAgent:
             print(f"EngineerAgent encountered a critical file system error: {e}")
             raise
 
-        context.payload['code'] = generated_code
+        context.payload["code"] = generated_code
         return context
 
     def get_agent(self):
