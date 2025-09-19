@@ -1,10 +1,14 @@
 import asyncio
+import os
+import importlib
+import inspect
 from crewai import Task
 from core.context import SharedContext
 from agents.planner_agent import PlannerAgent
 from agents.engineer_agent import EngineerAgent
 from agents.tester_agent import TesterAgent
 from agents.aider_agent import AiderAgent
+from tools.base_tool import BaseTool
 
 import logging
 
@@ -26,9 +30,35 @@ class Orchestrator:
         self.engineer = EngineerAgent()
         self.tester = TesterAgent()
         self.aider = AiderAgent()
+        self.tools = self._load_tools()
+
+    def _load_tools(self) -> dict:
+        """
+        Dynamically loads all tools from the 'tools' directory that inherit from BaseTool.
+        """
+        tools = {}
+        tools_dir = "tools"
+        for filename in os.listdir(tools_dir):
+            if filename.endswith(".py") and not filename.startswith("__"):
+                module_name = f"{tools_dir}.{filename[:-3]}"
+                try:
+                    module = importlib.import_module(module_name)
+                    for name, cls in inspect.getmembers(module, inspect.isclass):
+                        if issubclass(cls, BaseTool) and cls is not BaseTool:
+                            try:
+                                tools[name] = cls()
+                                logging.info(f"Successfully loaded tool: {name}")
+                            except Exception as e:
+                                logging.error(f"Failed to instantiate tool {name}: {e}")
+                except Exception as e:
+                    logging.error(f"Failed to load module {module_name}: {e}")
+        return tools
 
     async def execute_task(self, context: SharedContext, task_description: str):
         logging.info(f"Orchestrator starting task: {task_description}")
+
+        # Pass the loaded tools to the context
+        context.available_tools = self.tools
 
         # 1. Plánování
         planning_task = Task(
