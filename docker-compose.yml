@@ -1,4 +1,4 @@
-version: '3.9'
+
 
 services:
   backend:
@@ -8,8 +8,9 @@ services:
     container_name: sophia-backend
     ports:
       - "8001:8000"
+    # env_file je volitelný – pokud .env není ve web/api, použije se root .env nebo proměnná SOPHIA_ENV_PATH
     env_file:
-      - ./web/api/.env
+      - .env
     volumes:
       - ./web/api:/app
       - ./sandbox:/sandbox

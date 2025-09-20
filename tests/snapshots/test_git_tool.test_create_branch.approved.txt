@@ -1,0 +1,2 @@
+{'branches': ['main', 'test-branch'],
+ 'result': "Branch 'test-branch' created and checked out successfully."}

@@ -1,0 +1,1 @@
+{'has_run_aider': True, 'has_propose_change': True, 'has_audit_change': True, 'sandbox_path': '/workspaces/sophia/sandbox'}

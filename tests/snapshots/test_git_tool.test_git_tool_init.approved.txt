@@ -1,0 +1,1 @@
+<git.repo.base.Repo '/tmp/pytest-of-codespace/pytest-22/test_git_tool_init0/repo/.git'>

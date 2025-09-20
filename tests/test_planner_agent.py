@@ -1,4 +1,9 @@
+
 from unittest.mock import patch
+from tests.conftest import robust_import, safe_remove
+
+# Robustní import crewai
+crewai = robust_import('crewai')
 from crewai import Crew, Task
 from agents.planner_agent import PlannerAgent
 

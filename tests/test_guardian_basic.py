@@ -1,17 +1,25 @@
 import os
 import sys
+
+
+import pytest
+from tests.conftest import robust_import, safe_remove
 import tempfile
+import os
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/../"))
-import guardian
-
-
-def test_guardian_importable():
+guardian = robust_import('guardian')
+def test_guardian_importable(request):
     assert hasattr(guardian, "main")
     assert callable(guardian.main)
-
-
-def test_log_message_creates_log():
+    assert hasattr(guardian, "main")
+    assert callable(guardian.main)
+    # Audit snapshot
+    snapshot = request.getfixturevalue("snapshot") if "snapshot" in request.fixturenames else None
+    if snapshot:
+        snapshot(str(dir(guardian)))
+def test_log_message_creates_log(request):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        log_path = os.path.join(tmpdir, "guardian.log")
     with tempfile.TemporaryDirectory() as tmpdir:
         log_path = os.path.join(tmpdir, "guardian.log")
         # monkeypatch log path
@@ -22,3 +30,7 @@ def test_log_message_creates_log():
             content = f.read()
         assert "test123" in content
         guardian.LOG_FILE = orig_log_file
+        # Audit snapshot
+        snapshot = request.getfixturevalue("snapshot") if "snapshot" in request.fixturenames else None
+        if snapshot:
+            snapshot(content)

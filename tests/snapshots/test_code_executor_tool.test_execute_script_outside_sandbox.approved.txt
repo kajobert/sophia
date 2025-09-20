@@ -1,0 +1,1 @@
+Error: Path '../../main.py' is outside the allowed /sandbox directory.

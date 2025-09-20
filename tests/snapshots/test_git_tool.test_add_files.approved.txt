@@ -1,0 +1,8 @@
+{'add_result': 'Files '
+               "['/tmp/pytest-of-codespace/pytest-22/test_add_files0/repo/new_test_file.txt'] "
+               'added to staging successfully.',
+ 'ls_files': 'README.md\nnew_test_file.txt',
+ 'status_result': 'On branch main\n'
+                  'Changes to be committed:\n'
+                  '  (use "git restore --staged <file>..." to unstage)\n'
+                  '\tnew file:   new_test_file.txt\n'}

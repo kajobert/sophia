@@ -1,0 +1,34 @@
+--- INTEGRITY ---
+agents/aider_agent.py: a88812e97c249dd3041e80c1fe72d4f520eaf390878c0e6387a522e1c6986c44
+agents/architect_agent.py: 4208104b006debe38d01c48148bb6b7da39aa03e409f6fb9cbd28b6ef5b5c85b
+agents/autogen_team.py: c06b8ea51ac826c411a08cae8311f1c4b2f3736fd825ba6847960d32ca89f137
+agents/engineer_agent.py: b2269c53131804709bd8fe546c1c996b04c731ad32f5ccf4be80bb5b08835b2c
+agents/philosopher_agent.py: 9800e8b1f630c7dbef2ee6963b2456215fe303c3a239d7f37f99c778a64c8fff
+agents/planner_agent.py: 08b7db09cee19d8af68e58a82913876863001b24316e135e567546ab0b3647e1
+agents/tester_agent.py: c7d9e81f2d6d55064c0a0b7099742f37ef79870791b202523ceded6d560127f3
+config.yaml: b7425949a23f68b21efea6abf595a51accbb822e1a93e411c05af0220b235069
+core/config.py: 250ba388c5f21eeff35865819236acce9e1c56b54410ae59d9d85f8911bba2e3
+core/consciousness_loop.py: 6dc6ad2c52383e75de44584a6443930df5c3bc210ef5b1ca637652fce5481311
+core/context.py: 11b865209785c032a6c142cdc701e88b0e4f88eac2e0448f4cff7516faaf28b5
+core/ethos_module.py: 4f90c9c24263c189543fcc1ad3647c4188552c7ee179fe400bfd0a458fa9d134
+core/gemini_llm_adapter.py: 1b8ee8a4895d40bec3a6f31b787d3bfc94649b7f8dfe6d11fd18cf13eac1a2ff
+core/llm_config.py: 4d1f1279b3370fa1e184040fc38d2da102915f08960329367a49e863c393411e
+core/orchestrator.py: 98826ab27522ca65b72f692afd2a476630fa44ac78543c8489e5067b1c3a6ef3
+core/utils.py: d578681f2f32a9e4f64ac9921d4d8ec2050d70f4f103743b7ea9897b2496f948
+find_and_set_env_path.py: d2e364ecc24d61fc16f5bdd58a8e264853bdbc34ec669f1d58d7d4dce79dd6b0
+find_unused_files.py: 33e66ae65104bec4baf911a0abe3385c178777f69f2498ae1669fc536bc1dc39
+guardian.py: 55f514f57a56bc9746133e7d36d8512198fb1980785503cf761c92266a2acfc7
+main.py: 15d063547b1ac482a40784736f5d3b01178c8e6e2b313e43061bfda6507b8728
+requirements.txt: 7decbb4ffea7c942949c19005f5c771e9eda1516b791d1618037fc561a7a4f1c
+setup.sh: 899408fec514c23f9651191f60fe583ff023c75702f28c59cb5d032afae0fdbb
+sophia_monitor.py: 8d7e62e07904d4e14ed56092e67f4f4f6d4225df4026130e291e2e7122e588cc
+
+--- LOG ERRORS ---
+logs/guardian.log: ERROR -> 6
+logs/guardian.log: Traceback -> 3
+logs/sophia_main.log: ERROR -> 44
+logs/sophia_main.log: CRITICAL -> 20
+
+--- NETWORK ---
+Internet: True
+DNS: True

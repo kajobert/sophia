@@ -1,12 +1,14 @@
 import os
 import tempfile
+import os
+import tempfile
 import sys
+import pytest
+from tests.conftest import safe_remove, robust_import
+ 
+sophia_monitor = robust_import('sophia_monitor')
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/../"))
-import sophia_monitor
-
-
-def test_check_integrity_creates_hashes():
+def test_scan_logs_for_errors_detects_pattern(request):
     # Vytvoříme dočasný soubor v rootu workspace, aby byl zachycen globem
     fname = "test_temp_sophiamonitor.py"
     with open(fname, "w") as f:
@@ -17,10 +19,11 @@ def test_check_integrity_creates_hashes():
         assert fname in hashes
         assert hashes[fname] is not None
     finally:
-        os.remove(fname)
-
-
-def test_scan_logs_for_errors_detects_pattern():
+        safe_remove(fname)
+        # Snapshot výstupu hashů
+        snapshot = request.getfixturevalue("snapshot") if "snapshot" in request.fixturenames else None
+        if snapshot:
+            snapshot(str(hashes))
     with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
         f.write("ERROR\nERROR\nERROR\n")
         fname = f.name
@@ -30,7 +33,11 @@ def test_scan_logs_for_errors_detects_pattern():
         )
         assert any(fname in k[0] for k in result.keys())
     finally:
-        os.remove(fname)
+        safe_remove(fname)
+        # Snapshot výstupu logu
+        snapshot = request.getfixturevalue("snapshot") if "snapshot" in request.fixturenames else None
+        if snapshot:
+            snapshot(str(result))
 
 
 def test_check_internet_connectivity():
