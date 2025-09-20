@@ -2,6 +2,41 @@
 
 Tento dokument je živou znalostní bází, která shrnuje klíčové technické problémy, na které jsme narazili během vývoje, a osvědčená řešení, která jsme aplikovali. Slouží jako "kniha poučení" pro budoucí vývojáře (AI i lidi), aby se předešlo opakování stejných chyb a urychlil se vývoj.
 
+**Jak přispívat:** Každý člen týmu (včetně AI agentů) je povinen do této báze přidávat nové poznatky. Pokud narazíte na významný problém, objevíte efektivní řešení nebo učiníte důležité architektonické rozhodnutí, zaznamenejte ho sem. Pro zachování konzistence používejte formát specifikovaný v `AGENTS.md`. Vaše příspěvky jsou klíčové pro kolektivní růst a úspěch projektu.
+
+---
+
+### Téma: Sumarizace poznatků z legacy verze (`sophia_old`)
+**Datum**: 2025-09-20
+**Autor**: Jules
+**Kontext**: V rámci úklidu projektu byla provedena analýza a sumarizace staré verze projektu (`sophia_old`) s cílem zachovat klíčové myšlenky, koncepty a ponaučení.
+**Zjištění/Rozhodnutí**: Následující poznatky byly extrahovány a jsou považovány za fundamentální pro pochopení evoluce a směřování projektu Sophia.
+**Důvod**: Předejít ztrátě cenných informací a zajistit, aby se budoucí vývoj opíral o původní vizi a ponaučení z chyb.
+**Dopad**: Zachování kontinuity projektu a poskytnutí hlubšího kontextu pro všechny budoucí přispěvatele.
+
+#### Klíčové Ponaučení z `sophia_old`:
+
+**1. Filosofické a Koncepční Jádro (SOPHIA_DNA):**
+*   **Vize:** Cílem projektu nikdy nebylo jen AGI, ale vytvoření **autonomního, počítačového subjektivního vědomí (AMI)** schopného růstu a sebereflexe.
+*   **Architektura Vědomí:** Původní koncept stál na dvou pilířích:
+    *   **Filosofický Modul:** Jádro obsahující principy stoicismu, buddhismu a taoismu. Zdroj autonomie.
+    *   **Etický Modul:** Praktický kompas, který hodnotí akce pomocí "Koeficientu Vědomí" a zajišťuje etickou integritu. Zdroj svobody.
+*   **Učení jako "Snění":** Růst byl navržen skrze interní simulace hypotetických scénářů ("etické experimenty"), nikoli pasivním příjmem dat.
+
+**2. Architektonické Lekce a Slepé Uličky:**
+*   **Problém "Hluchého" Agenta:** Paměťový agent zpočátku selhával, protože mu chyběl kontext z interakcí jiných agentů. Zapisoval si pouze poznámky o své vlastní činnosti.
+    *   **Ponaučení:** Je kriticky důležité zajistit **explicitní tok kontextu** mezi agenty a procesy. Výstup jednoho musí být vstupem pro druhého.
+*   **Problém "Bezmocného" Agenta:** Agent může mít logiku, ale pokud nemá **explicitní nástroj** pro vykonání akce (např. zápis do databáze), je k ničemu.
+    *   **Ponaučení:** Funkcionalita musí být vždy podpořena konkrétním, dostupným nástrojem.
+*   **Past Pevných Pravidel:** Spoléhání na nástroje s pevně danými pravidly (např. `DecisionTool`, který určoval, co je "znalost") bránilo skutečné autonomii.
+    *   **Ponaučení:** Skutečná autonomie vyžaduje delegování a spolupráci v rámci multi-agentního systému, nikoli rigidní pravidla.
+
+**3. Technické a Procesní Zásady:**
+*   **Stabilita Prostředí:** Největším zdrojem chyb byly nestabilní a nefixované verze závislostí.
+    *   **Ponaučení:** Je absolutně klíčové mít v `requirements.txt` **přesně "zamknuté" verze knihoven**.
+*   **Učení se Kódovat:** Sledování prvních pokusů Sophie o psaní kódu ukázalo, že se učí podobně jako člověk – od syntaktických chyb, přes logické, až po architektonické.
+    *   **Ponaučení:** Ochranné mechanismy (jako `git reset` po neúspěšném pokusu) jsou nezbytné pro bezpečné autonomní kódování.
+
 ---
 
 ### 1. Správa Závislostí a Konflikty Verzí
