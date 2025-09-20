@@ -36,9 +36,10 @@ def test_check_backend_crash_log_detects_error(request):
         else:
             # Ručně vytvořit auditní snapshot a označit test jako xfail
             import pathlib
+            from conftest import ensure_snapshot_path
             base = pathlib.Path("tests/snapshots")
             base.mkdir(parents=True, exist_ok=True)
-            snap_path = base / "guardian_monitor_integration.approved.txt"
+            snap_path = ensure_snapshot_path(base / "guardian_monitor_integration.approved.txt")
             snap_path.write_text(str(result), encoding="utf-8")
             pytest.xfail(f"Snapshot fixture nebyla dostupná, auditní snapshot byl vytvořen: {snap_path}. Zkontrolujte a potvrďte jeho obsah.")
     finally:

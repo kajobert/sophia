@@ -1,3 +1,11 @@
+## Pravidlo: Ukládání testovacích artefaktů
+
+- **Všechny snapshot/approval soubory** (`*.approved.txt`, `*.received.txt`) MUSÍ být ukládány výhradně do složky `tests/snapshots/`.
+- **Archivované snapshoty** patří do `tests/snapshots/archive/`.
+- **Auditní logy a dočasné/testovací logy** patří pouze do `tests/tmp/`.
+- **Testovací utility** (např. skripty pro schvalování snapshotů) patří do `tests/utils/`.
+- Jakýkoliv pokus o vytvoření těchto souborů mimo určené složky je považován za chybu a helpery/testy jej zablokují a zalogují.
+
 
 # Pravidla pro robustní testy v projektu Sophia
 

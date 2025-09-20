@@ -1,5 +1,0 @@
-{'log': 'Traceback (most recent call last):\n'
-        '  File "/workspaces/sophia/core/orchestrator.py", line 5, in '
-        '<module>\n'
-        '    from core.context import SharedContext\n'
-        "ModuleNotFoundError: No module named 'core'\n"}

@@ -157,6 +157,11 @@ def manage_snapshots():
     base = pathlib.Path("tests/snapshots")
     archive = base / "archive"
     archive.mkdir(exist_ok=True)
+    # Kontrola, že žádný snapshot není mimo povolenou složku
+    for p in pathlib.Path("tests").glob("*.approved.txt"):
+        raise RuntimeError(f"Snapshot/approval soubor {p} je mimo tests/snapshots/! Přesuňte jej.")
+    for p in pathlib.Path("tests").glob("*.received.txt"):
+        raise RuntimeError(f"Snapshot/approval soubor {p} je mimo tests/snapshots/! Přesuňte jej.")
     for received in base.glob("*.received.txt"):
         approved = base / received.name.replace(".received.txt", ".approved.txt")
         if approved.exists():
@@ -166,7 +171,14 @@ def manage_snapshots():
             archive_path = archive / f"{received.stem}_{ts}.received.txt"
             shutil.move(str(received), str(archive_path))
 
-# Volat ručně nebo v rámci cleanup/test setup
+
+# Helper pro vynucení správné cesty pro snapshot/approval
+def ensure_snapshot_path(path):
+    base = pathlib.Path("tests/snapshots").absolute()
+    p = pathlib.Path(path).absolute()
+    if not str(p).startswith(str(base)):
+        raise RuntimeError(f"Snapshot/approval soubor {p} je mimo tests/snapshots/! Upravte test nebo helper.")
+    return p
 
 import sys
 import subprocess
