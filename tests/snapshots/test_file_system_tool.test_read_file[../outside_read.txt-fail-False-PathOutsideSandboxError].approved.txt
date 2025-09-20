@@ -1,0 +1,1 @@
+Error reading file '../outside_read.txt': Path '../outside_read.txt' is outside the allowed /sandbox directory.
