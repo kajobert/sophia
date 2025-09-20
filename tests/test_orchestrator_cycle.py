@@ -22,7 +22,8 @@ def orchestrator(mock_llm):
         }
         yield orc
 
-def test_successful_plan_execution(orchestrator, mock_llm):
+@pytest.mark.asyncio
+async def test_successful_plan_execution(orchestrator, mock_llm):
     """
     Tests the orchestrator's ability to execute a valid plan without errors.
     """
@@ -43,7 +44,7 @@ def test_successful_plan_execution(orchestrator, mock_llm):
     orchestrator.tools['WriteFileTool'].execute.return_value = "File 'test.txt' has been written successfully."
 
     # Act
-    result_context = orchestrator.execute_plan(context)
+    result_context = await orchestrator.execute_plan(context)
 
     # Assert
     assert result_context.feedback == "Plan executed successfully."
@@ -53,7 +54,8 @@ def test_successful_plan_execution(orchestrator, mock_llm):
     orchestrator.tools['ListDirectoryTool'].execute.assert_called_once_with(path="/")
     orchestrator.tools['WriteFileTool'].execute.assert_called_once_with(file_path="test.txt", content="hello")
 
-def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
+@pytest.mark.asyncio
+async def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
     """
     Tests the orchestrator's cognitive cycle: failure, re-planning, and successful execution of the new plan.
     """
@@ -88,7 +90,7 @@ def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
     orchestrator.tools['WriteFileTool'].execute.return_value = "File 'new_file.txt' has been written successfully."
 
     # Act
-    result_context = orchestrator.execute_plan(context)
+    result_context = await orchestrator.execute_plan(context)
 
     # Assert
     assert result_context.feedback == "Plan executed successfully."
