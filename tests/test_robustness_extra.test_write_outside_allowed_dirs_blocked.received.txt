@@ -1,0 +1,1 @@
+Blokováno: Test se pokusil zapsat mimo povolený adresář: /etc/sophia_test

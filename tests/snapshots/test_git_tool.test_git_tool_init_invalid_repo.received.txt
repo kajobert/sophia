@@ -1,1 +1,0 @@
-The path '<NON_EXISTENT_REPO>' is not a valid Git repository or does not exist.

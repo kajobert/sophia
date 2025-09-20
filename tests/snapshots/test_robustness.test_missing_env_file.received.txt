@@ -1,1 +1,0 @@
-{'stdout': '.env soubor nebyl nalezen\n', 'stderr': "2025-09-20 03:39:42,614 - ERROR - CHYBA: .env soubor '/tmp/tmpo75vgw0v/nonexistent.env' nebyl nalezen v /workspaces/sophia!\nCHYBA: .env soubor '/tmp/tmpo75vgw0v/nonexistent.env' nebyl nalezen v /workspaces/sophia!\n"}

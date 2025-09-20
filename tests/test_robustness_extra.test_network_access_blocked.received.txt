@@ -1,0 +1,1 @@
+Blokováno: Test nesmí vytvářet sockety v test mode!
