@@ -37,6 +37,17 @@ Toto je srdce aplikace, kde probíhá veškerá komunikace.
 2.  **Odeslání:** Stiskněte Enter nebo klikněte na tlačítko pro odeslání.
 3.  **Odpověď:** Vaše zpráva se zobrazí v okně chatu a Sophia po chvíli odpoví. Historie vaší konverzace zůstává viditelná, takže se můžete snadno vracet k předchozím tématům.
 
+### Spouštění Úkolů (Task Runner)
+
+Kromě běžného chatu můžete Sophii zadávat i komplexnější úkoly, které vyžadují plánování a provedení několika kroků. K tomu slouží záložka **"Task Runner"**.
+
+1.  **Zadání úkolu:** V textovém poli popište, co má Sophia udělat. Buďte co nejkonkrétnější. Například: "Vytvoř v aktuálním adresáři soubor s názvem `test.txt` a napiš do něj 'Ahoj světe!'".
+2.  **Spuštění:** Klikněte na tlačítko "Run Task".
+3.  **Sledování průběhu:** Po odeslání úkolu se zobrazí jeho unikátní ID a pod ním uvidíte v reálném čase jednotlivé kroky, které Sophia provádí.
+    -   ✔️ **Zelená fajfka** znamená, že krok proběhl úspěšně.
+    -   ❌ **Červený křížek** značí, že došlo k chybě. Sophia se pokusí plán opravit a pokračovat.
+4.  **Výsledek:** Po dokončení celého plánu se zobrazí finální zpráva o úspěchu či neúspěchu.
+
 ## Řešení Běžných Problémů
 
 -   **Aplikace neodpovídá:** Ujistěte se, že všechny Docker kontejnery běží správně (viz `QUICKSTART.md`). Zkontrolujte logy v terminálu, kde jste spustili `docker compose up`.

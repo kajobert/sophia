@@ -9,12 +9,20 @@ from fastapi import (
     HTTPException,
     Request,
     UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
+import uuid
+import asyncio
+from core.orchestrator import Orchestrator
+from core.context import SharedContext
+from core.gemini_llm_adapter import GeminiLLMAdapter
 from services.audit_service import log_event
 from services.celery_worker import celery_app
+from web.api.websocket_manager import manager
 from services.roles import ROLE_USER, get_user_role, require_role
 from services.token_service import create_refresh_token, verify_refresh_token
 from services.user_service import (
@@ -172,5 +180,56 @@ async def upload_file(
         "user": user["email"],
     }
 
+# --- Task management endpoints ---
+tasks = {}
+
+class TaskRequest(BaseModel):
+    prompt: str
+
+@app.post("/api/v1/tasks", status_code=202)
+async def create_task(task_request: TaskRequest, background_tasks: BackgroundTasks):
+    task_id = str(uuid.uuid4())
+
+    # In a real app, LLM would be managed via dependency injection
+    try:
+        llm_adapter = GeminiLLMAdapter()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to initialize LLM: {e}")
+
+    orchestrator = Orchestrator(llm=llm_adapter)
+    context = SharedContext(original_prompt=task_request.prompt, session_id=task_id)
+    tasks[task_id] = context
+
+    background_tasks.add_task(orchestrator.execute_plan, context)
+
+    return {"task_id": task_id}
+
+@app.get("/api/v1/tasks/{task_id}")
+async def get_task_status(task_id: str):
+    context = tasks.get(task_id)
+    if not context:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # This status is a placeholder. A more robust solution would track the orchestrator's state.
+    status = "completed" if context.feedback else "in_progress"
+
+    return {
+        "task_id": task_id,
+        "status": status,
+        "history": context.step_history,
+        "feedback": context.feedback
+    }
+
+
+@app.websocket("/api/v1/tasks/{task_id}/ws")
+async def websocket_endpoint(websocket: WebSocket, task_id: str):
+    await manager.connect(websocket, task_id)
+    try:
+        while True:
+            # Keep the connection alive to send updates from the orchestrator
+            # We are not expecting any messages from the client in this implementation
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, task_id)
 
 # Poznámka: Další endpoints a logika budou přidány v dalších krocích.
