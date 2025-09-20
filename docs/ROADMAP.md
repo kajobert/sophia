@@ -8,7 +8,7 @@ Původní roadmapa k dosažení MVP byla úspěšně dokončena. Nyní se projek
 
 Detailní, technická a strategická vize pro Sophii 2.0, která se zaměřuje na dosažení skutečné autonomie, sebe-zdokonalování a integraci state-of-the-art technologií, je popsána v novém dokumentu:
 
-### ➡️ **[Technická Roadmapa: Sophia 2.0](./docs/ROADMAP_V2.md)**
+### ➡️ **[Technická Roadmapa: Sophia 2.0](./ROADMAP_V2.md)**
 
 Tento dokument je závazný pro další směřování vývoje.
 
