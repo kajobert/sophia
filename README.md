@@ -34,15 +34,15 @@ Tento repozitář obsahuje kompletní zdrojový kód pro jádro Sophie, její ag
 
 Pro lepší orientaci je dokumentace rozdělena do několika klíčových souborů:
 
-- **[🚀 QUICKSTART.md](./QUICKSTART.md)**: Nejrychlejší cesta, jak Sophii zprovoznit a začít s ní pracovat. Ideální pro první seznámení.
+- **[🚀 QUICKSTART.md](./docs/QUICKSTART.md)**: Nejrychlejší cesta, jak Sophii zprovoznit a začít s ní pracovat. Ideální pro první seznámení.
 
-- **[📘 USER_GUIDE.md](./USER_GUIDE.md)**: Podrobný průvodce pro koncové uživatele, kteří chtějí plně využívat všechny funkce Sophie přes její rozhraní.
+- **[📘 USER_GUIDE.md](./docs/USER_GUIDE.md)**: Podrobný průvodce pro koncové uživatele, kteří chtějí plně využívat všechny funkce Sophie přes její rozhraní.
 
-- **[🛠️ DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)**: Nezbytný zdroj pro vývojáře. Obsahuje popis architektury, návody pro nastavení vývojového prostředí, coding conventions a další technické detaily.
+- **[🛠️ DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nezbytný zdroj pro vývojáře. Obsahuje popis architektury, návody pro nastavení vývojového prostředí, coding conventions a další technické detaily.
 
 - **[🗺️ ROADMAP_V2.md](./docs/ROADMAP_V2.md)**: Detailní technická roadmapa pro Sophii 2.0, která definuje další éru vývoje směrem k plné autonomii.
 
-- **[🧠 KNOWLEDGE_BASE.md](./KNOWLEDGE_BASE.md)**: Znalostní báze osvědčených postupů a řešení problémů, na které jsme narazili. Učte se z našich chyb i úspěchů.
+- **[🧠 KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Znalostní báze osvědčených postupů a řešení problémů, na které jsme narazili. Učte se z našich chyb i úspěchů.
 
 ---
 
