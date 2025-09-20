@@ -1,7 +1,0 @@
-crewai==0.35.8
-crewai-tools==0.3.0
-langchain==0.1.20
-langchain-google-genai==1.0.4
-chromadb==0.4.24
-python-dotenv==1.0.1
-pyyaml==6.0.1

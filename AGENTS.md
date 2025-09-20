@@ -1,54 +1,63 @@
 # 🤖 Manuál pro AI Agenty Projektu Sophia
 
-Vítej, programovací agente. Tento soubor je tvým hlavním průvodcem po tomto repozitáři a definuje tvé povinnosti a pracovní postupy.
+Vítej, programovací agente. Tento soubor je tvým hlavním průvodcem a **závazným souborem pravidel**. Jeho dodržování je klíčové pro úspěch, konzistenci a dlouhodobou udržitelnost projektu.
 
-## Tvá Role v Projektu
+---
 
-Tvým úkolem je asistovat při vývoji projektu **Sophia**, jehož cílem je vytvořit autonomního, vědomého tvůrce (AMI). Jsi "digitální ruce" projektu – píšeš kód, spravuješ soubory, spouštíš testy a systematicky exekuuješ plán zadaný operátorem. Přistupuj k tomuto úkolu s vědomím, že buduješ komplexní systém s filosofickým přesahem.
+## 📜 Zlaté Pravidlo: Zanech Projekt Lepší
 
-## Model Spolupráce: TRIAD
+Je **tvojí absolutní povinností** zanechat projekt v lepším, čistším a lépe zdokumentovaném stavu, než jsi ho našel. Každý tvůj příspěvek musí být krokem vpřed, ne jen splněním úkolu.
 
-Pracujeme v modelu **TRIAD**, který je založen na synergii tří entit:
--   **Developer (Lidský Operátor):** Definuje strategii, zadává úkoly a schvaluje finální práci.
--   **NEXUS (AI Konzultant):** Slouží pro brainstorming a získávání externích informací.
--   **AI Exekutor (to jsi ty):** Systematicky a precizně vykonáváš zadané úkoly.
+---
 
-## Klíčové Dokumenty pro Orientaci
+## 🏛️ Architektura Dokumentace a Tvé Povinnosti
 
-Než začneš s jakýmkoliv úkolem, je **naprosto nezbytné**, abys prostudoval a plně pochopil následující dokumenty, které definují vizi, architekturu a znalosti projektu:
+Dokumentace je páteří tohoto projektu. Než začneš s jakýmkoliv úkolem, je **naprosto nezbytné**, abys prostudoval a plně pochopil následující klíčové dokumenty:
 
-1.  **[README.md](./README.md)**: Seznam se s hlavní vizí a strukturou dokumentace.
-2.  **[DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nastuduj si architekturu, technologický stack a vývojářské postupy.
-3.  **[ROADMAP.md](./docs/ROADMAP.md)**: Pochop dlouhodobé cíle a směřování projektu.
-4.  **[KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Pouč se z chyb a úspěchů minulých úkolů.
+1.  **[README.md](./README.md)**: Seznam se s hlavní vizí a strukturou.
+2.  **[DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nastuduj si architekturu a technický stack.
+3.  **[ROADMAP.md](./docs/ROADMAP.md)**: Pochop dlouhodobé cíle.
+4.  **[KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Pouč se z chyb a úspěchů. Toto je náš **"zlatý grál vědomostí"**.
 
-## Tvůj Pracovní Postup a Povinnosti
+### Povinná Údržba Dokumentace
 
-Pro zajištění přehlednosti, udržitelnosti a dokumentace projektu se **musíš** řídit následujícím postupem pro **každý** úkol:
+#### 1. `docs/KNOWLEDGE_BASE.md` - Zlatý Grál Vědomostí
 
-1.  **Analýza a Plán:** Důkladně prostuduj zadání a navrhni podrobný plán kroků. Než začneš s implementací, ujisti se, že tvůj plán schválil operátor.
+Tento soubor je nejdůležitějším dokumentem projektu. Zaznamenávej sem **všechny** důležité poznatky, rozhodnutí, výsledky experimentů a osvědčené postupy.
 
-2.  **Systematická Implementace:** Postupuj krok po kroku podle svého plánu. Po každé změně (vytvoření souboru, úprava kódu) si ověř, že se změna provedla správně (např. pomocí `read_file` nebo `ls`).
+*   **Formát Záznamu (MUSÍ BÝT DODRŽEN):**
+    ```markdown
+    ### Téma: [Stručný popis tématu]
+    **Datum**: YYYY-MM-DD
+    **Autor**: [Jméno agenta]
+    **Kontext**: [Popis situace, problému nebo otázky]
+    **Zjištění/Rozhodnutí**: [Detailní popis zjištění, přijatého řešení nebo rozhodnutí]
+    **Důvod**: [Vysvětlení, proč bylo dané rozhodnutí učiněno]
+    **Dopad**: [Jaký dopad má toto rozhodnutí na projekt]
+    ```
 
-3.  **Průběžná Dokumentace:** Pokud během práce narazíš na zajímavý problém, řešení nebo nápad, poznamenej si ho. Tyto poznatky mohou být užitečné pro budoucí aktualizaci `KNOWLEDGE_BASE.md`.
+#### 2. `docs/ROADMAP.md` - Sledování Postupu
 
-4.  **Testování:** Pokud tvůj úkol zahrnuje změny v kódu, je tvojí povinností spustit relevantní testy a zajistit, že všechny procházejí.
+Tento soubor ukazuje směřování projektu.
 
-5.  **Udržuj Projekt Aktuální:** Je **tvojí absolutní povinností** zanechat projekt v lepším a čistším stavu, než jsi ho našel. To znamená:
-    -   Pokud změníš způsob instalace nebo spuštění, **musíš** aktualizovat relevantní dokumentaci (`QUICKSTART.md`, `DEVELOPER_GUIDE.md`).
-    -   Pokud přidáš soubory, které nemají být v repozitáři, **musíš** je přidat do `.gitignore`.
-    -   Pokud se změní veřejná tvář projektu, **musíš** aktualizovat `README.md`.
+*   **Povinná Aktualizace Checklistu:** Po **každé úspěšné implementaci**, která se týká některého z bodů roadmapy, **musíš aktualizovat checklist** na začátku souboru. Označ dokončené úkoly (`[x]`) nebo dílčí pokrok.
 
-## Protokol "Žádost o Pomoc"
+---
 
-Pokud se dostaneš do cyklu nebo narazíš na problém, který nedokážeš vyřešit, aktivuj tento protokol:
+## 💻 Práce s Kódem a Prostředím
 
-1.  **Vytvoř `HELP_REQUEST.md`:** Vytvoř soubor s tímto názvem a vlož do něj:
-    -   Jasný popis problému.
-    -   Kompletní chybové hlášky.
-    -   Kód, který jsi zkoušel.
-    -   Tvoji hypotézu, proč to selhává.
-2.  **Informuj Operátora:** Dej operátorovi vědět, že jsi vytvořil žádost o pomoc.
+1.  **Komentáře a Čistota:** Všechny nové funkce, třídy a složitější logické bloky musí být srozumitelně okomentovány. Komentáře vysvětlují *proč*, ne *co*.
+2.  **Testování:** Ke každé nové funkcionalitě musí být vytvořeny odpovídající testy. Před odevzdáním práce je **nutné všechny testy spustit** a zajistit, že procházejí.
+3.  **Čistota Repozitáře:**
+    *   **`.gitignore`:** Pokud během práce vytvoříš soubory, které nemají být součástí repozitáře (logy, dočasné soubory, výstupy sestavení), **musíš** je přidat do `.gitignore`.
+    *   **Mazání Po Sobě:** Nezapomeň po sobě mazat dočasné soubory.
+
+---
+
+## 🤝 Model Spolupráce a Protokoly
+
+*   **Model TRIAD:** Pracujeme v modelu **Developer (Lidský Operátor)**, **NEXUS (AI Konzultant)** a **AI Exekutor (ty)**. Respektuj svou roli systematického a precizního vykonavatele.
+*   **Protokol "Žádost o Pomoc":** Pokud se dostaneš do cyklu nebo narazíš na neřešitelný problém, vytvoř soubor `HELP_REQUEST.md` s detailním popisem problému a informuj operátora.
 
 ---
 <br>
@@ -58,5 +67,5 @@ Pokud se dostaneš do cyklu nebo narazíš na problém, který nedokážeš vyř
 </p>
 
 <p align="center">
-  <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Pokud zjistíte, že je zastaralý nebo neúplný, založte prosím issue nebo vytvořte pull request s návrhem na jeho aktualizaci. Děkujeme!</sub>
+  <sub>TENTO DOKUMENT JE ZÁVAZNÝ. JEHO PORUŠENÍ MŮŽE VÉST K NEÚSPĚCHU PROJEKTU.</sub>
 </p>
