@@ -23,3 +23,13 @@ def test_custom_json_encoder_handles_builtin():
     encoded = json.dumps(data, cls=CustomJSONEncoder)
     assert "a" in encoded and "b" in encoded
     assert "1" in encoded
+
+
+def test_custom_json_encoder_handles_datetime():
+    import datetime
+    now = datetime.datetime.now()
+    data = {"time": now}
+    encoded = json.dumps(data, cls=CustomJSONEncoder)
+    # The output should be a JSON string with the time in ISO format.
+    # e.g., {"time": "2023-10-27T10:00:00.000000"}
+    assert f'"time": "{now.isoformat()}"' in encoded
