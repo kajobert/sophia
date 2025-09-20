@@ -18,6 +18,12 @@ memory/*.db-journal
 memory/*_db/
 .aider*
 
+# IDE specific
+.idea/
+
+# Sandbox directory
+sandbox/
+
 # Node.js
 node_modules/
 web/ui/node_modules/
