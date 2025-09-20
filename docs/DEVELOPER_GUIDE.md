@@ -12,7 +12,55 @@ Pro hlubší vhled do našich principů doporučujeme prostudovat **[🧬 DNA.md
 
 ## 1. První spuštění a nastavení prostředí
 
-Tento návod vás provede nastavením lokálního vývojového prostředí bez použití Dockeru.
+-   **`core/` (Jádro Mysli):**
+    -   `orchestrator.py`: Srdce kognitivní smyčky. Neprovádí úkoly přímo, ale exekuuje strukturované JSON plány vytvořené `PlannerAgentem`. Jeho klíčovou rolí je iterovat přes kroky plánu, volat příslušné nástroje a v případě selhání aktivovat **debugovací smyčku** – požádat plánovače o opravu plánu a spustit ho znovu.
+    -   `ethos_module.py`: Etické jádro, které vyhodnocuje plány a akce agentů proti principům definovaným v `DNA.md`.
+    -   `llm_config.py` & `gemini_llm_adapter.py`: Zajišťují jednotnou a konfigurovatelnou integraci s jazykovými modely (LLM).
+
+-   **`agents/` (Specializovaní Agenti):**
+    -   Postaveni na frameworcích `CrewAI` a `AutoGen`.
+    -   Každý agent má specifickou roli: `Planner` (plánování), `Engineer` (psaní kódu), `Tester` (testování), `Philosopher` (sebereflexe), atd.
+
+-   **`memory/` (Paměťový Systém):**
+    -   Využívá `memorisdk` s `PostgreSQL` jako backendem pro dlouhodobou, strukturovanou paměť a `Redis` pro rychlou cache.
+
+-   **`tools/` (Nástroje Agentů):**
+    -   Sada schopností, které mohou agenti používat. Nástroje jsou navrženy jako modulární a znovupoužitelné komponenty.
+    -   **Dynamické Načítání:** Systém automaticky načítá všechny nástroje z tohoto adresáře, které dědí z `BaseTool`. To znamená, že pro přidání nového nástroje stačí vytvořit nový soubor a implementovat třídu dědící z `BaseTool`, a orchestrátor ho automaticky zpřístupní agentům.
+    -   **Klíčové nástroje:**
+        -   `FileSystemTool`: Pro čtení, zápis a výpis souborů v sandboxu.
+        -   `CodeExecutorTool`: Pro spouštění a testování kódu.
+        -   `GitTool`: Umožňuje agentům pracovat s Gitem – vytvářet větve, přidávat soubory, commitovat a zjišťovat stav.
+
+-   **`sandbox/` (Izolované Prostředí):**
+    -   Bezpečný adresář, kde mohou agenti generovat, upravovat a testovat kód, aniž by ohrozili stabilitu hlavní aplikace.
+
+-   **`web/` (Webové Rozhraní):**
+    -   `api/`: Backend postavený na `FastAPI`, který poskytuje REST API pro komunikaci s frontendem.
+        -   **Správa Úkolů:**
+            -   `POST /api/v1/tasks`: Přijímá JSON s popisem úkolu (`{"prompt": "..."}`), asynchronně spouští `Orchestrator.execute_plan()` a okamžitě vrací unikátní `task_id`.
+            -   `GET /api/v1/tasks/{task_id}`: Vrací aktuální stav a historii konkrétního úkolu.
+        -   **Real-time Notifikace (WebSockets):**
+            -   `GET /api/v1/tasks/{task_id}/ws`: WebSocket endpoint, na který se frontend připojuje pro sledování průběhu úkolu v reálném čase.
+            -   **Protokol:** Po připojení backend odesílá JSON zprávy s následující strukturou:
+                -   `{"type": "step_update", "step_id": ..., "description": ..., "status": ..., "output": ...}`: Informace o stavu konkrétního kroku.
+                -   `{"type": "plan_feedback", "feedback": "..."}`: Finální zpráva po dokončení (nebo selhání) celého plánu.
+                -   `{"type": "plan_repaired", "new_plan": ...}`: Zpráva o tom, že plán byl opraven a bude spuštěn znovu.
+    -   `ui/`: Frontend napsaný v `Reactu`, který slouží jako uživatelské rozhraní.
+
+### Technologický Stack
+
+-   **Jazyk:** Python 3.12+
+-   **AI Frameworky:** CrewAI, LangChain, AutoGen
+-   **LLM:** Google Gemini (konfigurovatelné)
+-   **Backend:** FastAPI
+-   **Frontend:** React
+-   **Databáze:** PostgreSQL, Redis
+-   **Správa Závislostí:** `pip-tools` (`uv` nebo `pip`)
+-   **Kontrola Kvality:** `pre-commit` (s `black` a `ruff`)
+-   **Testování:** `pytest`
+
+## Nastavení Lokálního Prostředí (Bez Dockeru)
 
 1.  **Klonování Repozitáře:**
     ```bash

@@ -28,5 +28,7 @@ python-multipart
 
 # Testing
 pytest
+pytest-asyncio
 pytest-json-report
 GitPython
+asgi-lifespan

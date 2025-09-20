@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import Chat from "./components/Chat";
+import TaskRunner from "./components/TaskRunner";
 import Login from "./components/Login";
 import Upload from "./components/Upload";
 import Files from "./components/Files";
@@ -14,6 +15,7 @@ import UserInfo from "./components/UserInfo";
 
 const MENU = [
   { key: "chat", label: "Chat", component: <Chat /> },
+  { key: "task_runner", label: "Task Runner", component: <TaskRunner /> },
   { key: "upload", label: "Nahrávání", component: <Upload /> },
   { key: "files", label: "Soubory", component: <Files /> },
   { key: "profile", label: "Profil", component: <Profile /> },
