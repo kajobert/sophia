@@ -1,6 +1,11 @@
-import time
 
+import time
 import pytest
+from tests.conftest import robust_import, safe_remove
+
+# Robustní import redis
+redis = robust_import('redis')
+
 from services.llm_cache import (
     get_cached_reply,
     get_redis_client,

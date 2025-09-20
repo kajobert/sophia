@@ -1,0 +1,1 @@
+Error: Path '../../tests/test_file_system_tool.py' is outside the allowed /sandbox directory.

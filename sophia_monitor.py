@@ -1,135 +1,197 @@
-import hashlib
-import glob
+# --- AUDIT: Detekce chyb v logu (pro guardian/testy) ---
 import re
-import socket
-import urllib.request
-
-
-# --- Funkce pro test: detekce crash v logu ---
 def check_backend_crash_log(log_path, lines=10):
-    """Vrací dict s posledními řádky a nalezenými chybovými vzory (ImportError, Traceback)."""
+    """
+    Vrací dict s posledními řádky a nalezenými chybovými vzory (ImportError, Traceback).
+    """
     result = {"last_lines": [], "error_matches": []}
-    patterns = [r"ImportError", r"Traceback"]
+    if not os.path.exists(log_path):
+        return result
+    with open(log_path, encoding="utf-8", errors="ignore") as f:
+        all_lines = f.readlines()
+    last_lines = all_lines[-lines:] if len(all_lines) >= lines else all_lines
+    result["last_lines"] = [l.rstrip("\n") for l in last_lines]
+    error_patterns = [r"ImportError", r"Traceback"]
+    for i, line in enumerate(last_lines):
+        for pat in error_patterns:
+            if re.search(pat, line):
+                result["error_matches"].append((i, line.strip(), pat))
+    return result
+import os
+import sys
+import time
+import json
+import socket
+import threading
+import atexit
+import hashlib
+import shutil
+from datetime import datetime, timezone
+
+# --- HEARTBEAT ---
+def get_heartbeat_path():
+    return os.path.abspath("watchdog.alive")
+
+def write_heartbeat(started, version="1.0.0"):
+    data = {
+        "pid": os.getpid(),
+        "hostname": socket.gethostname(),
+        "started": started,
+        "last_heartbeat": datetime.now(timezone.utc).isoformat(),
+        "version": version
+    }
     try:
-        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
-            log_lines = f.readlines()[-lines:]
-        result["last_lines"] = log_lines
-        for i, line in enumerate(log_lines):
-            for pat in patterns:
-                if re.search(pat, line):
-                    result["error_matches"].append((i, line.strip(), pat))
-        return result
-    except Exception:
-        return result
+        with open(get_heartbeat_path(), "w") as f:
+            json.dump(data, f)
+        print(f"[watchdog] Heartbeat aktualizován: {data}")
+    except Exception as e:
+        print(f"[watchdog] Chyba při zápisu heartbeat: {e}")
 
-
-"""
-Sophia Monitor: Pokročilé kontroly pro guardian.py
-
-Tento modul obsahuje všechny pokročilé, bezpečnostní a provozní kontroly, které mohou být volány z guardian.py nebo samostatně.
-
-====================
-PLÁNOVANÉ A EXISTUJÍCÍ KONTROLY
-====================
-
-**Existující kontroly:**
-  - check_integrity():
-      Kontrola integrity všech .py, .yaml, .env, .sh, .txt v rootu, core/, agents/ (SHA256 hash).
-  - scan_logs_for_errors():
-      Prohledá logy a detekuje opakované výskyty chybových hlášek (ERROR, CRITICAL, Traceback, Chyba, VAROVÁNÍ).
-  - check_internet_connectivity():
-      Ověří dostupnost internetu pokusem o HTTP request.
-  - check_dns_resolution():
-      Ověří funkčnost DNS překladu.
-
-**Plánované kontroly (TODO):**
-  - check_disk_usage():
-      Kontrola volného místa na disku, případně rotace/smazání logů.
-  - check_cpu_usage():
-      Detekce přetížení CPU, případně upozornění nebo restart služby.
-  - check_memory_usage():
-      Kontrola využití RAM, případně upozornění nebo restart služby.
-  - check_ssl_certificates():
-      Ověření platnosti SSL certifikátů (např. pro web API).
-  - check_backup_status():
-      Kontrola, zda proběhly zálohy a jsou dostupné.
-  - check_file_permissions():
-      Ověření správných oprávnění u klíčových souborů.
-  - check_process_health():
-      Kontrola běhu klíčových procesů (např. Celery, Redis, backend).
-  - check_external_services():
-      Ověření dostupnosti externích API/služeb (např. LLM, cloud storage).
-
-Každá kontrola by měla být samostatná funkce, snadno volatelná a testovatelná.
-"""
-
-
-def check_integrity():
-    """Kontrola integrity všech .py, .yaml, .env, .sh, .txt v rootu, core/, agents/ (SHA256 hash)."""
-    files = set()
-    files.update(glob.glob("*.py"))
-    files.update(glob.glob("core/*.py"))
-    files.update(glob.glob("agents/*.py"))
-    files.update(glob.glob("*.yaml"))
-    files.update(glob.glob("*.env"))
-    files.update(glob.glob("*.sh"))
-    files.update(glob.glob("*.txt"))
-    results = {}
-    for path in sorted(files):
+def remove_heartbeat(started):
+    hb_path = get_heartbeat_path()
+    if os.path.exists(hb_path):
         try:
-            with open(path, "rb") as f:
-                h = hashlib.sha256(f.read()).hexdigest()
-            results[path] = h
-        except Exception:
-            results[path] = None
-    return results
+            with open(hb_path) as f:
+                data = json.load(f)
+            if data.get("pid") == os.getpid() and data.get("started") == started:
+                os.remove(hb_path)
+                print(f"[watchdog] Heartbeat soubor smazán.")
+            else:
+                print(f"[watchdog] Heartbeat soubor nesmazán (patří jinému procesu nebo byl změněn).")
+        except Exception as e:
+            print(f"[watchdog] Chyba při mazání heartbeat: {e}")
 
-
-def scan_logs_for_errors(log_files=None, patterns=None, min_count=3):
-    """Prohledá logy a detekuje opakované výskyty chybových hlášek."""
-    if log_files is None:
-        log_files = ["logs/guardian.log", "logs/sophia_main.log", "logs/audit.log"]
-    if patterns is None:
-        patterns = [r"ERROR", r"CRITICAL", r"Traceback", r"Chyba", r"VAROVÁNÍ"]
-    error_counts = {}
-    for log_path in log_files:
-        try:
-            with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+# --- .ENV BACKUP ---
+def watch_env_file(env_path=".env", backup_dir=".env_backups", interval=2):
+    env_path = os.path.abspath(env_path)
+    backup_dir = os.path.abspath(backup_dir)
+    os.makedirs(backup_dir, exist_ok=True)
+    last_hash = None
+    print(f"[watchdog] Sleduji {env_path}, zálohy do {backup_dir}")
+    while True:
+        if os.path.exists(env_path):
+            with open(env_path, "rb") as f:
                 content = f.read()
-                for pat in patterns:
-                    count = len(re.findall(pat, content, re.IGNORECASE))
-                    if count >= min_count:
-                        error_counts[(log_path, pat)] = count
-        except Exception:
-            continue
-    return error_counts
+                current_hash = hashlib.sha256(content).hexdigest()
+            if last_hash is None:
+                last_hash = current_hash
+            elif current_hash != last_hash:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = os.path.join(backup_dir, f".env_{timestamp}.bak")
+                shutil.copy2(env_path, backup_path)
+                print(f"[watchdog] Změna detekována, záloha vytvořena: {backup_path}")
+                last_hash = current_hash
+        time.sleep(interval)
 
-
-def check_internet_connectivity(url="https://www.google.com", timeout=5):
-    try:
-        urllib.request.urlopen(url, timeout=timeout)
-        return True
-    except Exception:
-        return False
-
-
-def check_dns_resolution(host="www.google.com"):
-    try:
-        socket.gethostbyname(host)
-        return True
-    except Exception:
-        return False
-
-
-# Další kontroly lze přidávat zde (CPU, disk, certifikáty, zálohy...)
+# --- ENTRYPOINT ---
+def main():
+    if "--watch-env" in sys.argv:
+        print("Spouštím watchdog pro .env soubor...")
+        started = datetime.now(timezone.utc).isoformat()
+        version = "1.0.0"
+        def heartbeat_loop():
+            while True:
+                write_heartbeat(started, version)
+                time.sleep(2)
+        heartbeat_thread = threading.Thread(target=heartbeat_loop, daemon=True)
+        heartbeat_thread.start()
+        atexit.register(remove_heartbeat, started)
+        try:
+            watch_env_file()
+        except KeyboardInterrupt:
+            print("\nWatchdog ukončen uživatelem.")
+        finally:
+            remove_heartbeat(started)
+        sys.exit(0)
 
 if __name__ == "__main__":
-    print("--- INTEGRITY ---")
-    for path, h in check_integrity().items():
-        print(f"{path}: {h}")
-    print("\n--- LOG ERRORS ---")
-    for (log, pat), count in scan_logs_for_errors().items():
-        print(f"{log}: {pat} -> {count}")
-    print("\n--- NETWORK ---")
-    print("Internet:", check_internet_connectivity())
-    print("DNS:", check_dns_resolution())
+    main()
+import os
+import sys
+import time
+import json
+import socket
+import threading
+import atexit
+import hashlib
+import shutil
+from datetime import datetime, timezone
+
+# --- HEARTBEAT ---
+def get_heartbeat_path():
+    return os.path.abspath("watchdog.alive")
+
+def write_heartbeat(started, version="1.0.0"):
+    data = {
+        "pid": os.getpid(),
+        "hostname": socket.gethostname(),
+        "started": started,
+        "last_heartbeat": datetime.now(timezone.utc).isoformat(),
+        "version": version
+    }
+    try:
+        with open(get_heartbeat_path(), "w") as f:
+            json.dump(data, f)
+        print(f"[watchdog] Heartbeat aktualizován: {data}")
+    except Exception as e:
+        print(f"[watchdog] Chyba při zápisu heartbeat: {e}")
+
+def remove_heartbeat(started):
+    hb_path = get_heartbeat_path()
+    if os.path.exists(hb_path):
+        try:
+            with open(hb_path) as f:
+                data = json.load(f)
+            if data.get("pid") == os.getpid() and data.get("started") == started:
+                os.remove(hb_path)
+                print(f"[watchdog] Heartbeat soubor smazán.")
+            else:
+                print(f"[watchdog] Heartbeat soubor nesmazán (patří jinému procesu nebo byl změněn).")
+        except Exception as e:
+            print(f"[watchdog] Chyba při mazání heartbeat: {e}")
+
+# --- .ENV BACKUP ---
+def watch_env_file(env_path=".env", backup_dir=".env_backups", interval=2):
+    env_path = os.path.abspath(env_path)
+    backup_dir = os.path.abspath(backup_dir)
+    os.makedirs(backup_dir, exist_ok=True)
+    last_hash = None
+    print(f"[watchdog] Sleduji {env_path}, zálohy do {backup_dir}")
+    while True:
+        if os.path.exists(env_path):
+            with open(env_path, "rb") as f:
+                content = f.read()
+                current_hash = hashlib.sha256(content).hexdigest()
+            if last_hash is None:
+                last_hash = current_hash
+            elif current_hash != last_hash:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = os.path.join(backup_dir, f".env_{timestamp}.bak")
+                shutil.copy2(env_path, backup_path)
+                print(f"[watchdog] Změna detekována, záloha vytvořena: {backup_path}")
+                last_hash = current_hash
+        time.sleep(interval)
+
+# --- ENTRYPOINT ---
+def main():
+    if "--watch-env" in sys.argv:
+        print("Spouštím watchdog pro .env soubor...")
+        started = datetime.now(timezone.utc).isoformat()
+        version = "1.0.0"
+        def heartbeat_loop():
+            while True:
+                write_heartbeat(started, version)
+                time.sleep(2)
+        heartbeat_thread = threading.Thread(target=heartbeat_loop, daemon=True)
+        heartbeat_thread.start()
+        atexit.register(remove_heartbeat, started)
+        try:
+            watch_env_file()
+        except KeyboardInterrupt:
+            print("\nWatchdog ukončen uživatelem.")
+        finally:
+            remove_heartbeat(started)
+        sys.exit(0)
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,19 @@
+### Správa snapshot/approval souborů
+
+- Všechny `.approved.txt` a `.received.txt` soubory musí být pouze v `tests/snapshots/`.
+- Při schválení snapshotu se odpovídající `.received.txt` smaže.
+- Staré `.received.txt` bez schválení se automaticky archivují do `tests/snapshots/archive/`.
+- Helper `manage_snapshots()` v `conftest.py` provádí tuto správu automaticky.
+- Nikdy nenechávejte snapshoty přímo v `tests/` – workspace musí zůstat čistý a auditní stopy centralizované.
+### Snapshotování a auditní výstupy
+
+Pokud test vyžaduje snapshot/approval výstup a není dostupná snapshot fixture:
+
+- Test musí automaticky vytvořit auditní snapshot (např. do složky `tests/snapshots/`).
+- Test se označí jako `pytest.xfail` s jasnou zprávou, že snapshot byl vytvořen a čeká na ruční schválení.
+- Nikdy nesmí dojít k tichému přeskočení testu bez zápisu auditní stopy.
+
+Toto pravidlo platí pro všechny auditní a approval testy v projektu Sophia.
 # 🛠️ Průvodce pro Vývojáře Projektu Sophia
 
 Vítejte, vývojáři! Tento dokument je vaším komplexním průvodcem pro přispívání do projektu Sophia. Ať už jste člověk nebo AI, naleznete zde vše potřebné pro pochopení architektury, nastavení prostředí a dodržování našich vývojových postupů.

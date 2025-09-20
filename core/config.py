@@ -6,8 +6,17 @@ Všechny proměnné prostředí a cesty na jednom místě.
 import os
 from starlette.config import Config
 
+
 # Cesta ke .env souboru (lze upravit podle potřeby)
 ENV_PATH = os.environ.get("SOPHIA_ENV_PATH", ".env")
+if not os.path.exists(ENV_PATH):
+    import sys
+    import logging
+    logging.basicConfig(level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s")
+    msg = f"CHYBA: .env soubor '{ENV_PATH}' nebyl nalezen v {os.getcwd()}!"
+    logging.error(msg)
+    print(msg, file=sys.stderr)
+    sys.exit(2)
 config = Config(ENV_PATH)
 
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", cast=str, default="")

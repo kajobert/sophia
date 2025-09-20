@@ -1,42 +1,32 @@
 import pytest
 
 
-@pytest.mark.skip(reason="Kontrola check_redis není implementována v sophia_monitor.py")
-def test_check_redis():
-    pass
 
+# Šablona pro parametrizované healthcheck testy
+import pytest
 
-@pytest.mark.skip(
-    reason="Kontrola check_celery není implementována v sophia_monitor.py"
-)
-def test_check_celery():
-    pass
+# Seznam healthcheck funkcí a očekávaných výsledků
+HEALTHCHECKS = [
+    # (funkce, očekávaný výsledek, popis)
+    # (sophia_monitor.check_redis, True, "Redis je dostupný"),
+    # (sophia_monitor.check_celery, True, "Celery worker běží"),
+    # (sophia_monitor.check_backend, True, "Backend API běží"),
+    # (sophia_monitor.check_audit_log, True, "Audit log je dostupný"),
+    # (sophia_monitor.check_disk, True, "Disk OK"),
+    # (sophia_monitor.check_llm_key, True, "LLM klíč validní"),
+]
 
-
-@pytest.mark.skip(
-    reason="Kontrola check_backend není implementována v sophia_monitor.py"
-)
-def test_check_backend():
-    pass
-
-
-@pytest.mark.skip(
-    reason="Kontrola check_audit_log není implementována v sophia_monitor.py"
-)
-def test_check_audit_log():
-    pass
-
-
-@pytest.mark.skip(reason="Kontrola check_disk není implementována v sophia_monitor.py")
-def test_check_disk():
-    pass
-
-
-@pytest.mark.skip(
-    reason="Kontrola check_llm_key není implementována v sophia_monitor.py"
-)
-def test_check_llm_key():
-    pass
+@pytest.mark.parametrize("check_func,expected,desc", HEALTHCHECKS)
+def test_healthchecks(check_func, expected, desc):
+    """
+    Parametrizovaný test pro všechny healthchecky.
+    check_func: funkce, která provádí healthcheck
+    expected: očekávaný výsledek (True/False nebo Exception)
+    desc: popis testovaného scénáře
+    """
+    # Výsledek healthchecku
+    result = check_func()
+    assert result == expected, f"{desc}: očekáváno {expected}, dostal {result}"
 
 
 @pytest.mark.skip(

@@ -1,5 +1,9 @@
-import pytest
 
+import pytest
+from conftest import robust_import, safe_remove
+
+# Robustní import crewai
+crewai = robust_import('crewai')
 from crewai.tools import BaseTool
 from crewai import Agent
 

@@ -1,10 +1,14 @@
-import sophia_monitor
+
+from tests.conftest import robust_import, safe_remove
 import tempfile
 import os
 import re
+import pytest
+
+sophia_monitor = robust_import('sophia_monitor')
 
 
-def test_check_backend_crash_log_detects_error():
+def test_check_backend_crash_log_detects_error(request):
     # Vytvoříme dočasný log s chybou
     log_content = """
 2025-09-16 12:00:00 - Něco proběhlo
@@ -25,5 +29,17 @@ def test_check_backend_crash_log_detects_error():
         found_patterns = [pat for (_, _, pat) in result["error_matches"]]
         assert any(re.match(r"ImportError", pat) for pat in found_patterns)
         assert any(re.match(r"Traceback", pat) for pat in found_patterns)
+        # Snapshot výstupu pro auditovatelnost
+        snapshot = request.getfixturevalue("snapshot") if "snapshot" in request.fixturenames else None
+        if snapshot:
+            snapshot(str(result))
+        else:
+            # Ručně vytvořit auditní snapshot a označit test jako xfail
+            import pathlib
+            base = pathlib.Path("tests/snapshots")
+            base.mkdir(parents=True, exist_ok=True)
+            snap_path = base / "guardian_monitor_integration.approved.txt"
+            snap_path.write_text(str(result), encoding="utf-8")
+            pytest.xfail(f"Snapshot fixture nebyla dostupná, auditní snapshot byl vytvořen: {snap_path}. Zkontrolujte a potvrďte jeho obsah.")
     finally:
-        os.remove(fname)
+        safe_remove(fname)
