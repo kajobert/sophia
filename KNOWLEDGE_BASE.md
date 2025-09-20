@@ -57,6 +57,29 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
     2.  **Budoucí Směřování:** Pro budoucí vylepšení je nutné zvážit použití pokročilejšího embedding modelu (např. z rodiny `text-embedding-ada-002` nebo `Gemini`) nebo fine-tuning vlastního modelu na specifické doméně etického hodnocení.
 
 ---
+
+### 6. Enforcement Sandbox a Auditní Bezpečnost Testů (2025)
+
+-   **Problém:** Testy mohly nechtěně ovlivnit produkční data, síť, prostředí nebo spouštět nebezpečné operace (zápis, procesy, DB, změny práv, čas, proměnné prostředí). Chyběla auditní stopa a robustní izolace.
+-   **Řešení:**
+    1.  **Globální enforcement sandbox:** Všechny testy jsou chráněny globální fixture v `conftest.py`, která:
+        - Vyžaduje `SOPHIA_TEST_MODE=1` (fail-fast bez této proměnné)
+        - Blokuje síťové požadavky (`requests`, `httpx`, `urllib`, `socket`)
+        - Zakazuje zápis mimo temp/snapshot adresáře
+        - Blokuje spouštění procesů (`subprocess`, `os.system`), změny práv (`os.chmod`, `os.chown`), změny času (`time.sleep`, `os.utime`), přímý přístup k DB (`sqlite3.connect`), změny proměnných prostředí (s výjimkou whitelistu)
+        - Všechny pokusy o zakázanou operaci jsou auditně logovány
+    2.  **Whitelisting:** Povolené proměnné prostředí a cesty jsou explicitně dokumentovány v `conftest.py`.
+    3.  **Auditní logika:** Každý skip, xfail nebo blokace je jasně logována a auditovatelná v test výstupech.
+    4.  **Best practices:**
+        - Všechny testy používají fixture `request` a snapshoty pouze v `tests/snapshots/`
+        - Nikdy nemanipulovat s produkčními soubory ani `.env`
+        - Externí importy přes `robust_import`
+        - Síť/procesy/zápis pouze s auditním zdůvodněním
+        - Všechny skipy a xfail musí být auditně zdokumentovány
+    5.  **Výsledek:** Testy jsou nyní bezpečné, auditní a robustní. Enforcement je ověřen v dedikovaných testech (`test_sandbox_enforcement.py`, `test_testmode_enforcement.py`).
+
+> **Poznámka:** Kompletní mechanismus, whitelist a příklady najdete v komentářích v `tests/conftest.py` a v test guide.
+---
 <br>
 
 <p align="center">

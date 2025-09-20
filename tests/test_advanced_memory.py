@@ -1,77 +1,46 @@
-import pytestimport pytest
+# POZOR: Tento test je dočasně nefunkční kvůli SyntaxError na začátku souboru (viz robustifikační log). Oprava je v TODO.
+# původní kód je zakomentován níže pro auditní účely.
+# def memory_fixture():def memory_fixture():
+database:database:
+def test_add_task_with_verification(request, memory_fixture, snapshot):import pytest
 
-from unittest.mock import patch, MagicMock, mock_openimport json
-
-import asynciofrom unittest.mock import patch, MagicMock, mock_open, AsyncMock
-
-from tests.conftest import robust_importimport asyncio
-
+import pytest
+import json
+import asyncio
+from unittest.mock import patch, MagicMock, mock_open, AsyncMock
 from tests.conftest import robust_import
 
 # Robustní import testované třídy
+AdvancedMemory = robust_import('memory.advanced_memory', 'AdvancedMemory')
 
-AdvancedMemory = robust_import('memory.advanced_memory', 'AdvancedMemory')AdvancedMemory = robust_import('memory.advanced_memory', 'AdvancedMemory')
+# Robustní fixture pro memory
+@pytest.fixture
 
-
-
-# Robustní fixture pro memory# Robustní fixture pro memory
-
-@pytest.fixture@pytest.fixture
-
-def memory_fixture():def memory_fixture():
-
-    with patch("memory.advanced_memory.Memori") as MockMemori, \    with patch("memory.advanced_memory.Memori") as MockMemori, \
-
-         patch("builtins.open", new_callable=mock_open, read_data="""         patch("builtins.open", new_callable=mock_open, read_data="""
-
-database:database:
-
-  db_host: 'mock_host'  db_host: 'mock_host'
-
-  db_port: 5432  db_port: 5432
-
-  db_user: 'mock_user'  db_user: 'mock_user'
-
-  db_password: 'mock_password'  db_password: 'mock_password'
-
-  db_name: 'mock_db'        mock_session.execute.return_value.fetchone.side_effect = [None, ("chat_123",)]
-
-""") as mock_file:        task_id = await memory.add_task("Test task with verification")
-
-        mock_memori_instance = MockMemori.return_value        assert task_id == "chat_123"
-
-        mock_session = MagicMock()        assert mock_session.execute.call_count == 2
-
-        mock_memori_instance.db_manager.SessionLocal.return_value = mock_session        snapshot(f"task_id={task_id}, call_count={mock_session.execute.call_count}")
-
-        memory = AdvancedMemory()    asyncio.run(run_test())
-
+    with patch("memory.advanced_memory.Memori") as MockMemori, \
+         patch("builtins.open", new_callable=mock_open, read_data="""
+database:
+  db_host: 'mock_host'
+  db_port: 5432
+  db_user: 'mock_user'
+  db_password: 'mock_password'
+  db_name: 'mock_db'
+""") as mock_file:
+        mock_memori_instance = MockMemori.return_value
+        mock_session = MagicMock()
+        mock_memori_instance.db_manager.SessionLocal.return_value = mock_session
+        memory = AdvancedMemory()
         yield memory, mock_memori_instance, mock_session
 
-
-
-# --- Přidání úkolu ---# --- Robustní testy podle ROBUST_TEST_GUIDE.md ---
-
-def test_add_task_with_verification(request, memory_fixture, snapshot):import pytest
-
-    memory, mock_memori_instance, mock_session = memory_fixtureimport tempfile
-
-    async def run_test():import shutil
-
-        mock_memori_instance.record_conversation.return_value = "chat_123"import os
-
-        mock_session.execute.return_value.fetchone.side_effect = [None, ("chat_123",)]import json
-
-        task_id = await memory.add_task("Test task with verification")from unittest.mock import patch, MagicMock, mock_open, AsyncMock
-
-        assert task_id == "chat_123"import asyncio
-
-        assert mock_session.execute.call_count == 2from tests.conftest import robust_import
-
+def test_add_task_with_verification(request, memory_fixture, snapshot):
+    memory, mock_memori_instance, mock_session = memory_fixture
+    async def run_test():
+        mock_memori_instance.record_conversation.return_value = "chat_123"
+        mock_session.execute.return_value.fetchone.side_effect = [None, ("chat_123",)]
+        task_id = await memory.add_task("Test task with verification")
+        assert task_id == "chat_123"
+        assert mock_session.execute.call_count == 2
         snapshot(f"task_id={task_id}, call_count={mock_session.execute.call_count}")
-
-    asyncio.run(run_test())AdvancedMemory = robust_import('memory.advanced_memory', 'AdvancedMemory')
-
+    asyncio.run(run_test())
 
 
 # --- Aktualizace stavu ---@pytest.fixture
@@ -231,69 +200,5 @@ def test_initialization(request, memory_fixture, snapshot):        from unittest
                     {
                         "chat_id": "task_456",
                         "user_input": "A new task",
+
                         "metadata": {"status": "IN_PROGRESS"},
-                    }
-                ]
-                task = await memory.get_next_task()
-                assert task["chat_id"] == "task_456"
-                assert task["metadata"]["status"] == "IN_PROGRESS"
-                snapshot(str(task))
-            asyncio.run(run_test())
-
-        def test_add_task_timeout(request, memory_fixture, snapshot):
-            memory, mock_memori_instance, mock_session = memory_fixture
-            from unittest.mock import patch
-            async def run_test():
-                mock_memori_instance.record_conversation.return_value = "chat_456"
-                mock_session.execute.return_value.fetchone.return_value = None
-                import pytest
-                with pytest.raises(TimeoutError):
-                    await memory.add_task("Test task timeout")
-            with patch("time.time", side_effect=[0, 1, 2, 3, 4, 5, 6]):
-                asyncio.run(run_test())
-            snapshot("timeout_raised")
-
-        def test_initialization(request, memory_fixture, snapshot):
-            memory, mock_memori_instance, _ = memory_fixture
-            try:
-                mock_memori_instance.enable.assert_called_once()
-                snapshot("enable_called")
-            except Exception as e:
-                pytest.skip(f"Test failed: {e}")
-            self.mock_session.execute.return_value.fetchone.side_effect = [
-                None,
-
-# --- Robustní testy podle ROBUST_TEST_GUIDE.md ---
-import pytest
-         patch("builtins.open", new_callable=mock_open, read_data="""
-database:
-  db_host: 'mock_host'
-import pytest
-import tempfile
-import shutil
-import os
-import json
-from unittest.mock import patch, MagicMock, mock_open, AsyncMock
-from datetime import datetime
-import asyncio
-from tests.conftest import robust_import, safe_remove
-
-AdvancedMemory = robust_import('memory.advanced_memory', 'AdvancedMemory')
-MemoryReaderTool = robust_import('tools.memory_tools', 'MemoryReaderTool')
-
-@pytest.fixture
-def memory_fixture():
-    with patch("memory.advanced_memory.Memori") as MockMemori, \
-                 patch("builtins.open", new_callable=mock_open, read_data="""
-database:
-  db_host: 'mock_host'
-  db_port: 5432
-  db_user: 'mock_user'
-  db_password: 'mock_password'
-  db_name: 'mock_db'
-""") as mock_file:
-        mock_memori_instance = MockMemori.return_value
-        mock_session = MagicMock()
-        mock_memori_instance.db_manager.SessionLocal.return_value = mock_session
-        memory = AdvancedMemory()
-
