@@ -68,6 +68,15 @@ Sophia je navržena jako modulární, multi-agentní systém s odděleným webov
 -   **`sandbox/` (Izolované Prostředí):** Bezpečný adresář, kde mohou agenti generovat a testovat kód bez rizika pro hlavní aplikaci.
 -   **`web/` (Webové Rozhraní):** `FastAPI` backend a `React` frontend pro interakci s uživateli.
 
+### Budoucí Směřování: Sophia 2.0
+
+Projekt se aktuálně nachází ve fázi přechodu na architekturu **Sophia 2.0**, jak je definováno v **[Technické Roadmapě v2](./ROADMAP_V2.md)**. To přinese několik klíčových změn:
+
+-   **Přechod na Model Context Protocol (MCP):** Stávající systém dynamického načítání nástrojů bude nahrazen robustní architekturou založenou na MCP. Sophia se stane "MCP Hostem" a jednotlivé nástroje budou refaktorovány na samostatné "MCP Servery". To zvýší modularitu a usnadní přidávání nových schopností.
+-   **Zavedení Meta-Agenta:** Architektura bude rozšířena o novou strategickou vrstvu – `Meta-Agenta`. Tento agent bude zodpovědný za dlouhodobé plánování, správu backlogu a řízení smyčky sebe-zdokonalování.
+
+Noví přispěvatelé by měli brát tento budoucí stav v potaz při návrhu nových funkcí.
+
 ---
 
 ## 3. Jak Přidat Nového Agenta nebo Nástroj
