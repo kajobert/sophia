@@ -2,7 +2,7 @@
 
 Vítejte! Tento průvodce je určen pro vás, koncové uživatele, kteří chtějí komunikovat se Sophií a využívat její schopnosti prostřednictvím webového rozhraní.
 
-Pokud jste zde poprvé a potřebujete pomoc se zprovozněním projektu, podívejte se prosím nejprve na **[🚀 QUICKSTART.md](../QUICKSTART.md)**.
+Pokud jste zde poprvé a potřebujete pomoc se zprovozněním projektu, podívejte se prosím nejprve na **[🚀 QUICKSTART.md](./QUICKSTART.md)**.
 
 ## Co je Sophia?
 

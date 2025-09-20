@@ -19,8 +19,8 @@ Než začneš s jakýmkoliv úkolem, je **naprosto nezbytné**, abys prostudoval
 
 1.  **[README.md](./README.md)**: Seznam se s hlavní vizí a strukturou dokumentace.
 2.  **[DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nastuduj si architekturu, technologický stack a vývojářské postupy.
-3.  **[ROADMAP.md](./ROADMAP.md)**: Pochop dlouhodobé cíle a směřování projektu.
-4.  **[KNOWLEDGE_BASE.md](./KNOWLEDGE_BASE.md)**: Pouč se z chyb a úspěchů minulých úkolů.
+3.  **[ROADMAP.md](./docs/ROADMAP.md)**: Pochop dlouhodobé cíle a směřování projektu.
+4.  **[KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Pouč se z chyb a úspěchů minulých úkolů.
 
 ## Tvůj Pracovní Postup a Povinnosti
 
