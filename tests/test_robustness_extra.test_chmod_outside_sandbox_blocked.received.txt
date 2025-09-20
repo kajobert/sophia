@@ -1,1 +1,0 @@
-Blokováno: Test nesmí měnit práva souborů!

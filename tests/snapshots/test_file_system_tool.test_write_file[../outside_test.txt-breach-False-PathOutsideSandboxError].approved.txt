@@ -1,1 +1,0 @@
-Error writing file '../outside_test.txt': Path '../outside_test.txt' is outside the allowed /sandbox directory.

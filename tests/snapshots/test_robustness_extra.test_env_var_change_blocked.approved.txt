@@ -1,1 +1,0 @@
-Blokováno: Test nesmí měnit proměnnou prostředí: LD_LIBRARY_PATH

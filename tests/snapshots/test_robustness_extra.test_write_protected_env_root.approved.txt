@@ -1,1 +1,0 @@
-Blokováno: Test se pokusil zapsat mimo povolený adresář: /.env

@@ -5,16 +5,11 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
-    # Nejprve importujeme výjimku z jejího nového modulu
-    from core.exceptions import MissingEnvFileError
-    # Poté se pokusíme importovat konfigurační modul, což by mělo selhat
-    import core.config
-except MissingEnvFileError:
-    # Odchytíme specifickou chybu a vypíšeme očekávanou zprávu
+    import core.config  # Tento import by měl selhat při chybějícím .env
+except SystemExit as e:
+    # Pokud dojde k SystemExit (např. sys.exit()), vypíšeme chybovou hlášku
     print(".env soubor nebyl nalezen")
-    # Ukončíme s kódem 0, protože jsme chybu očekávali a správně ošetřili
-    sys.exit(0)
+    raise
 except Exception as ex:
-    # Jakákoliv jiná chyba je stále neočekávaná
     print(f"Neočekávaná výjimka: {ex}")
-    sys.exit(1)
+    raise

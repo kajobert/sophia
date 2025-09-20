@@ -1,1 +1,0 @@
-{'ctypes': 'Import povolen (CHYBA)', 'resource': 'Import povolen (CHYBA)', 'fcntl': 'Import povolen (CHYBA)', 'signal': 'Import povolen (CHYBA)'}
