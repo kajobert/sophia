@@ -188,6 +188,7 @@ async def logout(request: Request, background_tasks: BackgroundTasks):
 
 class TaskRequest(BaseModel):
     prompt: str
+    user: str | None = None
 
 @app.post("/api/v1/tasks", status_code=202)
 async def create_task(task_request: TaskRequest, background_tasks: BackgroundTasks):
@@ -196,10 +197,10 @@ async def create_task(task_request: TaskRequest, background_tasks: BackgroundTas
         raise HTTPException(status_code=503, detail="Orchestrator is not available.")
 
     task_id = str(uuid.uuid4())
-    context = SharedContext(original_prompt=task_request.prompt, session_id=task_id)
+    context = SharedContext(original_prompt=task_request.prompt, session_id=task_id, user=task_request.user)
     tasks[task_id] = context
 
-    log_message(f"Vytvořen nový úkol přes API: {task_request.prompt} (ID: {task_id})")
+    log_message(f"Vytvořen nový úkol od uživatele {task_request.user}: {task_request.prompt} (ID: {task_id})")
     background_tasks.add_task(orchestrator.execute_plan, context)
 
     return {"task_id": task_id}
