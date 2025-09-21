@@ -3,6 +3,8 @@ import glob
 import re
 import socket
 import urllib.request
+from datetime import datetime, timedelta
+import os
 
 
 # --- Funkce pro test: detekce crash v logu ---
@@ -119,6 +121,112 @@ def check_dns_resolution(host="www.google.com"):
         return True
     except Exception:
         return False
+
+
+def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=3):
+    """
+    Analyzes log files for recurring errors within a specific time window.
+    If a recurring error is found, it searches for a solution in the knowledge base.
+    If a solution is found, it logs a warning with a link to the solution.
+    If no solution isfound, it creates a file with a template for a new knowledge base entry.
+    """
+    if log_paths is None:
+        log_paths = ["sophia_main.log", "guardian.log"]
+
+    error_patterns = {
+        "ModuleNotFoundError": r"ModuleNotFoundError",
+        "TypeError": r"TypeError: 'coroutine' object is not awaitable",
+        "TimeoutError": r"TimeoutError",
+        "DefaultCredentialsError": r"DefaultCredentialsError",
+    }
+
+    keyword_map = {
+        "ModuleNotFoundError": ["dependency", "závislostí", "ModuleNotFoundError"],
+        "TypeError": ["async", "sync", "asynchronního", "TypeError"],
+        "TimeoutError": ["timeout", "API", "službách"],
+        "DefaultCredentialsError": ["credentials", "API klíč", "DefaultCredentialsError"],
+    }
+
+    now = datetime.now()
+    time_window = timedelta(hours=time_window_hours)
+    error_counts = {key: [] for key in error_patterns}
+
+    for log_path in log_paths:
+        if not os.path.exists(log_path):
+            # Try looking in the logs/ directory as a fallback
+            if os.path.exists(f"logs/{log_path}"):
+                log_path = f"logs/{log_path}"
+            else:
+                continue
+
+        try:
+            with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    # Simple regex for timestamp, assuming format 'YYYY-MM-DD HH:MM:SS'
+                    match = re.search(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})", line)
+                    if not match:
+                        continue
+
+                    log_time = datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
+                    if now - log_time > time_window:
+                        continue
+
+                    for error_name, pattern in error_patterns.items():
+                        if re.search(pattern, line):
+                            error_counts[error_name].append(line)
+        except Exception as e:
+            print(f"Error reading log file {log_path}: {e}")
+
+
+    for error_name, errors in error_counts.items():
+        if len(errors) > error_threshold:
+            # Chronic problem detected
+            try:
+                with open("docs/KNOWLEDGE_BASE.md", "r", encoding="utf-8") as f:
+                    kb_content = f.read()
+
+                found_solution = False
+                for keyword in keyword_map[error_name]:
+                    if re.search(keyword, kb_content, re.IGNORECASE):
+                        # Find the most relevant topic heading
+                        # This is a simple implementation, could be improved with better NLP
+                        topic_headers = re.findall(r"### Téma: (.*)", kb_content)
+                        for header in topic_headers:
+                            if re.search(keyword, header, re.IGNORECASE):
+                                anchor = "#" + header.lower().strip().replace(" ", "-").replace('"',"").replace("(", "").replace(")", "")
+                                print(f"WARNING: Detected recurring '{error_name}'. This issue is documented. See solution at: docs/KNOWLEDGE_BASE.md{anchor}")
+                                found_solution = True
+                                break
+                        if found_solution:
+                            break
+
+                if not found_solution:
+                    issue_filename = "NEW_ISSUE_TO_DOCUMENT.md"
+                    with open(issue_filename, "w", encoding="utf-8") as f:
+                        f.write(f"""# NOVÝ PROBLÉM K ZADOKUMENTOVÁNÍ
+
+**Chyba**: {error_name}
+**Počet výskytů za poslední hodinu**: {len(errors)}
+
+**Příkladové logy:**
+```
+{"".join(errors[:3])}
+```
+
+## Template pro Znalostní Bázi (`docs/KNOWLEDGE_BASE.md`)
+
+### Téma: [Stručný popis tématu týkající se '{error_name}']
+**Datum**: {datetime.now().strftime('%Y-%m-%d')}
+**Autor**: Guardian Monitor
+**Kontext**: [Popiš, za jakých okolností se chyba vyskytla. Automaticky detekováno v log souborech.]
+**Zjištění/Rozhodnutí**: [Jaký byl problém a jaké je navrhované nebo implementované řešení?]
+**Důvod**: [Proč bylo toto řešení zvoleno?]
+**Dopad**: [Jaký dopad má řešení na projekt?]
+""")
+                    print(f"CRITICAL: Detected recurring '{error_name}' with no documented solution. Created '{issue_filename}' for documentation.")
+
+            except FileNotFoundError:
+                print("ERROR: Knowledge base file 'docs/KNOWLEDGE_BASE.md' not found.")
 
 
 # Další kontroly lze přidávat zde (CPU, disk, certifikáty, zálohy...)

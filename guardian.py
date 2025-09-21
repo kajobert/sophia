@@ -5,6 +5,7 @@ import sys
 from datetime import datetime
 import psutil
 import yaml
+from sophia_monitor import check_recurring_errors
 
 LOG_DIR = "logs"
 LOG_FILE = os.path.join(LOG_DIR, "guardian.log")
@@ -63,9 +64,12 @@ def main():
     log_message(f"Bude použit Python interpret: {python_executable}")
 
     threshold_breach_counter = 0
+    last_error_check = time.time()
 
     while True:
         log_message(f"Spouštím proces '{MAIN_SCRIPT}'...")
+        # Ensure logs directory exists before starting the main script
+        ensure_log_dir_exists()
         process = subprocess.Popen(
             [python_executable, MAIN_SCRIPT],
             stdout=subprocess.PIPE,
@@ -96,6 +100,17 @@ def main():
                     break
             else:
                 threshold_breach_counter = 0
+
+            # Periodická kontrola chyb
+            if time.time() - last_error_check > 300:  # 5 minutes
+                log_message("Provádím periodickou kontrolu chronických chyb...")
+                try:
+                    # We need to pass the log paths to the function
+                    log_files = [os.path.join(LOG_DIR, "sophia_main.log"), LOG_FILE]
+                    check_recurring_errors(log_files)
+                except Exception as e:
+                    log_message(f"CHYBA při kontrole chronických chyb: {e}")
+                last_error_check = time.time()
 
             time.sleep(4)  # Celkový cyklus je cca 5s (1s z cpu_percent + 4s sleep)
 
