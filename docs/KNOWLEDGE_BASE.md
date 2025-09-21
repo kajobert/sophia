@@ -79,6 +79,16 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
 **Dopad**: Zvýšení spolehlivosti etického modulu a zabránění provádění nebezpečných akcí. Dlouhodobě je potřeba investovat do lepšího embedding modelu.
 
 ---
+
+### Téma: Enforcement Sandbox a Auditní Bezpečnost Testů
+**Datum**: 2025-09-21
+**Autor**: Jules (na základě práce z forku ShotyCZ/sophia)
+**Kontext**: Bylo zjištěno, že automatizované testy nejsou plně izolované ("hermetické"). Mohly potenciálně provádět nebezpečné operace, jako jsou reálné síťové požadavky, zápis do souborového systému mimo určené oblasti nebo změny v prostředí. To představovalo bezpečnostní riziko a vedlo k nestabilním a nespolehlivým testům.
+**Zjištění/Rozhodnutí**: Byl implementován globální "enforcement sandbox" pomocí `autouse` fixture v `tests/conftest.py`. Toto řešení aktivně blokuje všechny potenciálně nebezpečné operace během provádění testů.
+**Důvod**: Cílem bylo zajistit 100% bezpečnost a spolehlivost testovací sady. Tím, že jsou všechny testy nuceny běžet v izolovaném prostředí, se eliminuje riziko vedlejších efektů a zajišťuje se, že testy ověřují pouze zamýšlenou funkcionalitu. Každý pokus o porušení sandboxu je navíc auditně logován.
+**Dopad**: Výsledkem je profesionální, robustní a bezpečná testovací sada. Zvyšuje to důvěru v kód a chrání vývojové i CI/CD prostředí. Tento přístup také vynucuje psaní kvalitnějších testů, které explicitně mockují své závislosti, místo aby se spoléhaly na reálné služby.
+
+---
 <br>
 
 <p align="center">
