@@ -1,6 +1,7 @@
 import unittest
 import os
 import shutil
+from unittest.mock import patch, MagicMock
 from tools.code_executor import ExecutePythonScriptTool, RunUnitTestsTool
 from tools.file_system import WriteFileTool, SANDBOX_DIR
 
@@ -41,11 +42,17 @@ if __name__ == '__main__':
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    def test_execute_script_success(self):
+    @patch('tools.code_executor.subprocess.run')
+    def test_execute_script_success(self, mock_subprocess_run):
         """Test successfully executing a Python script from the sandbox."""
+        # Configure the mock to simulate successful execution
+        mock_process = MagicMock()
+        mock_process.stdout = 'Hello from script'
+        mock_process.stderr = ''
+        mock_subprocess_run.return_value = mock_process
+
         result = self.executor_tool._run(file_path=self.script_path)
         self.assertIn("Hello from script", result)
-        # Successful script execution should not produce stderr
         self.assertNotIn("STDERR", result)
 
     def test_execute_script_outside_sandbox(self):
@@ -54,8 +61,15 @@ if __name__ == '__main__':
         self.assertIn("Error: Path", result)
         self.assertIn("outside the allowed /sandbox directory", result)
 
-    def test_run_unit_tests_success(self):
+    @patch('tools.code_executor.subprocess.run')
+    def test_run_unit_tests_success(self, mock_subprocess_run):
         """Test successfully running a unit test file from the sandbox."""
+        # Configure the mock to simulate successful test run
+        mock_process = MagicMock()
+        mock_process.stdout = ''
+        mock_process.stderr = 'Ran 1 test in 0.001s\n\nOK'
+        mock_subprocess_run.return_value = mock_process
+
         result = self.unittest_tool._run(test_file_path=self.test_script_path)
         # unittest output goes to stderr by default
         self.assertIn("Ran 1 test", result)

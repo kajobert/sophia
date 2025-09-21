@@ -1,18 +1,22 @@
 import pytest
 import os
+import git
+from pathlib import Path
 from agents.aider_agent import AiderAgent, SANDBOX_PATH
 
 
 @pytest.fixture(scope="module")
 def setup_sandbox():
     """Set up a clean sandbox directory for aider tests."""
-    if not os.path.exists(SANDBOX_PATH):
-        os.makedirs(SANDBOX_PATH)
+    sandbox_path = Path(SANDBOX_PATH)
+    sandbox_path.mkdir(exist_ok=True)
+
     # Create a dummy git repo in sandbox for audit testing
-    if not os.path.exists(os.path.join(SANDBOX_PATH, ".git")):
-        os.system(
-            f"cd {SANDBOX_PATH} && git init && git config user.email 'test@test.com' && git config user.name 'Test User' > /dev/null 2>&1"
-        )
+    if not (sandbox_path / ".git").exists():
+        repo = git.Repo.init(sandbox_path)
+        with repo.config_writer() as cw:
+            cw.set_value("user", "email", "test@test.com")
+            cw.set_value("user", "name", "Test User")
     yield
 
 
@@ -27,10 +31,11 @@ def test_aider_agent_init(setup_sandbox):
 def test_aider_agent_propose_change_mocked(setup_sandbox, monkeypatch):
     # Mock the run_aider method to avoid actual subprocess calls
     def mock_run_aider(self, task):
-        # Simulate aider making a change and creating a commit
-        os.system(
-            f"cd {SANDBOX_PATH} && touch new_file.txt && git add . && git commit -m 'feat: Add new file' > /dev/null 2>&1"
-        )
+        # Simulate aider making a change and creating a commit safely
+        repo = git.Repo(SANDBOX_PATH)
+        (Path(SANDBOX_PATH) / "new_file.txt").touch()
+        repo.index.add(["new_file.txt"])
+        repo.index.commit("feat: Add new file")
         return {"status": "success", "message": "Change proposed."}
 
     monkeypatch.setattr(AiderAgent, "run_aider", mock_run_aider)
