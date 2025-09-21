@@ -26,6 +26,9 @@ redis
 celery
 python-multipart
 
+# TUI Application
+textual
+
 # Testing
 pytest
 pytest-asyncio

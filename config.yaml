@@ -6,7 +6,7 @@ execution_mode: "offline"
 # Databáze pro epizodickou paměť a úkoly
 database:
   db_host: "localhost"
-  db_port: 5432
+  db_port: 5434 # Musí odpovídat portu vystavenému v docker-compose.yml
   db_user: "sophia_user"
   db_password: "sophia_password"
   db_name: "sophia_db"
