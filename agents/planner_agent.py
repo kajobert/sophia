@@ -41,9 +41,15 @@ class PlannerAgent:
         Runs the planning task, ensuring the output is a valid JSON plan.
         Retries up to MAX_RETRIES times if the output is not valid JSON.
         """
+        available_tools = [
+            "ExecutePythonScriptTool", "RunUnitTestsTool", "ListDirectoryTool",
+            "ReadFileTool", "WriteFileTool", "GitTool", "MemoryReaderTool", "SystemAwarenessTool"
+        ]
+
         task_description = (
             "Analyze the following user request and create a detailed, step-by-step plan to accomplish it. "
             "The plan must be in a specific JSON format. "
+            f"You must only use the tools from the following list: {', '.join(available_tools)}. "
             f"User Request: {context.original_prompt}"
         )
 
