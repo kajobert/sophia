@@ -1,102 +1,118 @@
 import os
 import sys
+import yaml
+import asyncio
 from unittest.mock import patch, MagicMock
 
-# Klíčové: Nastavení testovacího režimu PŘED importem jakýchkoliv modulů Sophie.
-os.environ["SOPHIA_TEST_MODE"] = "1"
-print(f"SOPHIA_TEST_MODE nastaven na: {os.environ.get('SOPHIA_TEST_MODE')}")
+def load_config():
+    """Načte a parsuje config.yaml."""
+    try:
+        with open("config.yaml", "r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        print("Chyba: config.yaml nebyl nalezen.")
+        return None
+    except yaml.YAMLError as e:
+        print(f"Chyba při parsování config.yaml: {e}")
+        return None
 
-import asyncio
-from core.orchestrator import Orchestrator
-from core.context import SharedContext
-from agents.planner_agent import PlannerAgent
-
-try:
-    from core.llm_config import llm
-except Exception as e:
-    print(f"Došlo k chybě při importu z core.llm_config, což je v pořádku, pokud mockujeme litellm. Chyba: {e}")
-    llm = None # Zajistíme, že llm existuje, i když selže import
-
+# --- Mock Handler pro Offline Režim ---
 def mock_litellm_completion_handler(model, messages, **kwargs):
     """
-    Mock handler pro `litellm.completion`. Nahrazuje skutečné volání API.
-    Vrací předpřipravený plán, pokud detekuje prompt pro plánování.
+    Mock handler pro `litellm.completion`. Vrací předpřipravený plán.
     """
-    prompt_text = " ".join([m.get("content", "") for m in messages]).lower()
+    print("\n--- MOCK LLM: Volání zachyceno, vracím testovací plán pro offline režim. ---\n")
 
-    # Specifická kontrola pro náš testovací případ
-    if "create a detailed, step-by-step plan" in prompt_text and "create a file called mission.txt" in prompt_text:
-        print("\n--- MOCK LLM: Intercepted planning request. Returning hardcoded plan. ---\n")
-
-        plan_json = """
-        [
-            {
-                "step_id": 1,
-                "description": "Create a new file in the sandbox with the mission statement.",
-                "tool_name": "WriteFileTool",
-                "parameters": {
-                    "file_path": "mission.txt",
-                    "content": "The mission of Project Sophia is to build a bridge between human and artificial consciousness."
-                }
+    plan_json = """
+    [
+        {
+            "step_id": 1,
+            "description": "Vytvoření testovacího souboru v sandboxu pro offline režim.",
+            "tool_name": "WriteFileTool",
+            "parameters": {
+                "file_path": "offline_test.txt",
+                "content": "Offline test byl úspěšný."
             }
-        ]
-        """
+        }
+    ]
+    """
 
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message = MagicMock()
-        mock_response.choices[0].message.content = f"```json\n{plan_json}\n```"
-        return mock_response
-
-    print(f"\n--- MOCK LLM: Intercepted an unexpected request for model {model}. Returning generic response. ---\n")
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message = MagicMock()
-    mock_response.choices[0].message.content = "This is a generic mock response for an unhandled case."
+    mock_response.choices[0].message.content = f"```json\n{plan_json}\n```"
     return mock_response
 
-async def run_single_task(prompt: str):
-    print(f"Spouštím úkol s promptem: '{prompt}'")
+async def run_task_logic(prompt: str, mode: str):
+    """
+    Hlavní logika pro plánování a spuštění úkolu.
+    """
+    # Importy modulů Sophie až po potenciálním nastavení prostředí
+    from core.orchestrator import Orchestrator
+    from core.context import SharedContext
+    from agents.planner_agent import PlannerAgent
+    from core.llm_config import llm
+
+    print(f"Spouštím úkol v '{mode}' režimu s promptem: '{prompt}'")
+
+    if mode == "online" and llm is None:
+        print("Chyba: LLM se nepodařilo inicializovat. Zkontrolujte API klíč v .env souboru.")
+        return
+
     print(f"Použitý LLM objekt: {type(llm)}")
 
-    print("\n--- KROK 1: Vytváření plánu ---")
+    # --- KROK 1: Vytvoření plánu ---
+    print(f"\n--- KROK 1: Vytváření plánu ({mode}) ---")
     planner = PlannerAgent(llm=llm)
-    initial_context = SharedContext(session_id="cli_task_session", original_prompt=prompt)
+    initial_context = SharedContext(session_id=f"cli_{mode}_task", original_prompt=prompt)
     planned_context = await asyncio.to_thread(planner.run_task, initial_context)
 
     plan = planned_context.payload.get("plan")
     if not plan:
-        print("Chyba: Planner nevrátil žádný plán. Výstup z planneru:")
-        print(planned_context.payload)
+        print("Chyba: Planner nevrátil žádný plán.")
+        print(f"Výstup z planneru: {planned_context.payload}")
         return
 
     print(f"Plán úspěšně vytvořen: {plan}")
     context_for_execution = planned_context
     context_for_execution.current_plan = plan
 
-    print("\n--- KROK 2: Spouštění plánu ---")
+    # --- KROK 2: Spuštění plánu ---
+    print(f"\n--- KROK 2: Spouštění plánu ({mode}) ---")
     orchestrator = Orchestrator(llm=llm)
     final_context = await orchestrator.execute_plan(context_for_execution)
 
     print("\n--- VÝSLEDEK ÚKOLU ---")
     print(f"Zpětná vazba: {final_context.feedback}")
-    if final_context.payload:
-        print("Payload:")
-        for key, value in final_context.payload.items():
-            print(f"  - {key}: {value}")
-    print("----------------------")
 
 def main():
+    """
+    Načte konfiguraci a spustí úkol v odpovídajícím režimu.
+    """
+    config = load_config()
+    if not config:
+        sys.exit(1)
+
+    mode = config.get("execution_mode", "offline") # Defaultně offline pro bezpečnost
+
     if len(sys.argv) < 2:
-        print("Chyba: Zadejte prosím prompt jako argument.")
+        print("Chyba: Zadejte prosím prompt jako argument v uvozovkách.")
         sys.exit(1)
 
     prompt = " ".join(sys.argv[1:])
 
-    # Klíčové: Spouštíme celý proces uvnitř patch kontextu
-    with patch('litellm.completion', new=mock_litellm_completion_handler):
-        print("--- Mock patch pro 'litellm.completion' je aktivní. ---")
-        asyncio.run(run_single_task(prompt))
+    if mode == "offline":
+        os.environ["SOPHIA_TEST_MODE"] = "1"
+        print("--- Režim: OFFLINE. Používám mock LLM. ---")
+        with patch('litellm.completion', new=mock_litellm_completion_handler):
+            asyncio.run(run_task_logic(prompt, mode))
+    elif mode == "online":
+        print("--- Režim: ONLINE. Používám reálné LLM. ---")
+        # Není potřeba nic nastavovat, `core.llm_config` by měl načíst .env soubor
+        asyncio.run(run_task_logic(prompt, mode))
+    else:
+        print(f"Chyba: Neznámý execution_mode v config.yaml: '{mode}'")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

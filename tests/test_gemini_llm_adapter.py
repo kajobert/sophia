@@ -11,7 +11,8 @@ def test_llm_adapter_initialization():
 
         mock_configure.assert_called_once_with(api_key="test-key")
         mock_model.assert_called_once_with("test-model")
-        assert adapter.model_name == "test-model"
+    # The model_name attribute should now be prefixed for litellm
+    assert adapter.model_name == "gemini/test-model"
 
 
 def test_llm_adapter_initialization_uses_env_var():
