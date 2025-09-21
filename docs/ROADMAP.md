@@ -21,6 +21,12 @@ Následující checklist vizualizuje postup v klíčových oblastech vývoje Sop
     -   [ ] Vývoj Pokročilého "VisionAgenta"
     -   [ ] Experimentální "AudioAgent"
     -   [ ] Integrace do Orchestrace
+-   [ ] **EPIC 5: Plnohodnotné Webové UI**
+    -   [ ] Autentizace a Autorizace
+    -   [ ] Interaktivní Chatovací Rozhraní
+    -   [ ] Správa Souborů
+    -   [ ] Uživatelský Profil a Nastavení
+    -   [ ] Systém Notifikací a Nápovědy
 
 ---
 
@@ -98,6 +104,34 @@ Následující checklist vizualizuje postup v klíčových oblastech vývoje Sop
 
 3.  **Integrace do Orchestrace:**
     *   Upravit `core/orchestrator.py` a `core/meta_agent.py` tak, aby dokázaly pracovat s multimodálními vstupy (obrázky, sekvence obrázků, audio) a na jejich základě delegovat práci správným specializovaným agentům (`VisionAgent`, `AudioAgent`).
+
+---
+
+## EPIC 5: Plnohodnotné Webové UI
+
+**Cíl:** Vytvořit robustní a uživatelsky přívětivé webové rozhraní, které bude sloužit jako hlavní vstupní bod pro interakci se Sophií.
+
+**Technické Úkoly:**
+
+1.  **Autentizace a Autorizace:**
+    *   Implementovat bezpečný systém pro přihlašování a správu uživatelů (např. pomocí OAuth).
+    *   Zavést správu rolí a oprávnění (administrátor, uživatel).
+
+2.  **Interaktivní Chatovací Rozhraní:**
+    *   Vytvořit plně funkční chatovací komponentu pro přímou komunikaci se Sophií.
+    *   Podpora pro formátování kódu, obrázky a další multimediální obsah.
+
+3.  **Správa Souborů:**
+    *   Umožnit nahrávání a správu souborů v kontextu jednotlivých úkolů.
+    *   Prohlížeč souborů pro snadnou navigaci v projektové struktuře.
+
+4.  **Uživatelský Profil a Nastavení:**
+    *   Stránka s uživatelským profilem a možností personalizace.
+    *   Globální nastavení aplikace (jazyk, vzhled, notifikace).
+
+5.  **Systém Notifikací a Nápovědy:**
+    *   Implementovat systém pro zobrazování notifikací o stavu úkolů a dalších událostech.
+    *   Vytvořit interaktivní nápovědu a helpdesk.
 ---
 <br>
 

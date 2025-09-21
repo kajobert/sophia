@@ -9,6 +9,7 @@ class SharedContext(BaseModel):
     """
     session_id: str
     original_prompt: str
+    user: Optional[str] = None
 
     # New structured planning fields
     current_plan: Optional[List[Dict[str, Any]]] = Field(default=None, description="The structured plan currently being executed.")
