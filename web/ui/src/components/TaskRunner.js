@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const TaskRunner = () => {
+const TaskRunner = ({ user }) => {
     const [prompt, setPrompt] = useState('');
     const [taskId, setTaskId] = useState(null);
     const [steps, setSteps] = useState([]);
@@ -70,7 +70,7 @@ const TaskRunner = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt }),
+                body: JSON.stringify({ prompt, user }),
             });
 
             if (!response.ok) {
