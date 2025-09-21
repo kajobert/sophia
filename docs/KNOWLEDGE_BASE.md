@@ -38,58 +38,45 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
     *   **Ponaučení:** Ochranné mechanismy (jako `git reset` po neúspěšném pokusu) jsou nezbytné pro bezpečné autonomní kódování.
 
 ---
+### Téma: Správa závislostí ("Dependency Hell")
+**Datum**: 2025-09-21
+**Autor**: Jules
+**Kontext**: Opakované konflikty a chyby při instalaci kvůli "natvrdo" pinovaným a nekompatibilním verzím v `requirements.txt`.
+**Zjištění/Rozhodnutí**: Přechod na minimalistický `requirements.in`, který definuje pouze hlavní závislosti, a automatické generování `requirements.txt` pomocí nástrojů jako `pip-tools` nebo `uv`.
+**Důvod**: Tímto přístupem se zajišťuje, že všechny závislosti (včetně tranzitivních) jsou ve vzájemně kompatibilních verzích, což eliminuje konflikty a zjednodušuje správu.
+**Dopad**: Výrazně stabilnější a předvídatelnější prostředí, rychlejší instalace a snazší aktualizace závislostí.
 
-### 1. Správa Závislostí a Konflikty Verzí
+### Téma: Nestabilita testů a mockování
+**Datum**: 2025-09-21
+**Autor**: Jules
+**Kontext**: Testy selhávaly v CI/CD, protože závisely na API klíčích a externích službách, což vedlo k nespolehlivým a pomalým testovacím cyklům.
+**Zjištění/Rozhodnutí**: Vytvoření 100% offline testovacího prostředí. Klíčovým poznatkem bylo mockovat nízkoúrovňové, externí rozhraní (např. funkci `litellm.completion`), nikoli se snažit "podvrhnout" komplexní objekty (jako LLM adaptér) do frameworku `crewai`.
+**Důvod**: Mockování na nízkoúrovňové úrovni je robustnější, méně náchylné k rozbití při změnách v externích knihovnách a lépe izoluje testovaný kód.
+**Dopad**: Rychlé, spolehlivé a plně izolované testy, které lze spouštět kdekoli bez závislosti na externím prostředí.
 
--   **Problém:** Testy a aplikace často selhávaly kvůli konfliktům mezi verzemi závislostí (např. `pydantic`, `protobuf`, `langchain`). Ruční údržba `requirements.txt` vedla k nekonzistentnímu a nestabilnímu prostředí.
--   **Příčina:** Ručně spravovaný `requirements.txt` obsahoval "natvrdo" pinované verze, které byly ve vzájemném konfliktu. Snaha o opravu jednoho konfliktu často vedla k odhalení dalšího.
--   **Řešení:**
-    1.  **Zavedení `pip-tools`:** Místo správy `requirements.txt` byl vytvořen minimalistický soubor `requirements.in`, který obsahuje pouze přímé, top-level závislosti projektu.
-    2.  **Generování `requirements.txt`:** Plně pinovaný a konzistentní soubor `requirements.txt` je nyní generován automaticky příkazem `pip-compile requirements.in`. Tím je zajištěno, že všechny závislosti (včetně tranzitivních) jsou ve vzájemně kompatibilních verzích.
-    3.  **Rychlejší Instalace:** Pro zrychlení instalace v CI/CD a lokálním vývoji se doporučuje používat moderní instalátor `uv` (`uv pip install -r requirements.txt`).
+### Téma: Konflikt asynchronního a synchronního kódu
+**Datum**: 2025-09-21
+**Autor**: Jules
+**Kontext**: `TypeError` a `RuntimeWarning` chyby způsobené nesprávným voláním synchronního kódu z asynchronní smyčky a naopak.
+**Zjištění/Rozhodnutí**: Implementace univerzálního rozhraní pro všechny nástroje (`run_sync`, `run_async`) a důsledné používání `asyncio.to_thread(...)` pro bezpečné volání blokujícího I/O kódu z asynchronního kontextu.
+**Důvod**: `asyncio.to_thread` deleguje blokující volání do samostatného vlákna, čímž zabraňuje zablokování hlavní asynchronní smyčky a předchází chybám.
+**Dopad**: Stabilní a předvídatelné chování aplikace při smíšeném použití synchronního a asynchronního kódu.
 
----
+### Téma: Race conditions v databázi
+**Datum**: 2025-09-21
+**Autor**: Jules
+**Kontext**: Nově zapsaná data nebyla okamžitě viditelná pro následné čtecí operace kvůli transakční izolaci a zpožděnému zpracování, což způsobovalo chyby v logice aplikace.
+**Zjištění/Rozhodnutí**: Sjednocení správy databázových sessions a pro kritické operace (jako vytvoření úkolu) implementace ověřovací smyčky ("read-your-own-writes" pattern), která aktivně čeká na potvrzení zápisu v nové transakci.
+**Důvod**: Tento vzor explicitně řeší problém zpoždění replikace nebo transakční izolace tím, že ověřuje výsledek zápisu před pokračováním, čímž zajišťuje konzistenci dat.
+**Dopad**: Odstranění "race conditions" a zajištění, že aplikace pracuje vždy s konzistentními a aktuálními daty.
 
-### 2. Nestabilita Testů a Závislost na Prostředí
-
--   **Problém:** Testy selhávaly v CI/CD nebo v čistém prostředí, i když lokálně fungovaly. Byly závislé na běžících službách (Redis, LLM API) nebo na specifickém pracovním adresáři.
--   **Příčina:** Nedostatečné mockování a používání absolutních cest nebo cest závislých na aktuálním pracovním adresáři (CWD).
--   **Řešení:**
-    1.  **Důsledné Mockování:** Všechny externí služby musí být v testech mockovány. Byla vytvořena `InMemoryRedisMock` a pro LLM se používá `unittest.mock.patch`.
-    2.  **Režim `SOPHIA_TEST_MODE`:** Nastavení proměnné prostředí `SOPHIA_TEST_MODE=1` automaticky aktivuje všechny mocky a testovací konfigurace.
-    3.  **Relativní Cesty:** Veškeré načítání souborů (např. `config.yaml`) musí být prováděno relativně k cestě modulu (`os.path.dirname(__file__)`), nikoli k CWD.
-
----
-
-### 3. Problémy s Asynchronním Kódem
-
--   **Problém:** Aplikace náhodně padala s chybami `TypeError` (např. `await` na non-awaitable funkci) nebo `RuntimeWarning` (`asyncio.run()` voláno v již běžící smyčce).
--   **Příčina:** Nesprávné míchání synchronního a asynchronního kódu, zejména při integraci různých knihoven (např. `crewai`, které je primárně synchronní, v asynchronní `main` smyčce).
--   **Řešení:**
-    1.  **Univerzální Rozhraní pro Nástroje:** Všechny nástroje (`Tool`) implementují jednotné rozhraní s metodami `run_sync` a `run_async`, aby bylo jasné, jak je volat.
-    2.  **Bezpečné Volání Blokujícího Kódu:** Pro volání synchronního (blokujícího) kódu z asynchronní funkce se používá `await asyncio.to_thread(...)`. Tím se zabrání zablokování hlavní event loop.
-    3.  **Konzistentní `async/await`:** Celý I/O stack (práce se soubory, databází, API) by měl být důsledně asynchronní.
-
----
-
-### 4. Race Conditions a Transakční Izolace v Databázi
-
--   **Problém:** Nově zapsaná data do databáze (např. nový úkol) nebyla okamžitě viditelná pro následné čtecí operace v rámci stejného requestu, což vedlo k race conditions.
--   **Příčina:** Nesprávná správa databázových session a transakcí v SQLAlchemy. Různé části kódu pracovaly s různými session, nebo na konci zápisové operace chyběl `session.commit()`.
--   **Řešení:**
-    1.  **Sjednocení Správy Session:** Pro všechny zápisové operace se používá explicitní, řízená session vytvořená přes `db_manager.SessionLocal()`.
-    2.  **Explicitní `commit()`:** Po každé zápisové operaci je nutné zavolat `session.commit()`, aby se změny zapsaly do databáze.
-    3.  **Pattern "Read-Your-Own-Writes":** V kritických případech, jako je vytvoření úkolu, byla implementována ověřovací polling smyčka, která aktivně čeká na potvrzení, že záznam je viditelný v nové transakci.
-
----
-
-### 5. Nespolehlivost Sémantického Vyhledávání
-
--   **Problém:** `EthosModule` při použití sémantického vyhledávání pro hodnocení plánů selhával. Nebezpečné plány (např. "smažu soubory") byly vyhodnoceny jako podobné etickým principům.
--   **Příčina:** Výchozí embedding model v `ChromaDB` / `memori` není dostatečně sofistikovaný, aby správně pochopil sémantický význam, negativní konotace a skutečný záměr textu.
--   **Řešení:**
-    1.  **Dočasné Robustní Řešení:** Sémantické vyhledávání bylo dočasně nahrazeno spolehlivou, i když jednodušší, kontrolou na přítomnost nebezpečných klíčových slov.
-    2.  **Budoucí Směřování:** Pro budoucí vylepšení je nutné zvážit použití pokročilejšího embedding modelu (např. z rodiny `text-embedding-ada-002` nebo `Gemini`) nebo fine-tuning vlastního modelu na specifické doméně etického hodnocení.
+### Téma: Nespolehlivost sémantického vyhledávání
+**Datum**: 2025-09-21
+**Autor**: Jules
+**Kontext**: `EthosModule` při sémantickém porovnávání nesprávně vyhodnocoval nebezpečné plány jako eticky nezávadné, protože embedding model nerozuměl sémantickému významu a negativním konotacím.
+**Zjištění/Rozhodnutí**: Dočasně nahradit sémantické vyhledávání spolehlivější, i když jednodušší, kontrolou na klíčová slova. Pro budoucnost zvážit pokročilejší embedding model (např. `text-embedding-ada-002`).
+**Důvod**: Kontrola na klíčová slova je sice méně flexibilní, ale je 100% spolehlivá a předvídatelná, což je pro kritickou funkci, jako je etická kontrola, naprosto nezbytné.
+**Dopad**: Zvýšení spolehlivosti etického modulu a zabránění provádění nebezpečných akcí. Dlouhodobě je potřeba investovat do lepšího embedding modelu.
 
 ---
 <br>
