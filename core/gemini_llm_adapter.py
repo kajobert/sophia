@@ -43,7 +43,9 @@ class GeminiLLMAdapter(LLM):
             )
 
         genai.configure(api_key=final_api_key)
-        self._model = genai.GenerativeModel(self.model_name)
+        # Use the original model name for the genai client, as it doesn't understand the prefix.
+        # The prefixed `self.model_name` is for crewai/litellm.
+        self._model = genai.GenerativeModel(model)
         self._last_token_usage = 0
 
     def _call(
