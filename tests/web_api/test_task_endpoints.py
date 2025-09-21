@@ -24,10 +24,9 @@ def test_create_task_and_get_status(MockLLMAdapter, MockOrchestrator):
     task_id = response_create.json().get("task_id")
     assert task_id is not None
 
-    # Allow some time for the background task to start and update the context
-    time.sleep(1)
-
     # Step 2: Get the status of the created task
+    # In a test environment, the background task might not have run,
+    # but we can still check if the initial status is correctly reported.
     response_status = client.get(f"/api/v1/tasks/{task_id}")
     assert response_status.status_code == 200
     status_data = response_status.json()

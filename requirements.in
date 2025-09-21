@@ -32,3 +32,4 @@ pytest-asyncio
 pytest-json-report
 GitPython
 asgi-lifespan
+requests

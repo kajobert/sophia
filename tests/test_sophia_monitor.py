@@ -6,18 +6,22 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/../"))
 import sophia_monitor
 
 
-def test_check_integrity_creates_hashes():
-    # Vytvoříme dočasný soubor v rootu workspace, aby byl zachycen globem
-    fname = "test_temp_sophiamonitor.py"
-    with open(fname, "w") as f:
-        f.write('print("test")')
-    try:
-        hashes = sophia_monitor.check_integrity()
-        assert isinstance(hashes, dict)
-        assert fname in hashes
-        assert hashes[fname] is not None
-    finally:
-        os.remove(fname)
+def test_check_integrity_creates_hashes(monkeypatch, tmp_path):
+    """
+    Tests that check_integrity correctly calculates hashes for found files.
+    This test is sandboxed and uses mocks to avoid touching the real filesystem.
+    """
+    # Create a dummy file in a temporary (and safe) directory
+    p = tmp_path / "test_temp_sophiamonitor.py"
+    p.write_text('print("test")')
+
+    # Mock glob.glob to "find" our temporary file when the function under test runs
+    monkeypatch.setattr("sophia_monitor.glob.glob", lambda pattern: [str(p)])
+
+    hashes = sophia_monitor.check_integrity()
+    assert isinstance(hashes, dict)
+    assert str(p) in hashes
+    assert hashes[str(p)] is not None
 
 
 def test_scan_logs_for_errors_detects_pattern():
