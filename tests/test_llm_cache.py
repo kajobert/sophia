@@ -39,15 +39,26 @@ def test_cache_key_differs_by_user():
     assert get_cached_reply(prompt, user2) == reply2
 
 
-def test_cache_ttl_expires():
+def test_cache_ttl_expires(monkeypatch):
+    """Test that a cached item correctly expires after its TTL."""
     prompt = "Ahoj, test TTL"
     user = None
     reply = "Odpověď TTL"
+
+    start_time = time.time()
+
+    # 1. Set the initial time
+    monkeypatch.setattr(time, 'time', lambda: start_time)
     set_cached_reply(prompt, user, reply)
     key = make_cache_key(prompt, user)
-    # Get a client instance for direct manipulation
+
+    # 2. Set the TTL and verify the item is present
     redis_client = get_redis_client()
     redis_client.expire(key, 1)  # Set TTL to 1 second
     assert get_cached_reply(prompt, user) == reply
-    time.sleep(1.2)
+
+    # 3. Simulate time passing beyond the TTL
+    monkeypatch.setattr(time, 'time', lambda: start_time + 1.2)
+
+    # 4. Verify the item has expired
     assert get_cached_reply(prompt, user) is None

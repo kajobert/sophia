@@ -123,8 +123,25 @@ def test_upload_unauth():
         assert resp.status_code == 401
 
 
-def test_login_redirect():
+def test_login_redirect(monkeypatch):
     """Test that the /login endpoint redirects to Google."""
+
+    # Import the correct Mixin class from the authlib library
+    from authlib.integrations.base_client.async_app import AsyncOAuth2Mixin
+
+    # Mock the function within the Mixin that makes the network call
+    async def mock_load_metadata(*args, **kwargs):
+        return {
+            "issuer": "https://accounts.google.com",
+            "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+            "token_endpoint": "https://oauth2.googleapis.com/token",
+            "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
+        }
+
+    monkeypatch.setattr(
+        AsyncOAuth2Mixin, "load_server_metadata", mock_load_metadata
+    )
+
     resp = client.get("/login", follow_redirects=False)
     # It's a redirect status
     assert resp.status_code in [302, 307]
