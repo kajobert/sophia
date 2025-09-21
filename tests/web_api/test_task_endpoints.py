@@ -1,15 +1,16 @@
 import pytest
 import asyncio
 from fastapi.testclient import TestClient
-from web.api.main import app, manager
+from main import app
+from services.websocket_manager import manager
 import time
 from unittest.mock import patch, MagicMock
 
 # Use the TestClient for synchronous endpoints
 client = TestClient(app)
 
-@patch('web.api.main.Orchestrator')
-@patch('web.api.main.GeminiLLMAdapter')
+@patch('main.Orchestrator')
+@patch('main.GeminiLLMAdapter')
 def test_create_task_and_get_status(MockLLMAdapter, MockOrchestrator):
     """
     Tests creating a task, then immediately polling its status.
@@ -43,8 +44,8 @@ def test_get_task_status_not_found():
     response = client.get("/api/v1/tasks/a-non-existent-task-id")
     assert response.status_code == 404
 
-@patch('web.api.main.Orchestrator')
-@patch('web.api.main.GeminiLLMAdapter')
+@patch('main.Orchestrator')
+@patch('main.GeminiLLMAdapter')
 def test_websocket_communication(MockLLMAdapter, MockOrchestrator):
     """
     Tests the WebSocket endpoint by creating a task and listening for updates.

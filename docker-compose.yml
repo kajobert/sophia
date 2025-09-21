@@ -2,15 +2,14 @@ services:
   backend:
     build:
       context: .
-      dockerfile: web/api/Dockerfile
+      dockerfile: Dockerfile
     container_name: sophia-backend
     ports:
       - "8001:8000"
     env_file:
-      - ./web/api/.env
+      - ./.env
     volumes:
-      - ./web/api:/app
-      - /app/node_modules
+      - .:/app
       - ./sandbox:/sandbox
     depends_on:
       - db
