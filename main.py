@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import asyncio
 import os
 from datetime import datetime
@@ -6,6 +10,7 @@ import yaml
 from agents.philosopher_agent import PhilosopherAgent
 from core.context import SharedContext
 from core.orchestrator import Orchestrator
+from core.gemini_llm_adapter import GeminiLLMAdapter
 from crewai import Task
 from memory.advanced_memory import AdvancedMemory
 
@@ -53,11 +58,27 @@ async def main():
         log_message("Kritická chyba: Nelze načíst konfiguraci. Ukončuji běh.")
         exit(1)
 
+    # Načtení konfigurace LLM a vytvoření instance
+    llm_config = config.get("llm_models", {}).get("primary_llm", {})
+    if not llm_config:
+        log_message("Kritická chyba: Konfigurace pro primární LLM nebyla nalezena.")
+        exit(1)
+
+    try:
+        llm = GeminiLLMAdapter(
+            model=llm_config.get("model_name", "gemini-pro"),
+            temperature=llm_config.get("temperature", 0.7),
+        )
+        log_message(f"LLM Adapter pro model {llm.model_name} úspěšně vytvořen.")
+    except Exception as e:
+        log_message(f"Kritická chyba: Nepodařilo se vytvořit LLM adapter: {e}")
+        exit(1)
+
     waking_duration = config.get("lifecycle", {}).get("waking_duration_seconds", 10)
     sleeping_duration = config.get("lifecycle", {}).get("sleeping_duration_seconds", 5)
 
     log_message("Zahajuji cyklus Bdění a Spánku.")
-    orchestrator = Orchestrator()
+    orchestrator = Orchestrator(llm=llm)
 
     while True:
         log_message("STAV: Bdění - Kontrola nových úkolů.")
