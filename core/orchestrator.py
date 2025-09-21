@@ -6,7 +6,7 @@ import asyncio
 from core.context import SharedContext
 from agents.planner_agent import PlannerAgent
 from tools.base_tool import BaseTool
-from web.api.websocket_manager import manager
+from services.websocket_manager import manager
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 

@@ -9,11 +9,6 @@ from services.token_service import create_refresh_token
 # This setup needs to run before `main` is imported
 os.environ["SOPHIA_TEST_MODE"] = "1"
 
-# Add the web/api path to sys.path to allow importing 'main'
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../web/api"))
-)
-
 from main import app  # noqa: E402
 
 client = TestClient(app)
@@ -23,7 +18,7 @@ def test_root():
     """Test the root endpoint."""
     resp = client.get("/")
     assert resp.status_code == 200
-    assert resp.json()["message"].startswith("Sophia Web API")
+    assert resp.json()["message"].startswith("Sophia API")
 
 
 def test_login_and_me_endpoint(monkeypatch):
