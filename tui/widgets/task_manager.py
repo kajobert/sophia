@@ -35,8 +35,9 @@ class TaskManager(Static):
             elif status == 'IN_PROGRESS':
                 style = "yellow"
 
+            status_text = f"[{style}]{status}[/{style}]" if style else status
             table.add_row(
                 task.get('chat_id', 'N/A'),
-                f"[{style}]{status}[/{style}]",
+                status_text,
                 task.get('user_input', 'N/A')
             )
