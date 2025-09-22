@@ -98,7 +98,30 @@ Pro hlubší vhled do našich principů doporučujeme prostudovat **[🧬 DNA.md
 
 ---
 
-## 2. Architektura a Struktura Projektu
+## 2. Povinnosti a Udržitelnost
+
+Úspěch tohoto projektu závisí na disciplíně a profesionalitě všech přispěvatelů.
+
+### Udržování Znalostní Báze
+Klíčovou zodpovědností každého přispěvatele je pečlivé a systematické dokumentování práce. Tímto způsobem budujeme kolektivní paměť, která zabraňuje opakování chyb a urychluje budoucí vývoj.
+
+- **Pro AI Agenty:** Všechny vaše povinnosti, pracovní postupy a formát pro záznamy do znalostní báze jsou definovány v **[`AGENTS.md`](../AGENTS.md)**. Tento dokument je pro vás **závazný**.
+- **Pro Lidské Vývojáře:** Očekává se, že budete dodržovat stejné standardy profesionality a dokumentace jako naši AI partneři. Inspirujte se a dodržujte postupy uvedené v `AGENTS.md`.
+
+### Code Review a Kvalita
+Před schválením a sloučením jakéhokoliv Pull Requestu (PR) je třeba zkontrolovat následující body:
+
+-   [ ] **Funkčnost:** Dělá kód to, co má? Byl otestován lokálně?
+-   [ ] **Testy:** Jsou pro novou funkčnost napsány dostatečné testy? Všechny testy (`pytest`) procházejí?
+-   [ ] **Kvalita Kódu:** Prošel kód úspěšně kontrolou `ruff check .` a `ruff format --check .`?
+-   [ ] **Soulad s Etikou:** Je navrhovaná změna v souladu s principy v `DNA.md`?
+-   [ ] **Dokumentace:** Byla aktualizována veškerá relevantní dokumentace? Byl vytvořen záznam ve znalostní bázi v souladu s `AGENTS.md`?
+-   [ ] **Popis PR:** Je v popisu Pull Requestu jasně vysvětleno, co se mění a proč?
+-   [ ] **Správa Závislostí:** Pokud byly přidány nové závislosti, jsou v `requirements.in` a je `requirements.txt` aktuální?
+
+---
+
+## 3. Architektura a Struktura Projektu
 
 Sophia je navržena jako modulární, multi-agentní systém s odděleným webovým rozhraním.
 
@@ -127,7 +150,7 @@ Noví přispěvatelé by měli brát tento budoucí stav v potaz při návrhu no
 
 ---
 
-## 3. Jak Přidat Nového Agenta nebo Nástroj
+## 4. Jak Přidat Nového Agenta nebo Nástroj
 
 Modularita je klíčová. Přidání nové funkčnosti je navrženo tak, aby bylo co nejjednodušší.
 
@@ -199,7 +222,7 @@ Následně integrujte tohoto agenta do příslušného `Crew` v `autogen_team.py
 
 ---
 
-## 4. Průvodce Testováním
+## 5. Průvodce Testováním
 
 Kvalitní testy jsou základem stability projektu.
 
@@ -209,20 +232,6 @@ Kvalitní testy jsou základem stability projektu.
     ```
 -   **Offline First:** Testy jsou navrženy tak, aby běžely **offline** a nevyžadovaly aktivní API klíče ani připojení k externím službám. Využíváme mockování, kde je to nutné.
 -   **Psaní testů:** Nové testy přidávejte do adresáře `tests/`. Snažte se pokrýt jak úspěšné scénáře, tak i chybové stavy.
-
----
-
-## 5. Code Review Checklist
-
-Před schválením a sloučením Pull Requestu (PR) je třeba zkontrolovat následující body:
-
--   [ ] **Funkčnost:** Dělá kód to, co má? Byl otestován lokálně?
--   [ ] **Testy:** Jsou pro novou funkčnost napsány dostatečné testy? Všechny testy (`pytest`) procházejí?
--   [ ] **Kvalita Kódu:** Prošel kód úspěšně kontrolou `ruff check .` a `ruff format --check .`?
--   [ ] **Dokumentace:** Je kód srozumitelný? Jsou složitější části okomentovány? Byla aktualizována relevantní dokumentace (např. tento `DEVELOPER_GUIDE.md`)?
--   [ ] **Soulad s Etikou:** Je navrhovaná změna v souladu s principy v `DNA.md`?
--   [ ] **Popis PR:** Je v popisu Pull Requestu jasně vysvětleno, co se mění a proč?
--   [ ] **Správa Závislostí:** Pokud byly přidány nové závislosti, jsou v `requirements.in` a je `requirements.txt` aktuální?
 
 ---
 <br>
