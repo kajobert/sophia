@@ -40,10 +40,10 @@ class SophiaTUI(App):
             yield self.log_viewer
         yield Footer()
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         """Spustí se po připojení widgetů."""
         # Automaticky spustíme jádro při startu TUI
-        self.run_action("start_core")
+        await self.run_action("start_core")
         # Nastavíme periodickou aktualizaci seznamu úkolů
         self.set_interval(5, self.update_task_table)
 
@@ -82,5 +82,15 @@ class SophiaTUI(App):
 
 
 if __name__ == "__main__":
+    import logging
+
+    # Nastavení logování do souboru pro ladění
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename="tui_debug.log",
+        filemode="w",
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+
     app = SophiaTUI()
     app.run()
