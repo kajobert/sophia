@@ -89,6 +89,16 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
 **Dopad**: Výsledkem je profesionální, robustní a bezpečná testovací sada. Zvyšuje to důvěru v kód a chrání vývojové i CI/CD prostředí. Tento přístup také vynucuje psaní kvalitnějších testů, které explicitně mockují své závislosti, místo aby se spoléhaly na reálné služby.
 
 ---
+
+### Téma: Vytvoření interaktivního terminálového nástroje pro testování
+**Datum**: 2025-09-22
+**Autor**: Jules
+**Kontext**: Pro efektivní ladění a testování jádra Sophie bylo potřeba vytvořit jednoduchý způsob, jak interagovat s její logikou přímo z terminálu, bez nutnosti spouštět kompletní webovou aplikaci přes Docker. Cílem bylo rychle testovat cyklus "zadání -> plánování -> provedení".
+**Zjištění/Rozhodnutí**: Byl vytvořen skript `interactive_session.py`. Tento skript inicializuje klíčové komponenty (`LLM`, `PlannerAgent`, `Orchestrator`) a spouští interaktivní smyčku (REPL), která umožňuje uživateli zadávat textové požadavky. Bylo zjištěno, že pro úspěšnou inicializaci je nutné mít vytvořený soubor `.env` s alespoň dočasnou (dummy) hodnotou pro `GEMINI_API_KEY`.
+**Důvod**: Tento přístup dramaticky zrychluje vývojový cyklus. Umožňuje přímou a okamžitou zpětnou vazbu při testování agentů a jejich nástrojů, což je mnohem efektivnější než ladění přes logy z Docker kontejnerů. Bylo zvoleno řešení v podobě samostatného skriptu pro jeho jednoduchost a přímou kontrolu nad procesem.
+**Dopad**: Projekt získal nový nástroj pro rychlé prototypování a ladění. Vývojáři mohou nyní snadno testovat funkčnost jádra Sophie spuštěním jediného příkazu: `.venv/bin/python interactive_session.py`. To snižuje bariéru pro přispívání a usnadňuje diagnostiku problémů.
+
+---
 <br>
 
 <p align="center">
