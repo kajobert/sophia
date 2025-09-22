@@ -3,8 +3,7 @@ import asyncio
 import json
 from typing import Type, Optional
 from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool as LangchainBaseTool
-from tools.base_tool import BaseTool
+from crewai.tools import BaseTool
 from memory.advanced_memory import AdvancedMemory
 from core.utils import CustomJSONEncoder
 
@@ -36,16 +35,13 @@ class MemoryReaderToolInput(BaseModel):
     )
 
 
-class MemoryReaderTool(LangchainBaseTool, BaseTool):
+class MemoryReaderTool(BaseTool):
     name: str = "Memory Reader"
     description: str = (
         "Reads the N most recent entries from the memory. Can optionally filter by memory type "
         "to get specific types of memories, such as 'CONVERSATION' for past dialogues or 'TASK' for task outcomes."
     )
     args_schema: Type[BaseModel] = MemoryReaderToolInput
-
-    def execute(self, **kwargs) -> str:
-        return self._run(**kwargs)
 
     def _run(self, n: int = 10, mem_type: Optional[str] = None) -> str:
         """Synchronous execution of the tool."""

@@ -126,13 +126,14 @@ async def main():
         except Exception as e:
             log_message(f"CHYBA: Nepodařilo se zapsat do epizodické paměti: {e}")
 
+        philosopher_wrapper = PhilosopherAgent(llm=llm)
         reflection_task = Task(
             description=(
                 "Read the most recent memories using your tool (defaulting to the last 10). "
                 "Generate a concise, one-paragraph summary of the key events and learnings "
                 "from the last 'waking' cycle. Focus on distilling insights, not just listing events."
             ),
-            agent=PhilosopherAgent(),
+            agent=philosopher_wrapper.get_agent(),
             expected_output="A single, insightful paragraph summarizing the recent past.",
         )
         log_message("Spouštím Filosofa k sebereflexi...")
