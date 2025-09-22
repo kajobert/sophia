@@ -3,6 +3,7 @@ fastapi
 uvicorn[standard]
 python-dotenv
 psutil
+PyYAML
 
 # Database
 psycopg2-binary
