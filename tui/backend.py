@@ -65,10 +65,14 @@ class SophiaController:
     async def get_task_updates(self) -> list:
         """Získá aktualizace o stavech úkolů."""
         try:
-            tasks = await self.memory.get_all_tasks()
+            # Oprava: Voláme správnou metodu pro získání úkolů.
+            tasks = await self.memory.read_last_n_memories(n=100, mem_type="TASK")
             return tasks
         except Exception as e:
             self.app.on_log_message(f"[TUI]: Chyba při načítání úkolů: {e}")
+            # Log the full traceback to the debug file for better diagnostics
+            import logging
+            logging.exception("Error getting task updates")
             return []
 
     async def _read_stream(self, stream: asyncio.StreamReader, on_message: Callable):
