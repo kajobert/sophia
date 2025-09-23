@@ -2,6 +2,7 @@ from fastapi import WebSocket
 import logging
 from typing import Dict, List
 
+
 class WebSocketManager:
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
@@ -27,5 +28,6 @@ class WebSocketManager:
             for connection in self.active_connections[task_id]:
                 await connection.send_json(message)
                 self.logger.info(f"Sent message to task_id {task_id}: {message}")
+
 
 manager = WebSocketManager()

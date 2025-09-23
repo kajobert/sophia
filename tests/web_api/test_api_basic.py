@@ -1,27 +1,21 @@
 import os
-import sys
 
 import pytest
-from fastapi.testclient import TestClient
 from services.token_service import create_refresh_token
 
 
 # This setup needs to run before `main` is imported
 os.environ["SOPHIA_TEST_MODE"] = "1"
 
-from main import app  # noqa: E402
 
-client = TestClient(app)
-
-
-def test_root():
+def test_root(client):
     """Test the root endpoint."""
     resp = client.get("/")
     assert resp.status_code == 200
     assert resp.json()["message"].startswith("Sophia API")
 
 
-def test_login_and_me_endpoint(monkeypatch):
+def test_login_and_me_endpoint(client, monkeypatch):
     """Test the test-login and /me endpoint."""
     # Ensure the test user is an admin for this test
     monkeypatch.setenv("SOPHIA_ADMIN_EMAILS", "test@example.com")
@@ -29,6 +23,7 @@ def test_login_and_me_endpoint(monkeypatch):
     from core import config as sophia_config
     from services import roles
     import importlib
+
     importlib.reload(sophia_config)
     importlib.reload(roles)
 
@@ -44,7 +39,7 @@ def test_login_and_me_endpoint(monkeypatch):
         assert data["role"] == "admin"
 
 
-def test_logout_and_session():
+def test_logout_and_session(client):
     """Test that logout invalidates the session."""
     with client as c:
         # Login first
@@ -62,7 +57,7 @@ def test_logout_and_session():
         assert resp.status_code == 401
 
 
-def test_refresh_token():
+def test_refresh_token(client):
     """Test that a refresh token can restore a session."""
     with client as c:
         # 1. Login to get a valid user
@@ -92,7 +87,7 @@ def test_refresh_token():
 @pytest.mark.skip(
     reason="Requires a running Redis and Celery worker, which is not available in the test environment."
 )
-def test_chat_async_endpoints():
+def test_chat_async_endpoints(client):
     """Test the async chat submission and result retrieval."""
     with client as c:
         # Submit a task
@@ -110,7 +105,7 @@ def test_chat_async_endpoints():
         ]  # Depending on test speed
 
 
-def test_upload_unauth():
+def test_upload_unauth(client):
     """Test that uploading without auth fails."""
     with client as c:
         c.post("/logout")  # Ensure clean session
@@ -118,7 +113,7 @@ def test_upload_unauth():
         assert resp.status_code == 401
 
 
-def test_login_redirect(monkeypatch):
+def test_login_redirect(client, monkeypatch):
     """Test that the /login endpoint redirects to Google."""
 
     # Import the correct Mixin class from the authlib library
@@ -133,9 +128,7 @@ def test_login_redirect(monkeypatch):
             "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
         }
 
-    monkeypatch.setattr(
-        AsyncOAuth2Mixin, "load_server_metadata", mock_load_metadata
-    )
+    monkeypatch.setattr(AsyncOAuth2Mixin, "load_server_metadata", mock_load_metadata)
 
     resp = client.get("/login", follow_redirects=False)
     # It's a redirect status

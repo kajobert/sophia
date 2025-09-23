@@ -7,11 +7,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.widgets import Header, Footer, Input
-from textual.reactive import reactive
 
 from tui.backend import SophiaController
 from tui.widgets.log_viewer import LogViewer
 from tui.widgets.task_manager import TaskManager
+
 
 class SophiaTUI(App):
     """Interaktivní terminálová aplikace pro Sophii."""

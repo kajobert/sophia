@@ -3,13 +3,13 @@ fastapi
 uvicorn[standard]
 python-dotenv
 psutil
-PyYAML
+pyyaml
+pydantic
 
 # Database
 psycopg2-binary
 
 # AI Agent Frameworks & Libraries
-crewai
 autogen
 langgraph
 langchain
@@ -19,6 +19,7 @@ google-generativeai
 litellm
 memorisdk
 httpx
+marko
 
 # Web API & Auth
 authlib
@@ -26,6 +27,7 @@ itsdangerous
 redis
 celery
 python-multipart
+PyJWT
 
 # TUI Application
 textual
@@ -37,3 +39,4 @@ pytest-json-report
 GitPython
 asgi-lifespan
 requests
+pre-commit
