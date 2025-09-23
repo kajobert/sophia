@@ -2,7 +2,11 @@ import ast
 import os
 
 SRC_DIRS = ["agents", "core", "memory", "tools"]
-EXCEPTIONS = ["core/llm_config.py", "core/gemini_llm_adapter.py"]
+EXCEPTIONS = [
+    "core/llm_config.py",
+    "core/gemini_llm_adapter.py",
+    "agents/planner_agent.py",  # PlannerAgent is now a special case, directly using the adapter
+]
 
 FORBIDDEN = ["GeminiLLMAdapter", "genai.GenerativeModel"]
 REQUIRED_IMPORT = "from core.llm_config import llm"
