@@ -48,7 +48,7 @@ def test_cache_ttl_expires(monkeypatch):
     start_time = time.time()
 
     # 1. Set the initial time
-    monkeypatch.setattr(time, 'time', lambda: start_time)
+    monkeypatch.setattr(time, "time", lambda: start_time)
     set_cached_reply(prompt, user, reply)
     key = make_cache_key(prompt, user)
 
@@ -58,7 +58,7 @@ def test_cache_ttl_expires(monkeypatch):
     assert get_cached_reply(prompt, user) == reply
 
     # 3. Simulate time passing beyond the TTL
-    monkeypatch.setattr(time, 'time', lambda: start_time + 1.2)
+    monkeypatch.setattr(time, "time", lambda: start_time + 1.2)
 
     # 4. Verify the item has expired
     assert get_cached_reply(prompt, user) is None

@@ -2,6 +2,7 @@ from textual.widgets import DataTable, Input, Static
 from textual.containers import Vertical
 from textual.app import ComposeResult
 
+
 class TaskManager(Static):
     """A widget for submitting tasks and viewing their status."""
 
@@ -26,18 +27,16 @@ class TaskManager(Static):
         table.clear()
         for task in tasks:
             # Přidáváme řádek s barevným stavem pro lepší přehlednost
-            status = task.get('status', 'N/A')
+            status = task.get("status", "N/A")
             style = ""
-            if status == 'TASK_COMPLETED':
+            if status == "TASK_COMPLETED":
                 style = "green"
-            elif status == 'TASK_FAILED':
+            elif status == "TASK_FAILED":
                 style = "red"
-            elif status == 'IN_PROGRESS':
+            elif status == "IN_PROGRESS":
                 style = "yellow"
 
             status_text = f"[{style}]{status}[/{style}]" if style else status
             table.add_row(
-                task.get('chat_id', 'N/A'),
-                status_text,
-                task.get('user_input', 'N/A')
+                task.get("chat_id", "N/A"), status_text, task.get("user_input", "N/A")
             )

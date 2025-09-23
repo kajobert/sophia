@@ -47,7 +47,9 @@ class FileSystemBaseTool(LangchainBaseTool, BaseTool):
     """Base tool for file system operations with sandbox validation."""
 
     def execute(self, **kwargs) -> any:
-        raise NotImplementedError("This is a base class and should not be executed directly.")
+        raise NotImplementedError(
+            "This is a base class and should not be executed directly."
+        )
 
     def _validate_path(self, file_path: str) -> str:
         """
@@ -56,7 +58,7 @@ class FileSystemBaseTool(LangchainBaseTool, BaseTool):
         """
         # Sanitize the file_path by removing any leading slashes to prevent os.path.join
         # from treating it as an absolute path. This ensures all paths are relative to SANDBOX_DIR.
-        safe_file_path = file_path.lstrip('/')
+        safe_file_path = file_path.lstrip("/")
 
         full_path = os.path.abspath(os.path.join(SANDBOX_DIR, safe_file_path))
 

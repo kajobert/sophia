@@ -4,6 +4,7 @@ import logging
 from core.context import SharedContext
 from core.gemini_llm_adapter import GeminiLLMAdapter
 
+
 class PlannerAgent:
     """
     A class to generate executable plans using a language model, without external frameworks.
@@ -34,8 +35,14 @@ class PlannerAgent:
         Builds a detailed, structured prompt for the LLM to generate a plan.
         """
         available_tools = [
-            "ExecutePythonScriptTool", "RunUnitTestsTool", "ListDirectoryTool",
-            "ReadFileTool", "WriteFileTool", "GitTool", "MemoryReaderTool", "SystemAwarenessTool"
+            "ExecutePythonScriptTool",
+            "RunUnitTestsTool",
+            "ListDirectoryTool",
+            "ReadFileTool",
+            "WriteFileTool",
+            "GitTool",
+            "MemoryReaderTool",
+            "SystemAwarenessTool",
         ]
 
         # This structured prompt is designed to be more robust and give the LLM clear instructions.
@@ -78,7 +85,9 @@ Now, generate the plan for the user's request.
         prompt = self._build_prompt(context)
 
         for attempt in range(self.MAX_RETRIES):
-            self.logger.info(f"Running PlannerAgent, attempt {attempt + 1}/{self.MAX_RETRIES}")
+            self.logger.info(
+                f"Running PlannerAgent, attempt {attempt + 1}/{self.MAX_RETRIES}"
+            )
             try:
                 # Direct LLM call
                 raw_response = self.llm.invoke(prompt)
@@ -92,32 +101,42 @@ Now, generate the plan for the user's request.
 
                 # Handle the case where the LLM correctly decides the task is impossible
                 if isinstance(parsed_plan, list) and not parsed_plan:
-                    self.logger.info("Planner correctly determined the task is un-plannable.")
+                    self.logger.info(
+                        "Planner correctly determined the task is un-plannable."
+                    )
                     context.payload["plan"] = []
                     context.feedback = "The task could not be completed as it is outside my capabilities."
                     return context
 
                 # Validate the structure of the plan
                 if isinstance(parsed_plan, list) and all(
-                    isinstance(step, dict) and
-                    "step_id" in step and
-                    "description" in step and
-                    "tool_name" in step and
-                    "parameters" in step
+                    isinstance(step, dict)
+                    and "step_id" in step
+                    and "description" in step
+                    and "tool_name" in step
+                    and "parameters" in step
                     for step in parsed_plan
                 ):
                     context.payload["plan"] = parsed_plan
-                    self.logger.info(f"Successfully generated and validated plan: {parsed_plan}")
+                    self.logger.info(
+                        f"Successfully generated and validated plan: {parsed_plan}"
+                    )
                     return context
                 else:
                     raise ValueError("Plan structure is invalid.")
 
             except (json.JSONDecodeError, ValueError) as e:
-                self.logger.warning(f"Attempt {attempt + 1} failed: Invalid JSON or plan structure. Error: {e}")
+                self.logger.warning(
+                    f"Attempt {attempt + 1} failed: Invalid JSON or plan structure. Error: {e}"
+                )
                 if attempt == self.MAX_RETRIES - 1:
-                    self.logger.error("PlannerAgent failed to generate a valid plan after all retries.")
+                    self.logger.error(
+                        "PlannerAgent failed to generate a valid plan after all retries."
+                    )
                     context.payload["plan"] = None
-                    context.feedback = "PlannerAgent failed to generate a valid JSON plan."
+                    context.feedback = (
+                        "PlannerAgent failed to generate a valid JSON plan."
+                    )
                     return context
 
         return context

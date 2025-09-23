@@ -1,4 +1,3 @@
-import asyncio
 import os
 import uuid
 from datetime import datetime
@@ -6,53 +5,64 @@ from datetime import datetime
 import yaml
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from dotenv import load_dotenv
-from fastapi import (BackgroundTasks, Body, Depends, FastAPI, File,
-                     HTTPException, Request, UploadFile, WebSocket,
-                     WebSocketDisconnect)
+from fastapi import (
+    BackgroundTasks,
+    Body,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
-from agents.philosopher_agent import PhilosopherAgent
+# --- New Architecture Imports ---
 from core import config as sophia_config
-from core.context import SharedContext
+from core.cognitive_layers import MammalianBrain, ReptilianBrain
 from core.gemini_llm_adapter import GeminiLLMAdapter
-from core.orchestrator import Orchestrator
-from crewai import Task
-from memory.advanced_memory import AdvancedMemory
+from core.memory_systems import LongTermMemory, ShortTermMemory
+from core.neocortex import Neocortex
+from agents.planner_agent import PlannerAgent
+
+# --- End New Architecture Imports ---
+
 from services.audit_service import log_event
-from services.celery_worker import celery_app
 from services.roles import ROLE_USER, get_user_role, require_role
 from services.token_service import create_refresh_token, verify_refresh_token
-from services.user_service import (clear_user_session, get_current_user,
-                                   set_user_session)
+from services.user_service import clear_user_session, get_current_user, set_user_session
 from services.websocket_manager import manager
 
-# Načtení .env souboru
 load_dotenv()
 
-# --- Globální proměnné a konfigurace ---
 CONFIG_FILE = "config.yaml"
 LOG_DIR = "logs"
 LOG_FILE = os.path.join(LOG_DIR, "sophia_main.log")
 
-# --- FastAPI Aplikace ---
 app = FastAPI(title="Sophia: An Evolving AI", version="1.0")
 
-# Middleware
 app.add_middleware(SessionMiddleware, secret_key=sophia_config.SECRET_KEY)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:3000", "http://localhost:3001"],
+    allow_origins=[
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Logování ---
+
 def ensure_log_dir_exists():
     os.makedirs(LOG_DIR, exist_ok=True)
+
 
 def log_message(message):
     ensure_log_dir_exists()
@@ -61,86 +71,73 @@ def log_message(message):
         f.write(f"{timestamp} - {message}\n")
     print(message, flush=True)
 
-# --- Načtení Konfigurace ---
+
 def load_config():
     try:
         with open(CONFIG_FILE, "r") as f:
             return yaml.safe_load(f)
     except FileNotFoundError:
-        log_message(f"CHYBA: Konfigurační soubor '{CONFIG_FILE}' nebyl nalezen.")
+        log_message(f"ERROR: Config file '{CONFIG_FILE}' not found.")
         return None
     except yaml.YAMLError as e:
-        log_message(f"CHYBA: Chyba při parsování konfiguračního souboru: {e}")
+        log_message(f"ERROR: Error parsing config file: {e}")
         return None
 
-# --- Globální instance pro Orchestrator a LLM ---
-llm_adapter: GeminiLLMAdapter | None = None
-orchestrator: Orchestrator | None = None
-tasks = {}
 
-# --- Cyklus Vědomí (jako background task) ---
-async def consciousness_loop():
-    global orchestrator, llm_adapter
-    log_message("Jádro Vědomí (consciousness_loop) se spouští na pozadí.")
+# --- Global instances for the new architecture ---
+neocortex: Neocortex | None = None
+stm: ShortTermMemory | None = None
 
-    config = load_config()
-    if not config:
-        log_message("Kritická chyba: Nelze načíst konfiguraci. Cyklus vědomí se nespustí.")
-        return
-
-    waking_duration = config.get("lifecycle", {}).get("waking_duration_seconds", 30)
-    sleeping_duration = config.get("lifecycle", {}).get("sleeping_duration_seconds", 60)
-
-    while True:
-        log_message("STAV: Bdění - Kontrola nových úkolů z paměti.")
-        memory = AdvancedMemory()
-        next_task = await memory.get_next_task()
-
-        if next_task:
-            task_id = next_task["chat_id"]
-            task_description = next_task["user_input"]
-            log_message(f"Nalezen nový úkol z paměti: {task_description} (ID: {task_id})")
-            context = SharedContext(session_id=task_id, original_prompt=task_description)
-            tasks[task_id] = context
-            # Orchestrator je spuštěn přes API, zde jen zaznamenáme
-            await memory.update_task_status(task_id, "TASK_SEEN")
-        else:
-            log_message("Žádné nové úkoly ve frontě, odpočívám...")
-
-        await asyncio.sleep(waking_duration)
-        memory.close()
-
-        log_message("STAV: Spánek - Fáze sebereflexe a konsolidace.")
-        # ... (logika spánku zůstává stejná)
-        await asyncio.sleep(sleeping_duration)
 
 @app.on_event("startup")
 async def startup_event():
-    global llm_adapter, orchestrator
-    log_message("FastAPI aplikace se spouští. Inicializuji globální instance.")
+    global neocortex, stm
+    log_message("FastAPI application starting up. Initializing cognitive architecture.")
 
     config = load_config()
     if not config:
-        log_message("Kritická chyba: Konfigurace pro LLM nebyla nalezena při startu.")
+        log_message("CRITICAL: LLM configuration not found on startup.")
         return
 
-    llm_config = config.get("llm_models", {}).get("primary_llm", {})
-    try:
-        llm_adapter = GeminiLLMAdapter(
-            model=llm_config.get("model_name", "gemini-pro"),
-            temperature=llm_config.get("temperature", 0.7),
-        )
-        orchestrator = Orchestrator(llm=llm_adapter)
-        log_message(f"LLM Adapter a Orchestrator úspěšně vytvořeny.")
-    except Exception as e:
-        log_message(f"Kritická chyba: Nepodařilo se vytvořit LLM adapter nebo Orchestrator: {e}")
+    llm_config_data = config.get("llm_models", {}).get("primary_llm", {})
 
-    # Spuštění cyklu vědomí na pozadí
-    # asyncio.create_task(consciousness_loop()) # Prozatím vypnuto, aby nerušilo API
+    try:
+        # 1. Initialize LLM Adapter
+        llm_adapter = GeminiLLMAdapter(
+            model=llm_config_data.get("model_name", "gemini-pro"),
+            temperature=llm_config_data.get("temperature", 0.7),
+        )
+
+        # 2. Initialize Memory Systems
+        stm = ShortTermMemory(
+            redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        )
+        ltm = LongTermMemory(
+            db_url=os.getenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/db")
+        )
+
+        # 3. Initialize Planner
+        planner = PlannerAgent(llm=llm_adapter)
+
+        # 4. Initialize Cognitive Layers
+        reptilian_brain = ReptilianBrain(llm_config=llm_config_data)
+        mammalian_brain = MammalianBrain(long_term_memory=ltm)
+
+        # 5. Initialize Neocortex
+        neocortex = Neocortex(
+            reptilian_brain=reptilian_brain,
+            mammalian_brain=mammalian_brain,
+            short_term_memory=stm,
+            planner=planner,
+        )
+        log_message("Neocortex and cognitive architecture initialized successfully.")
+
+    except Exception as e:
+        log_message(f"CRITICAL: Failed to create cognitive architecture: {e}")
+
 
 # --- API Endpoints ---
 
-# Přesunuto z web/api/main.py
 oauth = OAuth(sophia_config.config)
 oauth.register(
     name="google",
@@ -150,14 +147,18 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
+
 @app.get("/")
 def root():
     return {"message": "Sophia API is running."}
 
+
+# ... (Auth endpoints remain the same) ...
 @app.get("/login")
 async def login(request: Request):
     redirect_uri = request.url_for("auth")
     return await oauth.google.authorize_redirect(request, redirect_uri)
+
 
 @app.get("/auth")
 async def auth(request: Request, background_tasks: BackgroundTasks):
@@ -171,12 +172,14 @@ async def auth(request: Request, background_tasks: BackgroundTasks):
     background_tasks.add_task(log_event, "login", user, "Google OAuth2")
     return RedirectResponse(url="/me")
 
+
 @app.get("/me")
 @require_role(ROLE_USER)
 async def me(request: Request):
     user = get_current_user(request)
     role = get_user_role(user)
     return {"user": user, "role": role}
+
 
 @app.post("/logout")
 @require_role(ROLE_USER)
@@ -186,38 +189,53 @@ async def logout(request: Request, background_tasks: BackgroundTasks):
     clear_user_session(request)
     return {"message": "Odhlášení úspěšné"}
 
+
 class TaskRequest(BaseModel):
     prompt: str
     user: str | None = None
 
+
 @app.post("/api/v1/tasks", status_code=202)
 async def create_task(task_request: TaskRequest, background_tasks: BackgroundTasks):
-    global orchestrator
-    if not orchestrator:
-        raise HTTPException(status_code=503, detail="Orchestrator is not available.")
+    global neocortex
+    if not neocortex:
+        raise HTTPException(status_code=503, detail="Neocortex is not available.")
 
     task_id = str(uuid.uuid4())
-    context = SharedContext(original_prompt=task_request.prompt, session_id=task_id, user=task_request.user)
-    tasks[task_id] = context
+    log_message(
+        f"Created new task from user {task_request.user}: {task_request.prompt} (ID: {task_id})"
+    )
 
-    log_message(f"Vytvořen nový úkol od uživatele {task_request.user}: {task_request.prompt} (ID: {task_id})")
-    background_tasks.add_task(orchestrator.execute_plan, context)
+    # The Neocortex now handles the entire process
+    background_tasks.add_task(
+        neocortex.process_input, session_id=task_id, user_input=task_request.prompt
+    )
 
     return {"task_id": task_id}
 
+
 @app.get("/api/v1/tasks/{task_id}")
 async def get_task_status(task_id: str):
-    context = tasks.get(task_id)
-    if not context:
+    global stm
+    if not stm:
+        raise HTTPException(status_code=503, detail="ShortTermMemory is not available.")
+
+    state = stm.load_state(task_id)
+    if not state:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    status = "completed" if context.feedback else "in_progress"
+    # Determine status based on the state
+    is_complete = "plan_success" in [
+        h.get("type") for h in state.get("step_history", [])
+    ]  # This is a simplification
+
     return {
         "task_id": task_id,
-        "status": status,
-        "history": context.step_history,
-        "feedback": context.feedback
+        "status": "completed" if is_complete else "in_progress",
+        "history": state.get("step_history", []),
+        "current_plan": state.get("current_plan", []),
     }
+
 
 @app.websocket("/api/v1/tasks/{task_id}/ws")
 async def websocket_endpoint(websocket: WebSocket, task_id: str):
@@ -228,7 +246,8 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     except WebSocketDisconnect:
         manager.disconnect(websocket, task_id)
 
-# --- Ostatní endpoints ---
+
+# ... (Other endpoints like /refresh, /test-login, /upload remain the same for now) ...
 @app.post("/refresh")
 async def refresh_session(
     request: Request,
@@ -276,5 +295,6 @@ async def upload_file(
 
 if __name__ == "__main__":
     import uvicorn
+
     log_message("Spouštím Sophia API přímo přes Uvicorn.")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

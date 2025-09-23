@@ -33,7 +33,10 @@ class GeminiLLMAdapter(LLM):
         prefixed_model = f"gemini/{model}" if not model.startswith("gemini/") else model
 
         super().__init__(
-            model_name=prefixed_model, temperature=temperature, max_tokens=max_tokens, **kwargs
+            model_name=prefixed_model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            **kwargs,
         )
 
         final_api_key = api_key or os.getenv("GEMINI_API_KEY")
