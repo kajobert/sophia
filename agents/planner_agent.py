@@ -91,6 +91,11 @@ Now, generate the plan for the user's request.
             try:
                 # Direct LLM call
                 raw_response = self.llm.invoke(prompt)
+                # Preserve the raw LLM response in the context payload for debugging
+                try:
+                    context.payload["raw_response"] = raw_response
+                except Exception:
+                    context.payload["raw_response"] = str(raw_response)
 
                 if not raw_response or not raw_response.strip():
                     # This specifically handles the "None or empty response from LLM" error
@@ -123,6 +128,8 @@ Now, generate the plan for the user's request.
                     )
                     return context
                 else:
+                    # Log the raw response for debugging before raising
+                    self.logger.debug(f"Planner raw response (invalid structure): {raw_response}")
                     raise ValueError("Plan structure is invalid.")
 
             except (json.JSONDecodeError, ValueError) as e:
@@ -133,6 +140,11 @@ Now, generate the plan for the user's request.
                     self.logger.error(
                         "PlannerAgent failed to generate a valid plan after all retries."
                     )
+                    # include the last raw response for visibility
+                    try:
+                        context.payload["raw_response_last_attempt"] = raw_response
+                    except Exception:
+                        context.payload["raw_response_last_attempt"] = str(raw_response)
                     context.payload["plan"] = None
                     context.feedback = (
                         "PlannerAgent failed to generate a valid JSON plan."

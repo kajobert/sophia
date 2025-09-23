@@ -157,6 +157,16 @@ class Neocortex:
                 repaired = self.planner.run_task(repair_context)
                 new_steps = repaired.payload.get("plan")
 
+                # DEBUG: if planner returned nothing or an invalid plan, log the raw payload for inspection
+                if not new_steps:
+                    try:
+                        self.logger = logger
+                        logger.debug(
+                            f"Planner raw payload during repair: {repaired.payload}"
+                        )
+                    except Exception:
+                        logger.debug("Planner returned no payload or payload is not inspectable.")
+
                 if new_steps:
                     # If original plan was a single step and planner returned multiple steps,
                     # treat the returned plan as a full replacement (legacy behavior).

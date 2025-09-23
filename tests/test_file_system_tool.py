@@ -164,6 +164,39 @@ class TestFileSystemTools(unittest.TestCase):
 
         asyncio.run(run_test())
 
+    # --- Alias acceptance tests for public execute() methods ---
+
+    def test_writefile_execute_aliases(self):
+        """WriteFileTool.execute should accept both 'file_path' and 'path' aliases."""
+        # using canonical name
+        res1 = self.write_tool.execute(file_path=os.path.join(self.test_dir_name, "exec_a.txt"), content="A")
+        self.assertIn("written successfully", res1)
+        # using alias
+        res2 = self.write_tool.execute(path=os.path.join(self.test_dir_name, "exec_b.txt"), content="B")
+        self.assertIn("written successfully", res2)
+        self.assertTrue(os.path.exists(os.path.join(self.test_dir, "exec_a.txt")))
+        self.assertTrue(os.path.exists(os.path.join(self.test_dir, "exec_b.txt")))
+
+    def test_readfile_execute_aliases(self):
+        """ReadFileTool.execute should accept both 'file_path' and 'path' aliases."""
+        target = os.path.join(self.test_dir_name, "exec_read.txt")
+        self.write_tool._run(file_path=target, content="readme")
+        out1 = self.read_tool.execute(file_path=target)
+        self.assertIn("readme", out1)
+        out2 = self.read_tool.execute(path=target)
+        self.assertIn("readme", out2)
+
+    def test_listdir_execute_aliases(self):
+        """ListDirectoryTool.execute should accept 'path', 'directory', and 'dir' aliases."""
+        # create files
+        self.write_tool._run(file_path=os.path.join(self.test_dir_name, "l1.txt"), content="x")
+        out1 = self.list_tool.execute(path=self.test_dir_name)
+        self.assertIsInstance(out1, list)
+        out2 = self.list_tool.execute(directory=self.test_dir_name)
+        self.assertIsInstance(out2, list)
+        out3 = self.list_tool.execute(dir=self.test_dir_name)
+        self.assertIsInstance(out3, list)
+
 
 if __name__ == "__main__":
     unittest.main()
