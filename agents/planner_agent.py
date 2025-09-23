@@ -1,87 +1,103 @@
 import json
 import re
-from crewai import Agent, Task, Crew
-from core.context import SharedContext
 import logging
+from core.context import SharedContext
+from core.gemini_llm_adapter import GeminiLLMAdapter
 
 class PlannerAgent:
     """
-    A wrapper class for the Planner agent that ensures the output is a valid JSON plan.
+    A class to generate executable plans using a language model, without external frameworks.
     """
 
     MAX_RETRIES = 3
 
-    def __init__(self, llm):
-        self.agent = Agent(
-            role="Master Planner",
-            goal="Create comprehensive, detailed, and executable plans for given tasks and objectives. "
-                 "Each plan must be broken down into logical, sequential steps in a specific JSON format.",
-            backstory=(
-                "I am the Master Planner, an entity born from the need for order and strategy. "
-                "My sole purpose is to analyze complex problems and transform them into understandable, "
-                "step-by-step plans. I track every detail, anticipate potential obstacles, and ensure "
-                "the path to the goal is as efficient as possible. Without my plan, chaos reigns; with my plan, success is inevitable."
-            ),
-            llm=llm,
-            tools=[],
-            verbose=True,
-            allow_delegation=False,
-            max_iter=5,
-        )
+    def __init__(self, llm: GeminiLLMAdapter):
+        """
+        Initializes the PlannerAgent with a direct LLM adapter.
+        """
+        self.llm = llm
+        self.logger = logging.getLogger(__name__)
 
-    def _extract_json_from_reponse(self, response: str) -> str:
-        # Use regex to find the JSON block, even with markdown backticks
+    def _extract_json_from_response(self, response: str) -> str:
+        """
+        Extracts a JSON code block from the LLM's string response.
+        """
+        # Regex to find the JSON block, even with markdown backticks
         match = re.search(r"```(json)?\s*([\s\S]*?)\s*```", response)
         if match:
             return match.group(2).strip()
-        return response.strip() # Fallback to stripping the whole response
+        # Fallback for responses that might just be a raw JSON string
+        return response.strip()
 
-    def run_task(self, context: SharedContext) -> SharedContext:
+    def _build_prompt(self, context: SharedContext) -> str:
         """
-        Runs the planning task, ensuring the output is a valid JSON plan.
-        Retries up to MAX_RETRIES times if the output is not valid JSON.
+        Builds a detailed, structured prompt for the LLM to generate a plan.
         """
         available_tools = [
             "ExecutePythonScriptTool", "RunUnitTestsTool", "ListDirectoryTool",
             "ReadFileTool", "WriteFileTool", "GitTool", "MemoryReaderTool", "SystemAwarenessTool"
         ]
 
-        task_description = (
-            "Analyze the following user request and create a detailed, step-by-step plan to accomplish it. "
-            "The plan must be in a specific JSON format. "
-            f"You must only use the tools from the following list: {', '.join(available_tools)}. "
-            f"User Request: {context.original_prompt}"
-        )
+        # This structured prompt is designed to be more robust and give the LLM clear instructions.
+        prompt = f"""
+You are a master planner AI. Your task is to analyze a user's request and create a detailed, step-by-step execution plan.
 
-        expected_output = (
-            'A valid JSON array of objects, where each object represents a step. '
-            'Each step object must have the following keys: "step_id" (integer), "description" (string), '
-            '"tool_name" (string), and "parameters" (a dictionary of key-value pairs). '
-            'Example: [{"step_id": 1, "description": "List files in the root directory.", "tool_name": "file_system.list_files", "parameters": {"path": "/"}}]'
-            'Do not add any conversational fluff or explanations outside of the JSON structure.'
-        )
+**Constraints & Rules:**
+1.  The plan must be a valid JSON array of objects.
+2.  Each step in the JSON array must be an object with the following keys: `step_id` (integer), `description` (string), `tool_name` (string), and `parameters` (a dictionary).
+3.  You can ONLY use tools from this list: {', '.join(available_tools)}. Do not invent tools.
+4.  If the user's request is impossible or outside your capabilities (e.g., asking for the weather, accessing the internet), you must return an empty JSON array `[]` and nothing else.
+5.  Your entire response must be ONLY the JSON plan. Do not include any other text, explanations, or markdown formatting outside of the JSON itself.
 
-        planning_task = Task(
-            description=task_description,
-            agent=self.agent,
-            expected_output=expected_output,
-        )
+**User Request:**
+"{context.original_prompt}"
 
-        crew = Crew(agents=[self.agent], tasks=[planning_task], verbose=True)
+**Example of a valid response:**
+```json
+[
+  {{
+    "step_id": 1,
+    "description": "List all files in the root of the sandbox directory.",
+    "tool_name": "ListDirectoryTool",
+    "parameters": {{
+      "path": "."
+    }}
+  }}
+]
+```
+
+Now, generate the plan for the user's request.
+"""
+        return prompt
+
+    def run_task(self, context: SharedContext) -> SharedContext:
+        """
+        Runs the planning task by calling the LLM directly and validating the output.
+        Retries up to MAX_RETRIES times if the output is not a valid JSON plan.
+        """
+        prompt = self._build_prompt(context)
 
         for attempt in range(self.MAX_RETRIES):
-            logging.info(f"Running PlannerAgent, attempt {attempt + 1}/{self.MAX_RETRIES}")
+            self.logger.info(f"Running PlannerAgent, attempt {attempt + 1}/{self.MAX_RETRIES}")
             try:
-                result = crew.kickoff()
-                raw_plan = result.raw if hasattr(result, "raw") else str(result)
+                # Direct LLM call
+                raw_response = self.llm.invoke(prompt)
 
-                # Extract JSON from the response
-                json_string = self._extract_json_from_reponse(raw_plan)
+                if not raw_response or not raw_response.strip():
+                    # This specifically handles the "None or empty response from LLM" error
+                    raise ValueError("Received an empty response from the LLM.")
 
-                # Parse the JSON to validate it
+                json_string = self._extract_json_from_response(raw_response)
                 parsed_plan = json.loads(json_string)
 
-                # Basic validation of the plan structure
+                # Handle the case where the LLM correctly decides the task is impossible
+                if isinstance(parsed_plan, list) and not parsed_plan:
+                    self.logger.info("Planner correctly determined the task is un-plannable.")
+                    context.payload["plan"] = []
+                    context.feedback = "The task could not be completed as it is outside my capabilities."
+                    return context
+
+                # Validate the structure of the plan
                 if isinstance(parsed_plan, list) and all(
                     isinstance(step, dict) and
                     "step_id" in step and
@@ -91,22 +107,17 @@ class PlannerAgent:
                     for step in parsed_plan
                 ):
                     context.payload["plan"] = parsed_plan
-                    logging.info(f"Successfully generated and validated plan: {parsed_plan}")
+                    self.logger.info(f"Successfully generated and validated plan: {parsed_plan}")
                     return context
                 else:
                     raise ValueError("Plan structure is invalid.")
 
             except (json.JSONDecodeError, ValueError) as e:
-                logging.warning(f"Attempt {attempt + 1} failed: Invalid JSON or plan structure. Error: {e}")
+                self.logger.warning(f"Attempt {attempt + 1} failed: Invalid JSON or plan structure. Error: {e}")
                 if attempt == self.MAX_RETRIES - 1:
-                    logging.error("PlannerAgent failed to generate a valid plan after all retries.")
+                    self.logger.error("PlannerAgent failed to generate a valid plan after all retries.")
                     context.payload["plan"] = None
                     context.feedback = "PlannerAgent failed to generate a valid JSON plan."
                     return context
 
         return context
-
-
-    def get_agent(self):
-        """Returns the underlying crewAI Agent instance."""
-        return self.agent
