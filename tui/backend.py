@@ -11,11 +11,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from memory.advanced_memory import AdvancedMemory
 
+
 class SophiaController:
     """
     Spravuje běh `main.py` a komunikaci s ním.
     Je navržen tak, aby byl integrován s Textual aplikací.
     """
+
     def __init__(self, app: App):
         self.app = app
         self.process: Optional[asyncio.subprocess.Process] = None
@@ -32,13 +34,18 @@ class SophiaController:
         main_script_path = os.path.join(os.path.dirname(__file__), "..", "main.py")
 
         self.process = await asyncio.create_subprocess_exec(
-            python_executable, main_script_path,
+            python_executable,
+            main_script_path,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
         # Spuštění čtení streamů jako background tasky
-        asyncio.create_task(self._read_stream(self.process.stdout, self.app.on_log_message))
-        asyncio.create_task(self._read_stream(self.process.stderr, self.app.on_log_message))
+        asyncio.create_task(
+            self._read_stream(self.process.stdout, self.app.on_log_message)
+        )
+        asyncio.create_task(
+            self._read_stream(self.process.stderr, self.app.on_log_message)
+        )
 
     async def stop_sophia_core(self):
         """Zastaví proces `main.py`."""
@@ -72,6 +79,7 @@ class SophiaController:
             self.app.on_log_message(f"[TUI]: Chyba při načítání úkolů: {e}")
             # Log the full traceback to the debug file for better diagnostics
             import logging
+
             logging.exception("Error getting task updates")
             return []
 

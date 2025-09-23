@@ -9,7 +9,6 @@ PyYAML
 psycopg2-binary
 
 # AI Agent Frameworks & Libraries
-crewai
 autogen
 langgraph
 langchain
@@ -19,6 +18,9 @@ google-generativeai
 litellm
 memorisdk
 httpx
+
+# Markdown parsing
+marko
 
 # Web API & Auth
 authlib

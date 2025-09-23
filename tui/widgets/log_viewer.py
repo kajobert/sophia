@@ -1,5 +1,6 @@
 from textual.widgets import RichLog
 
+
 class LogViewer(RichLog):
     """A widget to display log messages from Sophia's core."""
 

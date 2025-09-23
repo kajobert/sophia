@@ -2,11 +2,11 @@ import builtins
 import pathlib
 import pytest
 import os
-import sys
 import time as _time
 import datetime as _datetime
 import sqlite3
 import subprocess as _subprocess
+
 
 @pytest.fixture(autouse=True, scope="function")
 def enforce_test_mode_and_sandbox(monkeypatch):
@@ -19,9 +19,12 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     """
     # Step 1: Enforce test mode
     if os.environ.get("SOPHIA_TEST_MODE") != "1":
-        pytest.exit("SOPHIA_TEST_MODE is not active! Tests can only be run in test mode.")
+        pytest.exit(
+            "SOPHIA_TEST_MODE is not active! Tests can only be run in test mode."
+        )
 
     audit_log = pathlib.Path("tests/sandbox_audit.log")
+
     def log_violation(msg):
         with open(audit_log, "a") as f:
             f.write(f"[{_datetime.datetime.now()}] [sandbox] {msg}\\n")
@@ -34,6 +37,7 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     # Patch requests
     try:
         import requests
+
         monkeypatch.setattr(requests, "request", fake_request)
     except ImportError:
         pass
@@ -41,6 +45,7 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     # Patch httpx
     try:
         import httpx
+
         monkeypatch.setattr(httpx, "request", fake_request)
     except ImportError:
         pass
@@ -48,6 +53,7 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     # Patch urllib
     try:
         import urllib.request
+
         monkeypatch.setattr(urllib.request, "urlopen", fake_request)
     except ImportError:
         pass
@@ -55,13 +61,16 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     # Patch socket to allow local communication (AF_UNIX) but block networking
     try:
         import socket
+
         original_socket = socket.socket
 
         # The 'family' argument is crucial for distinguishing network sockets
         def safe_socket_factory(family, *args, **kwargs):
             if family in (socket.AF_INET, socket.AF_INET6):
                 log_violation(f"Network socket attempt with family {family}")
-                raise RuntimeError("Tests must not create network sockets in test mode!")
+                raise RuntimeError(
+                    "Tests must not create network sockets in test mode!"
+                )
             # Allow other socket types (e.g., AF_UNIX for asyncio/multiprocessing)
             return original_socket(family, *args, **kwargs)
 
@@ -73,6 +82,7 @@ def enforce_test_mode_and_sandbox(monkeypatch):
 
     # Step 3: Restrict file writes
     original_open = builtins.open
+
     def safe_open(file, mode="r", *args, **kwargs):
         if "w" in mode or "a" in mode or "+" in mode:
             p = pathlib.Path(file).resolve()
@@ -81,12 +91,15 @@ def enforce_test_mode_and_sandbox(monkeypatch):
                 "/tmp",
                 str(pathlib.Path("tests").resolve()),
                 str(pathlib.Path("sandbox").resolve()),
-                str(pathlib.Path("logs").resolve())
+                str(pathlib.Path("logs").resolve()),
             ]
             if not any(str(p).startswith(allowed_dir) for allowed_dir in allowed_dirs):
                 log_violation(f"Forbidden file write attempt: {file}")
-                raise RuntimeError(f"Test tried to write outside of allowed directories: {file}")
+                raise RuntimeError(
+                    f"Test tried to write outside of allowed directories: {file}"
+                )
         return original_open(file, mode, *args, **kwargs)
+
     monkeypatch.setattr(builtins, "open", safe_open)
 
     # Step 4: Block dangerous operations
@@ -94,6 +107,7 @@ def enforce_test_mode_and_sandbox(monkeypatch):
         def blocked_function(*args, **kwargs):
             log_violation(f"Dangerous call attempt: {name}")
             raise RuntimeError(f"Tests must not call '{name}' in test mode!")
+
         return blocked_function
 
     monkeypatch.setattr(_subprocess, "Popen", block_dangerous_call("subprocess.Popen"))
@@ -104,7 +118,17 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     monkeypatch.setattr(_time, "sleep", block_dangerous_call("time.sleep"))
 
     # Block environment variable changes (with a whitelist)
-    ENV_WHITELIST = {"SOPHIA_TEST_MODE", "PYTEST_CURRENT_TEST", "PYTHONPATH", "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "SOPHIA_ADMIN_EMAILS"}
+    ENV_WHITELIST = {
+        "SOPHIA_TEST_MODE",
+        "PYTEST_CURRENT_TEST",
+        "PYTHONPATH",
+        "PATH",
+        "HOME",
+        "TMPDIR",
+        "TEMP",
+        "TMP",
+        "SOPHIA_ADMIN_EMAILS",
+    }
     original_setitem = os.environ.__setitem__
     original_delitem = os.environ.__delitem__
 

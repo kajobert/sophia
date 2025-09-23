@@ -1,5 +1,4 @@
 import pytest
-import os
 import git
 from pathlib import Path
 from agents.aider_agent import AiderAgent, SANDBOX_PATH
