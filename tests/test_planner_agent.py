@@ -1,39 +1,117 @@
 import pytest
-from unittest.mock import patch
-from crewai import Crew, Task
+import json
+from unittest.mock import MagicMock
 from agents.planner_agent import PlannerAgent
+from core.context import SharedContext
 
+# --- Test Fixtures ---
 
-@patch("crewai.memory.storage.kickoff_task_outputs_storage.sqlite3.connect")
-@patch(
-    "crewai.agent.Agent.execute_task",
-    return_value="Mocked plan generated successfully.",
-)
-def test_planner_agent_execution_in_crew(mock_agent_execute, mock_sqlite_connect):
+@pytest.fixture
+def mock_llm_adapter():
+    """Creates a mock LLM adapter for testing."""
+    return MagicMock()
+
+@pytest.fixture
+def planner(mock_llm_adapter):
+    """Creates a PlannerAgent instance with a mocked LLM."""
+    return PlannerAgent(llm=mock_llm_adapter)
+
+# --- Test Cases ---
+
+def test_successful_plan_generation(planner, mock_llm_adapter):
     """
-    Tests the planner agent's execution within a Crew by mocking the agent's
-    execute_task method. This validates that the Crew and Task are wired
-    correctly to the agent without needing a real LLM.
-    Also mocks sqlite3.connect to prevent CrewAI from creating a DB.
+    Tests that the planner successfully generates and validates a plan on the first attempt.
     """
-    # 1. Since execute_task is mocked, the LLM is never called.
-    # We can initialize the agent with a dummy LLM object (None).
-    planner_instance = PlannerAgent(llm=None).get_agent()
+    # Arrange
+    valid_plan_json = json.dumps([
+        {
+            "step_id": 1,
+            "description": "List files",
+            "tool_name": "ListDirectoryTool",
+            "parameters": {"path": "."}
+        }
+    ])
+    mock_llm_adapter.invoke.return_value = f"```json\n{valid_plan_json}\n```"
+    context = SharedContext(original_prompt="List all files.", session_id="test_session")
 
-    # 2. Create a task for the agent
-    task = Task(
-        description="Create a plan for a new feature.",
-        agent=planner_instance,
-        expected_output="A comprehensive plan.",
-    )
+    # Act
+    result_context = planner.run_task(context)
 
-    # 3. Create and run the Crew
-    crew = Crew(agents=[planner_instance], tasks=[task], verbose=0)
-    result = crew.kickoff()
+    # Assert
+    mock_llm_adapter.invoke.assert_called_once()
+    assert result_context.payload["plan"] is not None
+    assert len(result_context.payload["plan"]) == 1
+    assert result_context.payload["plan"][0]["tool_name"] == "ListDirectoryTool"
+    assert result_context.feedback is None
 
-    # 4. Assert the result
-    # The result of kickoff() is a CrewOutput object; the raw string is in the .raw attribute.
-    assert result.raw == "Mocked plan generated successfully."
-    mock_agent_execute.assert_called_once()
-    # We don't need to assert the number of sqlite calls, just that our mock was effective.
-    assert mock_sqlite_connect.called
+def test_retry_on_invalid_json(planner, mock_llm_adapter):
+    """
+    Tests that the planner retries if the LLM returns invalid JSON, then succeeds.
+    """
+    # Arrange
+    invalid_json = '{"step_id": 1, "description": "missing quotes and comma"}'
+    valid_plan_json = json.dumps([{"step_id": 1, "description": "fixed", "tool_name": "Tool", "parameters": {}}])
+
+    # Set the mock to return invalid JSON first, then valid JSON
+    mock_llm_adapter.invoke.side_effect = [
+        invalid_json,
+        f"```json\n{valid_plan_json}\n```"
+    ]
+    context = SharedContext(original_prompt="Do something.", session_id="test_session")
+
+    # Act
+    result_context = planner.run_task(context)
+
+    # Assert
+    assert mock_llm_adapter.invoke.call_count == 2
+    assert result_context.payload["plan"] is not None
+    assert result_context.payload["plan"][0]["description"] == "fixed"
+
+def test_retry_on_empty_response(planner, mock_llm_adapter):
+    """
+    Tests that the planner retries if the LLM returns an empty string, which was a previous failure point.
+    """
+    # Arrange
+    valid_plan_json = json.dumps([{"step_id": 1, "description": "valid", "tool_name": "Tool", "parameters": {}}])
+    mock_llm_adapter.invoke.side_effect = ["", "  ", valid_plan_json] # Test empty and whitespace-only responses
+    context = SharedContext(original_prompt="Do something.", session_id="test_session")
+
+    # Act
+    result_context = planner.run_task(context)
+
+    # Assert
+    assert mock_llm_adapter.invoke.call_count == 3
+    assert result_context.payload["plan"] is not None
+
+def test_failure_after_max_retries(planner, mock_llm_adapter):
+    """
+    Tests that the planner fails gracefully after exhausting all retries.
+    """
+    # Arrange
+    mock_llm_adapter.invoke.return_value = "this is not json"
+    context = SharedContext(original_prompt="This will fail.", session_id="test_session")
+
+    # Act
+    result_context = planner.run_task(context)
+
+    # Assert
+    assert mock_llm_adapter.invoke.call_count == PlannerAgent.MAX_RETRIES
+    assert result_context.payload["plan"] is None
+    assert "failed to generate a valid JSON plan" in result_context.feedback
+
+def test_impossible_task_handling(planner, mock_llm_adapter):
+    """
+    Tests that the planner correctly handles an impossible task by returning an empty plan.
+    The prompt instructs the LLM to return `[]` for such tasks.
+    """
+    # Arrange
+    mock_llm_adapter.invoke.return_value = "[]"
+    context = SharedContext(original_prompt="What is the weather in Prague?", session_id="test_session")
+
+    # Act
+    result_context = planner.run_task(context)
+
+    # Assert
+    mock_llm_adapter.invoke.assert_called_once()
+    assert result_context.payload["plan"] == []
+    assert "outside my capabilities" in result_context.feedback
