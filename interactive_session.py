@@ -1,5 +1,4 @@
 import asyncio
-import os
 import uuid
 import yaml
 import logging
@@ -12,7 +11,10 @@ from core.context import SharedContext
 
 # --- Konfigurace Logování ---
 # Nastavíme logování tak, aby se zobrazovaly informace z CrewAI a dalších modulů
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 # --- Načtení Konfigurace ---
 def load_app_config():
@@ -26,6 +28,7 @@ def load_app_config():
     except yaml.YAMLError as e:
         logging.error(f"CHYBA: Chyba při parsování konfiguračního souboru: {e}")
         return None
+
 
 async def main():
     """
@@ -85,12 +88,10 @@ async def main():
             for i, step in enumerate(plan):
                 print(f"  Krok {i+1}: {step['description']}")
 
-
             # --- Fáze 2: Provedení ---
             print("\n--- Fáze 2: Provádění plánu... ---")
             # Orchestrator.execute_plan je asynchronní metoda
             final_context = await orchestrator.execute_plan(context)
-
 
             # --- Fáze 3: Výsledek ---
             print("\n--- Fáze 3: Výsledek provedení ---")

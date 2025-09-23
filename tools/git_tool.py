@@ -2,6 +2,7 @@ import git
 from tools.base_tool import BaseTool
 from typing import Any, List
 
+
 class GitTool(BaseTool):
     """
     A tool for interacting with Git repositories.
@@ -19,7 +20,9 @@ class GitTool(BaseTool):
             self.repo = git.Repo(repo_path, search_parent_directories=True)
         except (git.InvalidGitRepositoryError, git.exc.NoSuchPathError):
             # Handle cases where the path is not a git repository or does not exist.
-            raise ValueError(f"The path '{repo_path}' is not a valid Git repository or does not exist.")
+            raise ValueError(
+                f"The path '{repo_path}' is not a valid Git repository or does not exist."
+            )
 
     def execute(self, action: str, **kwargs: Any) -> str:
         """
