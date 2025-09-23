@@ -4,7 +4,7 @@ import inspect
 import logging
 import asyncio
 from core.context import SharedContext
-from agents.planner_agent import PlannerAgent
+from agents.custom_planner import CustomPlanner
 from tools.base_tool import BaseTool
 from web.api.websocket_manager import manager
 
@@ -19,7 +19,7 @@ class Orchestrator:
 
     def __init__(self, llm):
         # The LLM is passed to the planner for plan generation and correction.
-        self.planner = PlannerAgent(llm)
+        self.planner = CustomPlanner(llm)
         self.tools = self._load_tools()
 
     def _load_tools(self) -> dict:
@@ -114,7 +114,7 @@ class Orchestrator:
                         session_id=context.session_id
                     )
 
-                    repaired_context = self.planner.run_task(repair_context)
+                    repaired_context = await self.planner.generate_plan(repair_context)
                     new_plan = repaired_context.payload.get("plan")
 
                     if new_plan:

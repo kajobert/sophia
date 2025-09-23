@@ -54,6 +54,8 @@ async def test_successful_plan_execution(orchestrator, mock_llm):
     orchestrator.tools['ListDirectoryTool'].execute.assert_called_once_with(path="/")
     orchestrator.tools['WriteFileTool'].execute.assert_called_once_with(file_path="test.txt", content="hello")
 
+import asyncio
+
 @pytest.mark.asyncio
 async def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
     """
@@ -75,11 +77,14 @@ async def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
         current_plan=failing_plan
     )
 
-    # Mock the planner to return the corrected plan
+    # Mock the new async planner to return the corrected plan
     mock_planner = MagicMock()
     repaired_context = SharedContext(session_id="repaired", original_prompt="")
     repaired_context.payload['plan'] = corrected_plan
-    mock_planner.run_task.return_value = repaired_context
+
+    future = asyncio.Future()
+    future.set_result(repaired_context)
+    mock_planner.generate_plan.return_value = future
     orchestrator.planner = mock_planner
 
     # Configure the mock tools' execute methods for the scenario
@@ -97,7 +102,7 @@ async def test_plan_execution_with_failure_and_repair(orchestrator, mock_llm):
     assert len(result_context.step_history) == 2  # History of the *successful* plan
 
     # Check that the planner was called for repair
-    mock_planner.run_task.assert_called_once()
+    mock_planner.generate_plan.assert_called_once()
 
     # Check tool calls
     assert orchestrator.tools['ReadFileTool'].execute.call_count == 2
