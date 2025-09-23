@@ -1,7 +1,7 @@
 # Konfigurace pro Sophia V4
 
 # Režim spuštění: "online" (vyžaduje API klíč) nebo "offline" (používá mock LLM)
-execution_mode: "offline"
+execution_mode: "online"
 
 # Databáze pro epizodickou paměť a úkoly
 database:

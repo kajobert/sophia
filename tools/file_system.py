@@ -1,6 +1,7 @@
 import os
 import asyncio
 from typing import Type, List
+from tools.param_utils import normalize_params
 from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool as LangchainBaseTool
 from tools.base_tool import BaseTool
@@ -112,7 +113,10 @@ class WriteFileTool(FileSystemBaseTool, BaseTool):
     args_schema: Type[BaseModel] = WriteFileInput
 
     def execute(self, **kwargs) -> str:
-        return self._run(**kwargs)
+        # Use central normalization utility
+        mappings = {"file_path": ["file_path", "path"], "content": ["content"]}
+        normalized = normalize_params(kwargs, mappings)
+        return self._run(**normalized)
 
     def _run(self, file_path: str, content: str) -> str:
         try:
@@ -136,7 +140,9 @@ class ReadFileTool(FileSystemBaseTool, BaseTool):
     args_schema: Type[BaseModel] = ReadFileInput
 
     def execute(self, **kwargs) -> str:
-        return self._run(**kwargs)
+        mappings = {"file_path": ["file_path", "path"]}
+        normalized = normalize_params(kwargs, mappings)
+        return self._run(**normalized)
 
     def _run(self, file_path: str) -> str:
         try:
@@ -170,7 +176,9 @@ class ListDirectoryTool(FileSystemBaseTool, BaseTool):
     args_schema: Type[BaseModel] = ListDirectoryInput
 
     def execute(self, **kwargs) -> str:
-        return self._run(**kwargs)
+        mappings = {"path": ["path", "directory", "dir"]}
+        normalized = normalize_params(kwargs, mappings)
+        return self._run(**normalized)
 
     def _run(self, path: str) -> List[str]:
         try:

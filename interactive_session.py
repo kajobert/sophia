@@ -80,9 +80,32 @@ async def main():
             session_id = str(uuid.uuid4())
             context = SharedContext(original_prompt=prompt, session_id=session_id)
 
-            # Run pipeline: Reptilian -> Mammalian -> Neocortex
+            # Run pipeline: Reptilian -> Mammalian -> Planner -> Neocortex
             ctx1 = reptilian.process_input(context)
             ctx2 = mammalian.process_input(ctx1)
+
+            # Ask the planner to produce a plan for the processed context
+            try:
+                planner_result = neocortex.planner.run_task(ctx2)
+            except Exception as e:
+                print(f"Planner error: {e}")
+                logging.exception("Planner raised an exception")
+                continue
+
+            # planner_result is expected to have a payload with a 'plan' key containing a list
+            plan = None
+            try:
+                plan = planner_result.payload.get("plan")
+            except Exception:
+                # be defensive: planner_result may not have payload or may be None
+                plan = None
+
+            if not plan or not isinstance(plan, list) or len(plan) == 0:
+                print("Planner did not produce a valid plan for that input. Try a more specific or actionable request.")
+                continue
+
+            # attach plan to context and execute
+            ctx2.current_plan = plan
 
             # neocortex.execute_plan is async and returns final context
             final_context = await neocortex.execute_plan(ctx2)
