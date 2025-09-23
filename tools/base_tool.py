@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+
 class BaseTool(ABC):
     """
     Abstract base class for all tools to ensure a unified interface.

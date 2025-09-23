@@ -4,10 +4,11 @@ from langchain_core.tools import BaseTool as LangchainBaseTool
 from pydantic import BaseModel
 from tools.base_tool import BaseTool
 
+
 class SystemAwarenessTool(LangchainBaseTool, BaseTool):
     name: str = "System Awareness"
     description: str = "Provides information about the system environment."
-    args_schema: Type[BaseModel] = None # No arguments needed
+    args_schema: Type[BaseModel] = None  # No arguments needed
 
     def execute(self, **kwargs) -> str:
         return self._run(**kwargs)

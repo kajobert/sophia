@@ -1,26 +1,25 @@
-import pytest
 import asyncio
 from fastapi.testclient import TestClient
 from main import app
 from services.websocket_manager import manager
-import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Use the TestClient for synchronous endpoints
 client = TestClient(app)
 
-@patch('main.Orchestrator')
-@patch('main.GeminiLLMAdapter')
+
+@patch("main.Orchestrator")
+@patch("main.GeminiLLMAdapter")
 def test_create_task_and_get_status(MockLLMAdapter, MockOrchestrator):
     """
     Tests creating a task, then immediately polling its status.
     """
-    # Arrange
-    mock_llm_instance = MockLLMAdapter.return_value
-    mock_orchestrator_instance = MockOrchestrator.return_value
+    # Arrange (mocks are applied via decorators; no direct use of return values needed)
 
     # Step 1: Create the task
-    response_create = client.post("/api/v1/tasks", json={"prompt": "A simple test prompt"})
+    response_create = client.post(
+        "/api/v1/tasks", json={"prompt": "A simple test prompt"}
+    )
     assert response_create.status_code == 202
     task_id = response_create.json().get("task_id")
     assert task_id is not None
@@ -36,6 +35,7 @@ def test_create_task_and_get_status(MockLLMAdapter, MockOrchestrator):
     assert "history" in status_data
     assert "feedback" in status_data
 
+
 def test_get_task_status_not_found():
     """
     Tests that querying a non-existent task ID returns a 404 error.
@@ -43,8 +43,9 @@ def test_get_task_status_not_found():
     response = client.get("/api/v1/tasks/a-non-existent-task-id")
     assert response.status_code == 404
 
-@patch('main.Orchestrator')
-@patch('main.GeminiLLMAdapter')
+
+@patch("main.Orchestrator")
+@patch("main.GeminiLLMAdapter")
 def test_websocket_communication(MockLLMAdapter, MockOrchestrator):
     """
     Tests the WebSocket endpoint by creating a task and listening for updates.
@@ -55,7 +56,9 @@ def test_websocket_communication(MockLLMAdapter, MockOrchestrator):
     mock_orchestrator_instance.execute_plan.return_value = None
 
     # Step 1: Create a task to get a valid task_id
-    response_create = client.post("/api/v1/tasks", json={"prompt": "Test websocket communication"})
+    response_create = client.post(
+        "/api/v1/tasks", json={"prompt": "Test websocket communication"}
+    )
     assert response_create.status_code == 202
     task_id = response_create.json().get("task_id")
     assert task_id is not None
@@ -64,7 +67,13 @@ def test_websocket_communication(MockLLMAdapter, MockOrchestrator):
     with client.websocket_connect(f"/api/v1/tasks/{task_id}/ws") as websocket:
         # Manually trigger a broadcast after connection is established
         # In a real scenario, this would be done by the orchestrator in a background thread
-        test_message = {"type": "step_update", "step_id": 1, "description": "Test Step", "status": "success", "output": "Success"}
+        test_message = {
+            "type": "step_update",
+            "step_id": 1,
+            "description": "Test Step",
+            "status": "success",
+            "output": "Success",
+        }
 
         # We need to run the broadcast in an event loop
         async def do_broadcast():

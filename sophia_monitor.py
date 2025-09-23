@@ -144,7 +144,11 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
         "ModuleNotFoundError": ["dependency", "závislostí", "ModuleNotFoundError"],
         "TypeError": ["async", "sync", "asynchronního", "TypeError"],
         "TimeoutError": ["timeout", "API", "službách"],
-        "DefaultCredentialsError": ["credentials", "API klíč", "DefaultCredentialsError"],
+        "DefaultCredentialsError": [
+            "credentials",
+            "API klíč",
+            "DefaultCredentialsError",
+        ],
     }
 
     now = datetime.now()
@@ -177,7 +181,6 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
         except Exception as e:
             print(f"Error reading log file {log_path}: {e}")
 
-
     for error_name, errors in error_counts.items():
         if len(errors) > error_threshold:
             # Chronic problem detected
@@ -193,8 +196,12 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
                         topic_headers = re.findall(r"### Téma: (.*)", kb_content)
                         for header in topic_headers:
                             if re.search(keyword, header, re.IGNORECASE):
-                                anchor = "#" + header.lower().strip().replace(" ", "-").replace('"',"").replace("(", "").replace(")", "")
-                                print(f"WARNING: Detected recurring '{error_name}'. This issue is documented. See solution at: docs/KNOWLEDGE_BASE.md{anchor}")
+                                anchor = "#" + header.lower().strip().replace(
+                                    " ", "-"
+                                ).replace('"', "").replace("(", "").replace(")", "")
+                                print(
+                                    f"WARNING: Detected recurring '{error_name}'. This issue is documented. See solution at: docs/KNOWLEDGE_BASE.md{anchor}"
+                                )
                                 found_solution = True
                                 break
                         if found_solution:
@@ -216,14 +223,16 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
 ## Template pro Znalostní Bázi (`docs/KNOWLEDGE_BASE.md`)
 
 ### Téma: [Stručný popis tématu týkající se '{error_name}']
-**Datum**: {datetime.now().strftime('%Y-%m-%d')}
+**Datum**: {datetime.now().strftime("%Y-%m-%d")}
 **Autor**: Guardian Monitor
 **Kontext**: [Popiš, za jakých okolností se chyba vyskytla. Automaticky detekováno v log souborech.]
 **Zjištění/Rozhodnutí**: [Jaký byl problém a jaké je navrhované nebo implementované řešení?]
 **Důvod**: [Proč bylo toto řešení zvoleno?]
 **Dopad**: [Jaký dopad má řešení na projekt?]
 """)
-                    print(f"CRITICAL: Detected recurring '{error_name}' with no documented solution. Created '{issue_filename}' for documentation.")
+                    print(
+                        f"CRITICAL: Detected recurring '{error_name}' with no documented solution. Created '{issue_filename}' for documentation."
+                    )
 
             except FileNotFoundError:
                 print("ERROR: Knowledge base file 'docs/KNOWLEDGE_BASE.md' not found.")

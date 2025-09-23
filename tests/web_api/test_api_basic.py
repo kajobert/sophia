@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pytest
 from fastapi.testclient import TestClient
@@ -29,6 +28,7 @@ def test_login_and_me_endpoint(monkeypatch):
     from core import config as sophia_config
     from services import roles
     import importlib
+
     importlib.reload(sophia_config)
     importlib.reload(roles)
 
@@ -133,9 +133,7 @@ def test_login_redirect(monkeypatch):
             "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
         }
 
-    monkeypatch.setattr(
-        AsyncOAuth2Mixin, "load_server_metadata", mock_load_metadata
-    )
+    monkeypatch.setattr(AsyncOAuth2Mixin, "load_server_metadata", mock_load_metadata)
 
     resp = client.get("/login", follow_redirects=False)
     # It's a redirect status

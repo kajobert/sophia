@@ -4,6 +4,7 @@ import yaml
 import asyncio
 from unittest.mock import patch, MagicMock
 
+
 def load_config():
     """Načte a parsuje config.yaml."""
     try:
@@ -16,12 +17,15 @@ def load_config():
         print(f"Chyba při parsování config.yaml: {e}")
         return None
 
+
 # --- Mock Handler pro Offline Režim ---
 def mock_litellm_completion_handler(model, messages, **kwargs):
     """
     Mock handler pro `litellm.completion`. Vrací předpřipravený plán.
     """
-    print("\n--- MOCK LLM: Volání zachyceno, vracím testovací plán pro offline režim. ---\n")
+    print(
+        "\n--- MOCK LLM: Volání zachyceno, vracím testovací plán pro offline režim. ---\n"
+    )
 
     plan_json = """
     [
@@ -43,6 +47,7 @@ def mock_litellm_completion_handler(model, messages, **kwargs):
     mock_response.choices[0].message.content = f"```json\n{plan_json}\n```"
     return mock_response
 
+
 async def run_task_logic(prompt: str, mode: str):
     """
     Hlavní logika pro plánování a spuštění úkolu.
@@ -56,7 +61,9 @@ async def run_task_logic(prompt: str, mode: str):
     print(f"Spouštím úkol v '{mode}' režimu s promptem: '{prompt}'")
 
     if mode == "online" and llm is None:
-        print("Chyba: LLM se nepodařilo inicializovat. Zkontrolujte API klíč v .env souboru.")
+        print(
+            "Chyba: LLM se nepodařilo inicializovat. Zkontrolujte API klíč v .env souboru."
+        )
         return
 
     print(f"Použitý LLM objekt: {type(llm)}")
@@ -64,7 +71,9 @@ async def run_task_logic(prompt: str, mode: str):
     # --- KROK 1: Vytvoření plánu ---
     print(f"\n--- KROK 1: Vytváření plánu ({mode}) ---")
     planner = PlannerAgent(llm=llm)
-    initial_context = SharedContext(session_id=f"cli_{mode}_task", original_prompt=prompt)
+    initial_context = SharedContext(
+        session_id=f"cli_{mode}_task", original_prompt=prompt
+    )
     planned_context = await asyncio.to_thread(planner.run_task, initial_context)
 
     plan = planned_context.payload.get("plan")
@@ -85,6 +94,7 @@ async def run_task_logic(prompt: str, mode: str):
     print("\n--- VÝSLEDEK ÚKOLU ---")
     print(f"Zpětná vazba: {final_context.feedback}")
 
+
 def main():
     """
     Načte konfiguraci a spustí úkol v odpovídajícím režimu.
@@ -93,7 +103,7 @@ def main():
     if not config:
         sys.exit(1)
 
-    mode = config.get("execution_mode", "offline") # Defaultně offline pro bezpečnost
+    mode = config.get("execution_mode", "offline")  # Defaultně offline pro bezpečnost
 
     if len(sys.argv) < 2:
         print("Chyba: Zadejte prosím prompt jako argument v uvozovkách.")
@@ -104,7 +114,7 @@ def main():
     if mode == "offline":
         os.environ["SOPHIA_TEST_MODE"] = "1"
         print("--- Režim: OFFLINE. Používám mock LLM. ---")
-        with patch('litellm.completion', new=mock_litellm_completion_handler):
+        with patch("litellm.completion", new=mock_litellm_completion_handler):
             asyncio.run(run_task_logic(prompt, mode))
     elif mode == "online":
         print("--- Režim: ONLINE. Používám reálné LLM. ---")
@@ -113,6 +123,7 @@ def main():
     else:
         print(f"Chyba: Neznámý execution_mode v config.yaml: '{mode}'")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
