@@ -54,16 +54,20 @@ class FileSystemBaseTool(LangchainBaseTool, BaseTool):
         Validates the path and returns the full, safe path.
         Raises PathOutsideSandboxError if the path is invalid.
         """
-        full_path = os.path.abspath(os.path.join(SANDBOX_DIR, file_path))
+        # Sanitize the file_path by removing any leading slashes to prevent os.path.join
+        # from treating it as an absolute path. This ensures all paths are relative to SANDBOX_DIR.
+        safe_file_path = file_path.lstrip('/')
 
-        real_path = os.path.realpath(full_path)
+        full_path = os.path.abspath(os.path.join(SANDBOX_DIR, safe_file_path))
 
-        if not real_path.startswith(SANDBOX_DIR):
+        # Check if the resolved real path is within the sandbox directory.
+        # This prevents directory traversal attacks (e.g., using '..').
+        if not full_path.startswith(SANDBOX_DIR):
             raise PathOutsideSandboxError(
                 f"Path '{file_path}' is outside the allowed /sandbox directory."
             )
 
-        return real_path
+        return full_path
 
 
 # --- Input Schemas for Tools ---
