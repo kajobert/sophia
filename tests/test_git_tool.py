@@ -4,6 +4,7 @@ import os
 import shutil
 from tools.git_tool import GitTool
 
+
 # Fixture to create a temporary git repository for testing
 @pytest.fixture(scope="module")
 def temp_git_repo(tmpdir_factory):
@@ -22,16 +23,19 @@ def temp_git_repo(tmpdir_factory):
     # Cleanup the temporary directory
     shutil.rmtree(str(repo_path))
 
+
 def test_git_tool_init(temp_git_repo):
     """Test that GitTool initializes correctly with a valid repo."""
     tool = GitTool(repo_path=temp_git_repo)
     assert tool.repo is not None
     assert isinstance(tool.repo, Repo)
 
+
 def test_git_tool_init_invalid_repo():
     """Test that GitTool raises an error for an invalid repo path."""
     with pytest.raises(ValueError):
         GitTool(repo_path="/tmp/non_existent_repo_for_sure")
+
 
 def test_create_branch(temp_git_repo):
     """Test creating a new branch."""
@@ -40,6 +44,7 @@ def test_create_branch(temp_git_repo):
     result = tool.execute(action="create_branch", branch_name=branch_name)
     assert "successfully" in result
     assert branch_name in tool.repo.branches
+
 
 def test_add_files(temp_git_repo):
     """Test adding files to staging."""
@@ -56,6 +61,7 @@ def test_add_files(temp_git_repo):
     # Check the status to see if the file is staged
     status_result = tool.execute(action="status")
     assert "new file:   new_test_file.txt" in status_result
+
 
 def test_commit(temp_git_repo):
     """Test committing changes."""
@@ -76,6 +82,7 @@ def test_commit(temp_git_repo):
     log = tool.repo.git.log()
     assert commit_message in log
 
+
 def test_status(temp_git_repo):
     """Test getting the git status."""
     tool = GitTool(repo_path=temp_git_repo)
@@ -88,6 +95,7 @@ def test_status(temp_git_repo):
     status_result = tool.execute(action="status")
     assert "untracked files" in status_result.lower()
     assert "dirty_file.txt" in status_result
+
 
 def test_unknown_action(temp_git_repo):
     """Test that an unknown action returns an error."""
