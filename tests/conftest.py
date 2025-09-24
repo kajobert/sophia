@@ -6,7 +6,6 @@ import time as _time
 import datetime as _datetime
 import sqlite3
 import subprocess as _subprocess
-import yaml
 
 
 @pytest.fixture(autouse=True, scope="function")
@@ -129,7 +128,6 @@ def enforce_test_mode_and_sandbox(monkeypatch):
         "TEMP",
         "TMP",
         "SOPHIA_ADMIN_EMAILS",
-        "GEMINI_API_KEY",
     }
     original_setitem = os.environ.__setitem__
     original_delitem = os.environ.__delitem__
@@ -153,50 +151,3 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     yield
 
     # Teardown is handled by monkeypatch
-
-
-@pytest.fixture(scope="session", autouse=True)
-def create_test_config():
-    """
-    Creates a dummy config.yaml for tests that initialize the full FastAPI app.
-    This prevents the app startup from failing when it can't find the config.
-    """
-    # Set a dummy API key to allow the real GeminiLLMAdapter to initialize without errors
-    # The actual tests will use a mocked version anyway.
-    os.environ["GEMINI_API_KEY"] = "test-key"
-
-    config_path = "config.yaml"
-    config_data = {
-        "llm_models": {
-            "primary_llm": {
-                "model_name": "test-model",
-                "temperature": 0.1,
-            }
-        },
-        "lifecycle": {
-            "waking_duration_seconds": 1,
-            "sleeping_duration_seconds": 1,
-        },
-    }
-    # Use builtins.open to bypass the sandbox for this setup task
-    with builtins.open(config_path, "w") as f:
-        yaml.dump(config_data, f)
-
-    yield
-
-    # Cleanup the file and env var after the test session is over
-    os.remove(config_path)
-    del os.environ["GEMINI_API_KEY"]
-
-
-@pytest.fixture(scope="function")
-def client(enforce_test_mode_and_sandbox):
-    """
-    Creates a new TestClient for each test function.
-    This ensures the app is created *after* setup fixtures like create_test_config have run.
-    """
-    from fastapi.testclient import TestClient
-    from main import app
-
-    with TestClient(app) as c:
-        yield c

@@ -1,68 +1,58 @@
-import logging
+from typing import Any, Dict, List, Optional
+import threading
 
 
 class ShortTermMemory:
+    """In-memory short-term memory (working memory) used for MVP/testing.
+
+    Simple thread-safe dict-based store mapped by session_id.
     """
-    Manages short-term memory using Redis.
-    This class is responsible for storing and retrieving ephemeral data,
-    such as the current state of a task or recent conversation history.
-    """
 
-    def __init__(self, redis_url: str):
-        """
-        Initializes the ShortTermMemory. For testing, this uses a simple dict.
-        In a real scenario, it would connect to Redis.
-        """
-        self.logger = logging.getLogger(__name__)
-        # In a real implementation, we would use redis.from_url(redis_url)
-        # For now, we'll mock the connection with a simple dict.
-        self._store = {}
-        self.logger.info("ShortTermMemory initialized (mocked with in-memory dict).")
+    def __init__(self):
+        self._store: Dict[str, Dict[str, Any]] = {}
+        self._lock = threading.RLock()
 
-    def save_state(self, session_id: str, state: dict):
-        """Saves the state for a given session ID."""
-        self.logger.info(f"Mock saving state for session {session_id}")
-        self._store[session_id] = state
-        return True
+    def get(self, session_id: str) -> Dict[str, Any]:
+        with self._lock:
+            return self._store.get(session_id, {})
 
-    def load_state(self, session_id: str) -> dict | None:
-        """Loads the state for a given session ID."""
-        self.logger.info(f"Mock loading state for session {session_id}.")
-        return self._store.get(session_id)
+    def set(self, session_id: str, data: Dict[str, Any]) -> None:
+        with self._lock:
+            self._store[session_id] = data
+
+    def update(self, session_id: str, partial: Dict[str, Any]) -> None:
+        with self._lock:
+            data = self._store.setdefault(session_id, {})
+            data.update(partial)
+
+    def clear(self, session_id: str) -> None:
+        with self._lock:
+            if session_id in self._store:
+                del self._store[session_id]
 
 
 class LongTermMemory:
-    """
-    Manages long-term memory using PostgreSQL with pgvector.
-    This class handles the storage and retrieval of knowledge, past experiences,
-    and other persistent data that informs the agent's behavior over time.
+    """Placeholder long-term memory. For MVP this is an in-memory store with
+    a very small semantic "search" implemented via substring matching.
     """
 
-    def __init__(self, db_url: str):
-        """
-        Initializes the LongTermMemory with a connection to PostgreSQL.
-        For now, it uses a mock implementation.
-        """
-        self.logger = logging.getLogger(__name__)
-        # In a real implementation, we would use psycopg2.connect(db_url)
-        self.conn = None
-        self.logger.info("LongTermMemory initialized (mocked).")
+    def __init__(self):
+        # simple list of records: {"id": str, "text": str, "tags": List[str]}
+        self._records: List[Dict[str, Any]] = []
+        self._next_id = 1
 
-    def search_knowledge(self, query: str, top_k: int = 5) -> list:
-        """Searches for relevant knowledge based on a query."""
-        self.logger.info(f"Mock searching knowledge for query: '{query}'")
-        # In a real implementation:
-        # with self.conn.cursor() as cur:
-        #     cur.execute("SELECT content FROM knowledge WHERE embedding <=> %s LIMIT %s", (query_embedding, top_k))
-        #     results = cur.fetchall()
-        # return [row[0] for row in results]
-        return [f"Mock result for '{query}'"] * top_k
+    def add_record(self, text: str, tags: Optional[List[str]] = None) -> str:
+        rid = f"rec-{self._next_id}"
+        self._next_id += 1
+        self._records.append({"id": rid, "text": text, "tags": tags or []})
+        return rid
 
-    def add_knowledge(self, content: str):
-        """Adds a new piece of knowledge to the long-term memory."""
-        self.logger.info(f"Mock adding knowledge: '{content}'")
-        # In a real implementation:
-        # with self.conn.cursor() as cur:
-        #     cur.execute("INSERT INTO knowledge (content, embedding) VALUES (%s, %s)", (content, content_embedding))
-        # self.conn.commit()
-        return True
+    def search(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
+        # naive substring match and ranking by length of match
+        matches: List[Dict[str, Any]] = []
+        q = query.lower()
+        for r in self._records:
+            if q in r["text"].lower() or any(q in t.lower() for t in r.get("tags", [])):
+                matches.append(r)
+        # return up to top_k matches
+        return matches[:top_k]

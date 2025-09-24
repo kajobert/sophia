@@ -1,113 +1,102 @@
+from typing import Dict, Any, Optional
+import marko
+import os
 import logging
-from core.llm_config import LLMConfig
 
+from core.memory_systems import ShortTermMemory, LongTermMemory
+from core.context import SharedContext
 
-# A mock for the nano model call
-def call_nano_model_mock(prompt: str) -> str:
-    """A mock function to simulate a call to a local, fast LLM."""
-    if "strukturuj" in prompt.lower():
-        return '{"action": "categorize", "priority": "high"}'
-    return '{"action": "unknown", "priority": "low"}'
+logger = logging.getLogger(__name__)
 
 
 class ReptilianBrain:
+    """Instinct layer: quick filtering, safety checks, basic structuring.
+
+    For MVP this class reads `docs/DNA.md` (if present) and applies a tiny
+    rule set. Heavy logic is intentionally omitted and left as stubs.
     """
-    The most primitive layer of the cognitive architecture.
-    It is responsible for instinctual, immediate reactions, and basic safety checks.
-    It operates based on a hardcoded "DNA".
-    """
 
-    def __init__(self, llm_config: LLMConfig, dna_path: str = "docs/DNA.md"):
-        self.logger = logging.getLogger(__name__)
-        self.dna = self._load_dna(dna_path)
-        # In a real scenario, this would be a proper LLM client (e.g., Ollama)
-        self.nano_model = call_nano_model_mock
-        self.logger.info("ReptilianBrain initialized.")
+    def __init__(self, dna_path: str = "docs/DNA.md"):
+        self.dna_path = dna_path
+        self.rules = self._load_dna()
 
-    def _load_dna(self, dna_path: str) -> str:
-        """
-        Loads the agent's core directives from a Markdown file.
-        Uses the 'marko' library for robust parsing.
-        """
+    def _load_dna(self) -> Dict[str, Any]:
+        if not os.path.exists(self.dna_path):
+            logger.info("DNA.md not found, using default empty rules")
+            return {}
         try:
-            with open(dna_path, "r", encoding="utf-8") as f:
-                markdown_content = f.read()
-                # Marko can be used to parse and process the markdown,
-                # but for now, we'll just return the raw text.
-                return markdown_content
-        except FileNotFoundError:
-            self.logger.error(
-                f"DNA file not found at {dna_path}. The agent will operate without its core directives."
-            )
-            return "Error: DNA not loaded."
+            with open(self.dna_path, "r", encoding="utf-8") as f:
+                md = f.read()
+            # Use marko to parse markdown into an AST; for MVP we'll simply keep text
+            ast = marko.Markdown().convert(md)
+            return {"raw": md, "html": ast}
+        except Exception as e:
+            logger.exception("Failed to load DNA.md: %s", e)
+            return {}
 
-    def _call_nano_model(self, prompt: str) -> str:
-        """
-        Calls a very fast, local "nano" model for quick tasks like categorization or structuring.
-        """
-        self.logger.info(f"Calling nano model with prompt: {prompt[:100]}...")
-        # This is a placeholder for a real local LLM call (e.g., via Ollama)
-        return self.nano_model(prompt)
+    def process_input(self, context: SharedContext) -> SharedContext:
+        # Basic safety check (stub): reject empty prompts
+        prompt = (context.original_prompt or "").strip()
+        if not prompt:
+            context.feedback = "Rejected: empty prompt"
+            context.payload["reptilian"] = {"accepted": False}
+            return context
 
-    def process_input(self, user_input: str) -> dict:
-        """
-        Processes the user input through the reptilian layer.
-        Performs a basic safety check based on the DNA and uses the nano model
-        to add initial structure.
-        """
-        self.logger.info("ReptilianBrain processing input.")
-
-        # Basic safety check (placeholder)
-        if "rm -rf" in user_input:
-            raise ValueError(
-                "Input contains a potentially dangerous command and was blocked by the ReptilianBrain."
-            )
-
-        # Use the nano model to get initial structure
-        structuring_prompt = f"Strukturuj nasledujici pozadavek: {user_input}"
-        structured_data_str = self._call_nano_model(structuring_prompt)
-
-        try:
-            structured_data = eval(
-                structured_data_str
-            )  # Using eval for mock, in real use json.loads
-        except Exception:
-            structured_data = {"action": "parsing_failed", "priority": "medium"}
-
-        processed_data = {
-            "original_input": user_input,
-            "structured_input": structured_data,
-            "dna_directives": self.dna,
-            "safety_passed": True,
+        # Example of structuring: minimal classification by length
+        classification = "short" if len(prompt) < 200 else "long"
+        context.payload.setdefault("preprocessed", {})["classification"] = (
+            classification
+        )
+        context.payload["reptilian"] = {
+            "accepted": True,
+            "classification": classification,
         }
-        return processed_data
+        return context
 
 
 class MammalianBrain:
+    """Subconscious layer: enriches input with long-term memory/context."""
+
+    def __init__(self, long_term_memory: Optional[LongTermMemory] = None):
+        self.ltm = long_term_memory or LongTermMemory()
+
+    def process_input(self, context: SharedContext) -> SharedContext:
+        # Use the prompt to search long-term memory for context
+        prompt = context.original_prompt or ""
+        results = self.ltm.search(prompt, top_k=3)
+        context.payload.setdefault("mammalian", {})["ltm_matches"] = results
+        return context
+
+
+class Neocortex:
+    """Top-level layer: strategy and planning. Minimal wrapper that stores state
+    in ShortTermMemory and can call a planner (injected) when needed.
     """
-    The second layer, responsible for emotions, social context, and memory retrieval.
-    It enriches the input with emotional context and relevant past experiences.
-    """
 
-    def __init__(self, long_term_memory):
-        self.logger = logging.getLogger(__name__)
-        self.ltm = long_term_memory
-        self.logger.info("MammalianBrain initialized.")
+    def __init__(
+        self, short_term_memory: Optional[ShortTermMemory] = None, planner=None
+    ):
+        self.stm = short_term_memory or ShortTermMemory()
+        self.planner = planner
 
-    def process_input(self, processed_data: dict) -> dict:
-        """
-        Enriches the processed data with context from long-term memory.
-        """
-        self.logger.info("MammalianBrain processing input.")
-        query = processed_data.get("original_input", "")
+    def process_input(self, context: SharedContext) -> SharedContext:
+        # Save current incoming context to short-term memory
+        self.stm.set(
+            context.session_id,
+            {"original_prompt": context.original_prompt, "payload": context.payload},
+        )
 
-        # Search for relevant memories
-        relevant_memories = self.ltm.search_knowledge(query, top_k=3)
+        # If a planner is provided, request a plan
+        if self.planner:
+            try:
+                plan_context = self.planner.run_task(context)
+                context.payload["plan"] = plan_context.payload.get("plan")
+            except Exception as e:
+                logger.exception("Planner failed inside Neocortex: %s", e)
+                context.feedback = f"Planner error: {e}"
+        else:
+            context.payload.setdefault("plan", [])
 
-        # Add memories to the data payload
-        processed_data["relevant_memories"] = relevant_memories
-
-        # Placeholder for emotional analysis
-        processed_data["emotional_context"] = "neutral"
-
-        return processed_data
+        # store plan in STM
+        self.stm.update(context.session_id, {"plan": context.payload.get("plan")})
+        return context

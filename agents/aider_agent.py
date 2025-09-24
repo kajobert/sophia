@@ -22,9 +22,9 @@ class AiderAgent:
     ):
         self.sandbox_path = sandbox_path
         self.aider_cli = aider_cli
-        assert os.path.isdir(
-            self.sandbox_path
-        ), f"Sandbox {self.sandbox_path} neexistuje!"
+        assert os.path.isdir(self.sandbox_path), (
+            f"Sandbox {self.sandbox_path} neexistuje!"
+        )
 
     def run_aider(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Spustí Aider CLI s úkolem (JSON stdin), vrací výstup (JSON stdout)."""

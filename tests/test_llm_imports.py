@@ -34,16 +34,16 @@ def test_no_forbidden_llm_imports():
             if isinstance(node, ast.ImportFrom):
                 if node.module == "core.gemini_llm_adapter":
                     for n in node.names:
-                        assert (
-                            n.name != "GeminiLLMAdapter"
-                        ), f"{file} nesmí importovat GeminiLLMAdapter přímo!"
+                        assert n.name != "GeminiLLMAdapter", (
+                            f"{file} nesmí importovat GeminiLLMAdapter přímo!"
+                        )
             if isinstance(node, ast.Import):
                 for n in node.names:
                     assert n.name != "genai", f"{file} nesmí importovat genai přímo!"
             if isinstance(node, ast.Name):
-                assert (
-                    node.id not in FORBIDDEN
-                ), f"{file} nesmí používat {node.id} přímo!"
+                assert node.id not in FORBIDDEN, (
+                    f"{file} nesmí používat {node.id} přímo!"
+                )
 
 
 def test_llm_import_pattern():

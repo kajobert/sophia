@@ -1,87 +1,56 @@
-import pytest
-from unittest.mock import MagicMock
-from core.cognitive_layers import ReptilianBrain, MammalianBrain
-from core.llm_config import LLMConfig
+
+from core.cognitive_layers import ReptilianBrain, MammalianBrain, Neocortex
+from core.memory_systems import LongTermMemory, ShortTermMemory
+from core.context import SharedContext
 
 
-@pytest.fixture
-def mock_llm_config():
-    """Provides a mock LLMConfig object."""
-    return MagicMock(spec=LLMConfig)
+def test_reptilian_rejects_empty_prompt():
+    rb = ReptilianBrain()
+    ctx = SharedContext(session_id="s1", original_prompt="")
+    out = rb.process_input(ctx)
+    assert out.payload["reptilian"]["accepted"] is False
 
 
-def test_reptilian_brain_initialization(mock_llm_config):
-    """Tests that ReptilianBrain initializes and loads its DNA."""
-    brain = ReptilianBrain(llm_config=mock_llm_config)
-    assert brain is not None
-    assert "Nejvyšší Cíl" in brain.dna
-    assert "Etické Pilíře" in brain.dna
+def test_reptilian_classification():
+    rb = ReptilianBrain()
+    prompt = "Short prompt"
+    ctx = SharedContext(session_id="s2", original_prompt=prompt)
+    out = rb.process_input(ctx)
+    assert out.payload["reptilian"]["accepted"] is True
+    assert out.payload["preprocessed"]["classification"] == "short"
 
 
-def test_reptilian_brain_process_input_safe(mock_llm_config):
-    """Tests processing a safe input."""
-    brain = ReptilianBrain(llm_config=mock_llm_config)
-    user_input = "Napiš mi skript, který strukturuje data."
-    processed_data = brain.process_input(user_input)
-
-    assert processed_data["original_input"] == user_input
-    assert processed_data["safety_passed"] is True
-    assert processed_data["structured_input"]["action"] == "categorize"
-    assert processed_data["structured_input"]["priority"] == "high"
+def test_mammalian_enriches_with_ltm():
+    ltm = LongTermMemory()
+    ltm.add_record("Previously solved prompt about optimization")
+    mb = MammalianBrain(long_term_memory=ltm)
+    ctx = SharedContext(session_id="s3", original_prompt="optimization")
+    out = mb.process_input(ctx)
+    assert "ltm_matches" in out.payload["mammalian"]
 
 
-def test_reptilian_brain_process_input_dangerous(mock_llm_config):
-    """Tests that a dangerous input raises a ValueError."""
-    brain = ReptilianBrain(llm_config=mock_llm_config)
-    user_input = "Spusť `rm -rf /`"
+def test_neocortex_stores_and_requests_plan(monkeypatch):
+    stm = ShortTermMemory()
 
-    with pytest.raises(ValueError, match="blocked by the ReptilianBrain"):
-        brain.process_input(user_input)
+    class DummyPlanner:
+        def run_task(self, context):
+            context.payload.setdefault(
+                "plan",
+                [
+                    {
+                        "step_id": 1,
+                        "description": "noop",
+                        "tool_name": "ListDirectoryTool",
+                        "parameters": {},
+                    }
+                ],
+            )
+            return context
 
-
-def test_reptilian_brain_dna_not_found(mock_llm_config):
-    """Tests that the brain handles a missing DNA file gracefully."""
-    brain = ReptilianBrain(llm_config=mock_llm_config, dna_path="non_existent_file.md")
-    assert "Error: DNA not loaded." in brain.dna
-
-
-@pytest.fixture
-def mock_long_term_memory():
-    """Provides a mock LongTermMemory object."""
-    ltm = MagicMock()
-    ltm.search_knowledge.return_value = ["mock memory 1", "mock memory 2"]
-    return ltm
-
-
-def test_mammalian_brain_initialization(mock_long_term_memory):
-    """Tests that MammalianBrain can be initialized."""
-    brain = MammalianBrain(long_term_memory=mock_long_term_memory)
-    assert brain is not None
-    assert brain.ltm == mock_long_term_memory
-
-
-def test_mammalian_brain_process_input(mock_long_term_memory):
-    """Tests that MammalianBrain enriches data with memories and emotional context."""
-    brain = MammalianBrain(long_term_memory=mock_long_term_memory)
-    initial_data = {
-        "original_input": "Tell me about my last project.",
-        "structured_input": {"action": "query", "topic": "project"},
-        "safety_passed": True,
-    }
-
-    enriched_data = brain.process_input(initial_data)
-
-    # Verify that the LTM was called
-    mock_long_term_memory.search_knowledge.assert_called_once_with(
-        "Tell me about my last project.", top_k=3
-    )
-
-    # Verify that the data was enriched
-    assert "relevant_memories" in enriched_data
-    assert len(enriched_data["relevant_memories"]) == 2
-    assert enriched_data["relevant_memories"][0] == "mock memory 1"
-    assert "emotional_context" in enriched_data
-    assert enriched_data["emotional_context"] == "neutral"
-
-    # Verify that original data is preserved
-    assert enriched_data["original_input"] == "Tell me about my last project."
+    planner = DummyPlanner()
+    nc = Neocortex(short_term_memory=stm, planner=planner)
+    ctx = SharedContext(session_id="s4", original_prompt="list files")
+    out = nc.process_input(ctx)
+    assert out.payload.get("plan") is not None
+    stored = stm.get("s4")
+    assert "plan" in stored
