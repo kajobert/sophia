@@ -47,16 +47,12 @@ Tento cyklus zajišťuje mnohem hlubší, bezpečnější a etičtější rozhod
 
 ### 3. Hybridní Agentní Model: Dva Týmy pro Dvě Funkce Mysli
 
-Uvědomili jsme si, že jedna velikost nesedí všem. Lidská mysl má také různé režimy pro různé úkoly. Proto zavádíme hybridní model se dvěma specializovanými týmy agentů:
+Původní návrhy zmiňovaly konkrétní rámce (např. `CrewAI`, `AutoGen`) jako ilustrační příklady. Implementace by však měla zůstat flexibilní a nezávislá na konkrétním frameworku. Důležité je rozlišit role:
 
-* **Exekuční Tým (CrewAI) - "Dílna"**: Během "bdění", kdy je potřeba efektivně a systematicky plnit úkoly (naplánovat -> napsat kód -> otestovat), použijeme `CrewAI`. Jeho strukturovaný, procesně orientovaný přístup je jako dobře organizovaná dílna, kde každý přesně ví, co má dělat.
+* **Exekuční Tým (Bdění)**: Tým optimalizovaný pro spolehlivou, procesně-orientovanou exekuci plánů (plán -> kód -> testy).
+* **Kreativní Tým (Spánek)**: Tým optimalizovaný pro sebereflexi, návrhy a strategii.
 
-* **Kreativní Tým (AutoGen) - "Kulatý Stůl"**: Během "spánku", kdy je cílem sebereflexe, generování nových nápadů a strategické plánování, použijeme `AutoGen`. Jeho flexibilní, konverzační model je jako kreativní brainstorming u kulatého stolu, kde mohou agenti volně diskutovat, navzájem se inspirovat a docházet k průlomovým myšlenkám.
-
-* **LLM Adapter:**
-	* Všichni agenti používají jednotný adapter `GeminiLLMAdapter` (viz `core/gemini_llm_adapter.py`), který zajišťuje robustní a snadno vyměnitelnou integraci s Google Gemini API.
-	* Adapter je inicializován v `core/llm_config.py` dle konfigurace v `config.yaml` a předáván agentům jako `llm=llm`.
-	* Přepnutí na jiného providera (např. OpenAI, LangChain) je možné úpravou konfigurace a jednoho řádku v `llm_config.py`.
+Všechny agenty by měly komunikovat pomocí `SharedContext` a používat adaptér LLM dle konfigurace v `core/llm_config.py`.
 
 Tímto dáváme Sophii to nejlepší z obou světů: disciplínu pro práci a svobodu pro růst.
 

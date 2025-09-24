@@ -30,25 +30,29 @@ Projekt vyžaduje API klíče pro připojení k jazykovým modelům. Tyto klíč
 
 -   Otevřete soubor `.env` v textovém editoru a doplňte požadované API klíče. Bez nich nebude Sophia schopna komunikovat s LLM.
 
-### 3. Spuštění Pomocí Docker Compose
+### 3. Spuštění Pomocí Docker Compose (nebo lokálně bez Dockeru)
 
-Nyní, když máte vše připraveno, spusťte celý ekosystém jediným příkazem:
+Nyní, když máte vše připraveno, spusťte celý ekosystém jediným příkazem (Docker doporučeno):
 
 ```bash
 docker compose up --build
 ```
 
--   Příkaz `--build` zajistí, že se Docker obrazy vytvoří poprvé (nebo přebudují, pokud došlo ke změnám v `Dockerfile`).
--   Spuštění může chvíli trvat, Docker musí stáhnout a nainstalovat všechny závislosti.
+Pokud preferujete běh bez Dockeru, spusťte backend lokálně pomocí Uvicorn (FastAPI):
+
+```bash
+# Spusťte z kořene repozitáře
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
 
 ### 4. Ověření Funkčnosti
 
 Po úspěšném spuštění bude projekt dostupný na následujících adresách:
 
--   **Frontend (Webové Rozhraní):** `http://localhost:3000`
--   **Backend (API):** `http://localhost:8000/docs` (interaktivní dokumentace API)
+- **Frontend (Webové Rozhraní):** `http://localhost:3000` (pokud frontend běží)
+- **Backend (API):** `http://localhost:8000/docs` (interaktivní dokumentace API)
 
-Otevřete v prohlížeči `http://localhost:3000` a měli byste vidět hlavní stránku webového rozhraní Sophie.
+Interakce s inteligencí nyní probíhá přes kognitivní pipeline (Reptilian -> Mammalian -> Neocortex). Pro lokální experimenty můžete použít `interactive_session.py` k otevření jednoduché CLI relace s těmito vrstvami.
 
 Gratulujeme, právě jste úspěšně spustili Sophii!
 

@@ -13,12 +13,12 @@ Pro hlubší vhled do našich principů doporučujeme prostudovat **[🧬 DNA.md
 ## 1. První spuštění a nastavení prostředí
 
 -   **`core/` (Jádro Mysli):**
-    -   `orchestrator.py`: Srdce kognitivní smyčky. Neprovádí úkoly přímo, ale exekuuje strukturované JSON plány vytvořené `PlannerAgentem`. Jeho klíčovou rolí je iterovat přes kroky plánu, volat příslušné nástroje a v případě selhání aktivovat **debugovací smyčku** – požádat plánovače o opravu plánu a spustit ho znovu.
+    -   `neocortex.py` (dříve `Orchestrator`): Srdce kognitivní smyčky. Exekuuje strukturované JSON plány vytvořené `PlannerAgentem`, používá `core/memory_systems.py` pro krátkodobou/krátkodobou persistenci a implementuje repair-loop (targeted repair) pro opravu neúspěšných kroků bez restartu celého plánu.
     -   `ethos_module.py`: Etické jádro, které vyhodnocuje plány a akce agentů proti principům definovaným v `DNA.md`.
     -   `llm_config.py` & `gemini_llm_adapter.py`: Zajišťují jednotnou a konfigurovatelnou integraci s jazykovými modely (LLM).
 
 -   **`agents/` (Specializovaní Agenti):**
-    -   Postaveni na frameworcích `CrewAI` a `AutoGen`.
+    -   Postaveni na obecně definovaném rozhraní agentů v `agents/`. Implementace může používat různé frameworky (např. `CrewAI`/`AutoGen`), ale dokumentace by žádný z nich neprezentovala jako povinný.
     -   Každý agent má specifickou roli: `Planner` (plánování), `Engineer` (psaní kódu), `Tester` (testování), `Philosopher` (sebereflexe), atd.
 
 -   **`memory/` (Paměťový Systém):**
@@ -38,7 +38,7 @@ Pro hlubší vhled do našich principů doporučujeme prostudovat **[🧬 DNA.md
 -   **`web/` (Webové Rozhraní):**
     -   `api/`: Backend postavený na `FastAPI`, který poskytuje REST API pro komunikaci s frontendem.
         -   **Správa Úkolů:**
-            -   `POST /api/v1/tasks`: Přijímá JSON s popisem úkolu (`{"prompt": "..."}`), asynchronně spouští `Orchestrator.execute_plan()` a okamžitě vrací unikátní `task_id`.
+            -   `POST /api/v1/tasks`: Přijímá JSON s popisem úkolu (`{"prompt": "..."}`), asynchronně spouští kognitivní pipeline (Reptilian -> Mammalian -> Neocortex) a okamžitě vrací unikátní `task_id`.
             -   `GET /api/v1/tasks/{task_id}`: Vrací aktuální stav a historii konkrétního úkolu.
         -   **Real-time Notifikace (WebSockets):**
             -   `GET /api/v1/tasks/{task_id}/ws`: WebSocket endpoint, na který se frontend připojuje pro sledování průběhu úkolu v reálném čase.

@@ -1,5 +1,7 @@
 # Detailní Plán Refaktoringu na Hierarchickou Kognitivní Architekturu
 
+> **NOTE (2025-09-24):** Tento refactoring byl úspěšně implementován a sloučen do `master` větve. Dokument nyní slouží primárně jako historický záznam plánu a doporučení. Aktuální architektura je popsána v `docs/COGNITIVE_ARCHITECTURE.md`.
+
 Tento dokument slouží jako detailní, krok-za-krokem plán pro refaktoring projektu Sophia ze stávajícího stavu na novou Hierarchickou Kognitivní Architekturu (HKA).
 
 **Cílový Stav:** Funkční MVP nové architektury, které lze plně ovládat a testovat přes terminál (`interactive_session.py`). Klíčovou schopností tohoto MVP musí být **autonomní úprava vlastního kódu**.
