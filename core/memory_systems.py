@@ -20,6 +20,18 @@ class ShortTermMemory:
         with self._lock:
             self._store[session_id] = data
 
+    # Compatibility methods expected by some tests and mocks
+    # Older tests/mock fixtures expect ShortTermMemory to expose
+    # save_state/load_state. Provide thin wrappers to preserve
+    # backwards compatibility while keeping the clearer get/set API.
+    def save_state(self, session_id: str, state: Dict[str, Any]) -> None:
+        """Compatibility wrapper for saving state (alias for set)."""
+        self.set(session_id, state)
+
+    def load_state(self, session_id: str) -> Dict[str, Any]:
+        """Compatibility wrapper for loading state (alias for get)."""
+        return self.get(session_id)
+
     def update(self, session_id: str, partial: Dict[str, Any]) -> None:
         with self._lock:
             data = self._store.setdefault(session_id, {})

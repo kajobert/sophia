@@ -23,6 +23,14 @@ def enforce_test_mode_and_sandbox(monkeypatch):
             "SOPHIA_TEST_MODE is not active! Tests can only be run in test mode."
         )
 
+    # Prevent third-party packages from loading .env into the environment during test imports
+    try:
+        import dotenv
+
+        monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: None)
+    except Exception:
+        pass
+
     audit_log = pathlib.Path("tests/sandbox_audit.log")
 
     def log_violation(msg):
@@ -128,6 +136,8 @@ def enforce_test_mode_and_sandbox(monkeypatch):
         "TEMP",
         "TMP",
         "SOPHIA_ADMIN_EMAILS",
+        # Allow third-party libraries to set commonly used LLM env vars in test mode
+        "GEMINI_API_KEY",
     }
     original_setitem = os.environ.__setitem__
     original_delitem = os.environ.__delitem__
@@ -151,3 +161,16 @@ def enforce_test_mode_and_sandbox(monkeypatch):
     yield
 
     # Teardown is handled by monkeypatch
+
+
+@pytest.fixture(scope="function")
+def client():
+    """Provide a TestClient for the FastAPI app to tests that expect the `client` fixture."""
+    from fastapi.testclient import TestClient
+
+    # Import here to avoid importing FastAPI app at module import time which
+    # can trigger side-effects outside test control.
+    from main import app
+
+    with TestClient(app) as c:
+        yield c

@@ -5,8 +5,10 @@ from core.gemini_llm_adapter import GeminiLLMAdapter
 
 # from langchain_google_genai import ChatGoogleGenerativeAI  # fallback do budoucna
 
-# Načtení proměnných prostředí ze souboru .env
-load_dotenv()
+# Only load .env into the environment when not running in test mode.
+if os.getenv("SOPHIA_TEST_MODE") != "1":
+    # Načtení proměnných prostředí ze souboru .env
+    load_dotenv()
 
 # --- Globals ---
 config = None
