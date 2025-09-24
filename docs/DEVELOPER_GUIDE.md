@@ -108,6 +108,26 @@ Klíčovou zodpovědností každého přispěvatele je pečlivé a systematické
 - **Pro AI Agenty:** Všechny vaše povinnosti, pracovní postupy a formát pro záznamy do znalostní báze jsou definovány v **[`AGENTS.md`](../AGENTS.md)**. Tento dokument je pro vás **závazný**.
 - **Pro Lidské Vývojáře:** Očekává se, že budete dodržovat stejné standardy profesionality a dokumentace jako naši AI partneři. Inspirujte se a dodržujte postupy uvedené v `AGENTS.md`.
 
+---
+
+## Testovací režim a .env chování
+
+Pro pohodlné, bezpečné a deterministické spuštění testů používáme interní testovací režim. Několik klíčových bodů, které si pamatujte:
+
+- `SOPHIA_TEST_MODE=1` (přes `os.environ`) — když je aktivní, některé moduly se inicializují v "testovacím módu" (např. LLM globály nejsou vytvořeny) a testy očekávají, že skutečné API volání budou mockovány.
+- `tests/conftest.py` obsahuje fixture `enforce_test_mode_and_sandbox` která:
+    - Nutí prostředí do testovacího režimu (ukončí běh testů, pokud není proměnná nastavena).
+    - Monkeypatchuje `dotenv.load_dotenv` během testů, aby třetí strany (knihovny v site-packages) neměnily `os.environ` při importu. Díky tomu se zabrání neočekávaným vedlejším efektům při importu modulů v testech.
+    - Omezí zápisy na disk na bezpečné adresáře (`/tmp`, `tests/`, `sandbox/`, `logs/`) a loguje porušení do `tests/sandbox_audit.log`.
+    - Blokuje skutečné síťové volání (přepisem `requests`, `httpx`, `urllib`) a některé nebezpečné operace (např. `subprocess.Popen`).
+
+Tato konfigurace dělá testovací běhy bezpečnějšími a stabilnějšími. Pokud přidáváte novou závislost, která při importu zapisuje do prostředí nebo na disk, ujistěte se, že:
+
+1. Testy buď mockují takové chování, nebo
+2. Aktualizujete `tests/conftest.py` (opatrně) tak, aby opravněné env klíče byly bezpečně povoleny, nebo aby byla inicializace volána explicitně v safe kontextu.
+
+Poznámka: Rozhodnutí monkeypatchovat `dotenv.load_dotenv` v testech je cílené — cíl je minimalizovat rozdíly mezi lokálním vývojem a testovacím během a zajistit, že testy budou ovlivněny pouze tím, co přímo nastavíte v testu nebo v CI.
+
 ### Code Review a Kvalita
 Před schválením a sloučením jakéhokoliv Pull Requestu (PR) je třeba zkontrolovat následující body:
 
