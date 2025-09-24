@@ -1,6 +1,6 @@
 # Technický Plán Implementace: Replikace Agenta "Jules" v Projektu Sophia 2.0
 
-**Verze:** 1.0
+**Verze:** 2.0
 **Datum:** 2025-09-24
 **Autor:** Jules (AI Agent)
 
@@ -90,3 +90,60 @@ Strategie spočívá ve vytvoření modulárního systému, který striktně odd
 
 -   Po dokončení každé fáze je doporučeno provést jednotkové testy pro ověření funkčnosti (např. testy pro `ToolExecutor`, parsování odpovědi).
 -   Po dokončení implementace bude proveden end-to-end test s jednoduchým úkolem (např. "Vytvoř soubor `test.txt` s obsahem 'ahoj' a následně ho přečti.") pro ověření celého řetězce.
+
+---
+
+## **Příloha A: Detailní Specifikace Komponent**
+
+Tato příloha detailně popisuje klíčové interní mechanismy, které musí být implementovány pro věrnou replikaci.
+
+### A.1 Architektura Systémového Promptu ("Meta Prompt")
+
+Systémový prompt je základní "ústava" agenta. Není to jen statický text, ale dynamicky sestavovaný blok informací, který je předán LLM v každém cyklu. Jeho struktura musí být následující:
+
+1.  **Sekce 1: Identita a Hlavní Direktiva (Statická část)**
+    -   Definuje, kdo agent je ("Jsi Jules, AI softwarový inženýr..."), jeho cíl a hlavní, neměnná pravidla (vždy použij nástroj, postupuj krok za krokem).
+
+2.  **Sekce 2: Popis Formátu Odpovědi (Statická část)**
+    -   Explicitně definuje, že odpověď musí být POUZE volání nástroje uzavřené ve specifických značkách (`<TOOL_CODE_START>` a `<TOOL_CODE_END>`). Musí obsahovat příklady pro oba typy syntaxe (standardní a DSL).
+
+3.  **Sekce 3: Popis Dostupných Nástrojů (Dynamická část)**
+    -   Tato sekce bude dynamicky generována `ToolExecutor`em. Bude obsahovat seznam názvů všech dostupných nástrojů a jejich docstringy, aby LLM věděl, co může použít a jak.
+
+4.  **Sekce 4: Paměťové Soubory (Dynamická část)**
+    -   Obsah souborů `JULES.md` a `AGENTS.md`. To poskytuje LLM kontext o jeho dlouhodobé paměti, osobnosti a pravidlech projektu.
+
+5.  **Sekce 5: Historie Aktuálního Úkolu (Dynamická část)**
+    -   Kompletní historie dosavadních akcí a jejich výsledků v rámci aktuálního úkolu. To umožňuje LLM navázat na předchozí kroky.
+
+6.  **Sekce 6: Finální Instrukce (Statická část)**
+    -   Krátká, finální instrukce, která shrnuje úkol, např. "Analyzuj historii a navrhni další krok jako JEDNO volání nástroje."
+
+### A.2 Komunikační Formáty Nástrojů
+
+Agent musí podporovat dva odlišné formáty volání nástrojů. `ToolExecutor` musí být schopen oba formáty správně zparsovat a vykonat.
+
+1.  **Standardní Syntaxe (Python-like)**
+    -   **Popis:** Používá se pro jednoduché nástroje s jedním nebo více argumenty na jednom řádku. Formát je `název_nástroje(argument1, "argument2", ...)`
+    -   **Příklad:** `read_file("src/main.py")`
+    -   **Parsování:** Lze použít regulární výrazy pro extrakci názvu nástroje a řetězce s argumenty, který se následně rozdělí podle čárky.
+
+2.  **Speciální Syntaxe (DSL - Domain Specific Language)**
+    -   **Popis:** Používá se pro komplexní nástroje, kde argumenty (často víceřádkové) následují po názvu nástroje na nových řádcích.
+    -   **Příklad:**
+        ```
+        create_file_with_block
+        cesta/k/souboru.txt
+        První řádek obsahu.
+        Druhý řádek obsahu.
+        ```
+    -   **Parsování:** `ToolExecutor` musí nejprve zkontrolovat, zda volání odpovídá standardní syntaxi. Pokud ne, rozdělí celý blok kódu podle odřádkování. První řádek je název nástroje, zbytek jsou argumenty.
+
+### A.3 Specifikace Klíčových Metod Orchestrátoru
+
+-   **`_build_prompt()`:**
+    -   Musí implementovat logiku popsanou v sekci A.1. Postupně spojí všech 6 sekcí do jednoho finálního textového řetězce, který bude odeslán do Gemini API.
+
+-   **`_parse_tool_call()`:**
+    -   Tato metoda musí nejprve z odpovědi LLM extrahovat obsah mezi značkami (`<TOOL_CODE_START>` a `<TOOL_CODE_END>`).
+    -   Extrahovaný text je pak předán `ToolExecutoru`, který se postará o detailní parsování a vykonání. Orchestrátor tedy nemusí znát detaily syntaxe jednotlivých nástrojů.
