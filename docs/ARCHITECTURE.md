@@ -256,45 +256,17 @@ Základem autonomie Sophie je kognitivní cyklus implementovaný v `core/orchest
 
 **Kroky Kognitivního Cyklu:**
 
-1.  **Plánování (PlannerAgent):**
-    * Na začátku každého úkolu je zavolán `PlannerAgent`.
-    * Jeho úkolem je transformovat abstraktní cíl (např. "přidej novou funkci a otestuj ji") na konkrétní, strojově čitelný plán.
-    * **Výstupem je vždy validní JSON**, který představuje pole kroků.
+```markdown
+# Archivní: Dřívější architektura
 
-    **Příklad JSON Plánu:**
-    ```json
-    [
-        {
-            "step_id": 1,
-            "description": "Přečti obsah souboru 'main.py'.",
-            "tool_name": "ReadFileTool",
-            "parameters": {
+Tento dokument byl ponechán z historických důvodů. Architektura projektu se od data velké refaktorizace (2025-09-24) přesunula na Hierarchical Cognitive Architecture (HKA). Novým a oficiálním zdrojem pravdy pro architekturu je:
+
+- **`docs/COGNITIVE_ARCHITECTURE.md`**
+
+Veškeré technické detaily, diagramy a vysvětlení k HKA najdete v uvedeném dokumentu. Tento soubor slouží jako archivní přepis staršího stavu a neměl by být používán jako primární referenční materiál.
+
+---
+
+_Poznámka pro správce dokumentace:_ Pokud v budoucnu budete chtít uchovat konkrétní sekce z této staré verze, přesunujte je do `docs/archived/` a přidejte jasný nadpis s datem a krátkým kontextem.
+```
                 "file_path": "main.py"
-            }
-        },
-        {
-            "step_id": 2,
-            "description": "Napiš nový kód do souboru 'new_feature.py'.",
-            "tool_name": "WriteFileTool",
-            "parameters": {
-                "file_path": "new_feature.py",
-                "content": "def my_new_feature():\\n  return True"
-            }
-        }
-    ]
-    ```
-
-2.  **Exekuce (Orchestrator):**
-    * `Orchestrator` přijme JSON plán a začne ho vykonávat krok po kroku.
-    * Pro každý krok dynamicky identifikuje a zavolá příslušný nástroj (`tool_name`) s danými parametry (`parameters`).
-    * Všechny nástroje jsou načteny při startu a jsou dostupné v `orchestrator.tools`.
-
-3.  **Detekce Chyby a Oprava (Debugovací Smyčka):**
-    * **Pokud jakýkoliv krok selže** (např. soubor neexistuje, kód se nespustí), `Orchestrator` přeruší exekuci.
-    * Zabalí kontext chyby: původní cíl, neúspěšný plán, krok, který selhal, a konkrétní chybovou hlášku.
-    * **Znovu zavolá `PlannerAgenta`** s tímto chybovým kontextem a požádá ho o *opravu plánu*.
-    * `PlannerAgent` vytvoří nový, opravený plán, který se snaží chybu obejít (např. pokud čtení souboru selhalo, nový plán může nejprve soubor vytvořit).
-    * `Orchestrator` zahodí starý plán, přijme nový a **spustí exekuci od začátku nového plánu**.
-    * Tento cyklus (exekuce -> chyba -> oprava -> nová exekuce) se může opakovat (s limitem `MAX_REPAIR_ATTEMPTS`), dokud není úkol úspěšně dokončen nebo dokud plánovač selže.
-
-Tento mechanismus dává Sophii robustnost a schopnost autonomně řešit nepředvídatelné problémy, což je klíčový krok k dosažení plné autonomie.

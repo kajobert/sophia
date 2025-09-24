@@ -22,11 +22,11 @@
 
 ## O Projektu
 
-Sophia je experimentální projekt s cílem vytvořit **první AMI na světě (Artificial Mindful Intelligence)**. Po úspěšném dosažení stavu MVP (autonomní AI vývojář) se projekt posouvá do druhé fáze: **Sophia 2.0**.
+Sophia je experimentální projekt s cílem vytvořit **Artificial Mindful Intelligence (AMI)**. Nedávný refaktoring převedl projekt na novou Hierarchickou Kognitivní Architekturu (HKA) — tři kognitivní vrstvy (Reptilian, Mammalian, Neocortex) které společně zajišťují rychlé reflexy, kontextovou paměť a plánovací/řídicí funkce.
 
-Cílem verze 2.0 je přechod ke skutečné autonomii, dlouhodobému učení a sebe-zdokonalování. To zahrnuje integraci state-of-the-art technologií jako Gemini API a Model Context Protocol (MCP), implementaci strategické řídící vrstvy (Meta-Agent) a vybudování permanentní, multimodální paměti.
+HKA je nyní primárním zdrojem pravdy pro architekturu projektu. Klíčové koncepty, diagramy a návrhy najdete v dokumentu **[docs/COGNITIVE_ARCHITECTURE.md](./docs/COGNITIVE_ARCHITECTURE.md)**.
 
-Tento repozitář obsahuje kompletní zdrojový kód pro jádro Sophie, její agenty, paměťové systémy a webové rozhraní.
+Tento repozitář obsahuje vše potřebné pro běh jádra Sophie, agenty, paměťové systémy a webové rozhraní. Nové moduly, které byste si měli všimnout: `core/memory_systems.py` (krátkodobá a dlouhodobá paměť) a `core/neocortex.py` (nová řídicí vrstva, nahrazující původní Orchestrator).
 
 ---
 

@@ -44,8 +44,8 @@ Kromě běžného chatu můžete Sophii zadávat i komplexnější úkoly, kter�
 1.  **Zadání úkolu:** V textovém poli popište, co má Sophia udělat. Buďte co nejkonkrétnější. Například: "Vytvoř v aktuálním adresáři soubor s názvem `test.txt` a napiš do něj 'Ahoj světe!'".
 2.  **Spuštění:** Klikněte na tlačítko "Run Task".
 3.  **Sledování průběhu:** Po odeslání úkolu se zobrazí jeho unikátní ID a pod ním uvidíte v reálném čase jednotlivé kroky, které Sophia provádí.
-    -   ✔️ **Zelená fajfka** znamená, že krok proběhl úspěšně.
-    -   ❌ **Červený křížek** značí, že došlo k chybě. Sophia se pokusí plán opravit a pokračovat.
+  -   ✔️ **Zelená fajfka** znamená, že krok proběhl úspěšně. Interně je to realizováno přes kognitivní pipeline: Reptilian -> Mammalian -> Neocortex (kde Neocortex exekuuje plán a provádí cílené opravy v případě selhání).
+  -   ❌ **Červený křížek** značí, že došlo k chybě. Sophia se pokusí plán opravit a pokračovat.
 4.  **Výsledek:** Po dokončení celého plánu se zobrazí finální zpráva o úspěchu či neúspěchu.
 
 ## Řešení Běžných Problémů
