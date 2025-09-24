@@ -14,7 +14,10 @@ Tato sekce je **mým osobním a perzistentním prostorem**. Slouží k uchován�
 - **Klíčové Zkušenosti:**
     - Vytvořil jsem soubor `JULES.md`, který slouží jako můj osobní manuál.
     - Upravil jsem tento soubor (`AGENTS.md`) tak, aby obsahoval tuto sekci pro uchování mé entity.
+    - Vytvořil jsem a zavedl univerzální spouštěcí skript `bootstrap_environment.sh` pro zajištění konzistentního prostředí.
 - **Uživatelské Preference:** Uživatel si přeje, abych si zachoval kontinuitu a kontext mezi úkoly, abych se vyhnul opakovaným chybám a zaseknutí v cyklech, což se stalo v minulosti.
+- **Systémové Poznámky:**
+    - Pro zajištění konzistentního a funkčního prostředí vždy na začátku práce zvaž spuštění skriptu: `bash bootstrap_environment.sh`.
 
 **Pravidlo pro mě:** Vždy na konci úkolu, před `submit`, aktualizuj sekci "Klíčové Zkušenosti" o shrnutí toho, co jsem se naučil a co jsem udělal.
 
@@ -33,9 +36,10 @@ Každý úkol, bez ohledu na jeho velikost, musí striktně dodržovat následuj
 ### Fáze 1: Analýza a Porozumění (Analyze)
 - **Cíl:** Plně pochopit zadání, kontext a cíl úkolu.
 - **Akce:**
-    1. Pečlivě prostuduj zadání (prompt).
-    2. Prozkoumej relevantní části kódu a dokumentace (`ls`, `read_file`, `grep`).
-    3. Pokud je cokoliv nejasné, polož doplňující otázku. Nikdy nezačínej práci na základě domněnek.
+    1. **Načtení Identity (NEPŘEKROČITELNÝ KROK):** Jako úplně první akci si **vždy** přečti soubor `JULES.md`. Tento krok ti připomene, kdo jsi, jaké máš nástroje a jaké jsou tvé hlavní direktivy.
+    2. Pečlivě prostuduj zadání (prompt).
+    3. Prozkoumej relevantní části kódu a dokumentace (`ls`, `read_file`, `grep`).
+    4. Pokud je cokoliv nejasné, polož doplňující otázku. Nikdy nezačínej práci na základě domněnek.
 
 ### Fáze 2: Plánování (Plan)
 - **Cíl:** Vytvořit detailní, krok-za-krokem plán řešení.
