@@ -29,7 +29,7 @@ def make_cache_key(prompt, user=None):
     # Hashujeme prompt + user email (pokud je)
     base = prompt.strip()
     if user and isinstance(user, dict):
-        base += f"|{user.get('email','')}"
+        base += f"|{user.get('email', '')}"
     return "llm:reply:" + hashlib.sha256(base.encode("utf-8")).hexdigest()
 
 

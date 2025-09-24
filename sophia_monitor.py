@@ -210,8 +210,7 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
                 if not found_solution:
                     issue_filename = "NEW_ISSUE_TO_DOCUMENT.md"
                     with open(issue_filename, "w", encoding="utf-8") as f:
-                        f.write(
-                            f"""# NOVÝ PROBLÉM K ZADOKUMENTOVÁNÍ
+                        f.write(f"""# NOVÝ PROBLÉM K ZADOKUMENTOVÁNÍ
 
 **Chyba**: {error_name}
 **Počet výskytů za poslední hodinu**: {len(errors)}
@@ -224,14 +223,13 @@ def check_recurring_errors(log_paths=None, time_window_hours=1, error_threshold=
 ## Template pro Znalostní Bázi (`docs/KNOWLEDGE_BASE.md`)
 
 ### Téma: [Stručný popis tématu týkající se '{error_name}']
-**Datum**: {datetime.now().strftime('%Y-%m-%d')}
+**Datum**: {datetime.now().strftime("%Y-%m-%d")}
 **Autor**: Guardian Monitor
 **Kontext**: [Popiš, za jakých okolností se chyba vyskytla. Automaticky detekováno v log souborech.]
 **Zjištění/Rozhodnutí**: [Jaký byl problém a jaké je navrhované nebo implementované řešení?]
 **Důvod**: [Proč bylo toto řešení zvoleno?]
 **Dopad**: [Jaký dopad má řešení na projekt?]
-"""
-                        )
+""")
                     print(
                         f"CRITICAL: Detected recurring '{error_name}' with no documented solution. Created '{issue_filename}' for documentation."
                     )

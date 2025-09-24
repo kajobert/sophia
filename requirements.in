@@ -21,6 +21,9 @@ memorisdk
 httpx
 marko
 
+# Markdown parsing
+marko
+
 # Web API & Auth
 authlib
 itsdangerous

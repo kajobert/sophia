@@ -5,9 +5,10 @@ import logging
 from dotenv import load_dotenv
 
 from core.gemini_llm_adapter import GeminiLLMAdapter
-from core.orchestrator import Orchestrator
-from agents.planner_agent import PlannerAgent
 from core.context import SharedContext
+from core.cognitive_layers import ReptilianBrain, MammalianBrain
+from core.neocortex import Neocortex
+from core.memory_systems import ShortTermMemory, LongTermMemory
 
 # --- Konfigurace Logování ---
 # Nastavíme logování tak, aby se zobrazovaly informace z CrewAI a dalších modulů
@@ -51,9 +52,15 @@ async def main():
             model=llm_config.get("model_name", "gemini-pro"),
             temperature=llm_config.get("temperature", 0.7),
         )
-        planner = PlannerAgent(llm=llm_adapter)
-        orchestrator = Orchestrator(llm=llm_adapter)
-        print("Komponenty (LLM, Planner, Orchestrator) úspěšně inicializovány.")
+
+        # cognitive layers
+        short_term_memory = ShortTermMemory()
+        long_term_memory = LongTermMemory()
+        reptilian = ReptilianBrain()
+        mammalian = MammalianBrain(long_term_memory=long_term_memory)
+        neocortex = Neocortex(llm=llm_adapter, short_term_memory=short_term_memory)
+
+        print("Komponenty (LLM, Planner, Cognitive layers) úspěšně inicializovány.")
     except Exception as e:
         print(f"Kritická chyba při inicializaci: {e}")
         return
@@ -68,30 +75,40 @@ async def main():
             if not prompt:
                 continue
 
-            # --- Fáze 1: Plánování ---
-            print("\n--- Fáze 1: Generování plánu... ---")
+            # --- Fáze 1: Plazí + Savčí + Neokortex pipeline ---
+            print("\n--- Fáze: Reptilian -> Mammalian -> Neocortex pipeline... ---")
             session_id = str(uuid.uuid4())
             context = SharedContext(original_prompt=prompt, session_id=session_id)
 
-            # PlannerAgent.run_task je synchronní metoda, která vrací upravený kontext
-            context_with_plan = planner.run_task(context)
-            plan = context_with_plan.payload.get("plan")
+            # Run pipeline: Reptilian -> Mammalian -> Planner -> Neocortex
+            ctx1 = reptilian.process_input(context)
+            ctx2 = mammalian.process_input(ctx1)
 
-            if not plan:
-                print("\nCHYBA: Plánovač selhal a nevytvořil žádný plán.")
-                print(f"Zpětná vazba od plánovače: {context_with_plan.feedback}")
+            # Ask the planner to produce a plan for the processed context
+            try:
+                planner_result = neocortex.planner.run_task(ctx2)
+            except Exception as e:
+                print(f"Planner error: {e}")
+                logging.exception("Planner raised an exception")
                 continue
 
-            # Připravíme kontext pro orchestrátor
-            context.current_plan = plan
-            print(f"Úspěšně vygenerován plán s {len(plan)} kroky.")
-            for i, step in enumerate(plan):
-                print(f"  Krok {i+1}: {step['description']}")
+            # planner_result is expected to have a payload with a 'plan' key containing a list
+            plan = None
+            try:
+                plan = planner_result.payload.get("plan")
+            except Exception:
+                # be defensive: planner_result may not have payload or may be None
+                plan = None
 
-            # --- Fáze 2: Provedení ---
-            print("\n--- Fáze 2: Provádění plánu... ---")
-            # Orchestrator.execute_plan je asynchronní metoda
-            final_context = await orchestrator.execute_plan(context)
+            if not plan or not isinstance(plan, list) or len(plan) == 0:
+                print("Planner did not produce a valid plan for that input. Try a more specific or actionable request.")
+                continue
+
+            # attach plan to context and execute
+            ctx2.current_plan = plan
+
+            # neocortex.execute_plan is async and returns final context
+            final_context = await neocortex.execute_plan(ctx2)
 
             # --- Fáze 3: Výsledek ---
             print("\n--- Fáze 3: Výsledek provedení ---")

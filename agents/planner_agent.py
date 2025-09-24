@@ -52,7 +52,7 @@ You are a master planner AI. Your task is to analyze a user's request and create
 **Constraints & Rules:**
 1.  The plan must be a valid JSON array of objects.
 2.  Each step in the JSON array must be an object with the following keys: `step_id` (integer), `description` (string), `tool_name` (string), and `parameters` (a dictionary).
-3.  You can ONLY use tools from this list: {', '.join(available_tools)}. Do not invent tools.
+3.  You can ONLY use tools from this list: {", ".join(available_tools)}. Do not invent tools.
 4.  If the user's request is impossible or outside your capabilities (e.g., asking for the weather, accessing the internet), you must return an empty JSON array `[]` and nothing else.
 5.  Your entire response must be ONLY the JSON plan. Do not include any other text, explanations, or markdown formatting outside of the JSON itself.
 
@@ -91,6 +91,11 @@ Now, generate the plan for the user's request.
             try:
                 # Direct LLM call
                 raw_response = self.llm.invoke(prompt)
+                # Preserve the raw LLM response in the context payload for debugging
+                try:
+                    context.payload["raw_response"] = raw_response
+                except Exception:
+                    context.payload["raw_response"] = str(raw_response)
 
                 if not raw_response or not raw_response.strip():
                     # This specifically handles the "None or empty response from LLM" error
@@ -123,6 +128,8 @@ Now, generate the plan for the user's request.
                     )
                     return context
                 else:
+                    # Log the raw response for debugging before raising
+                    self.logger.debug(f"Planner raw response (invalid structure): {raw_response}")
                     raise ValueError("Plan structure is invalid.")
 
             except (json.JSONDecodeError, ValueError) as e:
@@ -133,6 +140,11 @@ Now, generate the plan for the user's request.
                     self.logger.error(
                         "PlannerAgent failed to generate a valid plan after all retries."
                     )
+                    # include the last raw response for visibility
+                    try:
+                        context.payload["raw_response_last_attempt"] = raw_response
+                    except Exception:
+                        context.payload["raw_response_last_attempt"] = str(raw_response)
                     context.payload["plan"] = None
                     context.feedback = (
                         "PlannerAgent failed to generate a valid JSON plan."

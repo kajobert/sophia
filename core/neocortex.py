@@ -2,43 +2,32 @@ import os
 import importlib
 import inspect
 import logging
+from typing import Dict
 
+from core.context import SharedContext
+from core.memory_systems import ShortTermMemory
 from agents.planner_agent import PlannerAgent
 from tools.base_tool import BaseTool
 from services.websocket_manager import manager
-from .cognitive_layers import ReptilianBrain, MammalianBrain
-from .memory_systems import ShortTermMemory
+from core.llm_config import llm
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 class Neocortex:
     """
-    The highest level of the cognitive architecture, responsible for executive functions,
-    planning, and conscious thought. It orchestrates the lower brain layers and tool execution.
+    Neocortex: executes plans, uses short-term memory, and repairs failing steps without
+    re-running already successful steps.
     """
 
     MAX_REPAIR_ATTEMPTS = 3
 
-    def __init__(
-        self,
-        reptilian_brain: ReptilianBrain,
-        mammalian_brain: MammalianBrain,
-        short_term_memory: ShortTermMemory,
-        planner: PlannerAgent,
-    ):
-        self.logger = logging.getLogger(__name__)
-        self.reptilian_brain = reptilian_brain
-        self.mammalian_brain = mammalian_brain
-        self.stm = short_term_memory
-        self.planner = planner
+    def __init__(self, llm, short_term_memory: ShortTermMemory = None):
+        self.planner = PlannerAgent(llm)
         self.tools = self._load_tools()
-        self.logger.info("Neocortex initialized.")
+        self.stm = short_term_memory or ShortTermMemory()
 
-    def _load_tools(self) -> dict:
-        """Dynamically loads all tool classes from the 'tools' directory."""
+    def _load_tools(self) -> Dict[str, BaseTool]:
         tools = {}
         tools_dir = "tools"
         for filename in os.listdir(tools_dir):
@@ -52,188 +41,183 @@ class Neocortex:
                             and cls is not BaseTool
                             and not inspect.isabstract(cls)
                         ):
-                            tools[name] = cls()
+                            try:
+                                tools[name] = cls()
+                                logger.info(f"Successfully loaded tool: {name}")
+                            except Exception as e:
+                                logger.error(f"Failed to instantiate tool {name}: {e}")
                 except Exception as e:
-                    self.logger.error(
-                        f"Failed to load or instantiate tool from {module_name}: {e}"
-                    )
+                    logger.error(f"Failed to load module {module_name}: {e}")
         return tools
 
-    async def process_input(self, session_id: str, user_input: str):
+    async def execute_plan(self, context: SharedContext):
         """
-        The main entry point for processing a new user request.
-        It runs the input through the cognitive layers and starts the execution loop.
+        Execute the plan stored in context.current_plan. On step failure, request a
+        targeted repair for that step and resume execution (do not restart entire plan).
         """
-        self.logger.info(
-            f"Neocortex processing new input for session {session_id}: '{user_input}'"
-        )
+        repair_attempts = 0
 
-        # 1. Reptilian Brain Processing
-        try:
-            reptilian_data = self.reptilian_brain.process_input(user_input)
-        except ValueError as e:
-            self.logger.error(f"Input blocked by ReptilianBrain: {e}")
-            await manager.broadcast({"type": "error", "message": str(e)}, session_id)
-            return
-
-        # 2. Mammalian Brain Processing
-        mammalian_data = self.mammalian_brain.process_input(reptilian_data)
-
-        # 3. Create initial plan
-        # The planner now receives a richer context
-        # For now, we'll keep it simple and just use the original prompt
-        from core.context import SharedContext
-
-        planning_context = SharedContext(
-            original_prompt=user_input, session_id=session_id
-        )
-        planned_context = self.planner.run_task(planning_context)
-        initial_plan = planned_context.payload.get("plan")
-
-        if not initial_plan:
-            self.logger.error("Planner failed to generate an initial plan.")
+        if not context.current_plan or not isinstance(context.current_plan, list):
+            logger.error("No valid plan to execute. Aborting.")
+            context.feedback = "Execution aborted: No plan provided."
             await manager.broadcast(
-                {"type": "error", "message": "Could not generate a plan."}, session_id
+                {"type": "plan_feedback", "feedback": context.feedback},
+                context.session_id,
             )
-            return
+            return context
 
-        # 4. Save initial state and start execution loop
-        initial_state = {
-            "session_id": session_id,
-            "original_prompt": user_input,
-            "mammalian_data": mammalian_data,
-            "current_plan": initial_plan,
-            "step_history": [],
-            "repair_attempts": 0,
-        }
-        self.stm.save_state(session_id, initial_state)
-        await self._execute_plan_loop(session_id)
+        # ensure short-term memory has the initial state
+        self.stm.set(
+            context.session_id,
+            {"plan": context.current_plan, "step_history": context.step_history},
+        )
 
-    async def _execute_plan_loop(self, session_id: str):
-        """
-        The core loop that executes a plan, step by step, handling failures and repairs.
-        """
-        state = self.stm.load_state(session_id)
-        if not state:
-            self.logger.error(
-                f"No state found for session {session_id}. Aborting execution."
-            )
-            return
+        i = 0
+        while i < len(context.current_plan):
+            step = context.current_plan[i]
+            try:
+                tool_name = step.get("tool_name")
+                parameters = step.get("parameters", {})
 
-        while state["repair_attempts"] < self.MAX_REPAIR_ATTEMPTS:
-            plan_successful = True
+                if tool_name not in self.tools:
+                    raise ValueError(f"Tool '{tool_name}' not found.")
 
-            # Create a copy of the plan to iterate over, as the original might be replaced during repair
-            plan_to_execute = list(state["current_plan"])
-
-            for step in plan_to_execute:
-                try:
-                    tool_name = step.get("tool_name")
-                    parameters = step.get("parameters", {})
-                    if tool_name not in self.tools:
-                        raise ValueError(f"Tool '{tool_name}' not found.")
-
-                    tool_instance = self.tools[tool_name]
-                    self.logger.info(
-                        f"Executing step {step.get('step_id')}: {step.get('description')}"
-                    )
-                    result = tool_instance.execute(**parameters)
-
-                    step_output = {"status": "success", "result": result}
-                    state["step_history"].append({**step, "output": step_output})
-                    await manager.broadcast(
-                        {
-                            "type": "step_update",
-                            "step_id": step.get("step_id"),
-                            "output": step_output,
-                        },
-                        session_id,
-                    )
-
-                except Exception as e:
-                    self.logger.error(f"Step {step.get('step_id')} failed: {e}")
-                    plan_successful = False
-                    step_output = {"status": "error", "error": str(e)}
-                    state["step_history"].append({**step, "output": step_output})
-                    await manager.broadcast(
-                        {
-                            "type": "step_update",
-                            "step_id": step.get("step_id"),
-                            "output": step_output,
-                        },
-                        session_id,
-                    )
-
-                    # --- Repair Loop ---
-                    state["repair_attempts"] += 1
-                    if state["repair_attempts"] >= self.MAX_REPAIR_ATTEMPTS:
-                        self.logger.error(
-                            f"Max repair attempts reached for session {session_id}."
-                        )
-                        await manager.broadcast(
-                            {
-                                "type": "plan_failed",
-                                "message": "Max repair attempts reached.",
-                            },
-                            session_id,
-                        )
-                        break
-
-                    self.logger.info("Calling PlannerAgent to repair the plan...")
-                    from core.context import SharedContext
-
-                    repair_prompt = f"The previous plan failed. Original goal: {state['original_prompt']}. Failed plan: {state['current_plan']}. The step '{step.get('description')}' failed with the error: {str(e)}. Please create a new plan."
-                    repair_context = SharedContext(
-                        original_prompt=repair_prompt, session_id=session_id
-                    )
-                    repaired_context = self.planner.run_task(repair_context)
-                    new_plan = repaired_context.payload.get("plan")
-
-                    if new_plan:
-                        self.logger.info(
-                            "Received a new plan. Restarting execution loop."
-                        )
-                        state["current_plan"] = new_plan
-                        state["step_history"] = []  # Reset history for the new plan
-                        await manager.broadcast(
-                            {"type": "plan_repaired", "new_plan": new_plan}, session_id
-                        )
-                        # Break the inner for-loop to restart the while-loop with the new plan
-                        break
-                    else:
-                        self.logger.error(
-                            "Planner failed to provide a new plan. Aborting."
-                        )
-                        await manager.broadcast(
-                            {
-                                "type": "plan_failed",
-                                "message": "Planner failed to repair the plan.",
-                            },
-                            session_id,
-                        )
-                        # Set attempts to max to exit the while loop
-                        state["repair_attempts"] = self.MAX_REPAIR_ATTEMPTS
-                        break
-
-            # Save state after each step or failure
-            self.stm.save_state(session_id, state)
-
-            if (
-                not plan_successful
-                and state["repair_attempts"] < self.MAX_REPAIR_ATTEMPTS
-            ):
-                # This continue is important to restart the while loop with the new plan
-                continue
-
-            if plan_successful:
-                self.logger.info(
-                    f"Plan for session {session_id} executed successfully."
+                tool_instance = self.tools[tool_name]
+                logger.info(
+                    f"Executing step {step.get('step_id')}: {step.get('description')} with tool {tool_name}"
                 )
+
+                result = tool_instance.execute(**parameters)
+
+                # Update context
+                context.last_step_output = {"status": "success", "result": result}
+                current_step_data = {
+                    "step_id": step.get("step_id"),
+                    "description": step.get("description"),
+                    "tool_name": tool_name,
+                    "parameters": parameters,
+                    "output": context.last_step_output,
+                }
+                context.step_history.append(current_step_data)
+                logger.info(
+                    f"Step {step.get('step_id')} completed successfully. Result: {result}"
+                )
+
                 await manager.broadcast(
-                    {"type": "plan_success", "message": "Plan executed successfully."},
-                    session_id,
+                    {"type": "step_update", **current_step_data}, context.session_id
                 )
-                break
 
-        # Final state save
-        self.stm.save_state(session_id, state)
+                # persist progress
+                self.stm.update(
+                    context.session_id,
+                    {
+                        "last_executed_index": i,
+                        "plan": context.current_plan,
+                        "step_history": context.step_history,
+                    },
+                )
+
+                i += 1
+
+            except Exception as e:
+                logger.error(f"Step {step.get('step_id')} failed: {e}")
+                context.last_step_output = {"status": "error", "error": str(e)}
+                failed_step_data = {
+                    "step_id": step.get("step_id"),
+                    "description": step.get("description"),
+                    "tool_name": step.get("tool_name"),
+                    "output": context.last_step_output,
+                }
+                context.step_history.append(failed_step_data)
+                await manager.broadcast(
+                    {"type": "step_update", **failed_step_data}, context.session_id
+                )
+
+                # attempt repair for this specific step
+                repair_attempts += 1
+                if repair_attempts > self.MAX_REPAIR_ATTEMPTS:
+                    logger.error("Exceeded max repair attempts for a step. Aborting.")
+                    context.feedback = f"Execution failed after {self.MAX_REPAIR_ATTEMPTS} repair attempts for a step."
+                    await manager.broadcast(
+                        {"type": "plan_feedback", "feedback": context.feedback},
+                        context.session_id,
+                    )
+                    return context
+
+                # build a focused repair prompt
+                repair_prompt = (
+                    f"The following plan step failed: {step}. "
+                    f"Error: {str(e)}. Please propose a replacement for this step only, "
+                    f"keeping the rest of the plan unchanged. Return a JSON array of steps if replacement is more than one step."
+                )
+
+                repair_context = SharedContext(
+                    original_prompt=repair_prompt, session_id=context.session_id
+                )
+                repaired = self.planner.run_task(repair_context)
+                new_steps = repaired.payload.get("plan")
+
+                # DEBUG: if planner returned nothing or an invalid plan, log the raw payload for inspection
+                if not new_steps:
+                    try:
+                        self.logger = logger
+                        logger.debug(
+                            f"Planner raw payload during repair: {repaired.payload}"
+                        )
+                    except Exception:
+                        logger.debug("Planner returned no payload or payload is not inspectable.")
+
+                if new_steps:
+                    # If original plan was a single step and planner returned multiple steps,
+                    # treat the returned plan as a full replacement (legacy behavior).
+                    if len(context.current_plan) == 1 and len(new_steps) > 1:
+                        logger.info(
+                            "Applying repaired plan as full replacement and restarting execution."
+                        )
+                        context.current_plan = new_steps
+                        context.step_history = []
+                        # persist updated plan
+                        self.stm.update(
+                            context.session_id,
+                            {
+                                "plan": context.current_plan,
+                                "step_history": context.step_history,
+                            },
+                        )
+                        # restart execution from the beginning
+                        i = 0
+                        repair_attempts = 0
+                        continue
+
+                    # Otherwise, treat returned steps as replacements for the failing step (splice-in)
+                    logger.info(
+                        "Applying repaired step(s) into the current plan (splice-in)."
+                    )
+                    context.current_plan = (
+                        context.current_plan[:i]
+                        + new_steps
+                        + context.current_plan[i + 1 :]
+                    )
+                    # persist updated plan
+                    self.stm.update(context.session_id, {"plan": context.current_plan})
+                    # do not increment i — re-run at the same index which now points to first new step
+                    continue
+                else:
+                    logger.error(
+                        "Planner failed to provide a repair for the step. Aborting."
+                    )
+                    context.feedback = (
+                        "Execution aborted: Planner failed to repair the step."
+                    )
+                    await manager.broadcast(
+                        {"type": "plan_feedback", "feedback": context.feedback},
+                        context.session_id,
+                    )
+                    return context
+
+        logger.info("Plan executed successfully.")
+        context.feedback = "Plan executed successfully."
+        await manager.broadcast(
+            {"type": "plan_feedback", "feedback": context.feedback}, context.session_id
+        )
+        return context

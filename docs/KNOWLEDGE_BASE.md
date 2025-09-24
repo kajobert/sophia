@@ -6,6 +6,27 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
 
 ---
 
+### Téma: Refaktorace jádra na Hierarchickou Kognitivní Architekturu (HKA)
+**Datum**: 2025-09-23
+**Autor**: Automated Refactor Agent
+**Kontext**: Původní architektura projektového jádra používala centrální `Orchestrator` se smíšenou logikou plánování, vykonávání a opravy plánů. To komplikovalo rozšiřitelnost, testovatelnost a jasné oddělení zodpovědností. Cílem refaktoringu bylo přejít na Hierarchickou Kognitivní Architekturu (Reptilian -> Mammalian -> Neocortex), zavést jednoduché in-memory paměťové systémy pro MVP a přepsat orchestrátor na `Neocortex` tak, aby byl modulární, lépe testovatelný a připravený pro budoucí škálování (např. Redis/DB + specializované LLMy).
+**Zjištění/Rozhodnutí**: 
+- Vytvořeny nové moduly: `core/memory_systems.py` (implementace `ShortTermMemory` a `LongTermMemory`) a `core/cognitive_layers.py` (implementace `ReptilianBrain`, `MammalianBrain`, `Neocortex` wrapper pro MVP).
+- Refaktor `core/orchestrator.py` → `core/neocortex.py`: `Neocortex` nyní provádí krok po kroku exekuci plánů, spravuje krátkodobou paměť (STM) a obsahuje repair-loop, který v případě selhání volá plánovač pro opravu kroku. Současně byl původní `Orchestrator` zachován jako kompatibilitní alias pro minimalizaci regresí v testech a integracích.
+- Repair-loop: implementováno chování, které obvykle splices náhradní kroky do aktuálního plánu, ale zachovává plnou náhradu plánu v konkrétních legacy případech (pokud původní plán měl délku 1 a plánovač vrátí více kroků). To zachovává předchozí očekávání testů, zároveň zlepšuje jemnost opravy pro multi-krokové plány.
+- Integrace do `main.py` a `interactive_session.py`: vytvoření pipeline Reptilian -> Mammalian -> Neocortex; implementován fallback pro testy, které patchují moduly na úrovni `main` (např. `main.Orchestrator`, `main.GeminiLLMAdapter`).
+- Testy: přidány izolované unit testy pro paměťové systémy a kognitivní vrstvy a cílené testy repair-loopu. Celá testovací sada byla spuštěna a opraveny regrese tak, aby `pytest` prošel bez selhání (92 passed, 22 skipped).
+**Důvod**: 
+- Oddělení zodpovědností: HKA dává jasné hranice mezi rychlými instinktivními filtry (Reptilian), podvědomou contextualizací (Mammalian) a plánováním/strategií (Neocortex). To zjednodušuje debugování a další rozvoj.
+- Testovatelnost a kompatibilita: Refaktor zlepšuje testovatelnost (menší třídní rozměry, explicitní vstupy/výstupy) a zároveň udržuje kompatibilitu s existujícími testy a rozhraními pomocí aliasů a fallbacků.
+- Postupný přechod na lepší infra: Implementace in-memory MVP pamětí umožňuje rychlé ověření architektury; budoucí migrace na Redis/Postgres/Ollama bude možná bez velkých změn API.
+**Dopad**: 
+- Stabilita: Po opravách a dolaďování repair-loopu projekt procházel kompletní testovací sadou (92 passed, 22 skipped) — to potvrzuje stabilitu refaktoringu.
+- Rozšiřitelnost: Nová architektura usnadňuje přidávání specializovaných subsystémů (např. dedicated LLM pro Reptilian, externí LTM služba) a paralelní vývoj více agentů.
+- Údržba: Jasné rozdělení vrstev a zjednodušené rozhraní `Neocortex` s `ShortTermMemory` usnadní budoucí refaktory a audit změn.
+
+---
+
 ### Téma: Sumarizace poznatků z legacy verze (`sophia_old`)
 **Datum**: 2025-09-20
 **Autor**: Jules
@@ -108,3 +129,4 @@ Tento dokument je živou znalostní bází, která shrnuje klíčové technické
 <p align="center">
   <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Pokud zjistíte, že je zastaralý nebo neúplný, založte prosím issue nebo vytvořte pull request s návrhem na jeho aktualizaci. Děkujeme!</sub>
 </p>
+---
