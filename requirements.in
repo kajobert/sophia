@@ -10,25 +10,14 @@ pydantic
 psycopg2-binary
 
 # AI Agent Frameworks & Libraries
-autogen
-langgraph
-langchain
-langchain-core
-langchain-google-genai
 google-generativeai
 litellm
-memorisdk
 httpx
-marko
-
-# Markdown parsing
-marko
 
 # Web API & Auth
 authlib
 itsdangerous
 redis
-celery
 python-multipart
 PyJWT
 
