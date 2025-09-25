@@ -8,12 +8,14 @@ from core.gemini_llm_adapter import GeminiLLMAdapter
 from core.context import SharedContext
 from core.cognitive_layers import ReptilianBrain, MammalianBrain
 from core.neocortex import Neocortex
-from core.memory_systems import ShortTermMemory, LongTermMemory, get_stm
+from core.memory_systems import ShortTermMemory, LongTermMemory
 
 # --- Konfigurace Logování ---
+# Nastavíme logování tak, aby se zobrazovaly informace z CrewAI a dalších modulů
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 
 # --- Načtení Konfigurace ---
 def load_app_config():
@@ -51,19 +53,19 @@ async def main():
             temperature=llm_config.get("temperature", 0.7),
         )
 
-        short_term_memory = get_stm()
+        # cognitive layers
+        short_term_memory = ShortTermMemory()
         long_term_memory = LongTermMemory()
         reptilian = ReptilianBrain()
         mammalian = MammalianBrain(long_term_memory=long_term_memory)
         neocortex = Neocortex(llm=llm_adapter, short_term_memory=short_term_memory)
 
-        print("Komponenty (LLM, Cognitive layers) úspěšně inicializovány.")
+        print("Komponenty (LLM, Planner, Cognitive layers) úspěšně inicializovány.")
     except Exception as e:
         print(f"Kritická chyba při inicializaci: {e}")
         return
 
     # 3. Spuštění REPL smyčky
-    session_id = str(uuid.uuid4())
     while True:
         try:
             prompt = input("\n> ")
@@ -73,22 +75,43 @@ async def main():
             if not prompt:
                 continue
 
-            # For now, we create a dummy plan to execute a tool.
-            # In the future, a planner module will create this plan.
-            plan = [
-                {
-                    "step_id": 1,
-                    "tool_name": "WriteFileTool",
-                    "description": "Write the user's prompt to a file.",
-                    "parameters": {"file_path": "user_prompt.txt", "content": prompt},
-                }
-            ]
+            # --- Fáze 1: Plazí + Savčí + Neokortex pipeline ---
+            print("\n--- Fáze: Reptilian -> Mammalian -> Neocortex pipeline... ---")
+            session_id = str(uuid.uuid4())
+            context = SharedContext(original_prompt=prompt, session_id=session_id)
 
-            context = SharedContext(original_prompt=prompt, session_id=session_id, current_plan=plan)
+            # Run pipeline: Reptilian -> Mammalian -> Planner -> Neocortex
+            ctx1 = reptilian.process_input(context)
+            ctx2 = mammalian.process_input(ctx1)
 
-            final_context = await neocortex.execute_plan(context)
+            # Ask the planner to produce a plan for the processed context
+            try:
+                planner_result = neocortex.planner.run_task(ctx2)
+            except Exception as e:
+                print(f"Planner error: {e}")
+                logging.exception("Planner raised an exception")
+                continue
 
-            print("\n--- Výsledek provedení ---")
+            # planner_result is expected to have a payload with a 'plan' key containing a list
+            plan = None
+            try:
+                plan = planner_result.payload.get("plan")
+            except Exception:
+                # be defensive: planner_result may not have payload or may be None
+                plan = None
+
+            if not plan or not isinstance(plan, list) or len(plan) == 0:
+                print("Planner did not produce a valid plan for that input. Try a more specific or actionable request.")
+                continue
+
+            # attach plan to context and execute
+            ctx2.current_plan = plan
+
+            # neocortex.execute_plan is async and returns final context
+            final_context = await neocortex.execute_plan(ctx2)
+
+            # --- Fáze 3: Výsledek ---
+            print("\n--- Fáze 3: Výsledek provedení ---")
             print(f"Finální status: {final_context.feedback}")
 
             print("\nHistorie kroků:")
@@ -106,17 +129,6 @@ async def main():
                     elif status == "error":
                         print(f"    Chyba: {error}")
 
-            # --- Stavový řádek ---
-            stm_count = len(short_term_memory.get(session_id).get("step_history", [])) if short_term_memory.get(session_id) else 0
-            ltm_count = len(long_term_memory._records) if hasattr(long_term_memory, '_records') else 0
-            last_action_status = "SUCCESS" if "success" in final_context.feedback.lower() else "PLAN_FAILED"
-
-            status_bar = (
-                f"\n[STATUS | Session: {session_id[:4]} | Vědomí: 0.0 | "
-                f"STM: {stm_count} | LTM: {ltm_count} | Poslední akce: {last_action_status}]"
-            )
-            print(status_bar)
-
         except KeyboardInterrupt:
             print("\nUkončuji session. Na shledanou!")
             break
@@ -126,6 +138,7 @@ async def main():
 
 
 if __name__ == "__main__":
+    # Spuštění asynchronní hlavní funkce
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
