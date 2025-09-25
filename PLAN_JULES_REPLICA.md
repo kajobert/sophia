@@ -1,8 +1,8 @@
 # Technický Plán Implementace: Replikace Agenta "Jules" v Projektu Sophia 2.0
 
-**Verze:** 2.0
-**Datum:** 2025-09-24
-**Autor:** Jules (AI Agent)
+**Verze:** 3.0
+**Datum:** 2025-09-25
+**Autor:** Jules (Nomad)
 
 ## 1. Cíl a Strategie
 
@@ -86,13 +86,43 @@ Strategie spočívá ve vytvoření modulárního systému, který striktně odd
     -   Vytvoří instance `ToolExecutor` a `JulesOrchestrator`.
     -   Zavolá metodu `orchestrator.run()` a tím spustí hlavní smyčku agenta.
 
-## 4. Ověření a Testování
+## 4. Správa Skriptů
 
--   Po dokončení každé fáze je doporučeno provést jednotkové testy pro ověření funkčnosti (např. testy pro `ToolExecutor`, parsování odpovědi).
--   Po dokončení implementace bude proveden end-to-end test s jednoduchým úkolem (např. "Vytvoř soubor `test.txt` s obsahem 'ahoj' a následně ho přečti.") pro ověření celého řetězce.
+Projekt musí obsahovat dva klíčové skripty pro správu prostředí.
+
+-   **4.1 Vývojářský Setup Skript (`setup.sh` nebo `bootstrap.sh`):**
+    -   **Účel:** Zajištění konzistentního a funkčního prostředí pro vývojáře (včetně AI agentů).
+    -   **Funkce:**
+        -   Ověření přítomnosti a verzí klíčových nástrojů (Python, uv, node).
+        -   Vytvoření/aktivace virtuálního prostředí (`.venv`).
+        -   Instalace závislostí z `requirements.in` pomocí `uv` (s fallbackem na `pip`).
+        -   Spuštění ověřovacích testů pro potvrzení funkčnosti prostředí.
+    -   **Udržba:** Tento skript musí být aktivně udržován a aktualizován s každou změnou v závislostech nebo konfiguraci prostředí.
+
+-   **4.2 Uživatelský Instalační Skript (`install.sh`):**
+    -   **Účel:** Poskytnout novým uživatelům co nejjednodušší a nejodolnější způsob, jak projekt nainstalovat a nakonfigurovat.
+    -   **Funkce:**
+        -   **Interaktivita:** Skript musí být plně interaktivní. Bude se uživatele ptát na klíčové informace.
+        -   **Nastavení API Klíče:** Interaktivně si vyžádá `GOOGLE_API_KEY` a bezpečně ho uloží do `.env` souboru. Nesmí ho zobrazovat na terminálu.
+        -   **Ověření API Klíče:** Po zadání klíče se pokusí provést jednoduché testovací volání na Gemini API, aby ověřil jeho platnost.
+        -   **Uvítací Skript:** Po úspěšné instalaci a ověření klíče spustí pod-skript, který pomocí Gemini API vygeneruje personalizovanou uvítací zprávu pro uživatele.
+        -   **Chybové Stavy:** Musí elegantně handleovat případy, kdy uživatel klíč nezadá nebo je klíč neplatný, a nabídnout mu jasné instrukce, co dál.
+
+## 5. Provozní Režimy a Testování
+
+-   **5.1 Detekce Provozních Režimů:**
+    -   Při startu musí aplikace (v `main.py` nebo orchestrátoru) ověřit stav Gemini API a nastavit globální proměnnou nebo stavový příznak na jednu z následujících hodnot: `ONLINE`, `OFFLINE`, `API_ERROR`.
+        -   `ONLINE`: API klíč je přítomen a testovací volání bylo úspěšné.
+        -   `OFFLINE`: API klíč není v `.env` souboru nalezen.
+        -   `API_ERROR`: API klíč je přítomen, ale komunikace selhává (např. chyba autentizace, sítě).
+    -   Aplikace a její komponenty musí na tyto režimy adekvátně reagovat (např. v `OFFLINE` režimu neumožnit spuštění úkolů vyžadujících LLM).
+
+-   **5.2 Návrh Testů Kompatibilních s Režimy:**
+    -   **Povinnost:** Ke každé nové funkci nebo modulu musí být vytvořeny jednotkové testy.
+    -   **Offline Kompatibilita:** Všechny testy, které interagují s externími službami (zejména Gemini API), musí být navrženy tak, aby fungovaly i v offline režimu.
+    -   **Mockování:** Pro testování v `OFFLINE` a `API_ERROR` režimech bude využita technika "mockování" (např. pomocí `unittest.mock`), kde se skutečné volání API nahradí předpřipravenou, simulovanou odpovědí. To umožní testovat logiku aplikace bez závislosti na síti nebo platném API klíči.
 
 ---
-
 ## **Příloha A: Detailní Specifikace Komponent**
 
 Tato příloha detailně popisuje klíčové interní mechanismy, které musí být implementovány pro věrnou replikaci.
