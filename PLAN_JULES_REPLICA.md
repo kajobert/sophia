@@ -1,8 +1,54 @@
-# Technický Plán Implementace: Replikace Agenta "Jules" v Projektu Sophia 2.0
+# Technický Plán a Checklist Implementace: Replikace Agenta "Jules"
 
-**Verze:** 3.0
+**Verze:** 4.0
 **Datum:** 2025-09-25
 **Autor:** Jules (Nomad)
+
+## 0. Implementační Checklist
+
+*Tento checklist slouží jako hlavní roadmapa pro implementaci agenta Jules. Každý bod představuje konkrétní, testovatelný úkol.*
+
+### Fáze 1: Základy Projektu a Konfigurace
+- [ ] Vytvořit adresářovou strukturu (`sophia_jules_replica/`, `core/`, `tools/`, `memory/`, `config/`).
+- [ ] Vytvořit `requirements.in` (`google-generativeai`, `python-dotenv`, `PyYAML`).
+- [ ] Vytvořit `config/config.yaml` se strukturou pro model a cesty.
+- [ ] Vytvořit `.env.example` a `.gitignore`.
+- [ ] Zkopírovat `JULES.md` a `AGENTS.md` do `memory/`.
+
+### Fáze 2: Jádro Orchestrátoru
+- [ ] Vytvořit soubor `core/orchestrator.py` s kostrou třídy `JulesOrchestrator`.
+- [ ] Implementovat v `__init__` načítání konfigurace a paměťových souborů.
+- [ ] Implementovat v `__init__` konfiguraci Gemini API klienta z `.env`.
+- [ ] Implementovat metodu `_build_prompt()` dle specifikace v Příloze A.
+- [ ] Implementovat metodu `_parse_tool_call()` pro extrakci bloku s kódem.
+- [ ] Implementovat hlavní smyčku v metodě `run()`.
+
+### Fáze 3: Nástroje
+- [ ] Vytvořit soubor `core/tool_executor.py` s kostrou třídy `ToolExecutor`.
+- [ ] Implementovat v `__init__` dynamické načítání a registraci nástrojů z adresáře `tools/`.
+- [ ] Implementovat v `execute_tool()` logiku pro parsování a volání **standardní syntaxe** (`tool(...)`).
+- [ ] Rozšířit `execute_tool()` o logiku pro parsování a volání **DSL syntaxe** (víceřádkové).
+- [ ] Vytvořit `tools/file_system.py` s nástroji `list_files`, `read_file`, `create_file_with_block`.
+- [ ] Vytvořit `tools/shell.py` s nástrojem `run_in_bash_session`.
+
+### Fáze 4: Osobnost a Spojení
+- [ ] Vytvořit `core/system_prompt.py` a definovat v něm konstantu `SYSTEM_PROMPT`.
+- [ ] V `JulesOrchestrator` naimportovat a použít `SYSTEM_PROMPT` v metodě `_build_prompt`.
+- [ ] V `JulesOrchestrator` naimportovat, inicializovat a použít `ToolExecutor`.
+
+### Fáze 5: Vstupní Bod a Správa Prostředí
+- [ ] Implementovat `main.py` s `argparse` pro přijetí úkolu.
+- [ ] Vytvořit a implementovat vývojářský `setup.sh` skript.
+- [ ] Vytvořit a implementovat interaktivní uživatelský `install.sh` skript.
+- [ ] Implementovat v `main.py` detekci provozních režimů (ONLINE, OFFLINE, API_ERROR).
+
+### Fáze 6: Testování
+- [ ] Napsat jednotkové testy pro `ToolExecutor` (včetně obou syntaxí).
+- [ ] Napsat jednotkové testy pro jednotlivé nástroje v `tools/file_system.py`.
+- [ ] Napsat jednotkové testy pro `JulesOrchestrator` s mockovaným Gemini API a `ToolExecutor`.
+- [ ] Zajistit, aby všechny testy fungovaly v offline režimu.
+
+---
 
 ## 1. Cíl a Strategie
 
