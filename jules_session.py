@@ -8,18 +8,18 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 try:
-    # Import z finální, integrované architektury v 'core'
-    from core.orchestrator import JulesOrchestrator
+    # Explicitní import z nové, izolované architektury
+    from core_v2.orchestrator import JulesOrchestrator
 except ImportError as e:
-    print(f"CHYBA: Nepodařilo se naimportovat JulesOrchestrator z 'core': {e}")
+    print(f"CHYBA: Nepodařilo se naimportovat JulesOrchestrator z 'core_v2': {e}")
     sys.exit(1)
 
 async def main():
     """
-    Hlavní funkce pro spuštění interaktivní session s finální
-    V2 architekturou.
+    Hlavní funkce pro spuštění testovací interaktivní session
+    s novou V2 architekturou.
     """
-    print("--- Sophia V2 Interactive Session ---")
+    print("--- Jules V2 Interactive Session (Isolated Test) ---")
 
     orchestrator = JulesOrchestrator(project_root=project_root)
     try:
@@ -33,7 +33,7 @@ async def main():
 
         while True:
             prompt = await loop.run_in_executor(
-                None, lambda: input("\nZadejte úkol pro Sophii > ")
+                None, lambda: input("\nZadejte úkol pro Julese V2 > ")
             )
 
             if prompt.lower() in ["exit", "quit", "konec"]:
