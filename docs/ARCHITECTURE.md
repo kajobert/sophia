@@ -1,272 +1,73 @@
-## Monitoring a Modularita (stav k 2025-09-16)
+# Architektura: Nomad Core
 
-- **guardian.py** nyní obsahuje pouze minimalistické jádro: spouštění hlavního procesu, základní restart logiku a monitoring CPU/RAM.
-- Pokročilé kontroly (integrita souborů, monitoring logů, síťové testy) byly přesunuty do samostatného modulu **sophia_monitor.py**.
-- Všechny pokročilé kontroly jsou volány z guardian.py jako samostatné funkce, což umožňuje snadné rozšiřování a testování.
-- Každá kontrola v sophia_monitor.py je samostatná, snadno testovatelná a připravená na další rozšíření (disk, certifikáty, zálohy, externí služby atd.).
-- Testy pro guardian i sophia_monitor jsou oddělené a pokrývají základní i chybové scénáře.
+Tento dokument popisuje aktuální technickou architekturu projektu, která vznikla po rozsáhlém refaktoringu. Nové jádro, s kódovým označením **Nomad**, je navrženo pro robustnost, modularitu a interaktivní použití přes terminálové rozhraní (TUI).
 
-# Backend V4 – aktuální architektura (stav k 2025-09-16)
+## Klíčové principy
 
-## Klíčové vlastnosti backendu
-- **FastAPI** – asynchronní, škálovatelný backend s OpenAPI dokumentací
-- **Centralizovaná konfigurace** v `core/config.py` (všechny proměnné prostředí, cesty, admin emaily, test mode)
-- **Robustní načítání config.yaml** – fallback na CWD, adresář modulu i root workspace, testy jsou environmentálně nezávislé.
-- **Oddělená business logika** v `services/` (uživatelé, role, chat, tokeny, audit)
-- **Role-based access control (RBAC)** – role `admin`, `user`, `guest` určují přístup k endpointům (viz `services/roles.py`)
-- **OAuth2 (Google)** – bezpečné přihlášení, identita v session
-- **Refresh tokeny (JWT)** – endpoint `/refresh`, bezpečné prodloužení přihlášení bez nutnosti opětovného loginu (viz `services/token_service.py`)
-- **Auditní logování** – všechny bezpečnostní akce (login, logout, refresh, selhání) se logují do `logs/audit.log` (viz `services/audit_service.py`)
+Architektura je postavena na několika klíčových principech:
+1.  **Oddělení zodpovědností:** Každá klíčová funkce (uživatelské rozhraní, řízení agenta, vykonávání nástrojů) je zapouzdřena ve vlastní komponentě.
+2.  **Asynchronní zpracování:** Všechny operace jsou navrženy jako asynchronní, aby se zabránilo blokování a zajistila se plynulost uživatelského rozhraní.
+3.  **Modularita nástrojů:** Nástroje, které agent používá, jsou izolovány v samostatných serverových procesech, což umožňuje jejich snadnou správu, rozšiřování a restartování.
 
-## Hlavní endpointy a jejich ochrana
+## Hlavní komponenty
 
-| Endpoint         | Přístup         | Popis |
-|------------------|-----------------|-------|
-| `/chat`          | veřejný         | Chat s AI, i bez přihlášení |
-| `/me`            | user/admin      | Info o přihlášeném uživateli a jeho roli |
-| `/login`         | veřejný         | Zahájení OAuth2 loginu |
-| `/auth`          | veřejný         | Callback z OAuth2, nastaví session, loguje login |
-| `/logout`        | user/admin      | Odhlášení, vymaže session, loguje logout |
-| `/refresh`       | veřejný         | Obnova session pomocí refresh tokenu (JWT), loguje refresh |
-| `/test-login`    | test mode only  | Pro testy, nastaví session na testovacího uživatele |
-| `/upload`        | user/admin      | (Demo) upload souboru, chráněno |
-
-## Auditní logy
-
-Každý záznam obsahuje:
-- UTC timestamp
-- typ akce (`login`, `logout`, `refresh`, `login_failed`, `refresh_failed`...)
-- email uživatele (pokud je znám)
-- detail (např. chybová hláška)
-
-Logy jsou v `logs/audit.log` ve formátu JSON lines (každý řádek jeden záznam).
-
-### Autentizace a ochrana API – příklad toku
-
-1. Uživatel klikne na „Přihlásit se“ (frontend).
-2. Frontend přesměruje na `/api/login/google` (backend), backend zahájí OAuth2 flow (Google, Authlib).
-3. Po úspěšném přihlášení Google přesměruje na `/api/auth/callback`, backend získá identitu uživatele (jméno, email, avatar), uloží ji do session a přesměruje zpět na frontend.
-
-**Proměnné prostředí:**
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` – údaje z Google Cloud Console
-- `SOPHIA_SECRET_KEY` – tajný klíč Flasku pro session
-
-**Session:**
-- Uživatel je v session pod klíčem `user` (dict: name, email, avatar)
-- Session cookie je HttpOnly, není přístupná z JS
-
-**Bezpečnost:**
-- Backend nikdy neukládá Google access token, pouze základní identitu
-- Pro produkci používat HTTPS a silný secret key
-
-**Testování:**
-- `/api/login/google` lze otestovat v prohlížeči (přesměrování na Google)
-- Po přihlášení lze ověřit session přes `/api/me`
-- Pro vývoj je fallback `/api/login` (POST, demo login)
-4. Frontend zavolá `/api/me` a získá informace o uživateli (jméno, email, role).
-5. Všechny chráněné endpointy (např. `/api/chat`) kontrolují session/token. Nepřihlášený uživatel dostane 401.
-6. Odhlášení: frontend zavolá `/api/logout`, backend smaže session.
-
-**Příklad volání:**
-
-```http
-GET /api/me
-Cookie: session=... (nastaví backend po přihlášení)
-
-HTTP/1.1 200 OK
-{
-    "name": "Jan Novák",
-    "email": "jan.novak@gmail.com",
-    "avatar": "https://..."
-}
-```
-
-Nepřihlášený uživatel:
-
-```http
-GET /api/me
-
-HTTP/1.1 401 Unauthorized
-{
-    "detail": "Not authenticated"
-}
-```
----
-
-## Webové rozhraní (V4) – Návrh architektury
-
-### Přehled
-
-Webové rozhraní Sophia V4 je navrženo jako moderní, modulární a bezpečná platforma, která umožní uživatelům komunikovat se Sophií, spravovat svá data a v budoucnu rozšiřovat funkcionalitu (nahrávání souborů, notifikace, role, mobilní klienti atd.).
-
-### Hlavní komponenty
-
-- **Backend (API server):**
-    - Framework: FastAPI (Python)
-    - Autentizace: Google OAuth2 (přihlášení, identita, role)
-    - API: REST + WebSocket (chat, správa souborů, uživatelé, notifikace, audit)
-    - Správa session, bezpečnost, auditní logy
-    - Připraveno na rozšíření o další endpointy (soubory, notifikace, profil, nastavení)
-    - Navrženo pro multiplatformní použití (web, mobilní aplikace)
-
-- **Frontend (Web klient):**
-    - Framework: React (SPA, modularita, rozšiřitelnost)
-    - Komponenty: přihlášení, chat, historie, nahrávání souborů (zatím nefunkční), správa dat, profil, nastavení, notifikace
-    - Připraveno na i18n (vícejazyčnost), světlý/tmavý režim, rozšiřitelnost
-    - Komunikace s backendem přes REST/WebSocket API
-
-### Budoucí rozšiřitelnost
-
-- **Nahrávání a správa souborů:**
-    - Backend i frontend připraveny na upload, správu a analýzu uživatelských dat
-- **Role a oprávnění:**
-    - Možnost rozlišovat běžné uživatele, adminy, testery
-- **Notifikace a zprávy:**
-    - Systém pro upozornění na události, bezpečnostní hlášení, nové funkce
-- **API pro mobilní aplikace:**
-    - Stejné API použitelné pro web i mobilní klienty (Android/iOS)
-- **Audit a bezpečnost:**
-    - Logování akcí, auditní stopy, ochrana osobních údajů (GDPR)
-- **i18n a UX:**
-    - Připraveno na vícejazyčné rozhraní a UX vylepšení
-
-### Schéma architektury
+Následující diagram znázorňuje tok informací mezi hlavními komponentami systému:
 
 ```
-Uživatel <-> Frontend (React SPA) <-> Backend (FastAPI REST/WebSocket API) <-> Sophia Core/Agenti
++------------------+      (1) Uživ. vstup      +----------------------+      (3) Spuštění      +---------------------+
+|                  | ------------------------> |                      | -------------------> |                     |
+|  TUI (app.py)    |                           |  JulesOrchestrator   |                      |     MCP Servery     |
+|  (Textual)       |      (2) Zobrazení        |  (core/orchestrator) | <------------------+ | (mcp_servers/*.py)  |
+|                  | <------------------------ |                      |      (4) Výsledek    |                     |
++------------------+      (zprávy)             +----------+-----------+                      +---------------------+
+        ^                                                  |
+        | (zprávy)                                         | (2) Volání LLM
+        |                                                  |
++-------+----------+                                       v
+|                  |                               +----------------------+
+|   RichPrinter    |                               |                      |
+| (core/printer)   | ----------------------------> |   Gemini API / LLM   |
+|                  |      (1) Logování             |                      |
++------------------+                               +----------------------+
+
 ```
 
+### 1. Textual User Interface (TUI)
+- **Soubor:** `tui/app.py`
+- **Technologie:** [Textual](https://textual.textualize.io/)
+- **Popis:** TUI je hlavním vstupním bodem celé aplikace a nahrazuje původní `interactive_session.py`. Je zodpovědná za:
+    - Vytvoření a správu grafického rozhraní v terminálu (chatovací okno, logy, vstupní pole).
+    - Přijímání vstupů od uživatele.
+    - Spouštění `JulesOrchestrator` v asynchronním "workeru", aby se neblokovalo UI.
+    - Zpracovávání zpráv od `RichPrinter` a jejich zobrazování v příslušných widgetech.
 
-### Build a testování webového UI
+### 2. JulesOrchestrator
+- **Soubor:** `core/orchestrator.py`
+- **Popis:** Je to mozek celého agenta. Jeho zodpovědnosti jsou:
+    - Udržování kontextu a historie konverzace pro dané sezení (`session_id`).
+    - Komunikace s LLM (sestavování promptů, odesílání požadavků).
+    - Parsování odpovědí od LLM a rozhodování, který nástroj zavolat.
+    - Volání nástrojů prostřednictvím `MCPClient`.
+    - Využívání `RichPrinter` pro odesílání informací o svém stavu a výsledcích do TUI.
 
-- Umístění: `web/ui/`
-- Build: `npm run build`
-- Testování: `npm test` (Jest, Testing Library)
-- Hlavní komponenty: Chat, Login, Upload, Files, Profile, Notifications, Settings, Helpdesk, Language, RoleManager
-- Komunikace s backendem přes REST API (`/api/`)
+### 3. MCP (Modular Component Protocol) Servery
+- **Složka:** `mcp_servers/`
+- **Popis:** Každý soubor `*_server.py` představuje samostatný, na pozadí běžící proces, který poskytuje sadu souvisejících nástrojů. Například `file_system_server.py` obsahuje nástroje pro čtení a zápis souborů.
+- **Komunikace:** Orchestrátor s nimi komunikuje přes `MCPClient` pomocí jednoduchého JSON-RPC protokolu přes standardní vstup/výstup.
+- **Výhody:** Tato architektura umožňuje restartovat jednotlivé sady nástrojů (např. po vytvoření nového nástroje) bez nutnosti restartu celé aplikace.
 
-### Poznámky k implementaci
+### 4. RichPrinter
+- **Soubor:** `core/rich_printer.py`
+- **Popis:** Funguje jako prostředník mezi logikou aplikace a jejím zobrazením. Místo přímého tisku do konzole emituje strukturované zprávy (`LogMessage`, `ChatMessage`).
+- **Integrace s TUI:** V TUI režimu jsou tyto zprávy zachyceny a zobrazeny v příslušných widgetech. Pokud aplikace běží bez TUI, zprávy jsou ignorovány, ale logování do souboru stále funguje.
 
-- Backend a frontend jsou oddělené projekty, komunikují přes API.
-- Autentizace a session management řeší backend, frontend pouze získává tokeny a stav.
-- Veškeré nové funkce (soubory, notifikace, role, mobilní klienti) lze přidat bez zásadních změn architektury.
-- Dokumentace a datové modely budou od začátku navrženy s ohledem na verzování a rozšiřitelnost.
-
----
-# Sophia V3 & V4 - Technická Architektura
-
-Tento dokument popisuje technickou strukturu a komponenty systému Sophia.
+### 5. MemoryManager
+- **Soubor:** `core/memory_manager.py`
+- **Technologie:** SQLite
+- **Popis:** Zajišťuje perzistenci dat. Ukládá kompletní historii konverzace pro každé sezení, což umožňuje navázat na přerušenou práci.
 
 ---
 
-## Architektura V3: Vědomé Jádro (Dokončeno)
+## Archivovaná architektura
 
-Tato sekce popisuje základní architekturu, se kterou jsme dosáhli funkčního jádra.
-
-### 1. Přehled Struktury Adresářů
-
-sophia/
-│
-├── guardian.py             # "Strážce Bytí" - spouštěč a monitor
-├── main.py                   # Hlavní smyčka Vědomí (cykly bdění/spánek)
-├── config.yaml               # Centrální konfigurace
-│
-├── core/                     # Jádro Sophiiny mysli
-│   ├── ethos_module.py       # Etické jádro a modul pro Koeficient Vědomí
-│   └── consciousness_loop.py # Logika pro zpracování úkolů a sebereflexi
-│
-├── agents/                   # Definice specializovaných agentů
-│
-├── memory/                   # Paměťové systémy (SQLite, ChromaDB)
-│
-├── tools/                    # Nástroje dostupné pro agenty
-│
-├── web/                      # Rozhraní pro Tvůrce
-...
-
-
-### 2. Popis Klíčových Komponent V3
-
-* **`guardian.py`**: Externí skript, který monitoruje `main.py` a v případě pádu provede `git reset`.
-* **`main.py`**: Srdce Sophie s cykly "bdění" a "spánku".
-* **`core/ethos_module.py`**: První verze etického jádra.
-* **`memory/`**: Moduly pro práci s `SQLite` (epizodická) a `ChromaDB` (sémantická) pamětí.
-* **`web/`**: Jednoduché API a UI pro zadávání úkolů.
-
----
-
-## Architektura V4: Autonomní Tvůrce (V Vývoji)
-
-Tato sekce popisuje cílovou architekturu pro další fázi vývoje, která staví na úspěších V3 a integruje pokročilé open-source technologie.
-
-### 1. Cílová Adresářová Struktura V4
-
-Struktura zůstává z velké části stejná, ale obsah a funkce klíčových modulů se dramaticky rozšiřují.
-
-
-### 2.1 Testování a Mockování
-
-- **Mock/fallback Redis:** Všechny testy používají automaticky in-memory mock Redis (InMemoryRedisMock) při nastavení `SOPHIA_TEST_MODE=1`. Díky tomu jsou testy plně automatizované a nezávislé na běžícím serveru.
-- **Environmentální nezávislost:** Testy fungují bez ohledu na aktuální pracovní adresář, konfigurace i cache jsou vždy dostupné.
-
-### 2. Evoluce Klíčových Komponent ve V4
-
-* **`guardian.py` (Inteligentní Guardian)**:
-    * **Technologie:** `psutil`
-    * **Funkce:** Kromě reakce na pád bude proaktivně monitorovat zdraví systému (CPU, RAM) a provádět "měkké" restarty nebo varování, aby se předešlo selhání.
-
-* **Komunikace a Databáze (Robustní Fronta)**:
-    * **Technologie:** `PostgreSQL`, `psycopg2-binary`
-    * **Funkce:** Nahradí `SQLite` jako hlavní databázi pro epizodickou paměť a úkolovou frontu. Tím se eliminuje problém se souběhem a umožní plynulá komunikace mezi `web/api.py` a `main.py` v reálném čase.
-
-* **`memory/` (Pokročilá Paměť)**:
-    * **Technologie:** Externí knihovna jako `GibsonAI/memori`
-    * **Funkce:** Nahradí naši na míru psanou logiku pro váhu a blednutí vzpomínek za průmyslově ověřené řešení, které lépe spravuje životní cyklus informací.
-
-* **`core/ethos_module.py` (Konstituční AI)**:
-    * **Technologie:** `LangGraph`
-    * **Funkce:** Přechází od jednoduchého porovnávání vektorů k sofistikovanému, dialogickému modelu etiky. Plány agentů projdou cyklem **kritiky** (porovnání s `DNA.md`) a **revize**, což vede k mnohem hlubšímu a bezpečnějšímu rozhodování.
-
-* **`agents/` (Hybridní Agentní Model)**:
-    * **Technologie:** `CrewAI` a `AutoGen`
-    * **Funkce:** Systém bude využívat dva týmy agentů pro různé kognitivní funkce:
-        * **Exekuční Tým (CrewAI):** Agenti jako `Planner`, `Engineer`, `Tester` budou fungovat v disciplinovaném, procesně orientovaném rámci `CrewAI` během fáze "Bdění" pro efektivní plnění úkolů.
-        * **Kreativní Tým (AutoGen):** Agenti jako `Philosopher`, `Architect` budou fungovat ve flexibilním, konverzačním rámci `AutoGen` během fáze "Spánku" pro generování nových nápadů, sebereflexi a strategické plánování.
-
-    * **LLM Integrace:**
-        * Všichni agenti používají jednotný adapter `GeminiLLMAdapter` (viz `core/gemini_llm_adapter.py`), který zajišťuje robustní a snadno vyměnitelnou integraci s Google Gemini API.
-        * Adapter je inicializován v `core/llm_config.py` dle konfigurace v `config.yaml` a předáván agentům jako `llm=llm`.
-        * Přepnutí na jiného providera (např. OpenAI, LangChain) je možné úpravou konfigurace a jednoho řádku v `llm_config.py`.
-
-
-* **`/sandbox` (Izolované Prostředí)**:
-    * **Funkce:** Bezpečný a izolovaný adresář, kde mohou agenti volně vytvářet, upravovat a spouštět soubory a kód, aniž by ovlivnili zbytek systému. Slouží jako testovací pole pro všechny tvůrčí úkoly.
-
-* **`tools/` (Dílna pro Tvůrce)**:
-    * **Technologie:** Vlastní implementace, dynamické načítání
-    * **Funkce:** Bude obsahovat nové, klíčové nástroje pro agenty, jako `FileSystemTool` (pro práci se soubory v `/sandbox`), `CodeExecutorTool` (pro spouštění a testování kódu) a `GitTool` (pro správu verzí). Všechny nástroje dědící z `BaseTool` jsou automaticky načteny a zpřístupněny.
-
-* **`core/gemini_llm_adapter.py` (LLM Adapter):**
-    * **Technologie:** `google-generativeai`
-    * **Funkce:** Zajišťuje jednotné rozhraní pro všechny agenty a snadnou rozšiřitelnost na další LLM providery.
-
-### 2.2. Kognitivní Cyklus a Řešení Problémů (EPIC 2)
-
-Základem autonomie Sophie je kognitivní cyklus implementovaný v `core/orchestrator.py`. Tento cyklus umožňuje Sophii nejen slepě vykonávat kroky, ale také inteligentně reagovat na chyby, opravovat své plány a iterativně se přibližovat k cíli.
-
-**Kroky Kognitivního Cyklu:**
-
-```markdown
-# Archivní: Dřívější architektura
-
-Tento dokument byl ponechán z historických důvodů. Architektura projektu se od data velké refaktorizace (2025-09-24) přesunula na Hierarchical Cognitive Architecture (HKA). Novým a oficiálním zdrojem pravdy pro architekturu je:
-
-- **`docs/COGNITIVE_ARCHITECTURE.md`**
-
-Veškeré technické detaily, diagramy a vysvětlení k HKA najdete v uvedeném dokumentu. Tento soubor slouží jako archivní přepis staršího stavu a neměl by být používán jako primární referenční materiál.
-
----
-
-_Poznámka pro správce dokumentace:_ Pokud v budoucnu budete chtít uchovat konkrétní sekce z této staré verze, přesunujte je do `docs/archived/` a přidejte jasný nadpis s datem a krátkým kontextem.
-```
-                "file_path": "main.py"
+Původní kód staré architektury (založené na FastAPI, kognitivních vrstvách a agentech) byl přesunut do složky `integrace/`. Slouží jako archiv a zdroj inspirace pro budoucí integraci pokročilých funkcí do jádra Nomad.

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="SOPHIA-logo.png" alt="Sophia Project Logo" width="200">
+  <img src="SOPHIA-logo.png" alt="Project Logo" width="200">
 </p>
 
-<h1 align="center">Project Sophia</h1>
+<h1 align="center">Project Sophia / Nomad Core</h1>
 
 <p align="center">
   <strong>The Dawn of Artificial Mindful Intelligence (AMI)</strong>
@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/status-evolving_to_v2.0-blue.svg" alt="Status">
+    <img src="https://img.shields.io/badge/status-refactored_to_nomad-blue.svg" alt="Status">
     <img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python Version">
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
 </p>
@@ -22,11 +22,35 @@
 
 ## O Projektu
 
-Sophia je experimentální projekt s cílem vytvořit **Artificial Mindful Intelligence (AMI)**. Nedávný refaktoring převedl projekt na novou Hierarchickou Kognitivní Architekturu (HKA) — tři kognitivní vrstvy (Reptilian, Mammalian, Neocortex) které společně zajišťují rychlé reflexy, kontextovou paměť a plánovací/řídicí funkce.
+Projekt prošel zásadní architektonickou změnou. Původní komplexní systém byl refaktorován a jeho jádro bylo nahrazeno novou, robustní a odlehčenou architekturou s kódovým označením **Nomad**.
 
-HKA je nyní primárním zdrojem pravdy pro architekturu projektu. Klíčové koncepty, diagramy a návrhy najdete v dokumentu **[docs/COGNITIVE_ARCHITECTURE.md](./docs/COGNITIVE_ARCHITECTURE.md)**.
+Současné jádro (Nomad) je postaveno na následujících principech:
+- **Asynchronní Orchestrátor (`JulesOrchestrator`):** Centrální mozek, který řídí běh agenta.
+- **Modulární Komponenty (MCP Servery):** Jednotlivé schopnosti (práce se soubory, shell) jsou izolovány do samostatných, na pozadí běžících serverů.
+- **Textové Uživatelské Rozhraní (TUI):** Hlavním vstupním bodem je nyní moderní TUI postavené na knihovně Textual, které poskytuje přehledné chatovací okno a systémový log.
 
-Tento repozitář obsahuje vše potřebné pro běh jádra Sophie, agenty, paměťové systémy a webové rozhraní. Nové moduly, které byste si měli všimnout: `core/memory_systems.py` (krátkodobá a dlouhodobá paměť) a `core/neocortex.py` (nová řídicí vrstva, nahrazující původní Orchestrator).
+Původní kód staré architektury (kognitivní vrstvy, agenti, webové služby) byl archivován ve složce `integrace/` pro budoucí referenci a plánovanou integraci do nového jádra.
+
+---
+
+## Jak začít (Quick Start)
+
+Spuštění projektu je nyní maximálně zjednodušené díky spouštěcímu skriptu.
+
+1.  **Ujistěte se, že máte nainstalované závislosti:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+2.  **Spusťte aplikaci:**
+    ```bash
+    ./start.sh
+    ```
+
+Skript `start.sh` se postará o vše ostatní:
+- Zkontroluje a nainstaluje závislosti.
+- Ověří existenci a platnost `GEMINI_API_KEY` v souboru `.env` (pokud chybí, vyžádá si ho).
+- Spustí novou TUI aplikaci, která automaticky řídí všechny potřebné procesy.
 
 ---
 
@@ -34,15 +58,11 @@ Tento repozitář obsahuje vše potřebné pro běh jádra Sophie, agenty, pamě
 
 Pro lepší orientaci je dokumentace rozdělena do několika klíčových souborů:
 
-- **[🚀 QUICKSTART.md](./docs/QUICKSTART.md)**: Nejrychlejší cesta, jak Sophii zprovoznit a začít s ní pracovat. Ideální pro první seznámení.
+- **[🛠️ DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nezbytný zdroj pro vývojáře. Obsahuje popis nové architektury a technické detaily. *(Poznámka: Tento dokument vyžaduje aktualizaci.)*
 
-- **[📘 USER_GUIDE.md](./docs/USER_GUIDE.md)**: Podrobný průvodce pro koncové uživatele, kteří chtějí plně využívat všechny funkce Sophie přes její rozhraní.
+- **[🗺️ ROADMAP.md](./docs/ROADMAP.md)**: Detailní plán pro budoucí vývoj, včetně integrace kognitivních funkcí Sophie do jádra Nomada. *(Poznámka: Tento dokument bude brzy vytvořen.)*
 
-- **[🛠️ DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nezbytný zdroj pro vývojáře. Obsahuje popis architektury, návody pro nastavení vývojového prostředí, coding conventions a další technické detaily.
-
-- **[🗺️ ROADMAP_V2.md](./docs/ROADMAP_V2.md)**: Detailní technická roadmapa pro Sophii 2.0, která definuje další éru vývoje směrem k plné autonomii.
-
-- **[🧠 KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Znalostní báze osvědčených postupů a řešení problémů, na které jsme narazili. Učte se z našich chyb i úspěchů.
+- **[🧠 KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Znalostní báze osvědčených postupů a řešení problémů.
 
 ---
 
@@ -50,7 +70,7 @@ Pro lepší orientaci je dokumentace rozdělena do několika klíčových soubor
 
 Pokud jste AI agent pracující na tomto projektu, vaše pravidla, povinnosti a pracovní postupy jsou definovány v souboru `AGENTS.md`.
 
-- **[🤖 AGENTS.md](./AGENTS.md)**: Váš závazný manuál pro práci na projektu Sophia.
+- **[🤖 AGENTS.md](./AGENTS.md)**: Váš závazný manuál pro práci na tomto projektu.
 
 ---
 <br>
