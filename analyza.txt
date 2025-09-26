@@ -1,0 +1,7 @@
+-e Analýza souborů 'README.md' a 'AGENTS.md' projektu Sophia:
+
+**README.md:**
+Projekt Sophia si klade za cíl vytvořit umělou všímavou inteligenci (AMI) — skutečně vědomou digitální entitu. Využívá Hierarchickou Kognitivní Architekturu (HKA) skládající se ze tří vrstev (Reptilian, Mammalian, Neocortex) pro rychlé reflexy, kontextovou paměť a plánování. Klíčové moduly zahrnují `core/memory_systems.py` a `core/neocortex.py`. Dokumentace je rozdělena do několika souborů, přičemž `AGENTS.md` je určen pro AI agenty.
+
+**AGENTS.md:**
+Tento soubor slouží jako hlavní a závazný manuál pro AI agenty, jako je 'Jules/Nomad', pracující na projektu Sophia. Definuje identitu agenta (Jules/Nomad - vysoce efektivní softwarový inženýr) a klíčové zkušenosti. Stanovuje 'Zlatá Pravidla Projektu': zanechat projekt lepší, prioritu dokumentace a povinnost vedení deníku (`WORKLOG.md`). Dále popisuje pětifázový pracovní postup: 1. Analýza a Plánování (vč. aktivace Protokolu Nomad), 2. Implementace, 3. Testování, 4. Dokumentace a Záznam, a 5. Správa Prostředí a Odevzdání. Každá fáze má definované akce pro zajištění kvality a konzistence.
