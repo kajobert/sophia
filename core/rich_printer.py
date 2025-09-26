@@ -1,66 +1,109 @@
+import logging
+import os
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.text import Text
+from rich.theme import Theme
 
-class Colors:
-    """Třída pro uchování ANSI kódů pro barvy v terminálu."""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+# Custom theme for better visual distinction
+custom_theme = Theme({
+    "info": "cyan",
+    "warning": "yellow",
+    "error": "bold red",
+    "header": "bold magenta",
+    "subheader": "bold blue",
+    "mcp_request": "yellow",
+    "mcp_response": "green",
+    "prompt": "dim",
+    "system": "bold green on black"
+})
 
 class RichPrinter:
     """
-    Centralizovaná třída pro formátovaný výstup do terminálu pomocí knihovny Rich.
+    Centralizovaná třída pro formátovaný výstup a logování.
+    Používá rich pro výstup do konzole a standardní logging pro zápis do souboru.
     """
-    console = Console()
+    console = Console(theme=custom_theme)
+    _logger = None
 
     @staticmethod
-    def print_header(text: str, style: str = "bold magenta"):
-        """Vytiskne hlavní nadpis."""
-        RichPrinter.console.print(f"\n--- {text} ---", style=style)
+    def configure_logging(log_dir="logs", log_file="agent_run.log"):
+        """Konfiguruje souborové logování."""
+        if RichPrinter._logger:
+            return  # Již konfigurováno
+
+        logger = logging.getLogger("JulesAgent")
+        logger.setLevel(logging.INFO)
+
+        # Zamezení duplicitním handlerům
+        if logger.hasHandlers():
+            logger.handlers.clear()
+
+        log_path = os.path.join(log_dir, log_file)
+        os.makedirs(log_dir, exist_ok=True)
+
+        # Handler pro soubor
+        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        RichPrinter._logger = logger
+        # Do not print here, as it might not be desired in all contexts
+        # Let the caller announce that logging is configured.
+        RichPrinter._log(logging.INFO, f"Logging configured. Log file at: {log_path}")
+
 
     @staticmethod
-    def print_subheader(text: str, style: str = "bold cyan"):
-        """Vytiskne podnadpis (např. pro Akci nebo Výsledek)."""
-        RichPrinter.console.print(f"{text}", style=style)
+    def _log(level, message, *args, **kwargs):
+        if RichPrinter._logger:
+            # Ensure message is a simple string for the logger
+            log_message = str(message)
+            RichPrinter._logger.log(level, log_message, *args, **kwargs)
 
     @staticmethod
-    def print_info(text: str):
-        """Vytiskne informační zprávu."""
-        RichPrinter.console.print(f"[dim]INFO:[/] {text}")
+    def print_info(message: str):
+        RichPrinter.console.print(f"[INFO] {message}", style="info")
+        RichPrinter._log(logging.INFO, message)
 
     @staticmethod
-    def print_warning(text: str):
-        """Vytiskne varovnou zprávu."""
-        RichPrinter.console.print(f"[yellow]VAROVÁNÍ:[/] {text}")
+    def print_warning(message: str):
+        RichPrinter.console.print(f"[VAROVÁNÍ] {message}", style="warning")
+        RichPrinter._log(logging.WARNING, message)
 
     @staticmethod
-    def print_error(text: str):
-        """Vytiskne chybovou zprávu."""
-        RichPrinter.console.print(f"[bold red]CHYBA:[/] {text}")
+    def print_error(message: str):
+        RichPrinter.console.print(f"[CHYBA] {message}", style="error")
+        RichPrinter._log(logging.ERROR, message)
 
     @staticmethod
-    def print_code(code: str, language: str = "json"):
-        """Vytiskne blok kódu se zvýrazněním syntaxe."""
-        syntax = Syntax(code, language, theme="monokai", line_numbers=False, background_color="default")
-        RichPrinter.console.print(syntax)
+    def print_header(message: str, style="header"):
+        RichPrinter.console.print(Panel(Text(message, justify="center"), style=style, padding=(0, 5)))
+        RichPrinter._log(logging.INFO, f"--- {message} ---")
 
     @staticmethod
-    def print_markdown(text: str):
-        """Vytiskne text formátovaný jako Markdown."""
-        md = Markdown(text)
-        RichPrinter.console.print(md)
+    def print_subheader(message: str, style="subheader"):
+        RichPrinter.console.print(message, style=style)
+        RichPrinter._log(logging.INFO, message)
 
     @staticmethod
-    def print_panel(text: str, title: str = "Výsledek", border_style: str = "green"):
-        """Vytiskne text v ohraničeném panelu."""
-        panel = Panel.fit(Text(text), title=title, border_style=border_style)
-        RichPrinter.console.print(panel)
+    def print_code(code: str, language: str = "python", title="Kód"):
+        syntax = Syntax(code, language, theme="monokai", line_numbers=True)
+        RichPrinter.console.print(Panel(syntax, title=title, border_style="green"))
+        RichPrinter._log(logging.INFO, f"CODE BLOCK ({title}):\n{code}")
+
+    @staticmethod
+    def print_panel(content: str, title: str, border_style="default"):
+        # Convert content to string if it's not, just in case
+        content_str = str(content)
+        RichPrinter.console.print(Panel(content_str, title=title, border_style=border_style, expand=False))
+        RichPrinter._log(logging.INFO, f"PANEL ({title}):\n{content_str}")
+
+    @staticmethod
+    def print_markdown(content: str, title="Vysvětlení"):
+        """Zobrazí obsah formátovaný jako Markdown v panelu."""
+        md = Markdown(content)
+        RichPrinter.console.print(Panel(md, title=title, border_style="dim"))
+        RichPrinter._log(logging.INFO, f"MARKDOWN ({title}):\n{content}")

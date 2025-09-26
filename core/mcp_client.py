@@ -16,46 +16,75 @@ class MCPClient:
         self.servers = {}
         self.tool_to_server = {}
         self.tool_definitions = []
+        self.server_scripts = {} # Uloží cesty ke skriptům pro možnost restartu
 
     async def start_servers(self):
         """Spustí a inicializuje všechny MCP servery nalezené v adresáři mcp_servers."""
         servers_dir = os.path.join(self.project_root, "mcp_servers")
         if not os.path.isdir(servers_dir):
-            print(f"VAROVÁNÍ: Adresář MCP serverů '{servers_dir}' nebyl nalezen.")
+            from .rich_printer import RichPrinter
+            RichPrinter.print_warning(f"Adresář MCP serverů '{servers_dir}' nebyl nalezen.")
             return
 
         for filename in os.listdir(servers_dir):
             if filename.endswith("_server.py"):
                 script_path = os.path.join(servers_dir, filename)
                 server_name = os.path.basename(script_path)
+                self.server_scripts[server_name] = script_path
+                await self._start_and_init_server(server_name, script_path)
 
-                process = await asyncio.create_subprocess_exec(
-                    sys.executable, script_path,
-                    stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-                    cwd=self.project_root
-                )
-                self.servers[server_name] = process
-                print(f"INFO: MCPClient spustil server '{server_name}' (PID: {process.pid}).")
+    async def _start_and_init_server(self, server_name: str, script_path: str):
+        """Pomocná metoda pro spuštění a inicializaci jednoho serveru."""
+        from .rich_printer import RichPrinter
+        process = await asyncio.create_subprocess_exec(
+            sys.executable, script_path,
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            cwd=self.project_root
+        )
+        self.servers[server_name] = process
+        RichPrinter.print_info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
 
-                init_request = json.dumps({"jsonrpc": "2.0", "method": "initialize", "id": 1})
-                process.stdin.write((init_request + '\n').encode())
-                await process.stdin.drain()
+        init_request = json.dumps({"jsonrpc": "2.0", "method": "initialize", "id": 1})
+        process.stdin.write((init_request + '\n').encode())
+        await process.stdin.drain()
 
-                # Krátké zpoždění, aby měl server čas nastartovat a odpovědět
-                await asyncio.sleep(0.2)
+        await asyncio.sleep(0.2)
+        response_line = await process.stdout.readline()
 
-                response_line = await process.stdout.readline()
+        if not response_line:
+            RichPrinter.print_error(f"Server '{server_name}' neodpověděl na inicializační požadavek.")
+            return
 
-                if not response_line:
-                    print(f"CHYBA: Server '{server_name}' neodpověděl na inicializační požadavek.")
-                    continue
+        response = json.loads(response_line)
+        tools = response.get('result', {}).get('capabilities', {}).get('tools', [])
+        for tool in tools:
+            self.tool_to_server[tool['name']] = server_name
+            self.tool_definitions.append(tool)
 
-                response = json.loads(response_line)
+    async def restart_server(self, server_name: str):
+        """Zastaví, znovu spustí a reinicializuje specifický MCP server."""
+        from .rich_printer import RichPrinter
+        RichPrinter.print_info(f"Restartuji server '{server_name}', abych znovu načetl jeho nástroje...")
 
-                tools = response.get('result', {}).get('capabilities', {}).get('tools', [])
-                for tool in tools:
-                    self.tool_to_server[tool['name']] = server_name
-                    self.tool_definitions.append(tool)
+        if server_name in self.servers:
+            process = self.servers[server_name]
+            if process.returncode is None:
+                process.terminate()
+                await process.wait()
+            del self.servers[server_name]
+
+        tools_to_remove = [name for name, srv in self.tool_to_server.items() if srv == server_name]
+        for tool_name in tools_to_remove:
+            del self.tool_to_server[tool_name]
+
+        self.tool_definitions = [tool for tool in self.tool_definitions if self.tool_to_server.get(tool['name']) != server_name]
+
+        script_path = self.server_scripts.get(server_name)
+        if script_path:
+            await self._start_and_init_server(server_name, script_path)
+            RichPrinter.print_info(f"Server '{server_name}' byl úspěšně restartován.")
+        else:
+            RichPrinter.print_error(f"Nelze restartovat server '{server_name}', nebyla nalezena cesta ke skriptu.")
 
     async def get_tool_descriptions(self) -> str:
         """Získá a zformátuje popisy všech registrovaných nástrojů."""
@@ -66,14 +95,11 @@ class MCPClient:
         for tool in self.tool_definitions:
             description = tool.get('description', 'No description available.').strip()
             descriptions.append(f"- `{tool['name']}`: {description}")
-
         return "\n".join(descriptions)
 
     async def execute_tool(self, tool_name: str, args: list, kwargs: dict, verbose: bool = False) -> str:
         """Vykoná nástroj na příslušném MCP serveru."""
-        # Tento import je zde, aby se zabránilo cyklické závislosti na startu
         from .rich_printer import RichPrinter
-
         server_name = self.tool_to_server.get(tool_name)
         if not server_name:
             return f"Error: Tool '{tool_name}' not registered to any server."
@@ -83,11 +109,7 @@ class MCPClient:
         request_id = int(time.time() * 1000)
         mcp_request = json.dumps({
             "jsonrpc": "2.0", "method": "mcp/tool/execute",
-            "params": {
-                "name": tool_name,
-                "args": args,
-                "kwargs": kwargs
-            },
+            "params": {"name": tool_name, "args": args, "kwargs": kwargs},
             "id": request_id
         })
 
@@ -107,6 +129,8 @@ class MCPClient:
 
     async def shutdown_servers(self):
         """Bezpečně ukončí všechny spuštěné MCP servery."""
+        from .rich_printer import RichPrinter
+        RichPrinter.print_info("Ukončuji MCP servery...")
         for server_name, process in self.servers.items():
             if process.returncode is None:
                 process.terminate()
