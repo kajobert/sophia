@@ -1,144 +1,57 @@
+import sys
+import os
 import asyncio
-import uuid
-import yaml
-import logging
-from dotenv import load_dotenv
 
-from core.gemini_llm_adapter import GeminiLLMAdapter
-from core.context import SharedContext
-from core.cognitive_layers import ReptilianBrain, MammalianBrain
-from core.neocortex import Neocortex
-from core.memory_systems import ShortTermMemory, LongTermMemory
+# Přidání cesty k projektu pro importy
+project_root = os.path.abspath(os.path.dirname(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# --- Konfigurace Logování ---
-# Nastavíme logování tak, aby se zobrazovaly informace z CrewAI a dalších modulů
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
-# --- Načtení Konfigurace ---
-def load_app_config():
-    """Načte konfiguraci z config.yaml."""
-    try:
-        with open("config.yaml", "r") as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        logging.error("CHYBA: Konfigurační soubor 'config.yaml' nebyl nalezen.")
-        return None
-    except yaml.YAMLError as e:
-        logging.error(f"CHYBA: Chyba při parsování konfiguračního souboru: {e}")
-        return None
-
+try:
+    from core.orchestrator import JulesOrchestrator
+except ImportError as e:
+    print(f"CHYBA: Nepodařilo se naimportovat JulesOrchestrator: {e}")
+    sys.exit(1)
 
 async def main():
     """
-    Hlavní asynchronní funkce pro spuštění interaktivní REPL session.
+    Hlavní funkce pro spuštění interaktivní session s finálním,
+    plně funkčním asynchronním orchestrátorem.
     """
-    print("--- Sophia Interactive Session ---")
-    print("Zadejte svůj požadavek, nebo napište 'exit' pro ukončení.")
+    print("--- Sophia Interactive Session (Full Agent) ---")
 
-    # 1. Načtení .env a konfigurace
-    load_dotenv()
-    config = load_app_config()
-    if not config:
-        print("Kritická chyba: Nelze načíst konfiguraci. Ukončuji.")
+    orchestrator = JulesOrchestrator()
+    await orchestrator.initialize()
+
+    # Kontrola, zda je agent online
+    if not orchestrator.model:
+        print("\nCHYBA: Agent je v offline režimu. Pro plnou funkčnost je vyžadován platný API klíč.")
+        await orchestrator.shutdown_servers()
         return
 
-    # 2. Inicializace komponent
+    loop = asyncio.get_running_loop()
+
     try:
-        llm_config = config.get("llm_models", {}).get("primary_llm", {})
-        llm_adapter = GeminiLLMAdapter(
-            model=llm_config.get("model_name", "gemini-pro"),
-            temperature=llm_config.get("temperature", 0.7),
-        )
+        while True:
+            prompt = await loop.run_in_executor(
+                None, lambda: input("\nZadejte úkol pro Sophii > ")
+            )
 
-        # cognitive layers
-        short_term_memory = ShortTermMemory()
-        long_term_memory = LongTermMemory()
-        reptilian = ReptilianBrain()
-        mammalian = MammalianBrain(long_term_memory=long_term_memory)
-        neocortex = Neocortex(llm=llm_adapter, short_term_memory=short_term_memory)
-
-        print("Komponenty (LLM, Planner, Cognitive layers) úspěšně inicializovány.")
-    except Exception as e:
-        print(f"Kritická chyba při inicializaci: {e}")
-        return
-
-    # 3. Spuštění REPL smyčky
-    while True:
-        try:
-            prompt = input("\n> ")
             if prompt.lower() in ["exit", "quit", "konec"]:
-                print("Ukončuji session. Na shledanou!")
                 break
             if not prompt:
                 continue
 
-            # --- Fáze 1: Plazí + Savčí + Neokortex pipeline ---
-            print("\n--- Fáze: Reptilian -> Mammalian -> Neocortex pipeline... ---")
-            session_id = str(uuid.uuid4())
-            context = SharedContext(original_prompt=prompt, session_id=session_id)
+            # Spuštění celé rozhodovací smyčky pro daný úkol
+            await orchestrator.run(prompt)
 
-            # Run pipeline: Reptilian -> Mammalian -> Planner -> Neocortex
-            ctx1 = reptilian.process_input(context)
-            ctx2 = mammalian.process_input(ctx1)
-
-            # Ask the planner to produce a plan for the processed context
-            try:
-                planner_result = neocortex.planner.run_task(ctx2)
-            except Exception as e:
-                print(f"Planner error: {e}")
-                logging.exception("Planner raised an exception")
-                continue
-
-            # planner_result is expected to have a payload with a 'plan' key containing a list
-            plan = None
-            try:
-                plan = planner_result.payload.get("plan")
-            except Exception:
-                # be defensive: planner_result may not have payload or may be None
-                plan = None
-
-            if not plan or not isinstance(plan, list) or len(plan) == 0:
-                print("Planner did not produce a valid plan for that input. Try a more specific or actionable request.")
-                continue
-
-            # attach plan to context and execute
-            ctx2.current_plan = plan
-
-            # neocortex.execute_plan is async and returns final context
-            final_context = await neocortex.execute_plan(ctx2)
-
-            # --- Fáze 3: Výsledek ---
-            print("\n--- Fáze 3: Výsledek provedení ---")
-            print(f"Finální status: {final_context.feedback}")
-
-            print("\nHistorie kroků:")
-            if not final_context.step_history:
-                print("  (žádné kroky nebyly provedeny)")
-            else:
-                for step in final_context.step_history:
-                    status = step.get("output", {}).get("status", "N/A")
-                    result = step.get("output", {}).get("result", "")
-                    error = step.get("output", {}).get("error", "")
-                    print(f"  - Krok: {step['description']}")
-                    print(f"    Stav: {status.upper()}")
-                    if status == "success":
-                        print(f"    Výstup: {result}")
-                    elif status == "error":
-                        print(f"    Chyba: {error}")
-
-        except KeyboardInterrupt:
-            print("\nUkončuji session. Na shledanou!")
-            break
-        except Exception as e:
-            print(f"\nDošlo k neočekávané chybě: {e}")
-            logging.exception("Neočekávaná chyba v hlavní smyčce")
-
+    except KeyboardInterrupt:
+        print("\nUkončuji session...")
+    finally:
+        await orchestrator.shutdown_servers()
+        print("Na shledanou!")
 
 if __name__ == "__main__":
-    # Spuštění asynchronní hlavní funkce
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
