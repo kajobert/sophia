@@ -32,8 +32,9 @@ celery
 python-multipart
 PyJWT
 
-# TUI Application
+# TUI / Rich CLI
 textual
+rich
 
 # Testing
 pytest
