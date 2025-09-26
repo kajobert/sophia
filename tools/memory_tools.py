@@ -1,75 +1,39 @@
-import threading
-import asyncio
-import json
-from typing import Type, Optional
-from pydantic import BaseModel, Field
-from langchain_core.tools import BaseTool as LangchainBaseTool
-from tools.base_tool import BaseTool
-from memory.advanced_memory import AdvancedMemory
-from core.utils import CustomJSONEncoder
+import sys
+import os
 
+# Přidání cesty k projektu pro importy
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-def run_sync_or_async(coro):
+from core.memory_manager import MemoryManager
+
+def recall_past_tasks(keywords: str) -> str:
     """
-    Safely runs a coroutine from a sync context by creating a new event loop
-    or using the existing one if in a different thread.
+    Searches the long-term memory for past tasks related to a list of keywords.
+    Keywords should be a comma-separated string (e.g., "file system, read, error").
+    Returns a summary of relevant past tasks to provide context for the current task.
+    This helps in learning from past successes and failures.
     """
+    if not keywords or not isinstance(keywords, str):
+        return "Error: Please provide a comma-separated string of keywords."
+
+    keyword_list = [kw.strip() for kw in keywords.split(",")]
+
     try:
-        loop = asyncio.get_running_loop()
-        if threading.current_thread() is threading.main_thread():
-            raise RuntimeError(
-                "Cannot call sync tool in a running async loop. Use the async version (`_arun`)."
-            )
-        future = asyncio.run_coroutine_threadsafe(coro, loop)
-        return future.result()
-    except RuntimeError:
-        return asyncio.run(coro)
+        memory = MemoryManager()
+        memories = memory.get_relevant_memories(keyword_list)
+        memory.close()
 
+        if not memories:
+            return "No relevant memories found for the given keywords."
 
-class MemoryReaderToolInput(BaseModel):
-    """Pydantic model for MemoryReaderTool input."""
+        response = "Found relevant memories from past tasks:\n\n"
+        for mem in memories:
+            response += f"- **Task:** {mem['task']}\n"
+            response += f"  **Summary:** {mem['summary']}\n"
+            response += f"  **Timestamp:** {mem['timestamp']}\n\n"
 
-    n: int = Field(10, description="The number of recent memories to read.")
-    mem_type: Optional[str] = Field(
-        None,
-        description="Optional memory type to filter by (e.g., 'TASK', 'CONVERSATION').",
-    )
-
-
-class MemoryReaderTool(LangchainBaseTool, BaseTool):
-    name: str = "Memory Reader"
-    description: str = (
-        "Reads the N most recent entries from the memory. Can optionally filter by memory type "
-        "to get specific types of memories, such as 'CONVERSATION' for past dialogues or 'TASK' for task outcomes."
-    )
-    args_schema: Type[BaseModel] = MemoryReaderToolInput
-
-    def execute(self, **kwargs) -> str:
-        return self._run(**kwargs)
-
-    def _run(self, n: int = 10, mem_type: Optional[str] = None) -> str:
-        """Synchronous execution of the tool."""
-        try:
-            memory = AdvancedMemory()
-            # Use the helper to run the async method from a sync context
-            recent_memories = run_sync_or_async(
-                memory.read_last_n_memories(n=n, mem_type=mem_type)
-            )
-            memory.close()
-            return json.dumps(
-                recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder
-            )
-        except Exception as e:
-            return f"Error reading memory: {e}"
-
-    async def _arun(self, n: int = 10, mem_type: Optional[str] = None) -> str:
-        """Asynchronous execution of the tool."""
-        try:
-            memory = AdvancedMemory()
-            recent_memories = await memory.read_last_n_memories(n=n, mem_type=mem_type)
-            memory.close()
-            return json.dumps(
-                recent_memories, indent=2, ensure_ascii=False, cls=CustomJSONEncoder
-            )
-        except Exception as e:
-            return f"Error reading memory: {e}"
+        return response.strip()
+    except Exception as e:
+        return f"Error recalling memories: {e}"
