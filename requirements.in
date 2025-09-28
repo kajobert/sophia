@@ -33,7 +33,7 @@ python-multipart
 PyJWT
 
 # TUI / Rich CLI
-textual
+textual==0.60.0
 rich
 
 # Testing

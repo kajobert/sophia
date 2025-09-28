@@ -35,7 +35,7 @@ class JulesOrchestrator:
         self.mcp_client = MCPClient(project_root=self.project_root)
         self.prompt_builder = PromptBuilder(system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"))
         self.memory_manager = MemoryManager()
-        RichPrinter.print_info("V2 Orchestrator initialized with MemoryManager.")
+        RichPrinter.info("V2 Orchestrator initialized with MemoryManager.")
 
     async def initialize(self):
         """Provede kompletní inicializaci."""
@@ -49,7 +49,7 @@ class JulesOrchestrator:
             with open(config_path, "r") as f:
                 self.config = yaml.safe_load(f)
         except FileNotFoundError:
-            RichPrinter.print_error(f"Konfigurační soubor '{config_path}' nebyl nalezen.")
+            RichPrinter.error(f"Konfigurační soubor '{config_path}' nebyl nalezen.")
             self.config = {}
 
     def _configure_api(self):
@@ -64,15 +64,15 @@ class JulesOrchestrator:
         if api_key and api_key != "VASE_GOOGLE_API_KLIC_ZDE":
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(model_name)
-            RichPrinter.print_info(f"Klient Gemini API byl úspěšně nakonfigurován s modelem '{model_name}'.")
+            RichPrinter.info(f"Klient Gemini API byl úspěšně nakonfigurován s modelem '{model_name}'.")
         else:
-            RichPrinter.print_warning("API klíč nebyl nalezen nebo je neplatný. Orchestrátor poběží v offline režimu.")
+            RichPrinter.warning("API klíč nebyl nalezen nebo je neplatný. Orchestrátor poběží v offline režimu.")
 
     async def shutdown(self):
         """Bezpečně ukončí všechny spuštěné služby."""
         await self.mcp_client.shutdown_servers()
         self.memory_manager.close()
-        RichPrinter.print_info("Všechny služby byly bezpečně ukončeny.")
+        RichPrinter.info("Všechny služby byly bezpečně ukončeny.")
 
     def _parse_llm_response(self, response_text: str) -> tuple[str | None, dict | None]:
         """
@@ -89,7 +89,7 @@ class JulesOrchestrator:
             try:
                 tool_call_data = json.loads(json_str)
             except json.JSONDecodeError as e:
-                RichPrinter.print_error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
+                RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
                 return response_text, None # Celá odpověď je v případě chyby považována za vysvětlení
 
             # Vysvětlení je vše před značkou <TOOL_CODE_START>
@@ -106,26 +106,26 @@ class JulesOrchestrator:
     async def run(self, initial_task: str, session_id: str | None = None):
         """Hlavní rozhodovací smyčka agenta."""
         if session_id:
-            RichPrinter.print_header(f"Obnovuji sezení: {session_id}")
+            RichPrinter.info(f"### Obnovuji sezení: {session_id}")
             loaded_history = self.memory_manager.load_history(session_id)
             if loaded_history:
                 self.history = loaded_history
-                RichPrinter.print_info(f"Historie pro sezení '{session_id}' byla úspěšně načtena ({len(self.history)} kroků).")
+                RichPrinter.info(f"Historie pro sezení '{session_id}' byla úspěšně načtena ({len(self.history)} kroků).")
             else:
-                RichPrinter.print_warning(f"Pro sezení '{session_id}' nebyla nalezena žádná historie. Vytvářím nové sezení.")
+                RichPrinter.warning(f"Pro sezení '{session_id}' nebyla nalezena žádná historie. Vytvářím nové sezení.")
                 session_id = str(uuid.uuid4()) # Vytvoříme nové ID, pokud staré nebylo nalezeno
         else:
             session_id = str(uuid.uuid4())
-            RichPrinter.print_header(f"Zahájení nového sezení (ID: {session_id})")
+            RichPrinter.info(f"### Zahájení nového sezení (ID: {session_id})")
 
-        RichPrinter.print_info(f"Úkol: {initial_task}")
+        RichPrinter.info(f"Úkol: {initial_task}")
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
         self.memory_manager.save_history(session_id, self.history)
 
 
         for i in range(len(self.history), 15):
             if not self.model:
-                RichPrinter.print_error("Model není k dispozici (offline režim). Ukončuji běh.")
+                RichPrinter.error("Model není k dispozici (offline režim). Ukončuji běh.")
                 break
 
             tool_descriptions = await self.mcp_client.get_tool_descriptions()
@@ -134,23 +134,23 @@ class JulesOrchestrator:
             token_count = self.model.count_tokens(prompt).total_tokens
             self.total_tokens += token_count
 
-            RichPrinter.print_header(f"Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}", style="bold blue")
+            RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
 
-            RichPrinter.print_info("Přemýšlím...")
-            RichPrinter.print_info(f"Počet tokenů v tomto promptu: {token_count}")
+            RichPrinter.info("Přemýšlím...")
+            RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 
             if self.verbose:
-                RichPrinter.print_panel(prompt, title="Prompt odeslaný do LLM")
+                RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
             response = await self.model.generate_content_async(prompt)
 
             explanation, tool_call_data = self._parse_llm_response(response.text)
 
             if explanation:
-                RichPrinter.print_markdown(explanation, title="Myšlenkový pochod")
+                RichPrinter.agent_markdown(f"**Myšlenkový pochod:**\n\n{explanation}")
 
             if not tool_call_data or "tool_name" not in tool_call_data:
-                RichPrinter.print_warning("LLM se rozhodl nepoužít nástroj v tomto kroku. Pokračuji v přemýšlení.")
+                RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku. Pokračuji v přemýšlení.")
                 if explanation:
                     self.history.append((explanation, "Žádná akce."))
                     self.memory_manager.save_history(session_id, self.history)
@@ -160,26 +160,26 @@ class JulesOrchestrator:
             args = tool_call_data.get("args", [])
             kwargs = tool_call_data.get("kwargs", {})
 
-            RichPrinter.print_subheader(">>> AKCE")
-            RichPrinter.print_code(json.dumps(tool_call_data, indent=2, ensure_ascii=False), language="json")
+            RichPrinter.info(">>> AKCE")
+            RichPrinter.agent_tool_code(json.dumps(tool_call_data, indent=2, ensure_ascii=False))
 
             history_entry_request = f"{explanation}\n\n{json.dumps(tool_call_data, indent=2)}" if explanation else json.dumps(tool_call_data, indent=2)
 
             if tool_name == "task_complete":
-                RichPrinter.print_info("Agent signalizoval dokončení úkolu. Ukládám vzpomínku...")
+                RichPrinter.info("Agent signalizoval dokončení úkolu. Ukládám vzpomínku...")
                 summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
                 self.memory_manager.save_session(session_id, initial_task, summary)
-                RichPrinter.print_info(f"Vzpomínka pro session {session_id} byla úspěšně uložena.")
+                RichPrinter.info(f"Vzpomínka pro session {session_id} byla úspěšně uložena.")
                 break
 
             if tool_name == "show_last_output":
-                RichPrinter.print_subheader("<<< VÝSLEDEK (Z paměti)")
+                RichPrinter.info("<<< VÝSLEDEK (Z paměti)")
                 output = "V paměti není žádný předchozí dlouhý výstup."
                 if self.last_full_output:
                     output = self.last_full_output
-                    RichPrinter.print_panel(output, title="Poslední úplný výstup")
+                    RichPrinter.agent_tool_output(output)
                 else:
-                    RichPrinter.print_warning(output)
+                    RichPrinter.warning(output)
 
                 # Klíčová oprava: Přidáme plný výstup do historie, aby se přerušila smyčka
                 self.history.append((history_entry_request, output))
@@ -187,7 +187,7 @@ class JulesOrchestrator:
                 continue
 
             if tool_name == "reload_tools":
-                RichPrinter.print_info("Přijat příkaz k restartování dynamického serveru nástrojů...")
+                RichPrinter.info("Přijat příkaz k restartování dynamického serveru nástrojů...")
                 await self.mcp_client.restart_server('dynamic_tool_server.py')
                 result = "Server s dynamickými nástroji byl restartován. Nové nástroje by nyní měly být k dispozici."
             else:
@@ -195,12 +195,12 @@ class JulesOrchestrator:
 
             output_for_display, output_for_history = self._handle_long_output(result)
 
-            RichPrinter.print_subheader("<<< VÝSLEDEK")
-            RichPrinter.print_panel(output_for_display, title="Výstup nástroje", border_style="green")
+            RichPrinter.info("<<< VÝSLEDEK")
+            RichPrinter.agent_tool_output(output_for_display)
             self.history.append((history_entry_request, output_for_history))
             self.memory_manager.save_history(session_id, self.history)
 
-        RichPrinter.print_header(f"Úkol dokončen (Celkem spotřebováno: {self.total_tokens} tokenů)", style="bold green")
+        RichPrinter.info(f"### Úkol dokončen (Celkem spotřebováno: {self.total_tokens} tokenů)")
 
     def _handle_long_output(self, result: str) -> tuple[str, str]:
         """Zpracuje dlouhé výstupy, uloží je a vrátí shrnutí."""

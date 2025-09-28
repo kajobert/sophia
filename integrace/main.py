@@ -34,7 +34,7 @@ async def main():
         await orchestrator.initialize()
 
         if not orchestrator.model:
-            RichPrinter.print_error("Agent je v offline režimu. Pro spuštění úkolu je vyžadován platný API klíč.")
+            RichPrinter.error("Agent je v offline režimu. Pro spuštění úkolu je vyžadován platný API klíč.")
             return
 
         await orchestrator.run(args.task, session_id=args.session_id)
@@ -42,14 +42,14 @@ async def main():
     except Exception as e:
         import traceback
         tb_string = traceback.format_exc()
-        RichPrinter.print_error(f"Došlo k neočekávané kritické chybě: {e}")
+        RichPrinter.error(f"Došlo k neočekávané kritické chybě: {e}")
         # Log the full traceback to the file for debugging
         RichPrinter._log(logging.CRITICAL, f"NEOČEKÁVANÁ KRITICKÁ CHYBA\n{tb_string}")
         # Also print to console for immediate visibility
         print(tb_string)
     finally:
         await orchestrator.shutdown()
-        RichPrinter.print_info("Běh agenta byl úspěšně ukončen.")
+        RichPrinter.info("Běh agenta byl úspěšně ukončen.")
 
 if __name__ == "__main__":
     try:

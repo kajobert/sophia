@@ -5,10 +5,11 @@ import asyncio
 # Přidání cesty k projektu, aby bylo možné importovat moduly z `core`
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
 from textual.widgets import Header, Footer, Input
-from textual.worker import work
+from textual.worker import Worker
 
 from core.orchestrator import JulesOrchestrator
 from core.rich_printer import RichPrinter

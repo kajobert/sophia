@@ -48,7 +48,7 @@ fi
 # 3. Spuštění TUI aplikace
 # Aplikace sama se postará o inicializaci orchestrátoru a spuštění MCP serverů.
 echo "INFO: Spouštím TUI aplikaci... (Pro ukončení stiskněte Ctrl+Q uvnitř aplikace)"
-python tui/app.py
+.venv/bin/python tui/app.py
 
 # 4. Úklid po normálním ukončení
 # Pokud se skript dostane sem, znamená to, že TUI aplikace skončila.
