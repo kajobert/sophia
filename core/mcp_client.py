@@ -23,7 +23,7 @@ class MCPClient:
         servers_dir = os.path.join(self.project_root, "mcp_servers")
         if not os.path.isdir(servers_dir):
             from .rich_printer import RichPrinter
-            RichPrinter.print_warning(f"Adresář MCP serverů '{servers_dir}' nebyl nalezen.")
+            RichPrinter.warning(f"Adresář MCP serverů '{servers_dir}' nebyl nalezen.")
             return
 
         for filename in os.listdir(servers_dir):
@@ -42,7 +42,7 @@ class MCPClient:
             cwd=self.project_root
         )
         self.servers[server_name] = process
-        RichPrinter.print_info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
+        RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
 
         init_request = json.dumps({"jsonrpc": "2.0", "method": "initialize", "id": 1})
         process.stdin.write((init_request + '\n').encode())
@@ -52,7 +52,7 @@ class MCPClient:
         response_line = await process.stdout.readline()
 
         if not response_line:
-            RichPrinter.print_error(f"Server '{server_name}' neodpověděl na inicializační požadavek.")
+            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek.")
             return
 
         response = json.loads(response_line)
@@ -64,7 +64,7 @@ class MCPClient:
     async def restart_server(self, server_name: str):
         """Zastaví, znovu spustí a reinicializuje specifický MCP server."""
         from .rich_printer import RichPrinter
-        RichPrinter.print_info(f"Restartuji server '{server_name}', abych znovu načetl jeho nástroje...")
+        RichPrinter.info(f"Restartuji server '{server_name}', abych znovu načetl jeho nástroje...")
 
         if server_name in self.servers:
             process = self.servers[server_name]
@@ -82,9 +82,9 @@ class MCPClient:
         script_path = self.server_scripts.get(server_name)
         if script_path:
             await self._start_and_init_server(server_name, script_path)
-            RichPrinter.print_info(f"Server '{server_name}' byl úspěšně restartován.")
+            RichPrinter.info(f"Server '{server_name}' byl úspěšně restartován.")
         else:
-            RichPrinter.print_error(f"Nelze restartovat server '{server_name}', nebyla nalezena cesta ke skriptu.")
+            RichPrinter.error(f"Nelze restartovat server '{server_name}', nebyla nalezena cesta ke skriptu.")
 
     async def get_tool_descriptions(self) -> str:
         """Získá a zformátuje popisy všech registrovaných nástrojů."""
@@ -114,13 +114,13 @@ class MCPClient:
         })
 
         if verbose:
-            RichPrinter.print_info(f"Odesílám MCP požadavek na server '{server_name}':")
-            RichPrinter.print_code(mcp_request, "json")
+            RichPrinter.info(f"Odesílám MCP požadavek na server '{server_name}':")
+            RichPrinter.agent_tool_code(mcp_request)
 
         server_process.stdin.write((mcp_request + '\n').encode())
         await server_process.stdin.drain()
 
-        response_line = await server_process.stdout.readline()
+        response_line = await process.stdout.readline()
         response = json.loads(response_line)
 
         if "error" in response:
@@ -130,7 +130,7 @@ class MCPClient:
     async def shutdown_servers(self):
         """Bezpečně ukončí všechny spuštěné MCP servery."""
         from .rich_printer import RichPrinter
-        RichPrinter.print_info("Ukončuji MCP servery...")
+        RichPrinter.info("Ukončuji MCP servery...")
         for server_name, process in self.servers.items():
             if process.returncode is None:
                 process.terminate()

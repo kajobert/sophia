@@ -11,7 +11,7 @@ Tento dokument popisuje plánované kroky a budoucí směřování projektu Soph
 
 - **[ ] Vylepšení Offline Režimu:**
   - Prozkoumat a implementovat možnost využití lokálního LLM (např. Ollama, Llama.cpp), když není k dispozici API klíč pro Gemini.
-  - Cílem je poskytnout základní funkčnost a schopnost plnit jednodušší úkoly i bez přístupu k externím službám.
+  - Cílem je poskytnout základní funkčnost a schopnost plnit jednodužší úkoly i bez přístupu k externím službám.
 
 - **[ ] Integrace Kognitivních Funkcí:**
   - Postupně integrovat a refaktorovat moduly z původní složky `integrace/` do nového jádra Nomad.
