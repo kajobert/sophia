@@ -107,6 +107,21 @@ class MemoryManager:
 
         return memories
 
+    def get_all_memories(self, limit: int = 100) -> list[dict]:
+        """
+        Získá všechny uložené vzpomínky (sessions), seřazené od nejnovější.
+        """
+        query = "SELECT task_prompt, summary, created_at FROM sessions ORDER BY created_at DESC LIMIT ?"
+        cursor = self.conn.cursor()
+        cursor.execute(query, (limit,))
+
+        rows = cursor.fetchall()
+        memories = []
+        for row in rows:
+            memories.append({"task": row[0], "summary": row[1], "timestamp": row[2]})
+
+        return memories
+
     def close(self):
         """Uzavře spojení s databází."""
         if self.conn:
