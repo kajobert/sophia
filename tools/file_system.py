@@ -66,11 +66,11 @@ def read_file(filepath: str) -> str:
     except Exception as e:
         return f"Error reading file: {e}"
 
-def write_to_file(filepath: str, content: str) -> str:
+def overwrite_file_with_block(filepath: str, content: str) -> str:
     """
-    Writes content to a file.
-    Defaults to the 'sandbox/' directory.
-    To write to a file in the project root, use the 'PROJECT_ROOT/' prefix.
+    Overwrites an existing file with new content. If the file does not exist, it is created.
+    This special tool is designed to work with multi-line content blocks.
+    Defaults to the 'sandbox/' directory. To operate on a file in the project root, use the 'PROJECT_ROOT/' prefix.
     """
     try:
         safe_path = _resolve_path(filepath)
@@ -81,13 +81,16 @@ def write_to_file(filepath: str, content: str) -> str:
     except Exception as e:
         return f"Error writing to file: {e}"
 
+# Alias for `create_file_with_block` as specified in JULES.md special tools
+create_file_with_block = overwrite_file_with_block
+
 def create_file(filepath: str) -> str:
     """
     Creates an empty file at the specified path.
     Defaults to the 'sandbox/' directory.
     To create a file in the project root, use the 'PROJECT_ROOT/' prefix.
     """
-    return write_to_file(filepath, "")
+    return overwrite_file_with_block(filepath, "")
 
 def create_new_tool(tool_filename: str, code: str) -> str:
     """
@@ -114,3 +117,61 @@ def create_new_tool(tool_filename: str, code: str) -> str:
         return f"New tool '{tool_filename}' created successfully in 'sandbox/custom_tools/'."
     except Exception as e:
         return f"Error creating new tool: {e}"
+
+
+def delete_file(filepath: str) -> str:
+    """
+    Deletes the specified file.
+    Defaults to the 'sandbox/' directory.
+    To delete a file from the project root, use the 'PROJECT_ROOT/' prefix.
+    """
+    try:
+        safe_path = _resolve_path(filepath)
+        os.remove(safe_path)
+        return f"File '{filepath}' deleted successfully."
+    except FileNotFoundError:
+        return f"Error: File not found at '{filepath}'."
+    except Exception as e:
+        return f"Error deleting file: {e}"
+
+
+def rename_file(filepath: str, new_filepath: str) -> str:
+    """
+    Renames or moves a file.
+    Defaults to the 'sandbox/' directory for both paths.
+    To use paths from the project root, use the 'PROJECT_ROOT/' prefix.
+    """
+    try:
+        safe_old_path = _resolve_path(filepath)
+        safe_new_path = _resolve_path(new_filepath)
+        os.rename(safe_old_path, safe_new_path)
+        return f"File '{filepath}' renamed to '{new_filepath}' successfully."
+    except FileNotFoundError:
+        return f"Error: Source file not found at '{filepath}'."
+    except Exception as e:
+        return f"Error renaming file: {e}"
+
+
+def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str) -> str:
+    """
+    Performs a targeted search-and-replace within a file.
+    This special tool takes a search block and a replace block to perform the update.
+    The search block must match a part of the file content exactly.
+    """
+    try:
+        original_content = read_file(filepath)
+        if original_content.startswith("Error:"):
+            return original_content
+
+        if search_block not in original_content:
+            return f"Error: SEARCH block not found in file '{filepath}'. Please ensure the search block is an exact match."
+
+        new_content = original_content.replace(search_block, replace_block, 1)
+
+        write_result = overwrite_file_with_block(filepath, new_content)
+        if write_result.startswith("Error"):
+            return write_result
+        else:
+            return f"File '{filepath}' updated successfully via replace/diff."
+    except Exception as e:
+        return f"Error applying replace/diff: {e}"
