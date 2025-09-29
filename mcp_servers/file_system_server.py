@@ -3,6 +3,7 @@ import os
 import json
 import inspect
 import asyncio
+import functools
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -36,9 +37,14 @@ async def main():
     tools = {
         "list_files": file_system.list_files,
         "read_file": file_system.read_file,
-        "write_to_file": file_system.write_to_file,
         "create_file": file_system.create_file,
+        "delete_file": file_system.delete_file,
+        "rename_file": file_system.rename_file,
         "create_new_tool": file_system.create_new_tool,
+        # Special DSL tools
+        "overwrite_file_with_block": file_system.overwrite_file_with_block,
+        "create_file_with_block": file_system.create_file_with_block,
+        "replace_with_git_merge_diff": file_system.replace_with_git_merge_diff,
     }
 
     while True:
@@ -70,8 +76,10 @@ async def main():
 
                 if tool_name in tools:
                     try:
+                        # Wrap the tool call with functools.partial to handle both args and kwargs
+                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
                         result = await loop.run_in_executor(
-                            None, tools[tool_name], *tool_args, **tool_kwargs
+                            None, tool_call
                         )
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
