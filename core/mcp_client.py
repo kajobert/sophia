@@ -45,14 +45,22 @@ class MCPClient:
         RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
 
         init_request = json.dumps({"jsonrpc": "2.0", "method": "initialize", "id": 1})
-        process.stdin.write((init_request + '\n').encode())
-        await process.stdin.drain()
+        if process.stdin:
+            process.stdin.write((init_request + '\n').encode())
+            await process.stdin.drain()
 
-        await asyncio.sleep(0.2)
-        response_line = await process.stdout.readline()
+        # Try to read the response, with a timeout.
+        try:
+            response_line = await asyncio.wait_for(process.stdout.readline(), timeout=2.0)
+        except asyncio.TimeoutError:
+            response_line = None
 
         if not response_line:
-            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek.")
+            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek v časovém limitu.")
+            # Přečteme a zalogujeme případné chybové hlášky
+            stderr_output = await process.stderr.read()
+            if stderr_output:
+                RichPrinter.error(f"Chybový výstup ze serveru '{server_name}':\n{stderr_output.decode(errors='ignore')}")
             return
 
         response = json.loads(response_line)
@@ -117,10 +125,11 @@ class MCPClient:
             RichPrinter.info(f"Odesílám MCP požadavek na server '{server_name}':")
             RichPrinter.agent_tool_code(mcp_request)
 
-        server_process.stdin.write((mcp_request + '\n').encode())
-        await server_process.stdin.drain()
+        if server_process.stdin:
+            server_process.stdin.write((mcp_request + '\n').encode())
+            await server_process.stdin.drain()
 
-        response_line = await process.stdout.readline()
+        response_line = await server_process.stdout.readline()
         response = json.loads(response_line)
 
         if "error" in response:

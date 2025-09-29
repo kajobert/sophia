@@ -73,7 +73,7 @@ async def main():
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
                 else:
-                    response = create_error_response(request_id, -32601, "Method not found: {tool_name}")
+                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
 
             else:
                 response = create_error_response(request_id, -32601, "Method not found")
