@@ -5,7 +5,6 @@ import asyncio
 import re
 import textwrap
 import uuid
-import google.generativeai as genai
 from dotenv import load_dotenv
 import yaml
 
@@ -18,6 +17,7 @@ from core.mcp_client import MCPClient
 from core.prompt_builder import PromptBuilder
 from core.rich_printer import RichPrinter
 from core.memory_manager import MemoryManager
+from core.llm_manager import LLMManager
 
 class JulesOrchestrator:
     """
@@ -28,51 +28,40 @@ class JulesOrchestrator:
     def __init__(self, project_root: str = "."):
         self.project_root = os.path.abspath(project_root)
         self.history = []
-        self.model = None
         self.verbose = False
         self.last_full_output = None
         self.total_tokens = 0
         self.mcp_client = MCPClient(project_root=self.project_root)
         self.prompt_builder = PromptBuilder(system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"))
         self.memory_manager = MemoryManager()
-        RichPrinter.info("V2 Orchestrator initialized with MemoryManager.")
+        self.llm_manager = LLMManager(project_root=self.project_root)
+        RichPrinter.info("V2 Orchestrator initialized with LLMManager.")
 
     async def initialize(self):
         """Provede kompletní inicializaci."""
-        self._load_config()
-        self._configure_api()
+        # _load_config se volá v LLMManager, není třeba ho volat zde znovu
         await self.mcp_client.start_servers()
-
-    def _load_config(self):
-        config_path = os.path.join(self.project_root, "config.yaml")
-        try:
-            with open(config_path, "r") as f:
-                self.config = yaml.safe_load(f)
-        except FileNotFoundError:
-            RichPrinter.error(f"Konfigurační soubor '{config_path}' nebyl nalezen.")
-            self.config = {}
-
-    def _configure_api(self):
-        dotenv_path = os.path.join(self.project_root, '.env')
-        load_dotenv(dotenv_path=dotenv_path)
-        api_key = os.getenv("GEMINI_API_KEY")
-
-        llm_config = self.config.get("llm_models", {}).get("primary_llm", {})
-        self.verbose = llm_config.get("verbose", False)
-        model_name = llm_config.get("model_name", "models/gemini-pro-latest")
-
-        if api_key and api_key != "VASE_GOOGLE_API_KLIC_ZDE":
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel(model_name)
-            RichPrinter.info(f"Klient Gemini API byl úspěšně nakonfigurován s modelem '{model_name}'.")
-        else:
-            RichPrinter.warning("API klíč nebyl nalezen nebo je neplatný. Orchestrátor poběží v offline režimu.")
 
     async def shutdown(self):
         """Bezpečně ukončí všechny spuštěné služby."""
         await self.mcp_client.shutdown_servers()
         self.memory_manager.close()
         RichPrinter.info("Všechny služby byly bezpečně ukončeny.")
+
+    def _triage_task_and_select_llm(self, prompt: str) -> str:
+        """
+        Analyzuje prompt a vybere nejvhodnější LLM model.
+        """
+        prompt_lower = prompt.lower()
+        powerful_keywords = ["analyzuj", "refaktoruj", "navrhni", "implementuj", "vytvoř kód"]
+        economical_keywords = ["vypiš", "přečti", "zkontroluj", "potvrď"]
+
+        if any(keyword in prompt_lower for keyword in powerful_keywords):
+            return "powerful"
+        elif any(keyword in prompt_lower for keyword in economical_keywords):
+            return "economical"
+        else:
+            return self.llm_manager.default_llm_name
 
     def _parse_llm_response(self, response_text: str) -> tuple[str | None, dict | None]:
         """
@@ -124,25 +113,41 @@ class JulesOrchestrator:
 
 
         for i in range(len(self.history), 15):
-            if not self.model:
-                RichPrinter.error("Model není k dispozici (offline režim). Ukončuji běh.")
-                break
-
             tool_descriptions = await self.mcp_client.get_tool_descriptions()
             prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
 
-            token_count = self.model.count_tokens(prompt).total_tokens
-            self.total_tokens += token_count
+            # Fáze 1: Výběr modelu
+            selected_model_name = self._triage_task_and_select_llm(initial_task) # Triage na základě původního úkolu
+            try:
+                model = self.llm_manager.get_llm(selected_model_name)
+                RichPrinter.info(f"Vybrán model: [bold cyan]{selected_model_name}[/bold cyan]")
+            except (ValueError, FileNotFoundError) as e:
+                RichPrinter.error(f"Nepodařilo se načíst model '{selected_model_name}': {e}")
+                break
+
+            # Fáze 2: Volání LLM s vybraným modelem
+            # Poznámka: token_count se liší mezi providery, prozatím ho necháme pro Gemini-based modely
+            token_count = 0
+            if hasattr(model, 'count_tokens'):
+                 token_count = model.count_tokens(prompt).total_tokens
+                 self.total_tokens += token_count
 
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
+            RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
+            if token_count > 0:
+                RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 
-            RichPrinter.info("Přemýšlím...")
-            RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 
             if self.verbose:
                 RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
-            response = await self.model.generate_content_async(prompt)
+            # Univerzální volání modelu - prozatím předpokládáme async metodu
+            # V budoucnu bude potřeba adaptér pro sjednocení API
+            if hasattr(model, 'generate_content_async'):
+                 response = await model.generate_content_async(prompt)
+            else:
+                 # Fallback pro ne-asynchronní modely (hypoteticky)
+                 response = await asyncio.to_thread(model.generate_content, prompt)
 
             explanation, tool_call_data = self._parse_llm_response(response.text)
 
