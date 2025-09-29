@@ -54,6 +54,33 @@ Skript `start.sh` se postará o vše ostatní:
 
 ---
 
+## Nástroje pro vývojáře
+
+Kromě hlavní aplikace projekt obsahuje i samostatné nástroje pro usnadnění vývoje a správy.
+
+### Zobrazení paměti agenta (`tools/view_memory.py`)
+
+Tento nástroj umožňuje nahlížet do databáze vzpomínek agenta. Můžete prohledávat minulé úkoly a jejich shrnutí.
+
+**Použití:**
+
+- **Zobrazení posledních 10 vzpomínek:**
+  ```bash
+  python3 tools/view_memory.py
+  ```
+
+- **Vyhledávání podle klíčových slov:**
+  ```bash
+  python3 tools/view_memory.py oprava chyba
+  ```
+
+- **Zobrazení všech vzpomínek s omezením počtu:**
+  ```bash
+  python3 tools/view_memory.py --all --limit 20
+  ```
+
+---
+
 ## Dokumentace
 
 Pro lepší orientaci je dokumentace rozdělena do několika klíčových souborů:
