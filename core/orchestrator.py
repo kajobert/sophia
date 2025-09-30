@@ -36,6 +36,7 @@ class JulesOrchestrator:
         self.memory_manager = MemoryManager()
         self.llm_manager = LLMManager(project_root=self.project_root)
         self.status_widget = status_widget
+
         RichPrinter.info("V2 Orchestrator initialized with LLMManager.")
 
     async def initialize(self):
@@ -119,6 +120,7 @@ class JulesOrchestrator:
 
             # Fáze 1: Výběr modelu
             selected_model_name = self._triage_task_and_select_llm(prompt) # Triage na základě aktuálního promptu
+
             try:
                 model = self.llm_manager.get_llm(selected_model_name)
                 RichPrinter.info(f"Vybrán model: [bold cyan]{selected_model_name}[/bold cyan]")
@@ -134,6 +136,9 @@ class JulesOrchestrator:
                  self.total_tokens += token_count
 
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
+            RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
+            if token_count > 0:
+                RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 
             # Logování do TUI widgetu, pokud je k dispozici
             if self.status_widget:
