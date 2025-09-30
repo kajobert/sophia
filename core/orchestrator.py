@@ -25,7 +25,7 @@ class JulesOrchestrator:
     a ukládá své zkušenosti do perzistentní paměti.
     """
 
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".", status_widget=None):
         self.project_root = os.path.abspath(project_root)
         self.history = []
         self.verbose = False
@@ -35,6 +35,8 @@ class JulesOrchestrator:
         self.prompt_builder = PromptBuilder(system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"))
         self.memory_manager = MemoryManager()
         self.llm_manager = LLMManager(project_root=self.project_root)
+        self.status_widget = status_widget
+
         RichPrinter.info("V2 Orchestrator initialized with LLMManager.")
 
     async def initialize(self):
@@ -117,7 +119,8 @@ class JulesOrchestrator:
             prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
 
             # Fáze 1: Výběr modelu
-            selected_model_name = self._triage_task_and_select_llm(initial_task) # Triage na základě původního úkolu
+            selected_model_name = self._triage_task_and_select_llm(prompt) # Triage na základě aktuálního promptu
+
             try:
                 model = self.llm_manager.get_llm(selected_model_name)
                 RichPrinter.info(f"Vybrán model: [bold cyan]{selected_model_name}[/bold cyan]")
@@ -134,6 +137,16 @@ class JulesOrchestrator:
 
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
             RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
+            if token_count > 0:
+                RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
+
+            # Logování do TUI widgetu, pokud je k dispozici
+            if self.status_widget:
+                self.status_widget.add_log(f"Přemýšlím... (model: {selected_model_name})")
+            else:
+                # Fallback pro běh bez TUI
+                RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
+
             if token_count > 0:
                 RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 

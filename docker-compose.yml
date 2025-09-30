@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    # Sestaví image z Dockerfile v aktuálním adresáři
+    build: .
+    # Název kontejneru pro snadnější identifikaci
+    container_name: sophia_dev_container
+    # Připojí aktuální adresář do /app v kontejneru
+    # To umožňuje "live-reloading", kdy se změny v kódu okamžitě projeví
+    volumes:
+      - .:/app
+    # Načte proměnné prostředí ze souboru .env v kořenovém adresáři
+    env_file:
+      - .env
+    # Mapuje port 8000 na hostiteli na port 8000 v kontejneru
+    ports:
+      - "8000:8000"
+    # Ponechá standardní vstup otevřený (pro interaktivní session) a přidělí pseudo-TTY
+    # To je užitečné pro ladění a interakci s kontejnerem.
+    stdin_open: true
+    tty: true
+    # Přepíše výchozí CMD z Dockerfile, pokud je potřeba,
+    # ale prozatím necháme CMD z Dockerfile, které spouští uvicorn.
+    # Pokud bychom chtěli jen spustit kontejner a pak v něm pracovat:
+    # command: /bin/bash

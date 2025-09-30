@@ -46,6 +46,7 @@ class DeepSeekAdapter(BaseLLMAdapter):
         self._api_key = api_key # Uložen pro budoucí použití
 
     async def generate_content_async(self, prompt: str) -> str:
+
         # Mock implementace, která vrací informativní text
         await asyncio.sleep(0.1) # Simulace síťové latence
         return f"<TOOL_CODE_START>\n{{\"tool_name\": \"task_complete\", \"args\": [], \"kwargs\": {{\"reason\": \"DeepSeek model '{self._model_name}' is not fully implemented. This is a mock response.\"}}}}\n</TOOL_CODE_END>"
@@ -62,4 +63,5 @@ class OllamaAdapter(BaseLLMAdapter):
     async def generate_content_async(self, prompt: str) -> str:
         # Mock implementace
         await asyncio.sleep(0.1)
+
         return f"<TOOL_CODE_START>\n{{\"tool_name\": \"task_complete\", \"args\": [], \"kwargs\": {{\"reason\": \"Ollama model '{self._model_name}' is not fully implemented. This is a mock response.\"}}}}\n</T>OOL_CODE_END>"
