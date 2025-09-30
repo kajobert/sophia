@@ -1,113 +1,95 @@
-# Průvodce pro `interactive_session.py`
+# Průvodce Vývojovým Prostředím
 
-Tento dokument slouží jako kompletní průvodce pro práci s interaktivním skriptem `interactive_session.py`. Jeho cílem je usnadnit vývoj, testování a ladění jádra Sophie.
-
----
-
-## 1. Účel Nástroje
-
-Skript `interactive_session.py` byl vytvořen jako **nástroj pro rychlý vývoj a ladění**. Umožňuje komunikovat s jádrem Sophie – konkrétně s jejím plánovacím a prováděcím mechanismem – přímo z terminálu.
-
-Hlavní výhody:
-- **Rychlost:** Nemusíte spouštět celou webovou aplikaci a databáze přes Docker.
-- **Přehlednost:** Veškerý výstup, včetně generovaného plánu a výsledků jednotlivých kroků, vidíte okamžitě v konzoli.
-- **Iterace:** Umožňuje rychle zkoušet různé zadání (prompty) a okamžitě vidět, jak na ně Sophia reaguje.
+Tento dokument slouží jako kompletní průvodce pro nastavení a práci s vývojovým prostředím projektu Sophia. Cílem je zajistit konzistentní, spolehlivé a snadno použitelné prostředí pro všechny vývojáře bez ohledu na jejich operační systém.
 
 ---
 
-## 2. Příprava a Spuštění
+## 1. Doporučený Přístup: Docker
 
-Pro úspěšné spuštění interaktivní session je potřeba splnit několik předpokladů.
+**Proč Docker?**
+- **Konzistence:** Všichni vývojáři pracují ve stejném Linuxovém prostředí s identickými závislostmi. Tím se eliminují problémy typu "na mém stroji to funguje".
+- **Jednoduchost:** Místo manuální instalace Pythonu, vytváření virtuálních prostředí a instalace balíčků stačí spustit jeden příkaz.
+- **Izolace:** Projekt a jeho závislosti jsou plně izolovány od vašeho lokálního systému.
+
+### Krok 1: Předpoklady
+Ujistěte se, že máte nainstalovaný a spuštěný **Docker** a **Docker Compose**.
+- [Instalace Docker Desktop](https://www.docker.com/products/docker-desktop/) (obsahuje Docker Compose)
+
+### Krok 2: Příprava Konfigurace
+Aplikace vyžaduje pro přístup k LLM API klíčům soubor `.env`.
+
+1.  Zkopírujte soubor `.env.example` do nového souboru s názvem `.env`:
+    ```bash
+    # V terminálu v kořenovém adresáři projektu
+    cp .env.example .env
+    ```
+2.  **Důležité:** Otevřete nově vytvořený soubor `.env` a vložte své skutečné API klíče.
+    ```
+    GEMINI_API_KEY="skutecny-api-klic-pro-gemini"
+    DEEPSEEK_API_KEY="skutecny-api-klic-pro-deepseek"
+    ```
+
+### Krok 3: Spuštění Vývojového Prostředí
+Nyní můžete aplikaci spustit.
+
+1.  **Sestavení a spuštění kontejneru:**
+    ```bash
+    # Tento příkaz sestaví Docker image (pokud ještě neexistuje) a spustí kontejner na pozadí (-d).
+    docker-compose up --build -d
+    ```
+
+2.  **Sledování logů:**
+    Pro zobrazení výstupu aplikace (logů) v reálném čase použijte:
+    ```bash
+    docker-compose logs -f
+    ```
+
+Aplikace nyní běží. Díky nastavení "live-reloading" se jakákoliv změna ve zdrojovém kódu automaticky projeví a server se sám restartuje.
+
+### Krok 4: Spouštění Testů
+Testy by měly být spouštěny **uvnitř Docker kontejneru**, aby se zajistilo, že běží ve správném prostředí.
+
+1.  Otevřete interaktivní shell v běžícím kontejneru:
+    ```bash
+    docker-compose exec app /bin/bash
+    ```
+
+2.  Uvnitř kontejneru můžete spouštět testy:
+    ```bash
+    # Spuštění všech testů
+    pytest
+
+    # Spuštění konkrétního testovacího souboru
+    pytest tests/test_llm_manager.py
+    ```
+
+### Krok 5: Zastavení Prostředí
+Až budete s prací hotovi, zastavte kontejner:
+```bash
+docker-compose down
+```
+Tento příkaz zastaví a odstraní kontejner, ale vaše zdrojové kódy a `.env` soubor zůstanou nedotčeny.
+
+---
+
+## 2. Alternativní Přístup (Legacy): Manuální Nastavení
+
+Tento přístup se **nedoporučuje** kvůli možným problémům s kompatibilitou mezi různými operačními systémy. Použijte jej pouze v případě, že nemůžete nebo nechcete použít Docker.
 
 ### Krok 1: Příprava Prostředí
 Ujistěte se, že máte aktivní virtuální prostředí a nainstalované všechny závislosti.
 
 ```bash
-# Vytvoření a aktivace virtuálního prostředí (pokud ještě nemáte)
+# Vytvoření a aktivace virtuálního prostředí (příkazy se mohou lišit pro Windows)
 python3 -m venv .venv
 source .venv/bin/activate
 
 # Instalace všech potřebných závislostí
-.venv/bin/pip install -r requirements.txt
+uv pip install -r requirements.in
 ```
 
-### Krok 2: Konfigurace
-Skript vyžaduje pro inicializaci LLM adaptéru soubor `.env`.
-
-1.  Zkopírujte soubor `.env.example` do nového souboru s názvem `.env`:
-    ```bash
-    cp .env.example .env
-    ```
-2.  **Důležité:** Otevřete soubor `.env` a ujistěte se, že proměnná `GEMINI_API_KEY` má alespoň nějakou dočasnou (ne-prázdnou) hodnotu, například:
-    ```
-    GEMINI_API_KEY="DUMMY_KEY"
-    ```
-    I když plánovač a LLM mohou běžet v offline režimu (s mockovanými odpověďmi), inicializační logika adaptéru vyžaduje, aby tato proměnná existovala a nebyla prázdná.
-
-### Krok 3: Spuštění Skriptu
-Nyní můžete skript spustit. Ujistěte se, že používáte Python interpret z vašeho virtuálního prostředí.
-
+### Krok 2: Spuštění Aplikace
+Spusťte TUI aplikaci:
 ```bash
-.venv/bin/python interactive_session.py
+python tui/app.py
 ```
-
-Po spuštění uvidíte uvítací zprávu a výzvu `>`. Nyní můžete zadávat své požadavky. Pro ukončení napište `exit` nebo `quit`.
-
----
-
-## 3. Možnosti Využití
-
-Tento nástroj je flexibilní a lze ho použít v mnoha fázích vývoje.
-
-### Příklad 1: Testování základních příkazů
-Můžete zadat jednoduchý úkol a sledovat, jak si s ním Sophia poradí.
-
-**Vstup:**
-```
-> Vypiš všechny soubory v aktuálním adresáři.
-```
-
-**Očekávaný výstup:**
-Skript vypíše, že byl vygenerován plán (např. 1 krok), a poté zobrazí výsledek provedení tohoto kroku, který bude obsahovat seznam souborů.
-
-### Příklad 2: Ladění komplexních plánů
-Zadejte složitější úkol, který vyžaduje více kroků.
-
-**Vstup:**
-```
-> Přečti obsah souboru README.md, najdi v něm sekci "Dokumentace" a vytvoř nový soubor `doc_summary.txt` s obsahem této sekce.
-```
-
-**Co sledovat:**
-- **Vygenerovaný plán:** Podívejte se, jestli plánovač správně rozložil úkol na logické kroky (čtení, analýza, zápis).
-- **Výstupy jednotlivých kroků:** Pokud nějaký krok selže, skript vypíše chybu. To vám pomůže identifikovat, zda je problém v logice nástroje (např. `WriteFileTool`) nebo v plánu samotném.
-
-### Příklad 3: Testování nového nástroje
-Představte si, že jste právě vytvořili nový nástroj `WeatherTool`, který zjišťuje počasí.
-1.  Vytvoříte soubor `tools/weather_tool.py` s vaším nástrojem.
-2.  Spustíte `interactive_session.py`.
-3.  Zadáte požadavek, který by měl váš nový nástroj aktivovat.
-
-**Vstup:**
-```
-> Jaké je počasí v Praze?
-```
-
-**Co sledovat:**
-- Zda plánovač správně identifikoval, že má použít `WeatherTool`.
-- Zda se nástroj spustil se správnými parametry (`{"city": "Prague"}`).
-- Jaký byl výstup nástroje a zda byl správně zaznamenán.
-
----
-
-## 4. Jak Tím Vylepšovat Sophii
-
-Interaktivní session je klíčovým nástrojem pro **iterativní vylepšování** Sophie.
-
-- **Zlepšování Plánovače:** Opakovaným zadáváním různých úkolů můžete zjistit, kde má `PlannerAgent` slabiny. Pokud generuje neefektivní nebo chybné plány, můžete vylepšit jeho základní prompt (`goal`, `backstory`) v `agents/planner_agent.py`, aby lépe rozuměl kontextu a dostupným nástrojům.
-
-- **Odlaďování Nástrojů:** Když plán selže, často je to chyba v samotném nástroji. Interaktivní session vám poskytne přesnou chybovou hlášku a kontext, což vám umožní rychle opravit chybu v kódu nástroje.
-
-- **Rozšiřování Schopností:** Tento nástroj vám umožňuje snadno experimentovat. Můžete rychle otestovat, jak by Sophia reagovala na úkoly, pro které ještě nemá nástroje, a tím identifikovat, jaké nové schopnosti (nástroje) je potřeba vytvořit.
-
-Stručně řečeno, `interactive_session.py` transformuje abstraktní ladění na konkrétní, praktický a rychlý proces. Je to váš primární "pískoviště" pro experimenty, které dělají Sophii chytřejší a spolehlivější.

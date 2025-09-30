@@ -21,13 +21,26 @@ lifecycle:
   sleeping_duration_seconds: 5
 
 # Konfigurace pro Large Language Models (LLM)
-# Struktura je navržena pro budoucí podporu více modelů.
 llm_models:
-  primary_llm:
-    provider: "google" # 'google', 'openai', 'anthropic', atd.
-    model_name: "gemini-2.5-flash"
-    temperature: 0.7
-    verbose: True
+  default: economical
+  llms:
+    powerful:
+      provider: "google"
+      model_name: "gemini-1.5-pro-latest"
+      api_key_env: "GEMINI_API_KEY"
+      temperature: 0.7
+      verbose: True
+    economical:
+      provider: "deepseek"
+      model_name: "deepseek-coder-v2"
+      api_key_env: "DEEPSEEK_API_KEY"
+      temperature: 0.7
+      verbose: True
+    local:
+      provider: "ollama"
+      model_name: "llama3"
+      temperature: 0.7
+      verbose: True
 
 # Konfigurace pro Intelligent Guardian
 guardian:

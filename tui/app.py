@@ -31,9 +31,10 @@ class SophiaTUI(App):
     def __init__(self):
         super().__init__()
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        self.orchestrator = JulesOrchestrator(project_root=self.project_root)
         self.chat_widget = ChatWidget(id="chat")
         self.status_widget = StatusWidget(id="status")
+        # Předání reference na status_widget do orchestrátoru
+        self.orchestrator = JulesOrchestrator(project_root=self.project_root, status_widget=self.status_widget)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
         self.session_id = None # Bude nastaveno po inicializaci
 
