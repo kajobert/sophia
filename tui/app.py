@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.containers import Vertical, Container
+from textual.containers import Vertical, Container, VerticalScroll
 from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog, Static
 from textual.worker import Worker
 from rich.panel import Panel
@@ -53,8 +53,8 @@ class SophiaTUI(App):
         yield Header()
         with TabbedContent(initial="agent_tab"):
             with TabPane("Agent", id="agent_tab"):
-                # Kontejner pro myšlenkový pochod s rámečkem a titulkem
-                with Container(id="explanation-container"):
+                # Scrollovatelný kontejner pro myšlenkový pochod
+                with VerticalScroll(id="explanation-container"):
                     yield self.explanation_widget
                 yield self.tool_widget
             with TabPane("Logy", id="log_tab"):
@@ -119,9 +119,11 @@ class SophiaTUI(App):
             # Vytvoříme Markdown panel a aktualizujeme s ním widget
             md_panel = Panel(Markdown(self.current_explanation), border_style="blue", title="Myšlenkový pochod")
             self.explanation_widget.update(md_panel)
+            self.query_one("#explanation-container", VerticalScroll).scroll_end(animate=False)
         elif msg_type == "explanation_end":
             # Můžeme přidat finální úpravy po skončení streamu, pokud bude třeba
             # Například zajistit, že kurzor je na konci atd.
+            self.query_one("#explanation-container", VerticalScroll).scroll_end(animate=True)
             pass
         elif msg_type == "tool_code":
             panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
