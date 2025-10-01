@@ -8,10 +8,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Container
-from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog
+from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog, Static
 from textual.worker import Worker
 from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.markdown import Markdown
 
 from core.orchestrator import JulesOrchestrator
 from core.rich_printer import RichPrinter
@@ -34,13 +35,13 @@ class SophiaTUI(App):
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
         # Nové widgety pro rozdělené zobrazení
-        self.explanation_widget = RichLog(id="explanation", highlight=True, markup=True)
-        self.explanation_widget.border_title = "Myšlenkový pochod"
+        self.explanation_widget = Static(id="explanation", markup=True)
+        self.current_explanation = "" # Pro skládání textu
 
         self.tool_widget = RichLog(id="tool_output", highlight=True, markup=True)
         self.tool_widget.border_title = "Výstup nástrojů"
 
-        self.log_widget = StatusWidget(id="log_view") # Přejmenovaný StatusWidget
+        self.log_widget = StatusWidget(id="log_view")
         self.log_widget.border_title = "Systémové logy"
 
         self.orchestrator = JulesOrchestrator(project_root=self.project_root)
@@ -52,20 +53,14 @@ class SophiaTUI(App):
         yield Header()
         with TabbedContent(initial="agent_tab"):
             with TabPane("Agent", id="agent_tab"):
-                yield Container(
-                    self.explanation_widget,
-                    self.tool_widget,
-                    id="agent-view-container"
-                )
+                # Kontejner pro myšlenkový pochod s rámečkem a titulkem
+                with Container(id="explanation-container"):
+                    yield self.explanation_widget
+                yield self.tool_widget
             with TabPane("Logy", id="log_tab"):
                 yield self.log_widget
         yield self.input_widget
         yield Footer()
-
-from rich.panel import Panel
-from rich.syntax import Syntax
-
-# ... (v těle třídy SophiaTUI)
 
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů."""
@@ -98,7 +93,8 @@ from rich.syntax import Syntax
         self.input_widget.clear()
 
         # Vyčistíme myšlenkový pochod pro nový úkol
-        self.explanation_widget.clear()
+        self.current_explanation = ""
+        self.explanation_widget.update("")
 
         self.run_orchestrator_task(prompt)
 
@@ -119,9 +115,13 @@ from rich.syntax import Syntax
         content = message.content
 
         if msg_type == "explanation_chunk":
-            self.explanation_widget.write(content)
+            self.current_explanation += content
+            # Vytvoříme Markdown panel a aktualizujeme s ním widget
+            md_panel = Panel(Markdown(self.current_explanation), border_style="blue", title="Myšlenkový pochod")
+            self.explanation_widget.update(md_panel)
         elif msg_type == "explanation_end":
-            # Můžeme přidat nějaký vizuální oddělovač, pokud bude třeba
+            # Můžeme přidat finální úpravy po skončení streamu, pokud bude třeba
+            # Například zajistit, že kurzor je na konci atd.
             pass
         elif msg_type == "tool_code":
             panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
