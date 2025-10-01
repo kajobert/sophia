@@ -16,7 +16,7 @@ class BaseLLMAdapter(ABC):
         Asynchronně generuje obsah.
 
         Vrací:
-            tuple[str, dict | None]: Vygenerovaný text a informace o použití (tokeny, náklady).
+            tuple[str, dict | None]: Vygenerovaný text a informace o použití (včetně ID generace).
         """
         pass
 
@@ -60,7 +60,13 @@ class OpenRouterAdapter(BaseLLMAdapter):
             )
 
             content = response.choices[0].message.content
-            usage_data = response.usage.model_dump() if response.usage else None
+
+            # Připravíme data o použití, včetně klíčového ID pro sledování nákladů
+            usage_data = {
+                "id": response.id,
+                "model": response.model,
+                "usage": response.usage.model_dump() if response.usage else None
+            }
 
             return content, usage_data
 

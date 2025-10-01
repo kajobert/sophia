@@ -13,13 +13,18 @@ class LLMManager:
         self.project_root = os.path.abspath(project_root)
         self._client = None
         self._load_config()
-        self.llms_config = self.config.get("llm_models", {}).get("models", {})
-        self.default_model_name = self.config.get("llm_models", {}).get("default", None)
+
+        # Načtení konfigurace modelů a aliasů
+        llm_config = self.config.get("llm_models", {})
+        self.models_config = llm_config.get("models", {})
+        self.aliases = llm_config.get("aliases", {})
+        self.default_model_name = llm_config.get("default", None)
+
         self._initialize_client()
 
     def _load_config(self):
-        """Načte konfiguraci z config.yaml."""
-        config_path = os.path.join(self.project_root, "config.yaml")
+        """Načte konfiguraci z config/config.yaml."""
+        config_path = os.path.join(self.project_root, "config/config.yaml")
         try:
             with open(config_path, "r") as f:
                 self.config = yaml.safe_load(f)
@@ -44,17 +49,25 @@ class LLMManager:
     def get_llm(self, name: str = None):
         """
         Vrátí instanci OpenRouterAdapter pro zadaný model.
+        Nejprve zkontroluje, zda je 'name' alias, a pokud ano, přeloží ho.
         Pokud jméno není specifikováno, vrátí výchozí model.
         """
-        model_name = name or self.default_model_name
-        if not model_name or model_name not in self.llms_config:
-            raise ValueError(f"Model s názvem '{model_name}' nebyl nalezen v 'config.yaml'.")
+        model_alias = name or self.default_model_name
+        if not model_alias:
+            raise ValueError("Není definován žádný výchozí model ani alias.")
 
-        model_config = self.llms_config[model_name]
+        # Přeložení aliasu na skutečný název modelu
+        actual_model_name = self.aliases.get(model_alias, model_alias)
+
+        if actual_model_name not in self.models_config:
+            raise ValueError(f"Model s názvem '{actual_model_name}' (přeloženo z aliasu '{model_alias}') nebyl nalezen v 'config.yaml' v sekci 'models'.")
+
+        # Získání konfigurace pro daný model. Pokud je None (prázdná hodnota v YAML), použije se prázdný slovník.
+        model_specific_config = self.models_config.get(actual_model_name) or {}
 
         # Předáme sdíleného klienta a specifickou konfiguraci modelu do adaptéru
         return OpenRouterAdapter(
-            model_name=model_name,
+            model_name=actual_model_name,
             client=self._client,
-            **model_config  # Předá další parametry, např. system_prompt
+            **model_specific_config  # Bezpečné rozbalení, protože je to vždy slovník
         )
