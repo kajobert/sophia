@@ -23,7 +23,7 @@ llm_models:
   # Aliasy pro různé typy úkolů. Orchestrátor vybírá alias,
   # LLM Manager ho překládá na konkrétní model.
   aliases:
-    powerful: "deepseek/deepseek-v2-lite"
+    powerful: "deepseek/deepseek-v3.2-exp"
     economical: "google/gemini-2.5-flash-lite"
 
   # Seznam dostupných modelů s jejich OpenRouter identifikátory.
@@ -31,8 +31,7 @@ llm_models:
   # Prázdný slovník `{}` znamená, že se použije výchozí konfigurace.
   models:
     "google/gemini-2.5-flash-lite": {}
-    "deepseek/deepseek-coder-v2": {}
-    "deepseek/deepseek-v2-lite": {}
+    "deepseek/deepseek-v3.2-exp": {}
 
 # Konfigurace pro Intelligent Guardian
 guardian:
