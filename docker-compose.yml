@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     # Sestaví image z Dockerfile v aktuálním adresáři
@@ -13,14 +11,7 @@ services:
     # Načte proměnné prostředí ze souboru .env v kořenovém adresáři
     env_file:
       - .env
-    # Mapuje port 8000 na hostiteli na port 8000 v kontejneru
-    ports:
-      - "8000:8000"
-    # Ponechá standardní vstup otevřený (pro interaktivní session) a přidělí pseudo-TTY
-    # To je užitečné pro ladění a interakci s kontejnerem.
+    # Pro interaktivní TUI aplikaci nepotřebujeme mapovat porty.
+    # Klíčové je ponechat standardní vstup otevřený a přidělit TTY.
     stdin_open: true
     tty: true
-    # Přepíše výchozí CMD z Dockerfile, pokud je potřeba,
-    # ale prozatím necháme CMD z Dockerfile, které spouští uvicorn.
-    # Pokud bychom chtěli jen spustit kontejner a pak v něm pracovat:
-    # command: /bin/bash
