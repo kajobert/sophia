@@ -132,7 +132,8 @@ class JulesOrchestrator:
             # Poznámka: token_count se liší mezi providery, prozatím ho necháme pro Gemini-based modely
             token_count = 0
             if hasattr(model, 'count_tokens'):
-                 token_count = model.count_tokens(prompt).total_tokens
+                 # Oprava: count_tokens již vrací int, takže odstraníme .total_tokens
+                 token_count = model.count_tokens(prompt)
                  self.total_tokens += token_count
 
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
@@ -162,7 +163,8 @@ class JulesOrchestrator:
                  # Fallback pro ne-asynchronní modely (hypoteticky)
                  response = await asyncio.to_thread(model.generate_content, prompt)
 
-            explanation, tool_call_data = self._parse_llm_response(response.text)
+            # Oprava: Adaptéry nyní vrací přímo string, takže nepotřebujeme .text
+            explanation, tool_call_data = self._parse_llm_response(response)
 
             if explanation:
                 RichPrinter.agent_markdown(f"**Myšlenkový pochod:**\n\n{explanation}")
