@@ -20,27 +20,27 @@ lifecycle:
   waking_duration_seconds: 10
   sleeping_duration_seconds: 5
 
-# Konfigurace pro Large Language Models (LLM)
+# Konfigurace pro Large Language Models (LLM) přes OpenRouter
 llm_models:
-  default: economical
-  llms:
-    powerful:
-      provider: "google"
-      model_name: "gemini-1.5-pro-latest"
-      api_key_env: "GEMINI_API_KEY"
-      temperature: 0.7
-      verbose: True
-    economical:
-      provider: "deepseek"
-      model_name: "deepseek-coder-v2"
-      api_key_env: "DEEPSEEK_API_KEY"
-      temperature: 0.7
-      verbose: True
-    local:
-      provider: "ollama"
-      model_name: "llama3"
-      temperature: 0.7
-      verbose: True
+  # Výchozí model, který se použije, pokud není specifikován jiný.
+  default: "google/gemini-2.5-flash-lite"
+
+  # Seznam dostupných modelů s jejich OpenRouter identifikátory.
+  # Pro každý model lze přidat specifickou konfiguraci, např. system_prompt.
+  models:
+    "google/gemini-2.5-flash-lite":
+      # Pro tento model není potřeba žádná speciální konfigurace.
+      # Bude použit globální system_prompt z 'prompts/system_prompt.txt'.
+      pass
+
+    "deepseek/deepseek-coder-v2":
+      # Tento model je specializovaný na kódování.
+      # Do budoucna zde může být specifický systémový prompt pro kódování.
+      pass
+
+    "deepseek/deepseek-v2-lite":
+      # Další úsporný model od DeepSeek.
+      pass
 
 # Konfigurace pro Intelligent Guardian
 guardian:

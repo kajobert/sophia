@@ -60,10 +60,16 @@ class SophiaTUI(App):
         """Inicializuje orchestrátor v samostatném workeru."""
         RichPrinter.info("Inicializace jádra agenta...")
         await self.orchestrator.initialize()
-        if self.orchestrator.model:
-            RichPrinter.info("Jádro agenta připraveno.")
-        else:
-            RichPrinter.error("API klíč pro Gemini nebyl nalezen nebo je neplatný. Agent je v offline režimu.")
+        # Ověření, zda je LLM manažer schopen poskytnout výchozí model.
+        # Tím se ověří i existence API klíče v online režimu.
+        try:
+            if self.orchestrator.llm_manager.get_llm():
+                RichPrinter.info("Jádro agenta připraveno.")
+            else:
+                # Tento případ by neměl nastat, pokud get_llm() vyvolá výjimku při chybě.
+                RichPrinter.error("LLM manažer nevrátil model, ale nevyvolal výjimku. Agent je v offline režimu.")
+        except Exception as e:
+            RichPrinter.error(f"Nepodařilo se inicializovat LLM: {e}. Agent je v offline režimu.")
 
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Zpracuje odeslání vstupu od uživatele."""

@@ -10,6 +10,7 @@ pydantic
 psycopg2-binary
 
 # AI Agent Frameworks & Libraries
+openai
 autogen
 langgraph
 langchain
