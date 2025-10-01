@@ -14,11 +14,12 @@ class LLMManager:
         self._client = None
         self._load_config()
 
-        # Načtení konfigurace modelů a aliasů
+        # Načtení konfigurace modelů, aliasů a fallback strategie
         llm_config = self.config.get("llm_models", {})
         self.models_config = llm_config.get("models", {})
         self.aliases = llm_config.get("aliases", {})
         self.default_model_name = llm_config.get("default", None)
+        self.fallback_models = llm_config.get("fallback_models", [])
 
         self._initialize_client()
 
@@ -65,9 +66,10 @@ class LLMManager:
         # Získání konfigurace pro daný model. Pokud je None (prázdná hodnota v YAML), použije se prázdný slovník.
         model_specific_config = self.models_config.get(actual_model_name) or {}
 
-        # Předáme sdíleného klienta a specifickou konfiguraci modelu do adaptéru
+        # Předáme sdíleného klienta, specifickou konfiguraci modelu a fallback strategii do adaptéru
         return OpenRouterAdapter(
             model_name=actual_model_name,
             client=self._client,
+            fallback_models=self.fallback_models,
             **model_specific_config  # Bezpečné rozbalení, protože je to vždy slovník
         )

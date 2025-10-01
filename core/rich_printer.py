@@ -79,24 +79,34 @@ class RichPrinter:
         RichPrinter._log(logging.ERROR, message)
         RichPrinter._post(LogMessage(message, "ERROR"))
 
-    # --- Metody pro chat (pro ChatWidget) ---
+    # --- Metody pro zobrazení v TUI (pro nové widgety) ---
 
     @staticmethod
-    def user_message(message: str):
-        # Uživatelovy zprávy se nelogují, jen zobrazují v TUI
-        RichPrinter._post(ChatMessage(message, owner='user', msg_type='text'))
+    def stream_explanation(chunk: str):
+        """Posílá kousek streamovaného myšlenkového pochodu."""
+        # Tyto zprávy nelogujeme do souboru, aby nebyly příliš zaplevelené.
+        # Loguje se až finální kompletní odpověď v orchestratoru.
+        RichPrinter._post(ChatMessage(chunk, owner='agent', msg_type='explanation_chunk'))
 
     @staticmethod
-    def agent_markdown(content: str):
-        RichPrinter._log(logging.INFO, f"AGENT (Markdown): {content}")
-        RichPrinter._post(ChatMessage(content, owner='agent', msg_type='markdown'))
+    def finish_explanation_stream():
+        """Signalizuje konec streamu myšlenkového pochodu."""
+        RichPrinter._post(ChatMessage("", owner='agent', msg_type='explanation_end'))
 
     @staticmethod
     def agent_tool_code(code: str):
+        """Zobrazí JSON s voláním nástroje."""
         RichPrinter._log(logging.INFO, f"AGENT (Tool Code): {code}")
         RichPrinter._post(ChatMessage(code, owner='agent', msg_type='tool_code'))
 
     @staticmethod
     def agent_tool_output(output: str):
+        """Zobrazí výstup z provedeného nástroje."""
         RichPrinter._log(logging.INFO, f"AGENT (Tool Output): {output}")
         RichPrinter._post(ChatMessage(output, owner='agent', msg_type='tool_output'))
+
+    @staticmethod
+    def show_task_complete(reason: str):
+        """Zobrazí finální shrnutí po dokončení úkolu."""
+        RichPrinter._log(logging.INFO, f"AGENT (Task Complete): {reason}")
+        RichPrinter._post(ChatMessage(reason, owner='agent', msg_type='task_complete'))

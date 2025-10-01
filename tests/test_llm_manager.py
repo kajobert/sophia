@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import os
 import sys
 
@@ -9,117 +9,101 @@ if project_root_for_import not in sys.path:
     sys.path.insert(0, project_root_for_import)
 
 from core.llm_manager import LLMManager
-from core.llm_adapters import GoogleGeminiAdapter, DeepSeekAdapter, OllamaAdapter
 
-# Mock pro google.generativeai
-mock_google_genai = MagicMock()
-# sys.modules['google'] = MagicMock() # This is too broad and might cause issues
-sys.modules['google.generativeai'] = mock_google_genai
-
-
-class TestLLMManager(unittest.TestCase):
+class TestLLMManagerRefactored(unittest.TestCase):
 
     def setUp(self):
         """Nastaví mockovanou konfiguraci a prostředí pro každý test."""
         self.mock_config_content = """
 llm_models:
-  default: economical
-  llms:
-    powerful:
-      provider: "google"
-      model_name: "gemini-1.5-pro-latest"
-      api_key_env: "GEMINI_API_KEY"
-    economical:
-      provider: "deepseek"
-      model_name: "deepseek-coder-v2"
-      api_key_env: "DEEPSEEK_API_KEY"
-    local:
-      provider: "ollama"
-      model_name: "llama3"
+  default: "economical"
+  aliases:
+    powerful: "deepseek/deepseek-v3.2-exp"
+    economical: "google/gemini-2.5-flash-lite"
+  models:
+    "google/gemini-2.5-flash-lite": {}
+    "deepseek/deepseek-v3.2-exp": {}
+    "anthropic/claude-3-haiku": {}
+  fallback_models:
+    - "anthropic/claude-3-haiku"
 """
         # Mockování `open` pro čtení konfiguračního souboru
-        self.mock_open_func = mock_open(read_data=self.mock_config_content)
+        self.mock_open_func = patch('builtins.open', mock_open(read_data=self.mock_config_content))
+        self.mock_open_func.start()
 
-        # Mockování `os.getenv` pro API klíče
-        self.getenv_patcher = patch('os.getenv', self._mock_getenv)
+        # Mockování `os.getenv` pro API klíč
+        self.getenv_patcher = patch('os.getenv', return_value="fake_openrouter_key")
         self.mock_getenv = self.getenv_patcher.start()
 
-        # Zásadní oprava: Mockování `load_dotenv`, aby se předešlo prohledávání souborového systému, které způsobuje timeout.
+        # Mockování `load_dotenv`, aby se předešlo prohledávání souborového systému
         self.load_dotenv_patcher = patch('core.llm_manager.load_dotenv', return_value=True)
         self.mock_load_dotenv = self.load_dotenv_patcher.start()
 
+        # Patchování adaptéru, abychom mohli kontrolovat, s jakými argumenty je volán
+        self.adapter_patcher = patch('core.llm_manager.OpenRouterAdapter', autospec=True)
+        self.mock_adapter = self.adapter_patcher.start()
+
+
     def tearDown(self):
         """Uklidí po každém testu."""
+        self.mock_open_func.stop()
         self.getenv_patcher.stop()
         self.load_dotenv_patcher.stop()
-        # Resetování mocku, aby testy byly izolované
-        mock_google_genai.reset_mock()
+        self.adapter_patcher.stop()
 
-
-    def _mock_getenv(self, key):
-        """Mockovací funkce pro os.getenv."""
-        if key == "GEMINI_API_KEY":
-            return "fake_gemini_key"
-        if key == "DEEPSEEK_API_KEY":
-            return "fake_deepseek_key"
-        return None
-
-    @patch('core.llm_adapters.GoogleGeminiAdapter')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_powerful_llm_returns_correct_adapter(self, mock_file, mock_adapter):
-        """Testuje, zda `get_llm` správně vrací 'powerful' (Google) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
+    def test_get_llm_with_alias_resolves_correctly(self):
+        """Testuje, zda get_llm správně přeloží alias na název modelu."""
         manager = LLMManager()
+        manager.get_llm("powerful")
 
-        llm = manager.get_llm("powerful")
-        self.assertIsInstance(llm, mock_adapter.__class__)
+        self.mock_adapter.assert_called_once()
+        args, kwargs = self.mock_adapter.call_args
+        self.assertEqual(kwargs.get('model_name'), "deepseek/deepseek-v3.2-exp")
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_economical_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` správně vrací 'economical' (DeepSeek) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
+    def test_get_default_llm_returns_correct_adapter(self):
+        """Testuje, zda get_llm bez argumentu vrátí výchozí adaptér."""
         manager = LLMManager()
+        manager.get_llm() # Volání bez argumentu
 
-        llm = manager.get_llm("economical")
-        self.assertIsInstance(llm, DeepSeekAdapter)
+        self.mock_adapter.assert_called_once()
+        args, kwargs = self.mock_adapter.call_args
+        self.assertEqual(kwargs.get('model_name'), "google/gemini-2.5-flash-lite")
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_local_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` správně vrací 'local' (Ollama) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
+    def test_fallback_models_are_passed_to_adapter(self):
+        """Testuje, zda je seznam záložních modelů správně předán do adaptéru."""
         manager = LLMManager()
+        manager.get_llm("powerful")
 
-        llm = manager.get_llm("local")
-        self.assertIsInstance(llm, OllamaAdapter)
+        self.mock_adapter.assert_called_once()
+        args, kwargs = self.mock_adapter.call_args
+        self.assertEqual(kwargs.get('fallback_models'), ["anthropic/claude-3-haiku"])
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_default_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` bez argumentu vrací výchozí adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
+    def test_invalid_model_name_raises_value_error(self):
+        """Testuje, zda je vyhozena výjimka ValueError pro neexistující název modelu."""
         manager = LLMManager()
-
-        llm = manager.get_llm() # Volání bez argumentu
-        self.assertIsInstance(llm, DeepSeekAdapter)
-
-    @patch('builtins.open', new_callable=mock_open)
-    def test_caching_mechanism_returns_same_instance(self, mock_file):
-        """Testuje, zda LLM klienti jsou cachováni a vrací se stejná instance."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
-
-        llm1 = manager.get_llm("powerful")
-        llm2 = manager.get_llm("powerful")
-
-        self.assertIs(llm1, llm2, "LLMManager by měl pro stejný název modelu vracet stejnou instanci.")
-
-    @patch('builtins.open', new_callable=mock_open)
-    def test_invalid_model_name(self, mock_file):
-        """Testuje, zda je vyhozena výjimka pro neexistující model."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
-
         with self.assertRaises(ValueError):
             manager.get_llm("non_existent_model")
+
+    def test_get_llm_without_alias_uses_direct_name(self):
+        """Testuje, zda get_llm s přímým názvem modelu funguje správně."""
+        manager = LLMManager()
+        manager.get_llm("anthropic/claude-3-haiku")
+
+        self.mock_adapter.assert_called_once()
+        args, kwargs = self.mock_adapter.call_args
+        self.assertEqual(kwargs.get('model_name'), "anthropic/claude-3-haiku")
+
+    def test_api_key_error_handling(self):
+        """Testuje, zda je vyhozena výjimka ValueError, když není nalezen API klíč."""
+        # Zastavíme a znovu patchneme os.getenv, aby vracel None
+        self.getenv_patcher.stop()
+        getenv_patcher_no_key = patch('os.getenv', return_value=None)
+        getenv_patcher_no_key.start()
+
+        with self.assertRaisesRegex(ValueError, "API klíč 'OPENROUTER_API_KEY' nebyl nalezen"):
+            LLMManager()
+
+        getenv_patcher_no_key.stop()
 
 if __name__ == '__main__':
     unittest.main()

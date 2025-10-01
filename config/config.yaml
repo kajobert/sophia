@@ -32,6 +32,18 @@ llm_models:
   models:
     "google/gemini-2.5-flash-lite": {}
     "deepseek/deepseek-v3.2-exp": {}
+    "anthropic/claude-3-haiku": {} # Přidán další model pro fallback
+
+  # Seznam záložních modelů, které se použijí v případě selhání primárního modelu.
+  # Budou se zkoušet v pořadí, v jakém jsou uvedeny.
+  fallback_models:
+    - "anthropic/claude-3-haiku"
+    - "google/gemini-2.5-flash-lite" # Může být i zde jako poslední záchrana
+
+# Konfigurace pro Orchestrator
+orchestrator:
+  # Maximální počet iterací (cyklů), než se agent zastaví.
+  max_iterations: 15
 
 # Konfigurace pro Intelligent Guardian
 guardian:

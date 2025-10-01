@@ -39,6 +39,10 @@ class JulesOrchestrator:
         self.cost_manager = CostManager(project_root=self.project_root)
         self.status_widget = status_widget
 
+        # Načtení specifické konfigurace pro orchestrátor
+        orchestrator_config = self.llm_manager.config.get("orchestrator", {})
+        self.max_iterations = orchestrator_config.get("max_iterations", 15)
+
         RichPrinter.info("V2 Orchestrator initialized with LLMManager and CostManager.")
 
     async def initialize(self):
@@ -67,25 +71,6 @@ class JulesOrchestrator:
         else:
             return self.llm_manager.default_llm_name
 
-    def _parse_llm_response(self, response_text: str) -> tuple[str | None, dict | None]:
-        """
-        Zparsuje garantovanou JSON odpověď z LLM.
-        Vrací n-tici: (vysvětlující_text, data_pro_volání_nástroje).
-        """
-        try:
-            response_data = json.loads(response_text)
-            explanation = response_data.get("explanation")
-            tool_call_data = response_data.get("tool_call")
-            return explanation, tool_call_data
-        except json.JSONDecodeError as e:
-            RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
-            RichPrinter.error(f"Přijatý text: {response_text}")
-            return "Chyba parsování odpovědi LLM.", None
-        except (AttributeError, KeyError) as e:
-            RichPrinter.error(f"Neplatná struktura JSON z LLM: {e}")
-            RichPrinter.error(f"Přijatá data: {response_text}")
-            return "Neplatná struktura JSON v odpovědi LLM.", None
-
     async def run(self, initial_task: str, session_id: str | None = None):
         """Hlavní rozhodovací smyčka agenta."""
         if session_id:
@@ -106,7 +91,8 @@ class JulesOrchestrator:
         self.memory_manager.save_history(session_id, self.history)
 
 
-        for i in range(len(self.history), 15):
+        task_was_completed_by_agent = False
+        for i in range(len(self.history), self.max_iterations):
             tool_descriptions = await self.mcp_client.get_tool_descriptions()
             prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
 
@@ -155,9 +141,36 @@ class JulesOrchestrator:
             if self.verbose:
                 RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
+            # --- Nová logika pro streamování a parsování ---
+            full_response_text = ""
+            explanation_streamed = ""
+            tool_call_json_str = None
+            tool_call_started = False
+
+            # Callback pro zpracování streamovaných dat
+            async def stream_callback(chunk: str):
+                nonlocal full_response_text, explanation_streamed, tool_call_json_str, tool_call_started
+                full_response_text += chunk
+
+                # Jakmile najdeme separátor, vše ostatní je JSON pro volání nástroje
+                if "|||TOOL_CALL|||" in full_response_text and not tool_call_started:
+                    parts = full_response_text.split("|||TOOL_CALL|||", 1)
+                    explanation_chunk = parts[0][len(explanation_streamed):] # Pošleme jen to, co je nové
+                    if explanation_chunk:
+                         RichPrinter.stream_explanation(explanation_chunk)
+                    explanation_streamed = parts[0]
+                    tool_call_started = True
+                    # Zbytek je začátek JSONu, zatím ho neparsujeme
+
+                # Pokud streamujeme myšlenkový pochod
+                elif not tool_call_started:
+                    RichPrinter.stream_explanation(chunk)
+                    explanation_streamed += chunk
+
+            # Zavoláme LLM se streamováním
             response_text, usage_data = await model.generate_content_async(
                 prompt,
-                response_format=tool_call_schema
+                stream_callback=stream_callback
             )
 
             # Zpracování nákladů a tokenů
@@ -174,13 +187,39 @@ class JulesOrchestrator:
                     RichPrinter.info(f"Počet spotřebovaných tokenů v tomto kroku: {token_count}")
 
 
-            explanation, tool_call_data = self._parse_llm_response(response_text)
+            # Ukončení streamu v TUI
+            RichPrinter.finish_explanation_stream()
 
-            if explanation:
-                RichPrinter.agent_markdown(f"**Myšlenkový pochod:**\n\n{explanation}")
+            # Finální parsování kompletní odpovědi
+            explanation = ""
+            tool_call_data = None
+
+            try:
+                if "|||TOOL_CALL|||" in response_text:
+                    explanation_part, tool_call_json_str = response_text.split("|||TOOL_CALL|||", 1)
+                    explanation = explanation_part.strip()
+                    tool_call_json_str = tool_call_json_str.strip()
+
+                    # Robustnější parsování JSONu, který může být obalen v ```json ... ```
+                    match = re.search(r'\{.*\}', tool_call_json_str, re.DOTALL)
+                    if match:
+                        tool_call_json_str = match.group(0)
+                        tool_call_data = json.loads(tool_call_json_str)
+                    else:
+                        raise json.JSONDecodeError("Nebyl nalezen platný JSON objekt.", tool_call_json_str, 0)
+                else:
+                    explanation = response_text.strip()
+                    RichPrinter.warning("Odpověď LLM neobsahovala separátor '|||TOOL_CALL|||'. Považuji celou odpověď za myšlenkový pochod.")
+
+            except json.JSONDecodeError as e:
+                RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
+                RichPrinter.error(f"Přijatý text pro parsování: {tool_call_json_str if 'tool_call_json_str' in locals() else response_text}")
+                explanation = response_text
+                tool_call_data = None
 
             if not tool_call_data or "tool_name" not in tool_call_data:
-                RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku. Pokračuji v přemýšlení.")
+                RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku nebo se JSON nepodařilo zparsovat. Pokračuji v přemýšlení.")
+                # I když se streamovalo, finální vysvětlení uložíme do historie
                 if explanation:
                     self.history.append((explanation, "Žádná akce."))
                     self.memory_manager.save_history(session_id, self.history)
@@ -193,13 +232,19 @@ class JulesOrchestrator:
             RichPrinter.info(">>> AKCE")
             RichPrinter.agent_tool_code(json.dumps(tool_call_data, indent=2, ensure_ascii=False))
 
-            history_entry_request = f"{explanation}\n\n{json.dumps(tool_call_data, indent=2)}" if explanation else json.dumps(tool_call_data, indent=2)
+            # Sestavení záznamu do historie (myšlenkový pochod + volání nástroje)
+            history_entry_request = f"{explanation}\n|||TOOL_CALL|||\n{json.dumps(tool_call_data, indent=2)}"
 
             if tool_name == "task_complete":
                 RichPrinter.info("Agent signalizoval dokončení úkolu. Ukládám vzpomínku...")
                 summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
+
+                # Zobrazíme finální shrnutí ve speciálním panelu v TUI
+                RichPrinter.show_task_complete(summary)
+
                 self.memory_manager.save_session(session_id, initial_task, summary)
                 RichPrinter.info(f"Vzpomínka pro session {session_id} byla úspěšně uložena.")
+                task_was_completed_by_agent = True # Nastavíme příznak
                 break
 
             if tool_name == "show_last_output":
@@ -230,7 +275,18 @@ class JulesOrchestrator:
             self.history.append((history_entry_request, output_for_history))
             self.memory_manager.save_history(session_id, self.history)
 
-        RichPrinter.info(f"### Úkol dokončen (Celkem spotřebováno: {self.total_tokens} tokenů)")
+        if not task_was_completed_by_agent:
+            final_message = f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen."
+            RichPrinter.warning(final_message)
+            # Uložíme session i v tomto případě, ale s jiným shrnutím
+            summary = f"Úkol byl automaticky ukončen po dosažení limitu {self.max_iterations} iterací."
+            self.memory_manager.save_session(session_id, initial_task, summary)
+            RichPrinter.info(f"Vzpomínka pro session {session_id} byla uložena s poznámkou o přerušení.")
+        else:
+            final_message = "Agent dokončil úkol."
+
+        RichPrinter.info(f"### {final_message} (Celkem spotřebováno: {self.total_tokens} tokenů)")
+
 
     def _handle_long_output(self, result: str) -> tuple[str, str]:
         """Zpracuje dlouhé výstupy, uloží je a vrátí shrnutí."""
