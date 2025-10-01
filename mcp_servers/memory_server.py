@@ -3,6 +3,7 @@ import os
 import json
 import inspect
 import asyncio
+import functools
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -66,8 +67,10 @@ async def main():
 
                 if tool_name in tools:
                     try:
+                        # Vytvoříme parciální funkci, která zapouzdří funkci i její argumenty
+                        func_to_run = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
                         result = await loop.run_in_executor(
-                            None, tools[tool_name], *tool_args, **tool_kwargs
+                            None, func_to_run
                         )
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
