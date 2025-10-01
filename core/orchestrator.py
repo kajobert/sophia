@@ -67,32 +67,22 @@ class JulesOrchestrator:
 
     def _parse_llm_response(self, response_text: str) -> tuple[str | None, dict | None]:
         """
-        Zparsuje odpověď LLM, aby oddělil vysvětlující text od JSONu pro volání nástroje.
+        Zparsuje garantovanou JSON odpověď z LLM.
         Vrací n-tici: (vysvětlující_text, data_pro_volání_nástroje).
         """
-        explanation = None
-        tool_call_data = None
-
-        tool_code_match = re.search(r"<TOOL_CODE_START>(.*?)</TOOL_CODE_END>", response_text, re.DOTALL)
-
-        if tool_code_match:
-            json_str = textwrap.dedent(tool_code_match.group(1)).strip()
-            try:
-                tool_call_data = json.loads(json_str)
-            except json.JSONDecodeError as e:
-                RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
-                return response_text, None # Celá odpověď je v případě chyby považována za vysvětlení
-
-            # Vysvětlení je vše před značkou <TOOL_CODE_START>
-            explanation = response_text[:tool_code_match.start()].strip()
-            if not explanation:
-                explanation = None
-        else:
-            # Nebyl nalezen žádný kód nástroje, takže celá odpověď je považována za vysvětlení.
-            explanation = response_text.strip()
-            # V tomto případě nevarujeme, protože odpověď bez nástroje může být legitimní (např. jen text)
-
-        return explanation, tool_call_data
+        try:
+            response_data = json.loads(response_text)
+            explanation = response_data.get("explanation")
+            tool_call_data = response_data.get("tool_call")
+            return explanation, tool_call_data
+        except json.JSONDecodeError as e:
+            RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
+            RichPrinter.error(f"Přijatý text: {response_text}")
+            return "Chyba parsování odpovědi LLM.", None
+        except (AttributeError, KeyError) as e:
+            RichPrinter.error(f"Neplatná struktura JSON z LLM: {e}")
+            RichPrinter.error(f"Přijatá data: {response_text}")
+            return "Neplatná struktura JSON v odpovědi LLM.", None
 
     async def run(self, initial_task: str, session_id: str | None = None):
         """Hlavní rozhodovací smyčka agenta."""
@@ -119,7 +109,7 @@ class JulesOrchestrator:
             prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
 
             # Fáze 1: Výběr modelu
-            selected_model_name = self._triage_task_and_select_llm(prompt) # Triage na základě aktuálního promptu
+            selected_model_name = self._triage_task_and_select_llm(prompt)
 
             try:
                 model = self.llm_manager.get_llm(selected_model_name)
@@ -128,41 +118,54 @@ class JulesOrchestrator:
                 RichPrinter.error(f"Nepodařilo se načíst model '{selected_model_name}': {e}")
                 break
 
-            # Fáze 2: Volání LLM s vybraným modelem
-            # Poznámka: token_count se liší mezi providery, prozatím ho necháme pro Gemini-based modely
-            token_count = 0
-            if hasattr(model, 'count_tokens'):
-                 token_count = model.count_tokens(prompt).total_tokens
-                 self.total_tokens += token_count
-
+            # Fáze 2: Volání LLM s vynuceným JSON formátem
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
             RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
-            if token_count > 0:
-                RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
 
-            # Logování do TUI widgetu, pokud je k dispozici
-            if self.status_widget:
-                self.status_widget.add_log(f"Přemýšlím... (model: {selected_model_name})")
-            else:
-                # Fallback pro běh bez TUI
-                RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
-
-            if token_count > 0:
-                RichPrinter.info(f"Počet tokenů v tomto promptu: {token_count}")
-
+            # Schéma pro vynucení JSON odpovědi
+            tool_call_schema = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "tool_call_with_explanation",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "explanation": {
+                                "type": "string",
+                                "description": "Tvůj myšlenkový pochod krok za krokem, zdůvodnění a vysvětlení, proč volíš tento nástroj a tyto parametry. Musí být v češtině."
+                            },
+                            "tool_call": {
+                                "type": "object",
+                                "properties": {
+                                    "tool_name": {"type": "string"},
+                                    "args": {"type": "array", "items": {}},
+                                    "kwargs": {"type": "object"}
+                                },
+                                "required": ["tool_name"]
+                            }
+                        },
+                        "required": ["explanation", "tool_call"]
+                    }
+                }
+            }
 
             if self.verbose:
                 RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
-            # Univerzální volání modelu - prozatím předpokládáme async metodu
-            # V budoucnu bude potřeba adaptér pro sjednocení API
-            if hasattr(model, 'generate_content_async'):
-                 response = await model.generate_content_async(prompt)
-            else:
-                 # Fallback pro ne-asynchronní modely (hypoteticky)
-                 response = await asyncio.to_thread(model.generate_content, prompt)
+            response_text, usage_data = await model.generate_content_async(
+                prompt,
+                response_format=tool_call_schema
+            )
 
-            explanation, tool_call_data = self._parse_llm_response(response.text)
+            # Aktualizace počtu tokenů na základě skutečného použití
+            if usage_data and 'total_tokens' in usage_data:
+                token_count = usage_data['total_tokens']
+                self.total_tokens += token_count
+                RichPrinter.info(f"Počet spotřebovaných tokenů v tomto kroku: {token_count}")
+
+
+            explanation, tool_call_data = self._parse_llm_response(response_text)
 
             if explanation:
                 RichPrinter.agent_markdown(f"**Myšlenkový pochod:**\n\n{explanation}")
