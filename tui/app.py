@@ -62,11 +62,6 @@ class SophiaTUI(App):
         yield self.input_widget
         yield Footer()
 
-from rich.panel import Panel
-from rich.syntax import Syntax
-
-# ... (v těle třídy SophiaTUI)
-
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů."""
         RichPrinter.set_message_poster(self.post_message)
