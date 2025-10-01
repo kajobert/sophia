@@ -1,67 +1,69 @@
-import asyncio
+import os
+from openai import OpenAI, AsyncOpenAI
 from abc import ABC, abstractmethod
-import google.generativeai as genai
 
 class BaseLLMAdapter(ABC):
     """
     Abstraktní základní třída pro všechny LLM adaptéry.
-    Definuje jednotné rozhraní pro generování obsahu.
+    Definuje jednotné rozhraní pro interakci s jazykovými modely.
     """
+    def __init__(self, model_name: str, **kwargs):
+        self.model_name = model_name
+
     @abstractmethod
-    async def generate_content_async(self, prompt: str) -> str:
+    async def generate_content_async(self, prompt: str, response_format: dict | None = None) -> tuple[str, dict | None]:
         """
-        Asynchronně generuje obsah na základě promptu.
-        Tato metoda musí být implementována v každé podtřídě.
+        Asynchronně generuje obsah.
+
+        Vrací:
+            tuple[str, dict | None]: Vygenerovaný text a informace o použití (tokeny, náklady).
         """
         pass
 
-    def count_tokens(self, prompt: str) -> int:
+    def count_tokens(self, text: str) -> int:
         """
-        Volitelná metoda pro počítání tokenů.
-        Pokud není implementována, vrací 0.
+        Odhadne počet tokenů v textu. Pro OpenRouter se spoléháme na data z odpovědi,
+        takže tato metoda nemusí být přesná a je spíše orientační.
         """
-        return 0
-
-class GoogleGeminiAdapter(BaseLLMAdapter):
-    """Adaptér pro modely od Google (Gemini)."""
-    def __init__(self, model_name: str, api_key: str):
-        genai.configure(api_key=api_key)
-        self._model = genai.GenerativeModel(model_name)
-
-    async def generate_content_async(self, prompt: str) -> str:
-        response = await self._model.generate_content_async(prompt)
-        return response.text
-
-    def count_tokens(self, prompt: str) -> int:
-        return self._model.count_tokens(prompt).total_tokens
+        # Jednoduchý odhad: 1 token ~ 4 znaky
+        return len(text) // 4
 
 
-class DeepSeekAdapter(BaseLLMAdapter):
+class OpenRouterAdapter(BaseLLMAdapter):
     """
-    Mock adaptér pro DeepSeek modely.
-    Zajišťuje kompatibilitu rozhraní.
+    Univerzální adaptér pro všechny modely dostupné přes OpenRouter.
+    Používá oficiální `openai` knihovnu pro komunikaci.
     """
-    def __init__(self, model_name: str, api_key: str):
-        self._model_name = model_name
-        self._api_key = api_key # Uložen pro budoucí použití
+    def __init__(self, model_name: str, client: AsyncOpenAI, **kwargs):
+        super().__init__(model_name=model_name)
+        self._client = client
+        self.system_prompt = kwargs.get("system_prompt", "")
 
-    async def generate_content_async(self, prompt: str) -> str:
+    async def generate_content_async(self, prompt: str, response_format: dict | None = None) -> tuple[str, dict | None]:
+        """
+        Odešle požadavek na OpenRouter API a vrátí odpověď a data o použití.
+        """
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": prompt}
+        ]
 
-        # Mock implementace, která vrací informativní text
-        await asyncio.sleep(0.1) # Simulace síťové latence
-        return f"<TOOL_CODE_START>\n{{\"tool_name\": \"task_complete\", \"args\": [], \"kwargs\": {{\"reason\": \"DeepSeek model '{self._model_name}' is not fully implemented. This is a mock response.\"}}}}\n</TOOL_CODE_END>"
+        extra_body = {}
+        if response_format:
+            extra_body["response_format"] = response_format
 
+        try:
+            response = await self._client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                extra_body=extra_body if extra_body else None,
+            )
 
-class OllamaAdapter(BaseLLMAdapter):
-    """
-    Mock adaptér pro lokální Ollama modely.
-    Zajišťuje kompatibilitu rozhraní.
-    """
-    def __init__(self, model_name: str):
-        self._model_name = model_name
+            content = response.choices[0].message.content
+            usage_data = response.usage.model_dump() if response.usage else None
 
-    async def generate_content_async(self, prompt: str) -> str:
-        # Mock implementace
-        await asyncio.sleep(0.1)
+            return content, usage_data
 
-        return f"<TOOL_CODE_START>\n{{\"tool_name\": \"task_complete\", \"args\": [], \"kwargs\": {{\"reason\": \"Ollama model '{self._model_name}' is not fully implemented. This is a mock response.\"}}}}\n</T>OOL_CODE_END>"
+        except Exception as e:
+            # V případě chyby vrátíme chybovou zprávu a žádná data o použití
+            return f"Error calling OpenRouter API: {str(e)}", None
