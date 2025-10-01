@@ -18,6 +18,7 @@ from core.prompt_builder import PromptBuilder
 from core.rich_printer import RichPrinter
 from core.memory_manager import MemoryManager
 from core.llm_manager import LLMManager
+from core.cost_manager import CostManager
 
 class JulesOrchestrator:
     """
@@ -35,9 +36,10 @@ class JulesOrchestrator:
         self.prompt_builder = PromptBuilder(system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"))
         self.memory_manager = MemoryManager()
         self.llm_manager = LLMManager(project_root=self.project_root)
+        self.cost_manager = CostManager(project_root=self.project_root)
         self.status_widget = status_widget
 
-        RichPrinter.info("V2 Orchestrator initialized with LLMManager.")
+        RichPrinter.info("V2 Orchestrator initialized with LLMManager and CostManager.")
 
     async def initialize(self):
         """Provede kompletní inicializaci."""
@@ -113,14 +115,14 @@ class JulesOrchestrator:
 
             try:
                 model = self.llm_manager.get_llm(selected_model_name)
-                RichPrinter.info(f"Vybrán model: [bold cyan]{selected_model_name}[/bold cyan]")
+                RichPrinter.info(f"Vybrán model: [bold cyan]{model.model_name}[/bold cyan] (alias: {selected_model_name})")
             except (ValueError, FileNotFoundError) as e:
                 RichPrinter.error(f"Nepodařilo se načíst model '{selected_model_name}': {e}")
                 break
 
             # Fáze 2: Volání LLM s vynuceným JSON formátem
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
-            RichPrinter.info(f"Přemýšlím... (model: {selected_model_name})")
+            RichPrinter.info(f"Přemýšlím... (model: {model.model_name})")
 
             # Schéma pro vynucení JSON odpovědi
             tool_call_schema = {
@@ -158,11 +160,18 @@ class JulesOrchestrator:
                 response_format=tool_call_schema
             )
 
-            # Aktualizace počtu tokenů na základě skutečného použití
-            if usage_data and 'total_tokens' in usage_data:
-                token_count = usage_data['total_tokens']
-                self.total_tokens += token_count
-                RichPrinter.info(f"Počet spotřebovaných tokenů v tomto kroku: {token_count}")
+            # Zpracování nákladů a tokenů
+            if usage_data:
+                generation_id = usage_data.get("id")
+                if generation_id:
+                    cost = await self.cost_manager.get_generation_cost(generation_id)
+                    self.cost_manager.add_cost(cost)
+                    RichPrinter.info(f"Náklady na tento krok: ${cost:.6f} | Celkové náklady: {self.cost_manager.get_total_cost_str()}")
+
+                if usage_data.get("usage"):
+                    token_count = usage_data["usage"].get("total_tokens", 0)
+                    self.total_tokens += token_count
+                    RichPrinter.info(f"Počet spotřebovaných tokenů v tomto kroku: {token_count}")
 
 
             explanation, tool_call_data = self._parse_llm_response(response_text)

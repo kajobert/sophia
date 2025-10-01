@@ -25,77 +25,65 @@
 Projekt prošel zásadní architektonickou změnou. Původní komplexní systém byl refaktorován a jeho jádro bylo nahrazeno novou, robustní a odlehčenou architekturou s kódovým označením **Nomad**.
 
 Současné jádro (Nomad) je postaveno na následujících principech:
-- **Asynchronní Orchestrátor (`JulesOrchestrator`):** Centrální mozek, který řídí běh agenta.
+- **Asynchronní Orchestrátor (`JulesOrchestrator`):** Centrální mozek, který řídí běh agenta a využívá **OpenRouter** pro flexibilní přístup k různým LLM.
 - **Modulární Komponenty (MCP Servery):** Jednotlivé schopnosti (práce se soubory, shell) jsou izolovány do samostatných, na pozadí běžících serverů.
-- **Textové Uživatelské Rozhraní (TUI):** Hlavním vstupním bodem je nyní moderní TUI postavené na knihovně Textual, které poskytuje přehledné chatovací okno a systémový log.
-
-Původní kód staré architektury (kognitivní vrstvy, agenti, webové služby) byl archivován ve složce `integrace/` pro budoucí referenci a plánovanou integraci do nového jádra.
+- **Textové Uživatelské Rozhraní (TUI):** Hlavním vstupním bodem je moderní TUI postavené na knihovně Textual.
 
 ---
 
 ## Jak začít (Quick Start)
 
-Spuštění projektu je nyní maximálně zjednodušené díky spouštěcímu skriptu.
+1.  **Příprava prostředí:**
+    *   Ujistěte se, že máte nainstalovaný Docker a Python 3.12+.
+    *   Vytvořte soubor `.env` zkopírováním šablony `.env.example`.
+        ```bash
+        cp .env.example .env
+        ```
+    *   Doplňte do souboru `.env` svůj `OPENROUTER_API_KEY`.
 
-1.  **Ujistěte se, že máte nainstalované závislosti:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+2.  **Instalace závislostí:**
+    *   Doporučujeme použít `uv` pro rychlou instalaci.
+        ```bash
+        uv pip install -r requirements.in
+        ```
 
-2.  **Spusťte aplikaci:**
-    ```bash
-    ./start.sh
-    ```
+3.  **Spuštění aplikace:**
+    *   Aplikaci lze spustit lokálně nebo v Dockeru pomocí připravených skriptů.
+        ```bash
+        # Spuštění v lokálním prostředí
+        ./scripts/start.sh
 
-Skript `start.sh` se postará o vše ostatní:
-- Zkontroluje a nainstaluje závislosti.
-- Ověří existenci a platnost `GEMINI_API_KEY` v souboru `.env` (pokud chybí, vyžádá si ho).
-- Spustí novou TUI aplikaci, která automaticky řídí všechny potřebné procesy.
+        # Spuštění v Dockeru (doporučeno pro konzistentní prostředí)
+        sudo docker compose up --build
+        ```
 
 ---
 
 ## Nástroje pro vývojáře
 
-Kromě hlavní aplikace projekt obsahuje i samostatné nástroje pro usnadnění vývoje a správy.
+V adresáři `tools/` se nacházejí pomocné skripty pro správu a údržbu.
 
 ### Zobrazení paměti agenta (`tools/view_memory.py`)
 
-Tento nástroj umožňuje nahlížet do databáze vzpomínek agenta. Můžete prohledávat minulé úkoly a jejich shrnutí.
-
-**Použití:**
-
-- **Zobrazení posledních 10 vzpomínek:**
-  ```bash
-  python3 tools/view_memory.py
-  ```
-
-- **Vyhledávání podle klíčových slov:**
-  ```bash
-  python3 tools/view_memory.py oprava chyba
-  ```
-
-- **Zobrazení všech vzpomínek s omezením počtu:**
-  ```bash
-  python3 tools/view_memory.py --all --limit 20
-  ```
+Tento nástroj umožňuje nahlížet do databáze vzpomínek agenta.
+```bash
+python3 tools/view_memory.py
+```
 
 ---
 
 ## Dokumentace
 
-Pro lepší orientaci je dokumentace rozdělena do několika klíčových souborů:
+Veškerá projektová dokumentace je sjednocena v adresáři `docs/`.
 
-- **[🛠️ DEVELOPER_GUIDE.md](./docs/DEVELOPER_GUIDE.md)**: Nezbytný zdroj pro vývojáře. Obsahuje popis nové architektury a technické detaily. *(Poznámka: Tento dokument vyžaduje aktualizaci.)*
-
-- **[🗺️ ROADMAP.md](./docs/ROADMAP.md)**: Detailní plán pro budoucí vývoj, včetně integrace kognitivních funkcí Sophie do jádra Nomada. *(Poznámka: Tento dokument bude brzy vytvořen.)*
-
-- **[🧠 KNOWLEDGE_BASE.md](./docs/KNOWLEDGE_BASE.md)**: Znalostní báze osvědčených postupů a řešení problémů.
+- **[🛠️ DEVELOP.md](./docs/DEVELOP.md)**: Nezbytný zdroj pro vývojáře.
+- **[🗺️ ROADMAP.md](./docs/ROADMAP.md)**: Detailní plán pro budoucí vývoj.
 
 ---
 
 ## Pro AI Agenty
 
-Pokud jste AI agent pracující na tomto projektu, vaše pravidla, povinnosti a pracovní postupy jsou definovány v souboru `AGENTS.md`.
+Pokud jste AI agent pracující na tomto projektu, vaše pravidla a pracovní postupy jsou definovány v souboru `AGENTS.md`.
 
 - **[🤖 AGENTS.md](./AGENTS.md)**: Váš závazný manuál pro práci na tomto projektu.
 
@@ -107,5 +95,5 @@ Pokud jste AI agent pracující na tomto projektu, vaše pravidla, povinnosti a 
 </p>
 
 <p align="center">
-  <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Pokud zjistíte, že je zastaralý nebo neúplný, založte prosím issue nebo vytvořte pull request s návrhem na jeho aktualizaci. Děkujeme!</sub>
+  <sub>Tento dokument je živý a měl by být udržován v aktuálním stavu. Děkujeme!</sub>
 </p>
