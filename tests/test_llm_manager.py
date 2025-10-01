@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, mock_open
 import os
 import sys
 
@@ -9,13 +9,7 @@ if project_root_for_import not in sys.path:
     sys.path.insert(0, project_root_for_import)
 
 from core.llm_manager import LLMManager
-from core.llm_adapters import GoogleGeminiAdapter, DeepSeekAdapter, OllamaAdapter
-
-# Mock pro google.generativeai
-mock_google_genai = MagicMock()
-# sys.modules['google'] = MagicMock() # This is too broad and might cause issues
-sys.modules['google.generativeai'] = mock_google_genai
-
+from core.llm_adapters import OpenRouterAdapter
 
 class TestLLMManager(unittest.TestCase):
 
@@ -23,103 +17,96 @@ class TestLLMManager(unittest.TestCase):
         """Nastaví mockovanou konfiguraci a prostředí pro každý test."""
         self.mock_config_content = """
 llm_models:
-  default: economical
-  llms:
-    powerful:
-      provider: "google"
-      model_name: "gemini-1.5-pro-latest"
-      api_key_env: "GEMINI_API_KEY"
-    economical:
-      provider: "deepseek"
-      model_name: "deepseek-coder-v2"
-      api_key_env: "DEEPSEEK_API_KEY"
-    local:
-      provider: "ollama"
-      model_name: "llama3"
+  default: "economical"
+  aliases:
+    powerful: "deepseek/deepseek-r1"
+    economical: "google/gemini-2.5-flash-lite"
+  models:
+    "google/gemini-2.5-flash-lite": {}
+    "deepseek/deepseek-r1":
+      system_prompt: "You are a powerful coding assistant."
 """
         # Mockování `open` pro čtení konfiguračního souboru
-        self.mock_open_func = mock_open(read_data=self.mock_config_content)
+        self.mock_open = mock_open(read_data=self.mock_config_content)
+        self.open_patcher = patch('builtins.open', self.mock_open)
+        self.open_patcher.start()
 
-        # Mockování `os.getenv` pro API klíče
-        self.getenv_patcher = patch('os.getenv', self._mock_getenv)
-        self.mock_getenv = self.getenv_patcher.start()
+        # Mockování `os.getenv` pro API klíč
+        self.getenv_patcher = patch('os.getenv', return_value="fake_openrouter_key")
+        self.getenv_patcher.start()
 
-        # Zásadní oprava: Mockování `load_dotenv`, aby se předešlo prohledávání souborového systému, které způsobuje timeout.
+        # Mockování `load_dotenv`, aby se předešlo prohledávání souborového systému
         self.load_dotenv_patcher = patch('core.llm_manager.load_dotenv', return_value=True)
-        self.mock_load_dotenv = self.load_dotenv_patcher.start()
+        self.load_dotenv_patcher.start()
 
     def tearDown(self):
         """Uklidí po každém testu."""
+        self.open_patcher.stop()
         self.getenv_patcher.stop()
         self.load_dotenv_patcher.stop()
-        # Resetování mocku, aby testy byly izolované
-        mock_google_genai.reset_mock()
 
+    @patch('core.llm_manager.OpenRouterAdapter')
+    def test_get_llm_with_alias(self, mock_adapter):
+        """Testuje, zda `get_llm` správně přeloží alias a vytvoří adaptér."""
+        manager = LLMManager(project_root="/fake/path")
 
-    def _mock_getenv(self, key):
-        """Mockovací funkce pro os.getenv."""
-        if key == "GEMINI_API_KEY":
-            return "fake_gemini_key"
-        if key == "DEEPSEEK_API_KEY":
-            return "fake_deepseek_key"
-        return None
+        # Test pro "powerful" alias
+        llm_powerful = manager.get_llm("powerful")
+        mock_adapter.assert_called_with(
+            model_name="deepseek/deepseek-r1",
+            client=manager._client,
+            system_prompt="You are a powerful coding assistant."
+        )
 
-    @patch('core.llm_adapters.GoogleGeminiAdapter')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_powerful_llm_returns_correct_adapter(self, mock_file, mock_adapter):
-        """Testuje, zda `get_llm` správně vrací 'powerful' (Google) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
+        # Test pro "economical" alias
+        llm_economical = manager.get_llm("economical")
+        mock_adapter.assert_called_with(
+            model_name="google/gemini-2.5-flash-lite",
+            client=manager._client
+        )
 
-        llm = manager.get_llm("powerful")
-        self.assertIsInstance(llm, mock_adapter.__class__)
+    @patch('core.llm_manager.OpenRouterAdapter')
+    def test_get_default_llm(self, mock_adapter):
+        """Testuje, zda `get_llm` bez argumentu použije výchozí model z configu."""
+        manager = LLMManager(project_root="/fake/path")
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_economical_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` správně vrací 'economical' (DeepSeek) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
+        llm_default = manager.get_llm()
+        # Očekáváme "economical", který se přeloží na "google/gemini-2.5-flash-lite"
+        mock_adapter.assert_called_with(
+            model_name="google/gemini-2.5-flash-lite",
+            client=manager._client
+        )
 
-        llm = manager.get_llm("economical")
-        self.assertIsInstance(llm, DeepSeekAdapter)
+    @patch('core.llm_manager.OpenRouterAdapter')
+    def test_get_llm_with_direct_model_name(self, mock_adapter):
+        """Testuje, zda `get_llm` funguje i s přímým názvem modelu."""
+        manager = LLMManager(project_root="/fake/path")
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_local_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` správně vrací 'local' (Ollama) adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
+        llm_direct = manager.get_llm("deepseek/deepseek-r1")
+        mock_adapter.assert_called_with(
+            model_name="deepseek/deepseek-r1",
+            client=manager._client,
+            system_prompt="You are a powerful coding assistant."
+        )
 
-        llm = manager.get_llm("local")
-        self.assertIsInstance(llm, OllamaAdapter)
+    def test_invalid_model_name_raises_value_error(self):
+        """Testuje, zda je vyhozena výjimka pro neexistující model nebo alias."""
+        manager = LLMManager(project_root="/fake/path")
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_get_default_llm_returns_correct_adapter(self, mock_file):
-        """Testuje, zda `get_llm` bez argumentu vrací výchozí adaptér."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
-
-        llm = manager.get_llm() # Volání bez argumentu
-        self.assertIsInstance(llm, DeepSeekAdapter)
-
-    @patch('builtins.open', new_callable=mock_open)
-    def test_caching_mechanism_returns_same_instance(self, mock_file):
-        """Testuje, zda LLM klienti jsou cachováni a vrací se stejná instance."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
-
-        llm1 = manager.get_llm("powerful")
-        llm2 = manager.get_llm("powerful")
-
-        self.assertIs(llm1, llm2, "LLMManager by měl pro stejný název modelu vracet stejnou instanci.")
-
-    @patch('builtins.open', new_callable=mock_open)
-    def test_invalid_model_name(self, mock_file):
-        """Testuje, zda je vyhozena výjimka pro neexistující model."""
-        mock_file.return_value.read.return_value = self.mock_config_content
-        manager = LLMManager()
-
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "nebyl nalezen v 'config.yaml'"):
             manager.get_llm("non_existent_model")
+
+    def test_missing_api_key_raises_value_error(self):
+        """Testuje, zda je vyhozena výjimka, pokud chybí API klíč."""
+        # Přepíšeme mock pro `os.getenv`, aby vracel None
+        self.getenv_patcher.stop()
+        getenv_patcher_none = patch('os.getenv', return_value=None)
+        getenv_patcher_none.start()
+
+        with self.assertRaisesRegex(ValueError, "API klíč 'OPENROUTER_API_KEY' nebyl nalezen"):
+            LLMManager(project_root="/fake/path")
+
+        getenv_patcher_none.stop()
 
 if __name__ == '__main__':
     unittest.main()
