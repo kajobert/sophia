@@ -45,12 +45,17 @@ def get_last_known_good_commit() -> str:
         return f.read().strip()
 
 def revert_to_last_known_good():
-    """Provede 'git reset --hard' na poslední funkční commit."""
+    """Provede 'git reset --hard' a bezpečný úklid na poslední funkční commit."""
     commit_hash = get_last_known_good_commit()
     logging.warning(f"Attempting to roll back to commit: {commit_hash}")
     try:
+        # Krok 1: Vrátí všechny SLEDOVANÉ soubory na stav daného commitu.
         subprocess.run(["git", "reset", "--hard", commit_hash], check=True, capture_output=True, text=True)
-        subprocess.run(["git", "clean", "-dfx"], check=True, capture_output=True, text=True)
+        
+        # Krok 2: Smaže NESLEDOVANÉ soubory a adresáře, ale RESPEKTUJE .gitignore.
+        # Odstranili jsme '-x', aby .env a logs/ zůstaly nedotčeny.
+        subprocess.run(["git", "clean", "-df"], check=True, capture_output=True, text=True)
+        
         logging.info(f"Successfully rolled back to commit {commit_hash}.")
     except subprocess.CalledProcessError as e:
         logging.error(f"FATAL: Git rollback failed! Stderr: {e.stderr}")
@@ -65,28 +70,22 @@ def main():
     while True:
         logging.info(f"Starting TUI application: {TUI_APP_PATH}")
 
-        # Spustíme TUI proces. Důležité je, že nezachytáváme stdout/stderr,
-        # aby TUI mohla plně ovládat terminál.
         process = subprocess.run(["python", TUI_APP_PATH])
 
-        # Pokud je návratový kód 0, aplikace se ukončila korektně (např. přes Ctrl+Q).
         if process.returncode == 0:
             logging.info("Application exited cleanly (code 0). Guardian shutting down.")
             break
 
-        # Jakýkoliv jiný kód značí pád.
         consecutive_failures += 1
         logging.error(f"Application crashed with exit code {process.returncode}. This is failure #{consecutive_failures}.")
         
-        # TUI aplikace sama by měla zapsat detailní log do crash.log
         if os.path.exists(CRASH_LOG_PATH):
              logging.info(f"Detailed crash information should be available in: {CRASH_LOG_PATH}")
 
-        # Pokud aplikace padá opakovaně, provedeme rollback.
         if consecutive_failures >= MAX_RESTART_ATTEMPTS:
             logging.warning(f"Reached {MAX_RESTART_ATTEMPTS} consecutive failures. Triggering rollback.")
             revert_to_last_known_good()
-            consecutive_failures = 0  # Resetujeme počítadlo po rollbacku.
+            consecutive_failures = 0
 
         logging.info(f"Restarting application in {RESTART_DELAY_SECONDS} seconds...")
         time.sleep(RESTART_DELAY_SECONDS)
