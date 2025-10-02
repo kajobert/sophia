@@ -64,33 +64,43 @@ def revert_to_last_known_good():
         exit(1)
 
 def main():
-    """Main guardian loop to run and monitor the TUI application."""
+    """
+    Main guardian loop to run and monitor the TUI application.
+    Uses Popen to keep the TUI interactive while still capturing stderr for crash detection.
+    """
     consecutive_failures = 0
 
     while True:
         logging.info(f"Starting TUI application: {TUI_APP_PATH}")
-        process = subprocess.run(
+
+        # Use Popen to allow interactivity. stdin and stdout are inherited from the parent.
+        # We only capture stderr to a pipe for crash logging.
+        process = subprocess.Popen(
             ["python", TUI_APP_PATH],
-            capture_output=True,
+            stderr=subprocess.PIPE,
             text=True,
             encoding='utf-8'
         )
 
-        if process.returncode == 0:
+        # Wait for the process to terminate and read the full stderr output.
+        stderr_output = process.communicate()[1]
+        return_code = process.returncode
+
+        if return_code == 0:
             logging.info("Application exited cleanly (code 0). Guardian shutting down.")
+            if stderr_output:
+                logging.warning(f"Application exited cleanly but produced stderr output:\n{stderr_output}")
             break  # User likely exited the app normally
 
         # --- Crash Detected ---
         consecutive_failures += 1
-        logging.error(f"Application crashed with exit code {process.returncode}. This is failure #{consecutive_failures}.")
+        logging.error(f"Application crashed with exit code {return_code}. This is failure #{consecutive_failures}.")
 
-        # Log the error output
+        # Log the error output from stderr
         os.makedirs(os.path.dirname(CRASH_LOG_PATH), exist_ok=True)
         with open(CRASH_LOG_PATH, "w", encoding='utf-8') as f:
-            f.write("--- STDOUT ---\n")
-            f.write(process.stdout)
-            f.write("\n\n--- STDERR ---\n")
-            f.write(process.stderr)
+            f.write("--- STDERR ---\n")
+            f.write(stderr_output)
         logging.info(f"Crash log saved to {CRASH_LOG_PATH}")
 
         # Check for rollback condition
