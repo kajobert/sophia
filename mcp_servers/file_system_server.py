@@ -11,6 +11,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from tools import file_system
+from tools import git_tools
+from tools import project_tools
 
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
@@ -34,17 +36,29 @@ async def main():
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
+    # Konsolidace všech core nástrojů do jednoho serveru pro robustnost
     tools = {
+        # File System Tools
         "list_files": file_system.list_files,
         "read_file": file_system.read_file,
         "create_file": file_system.create_file,
         "delete_file": file_system.delete_file,
         "rename_file": file_system.rename_file,
         "create_new_tool": file_system.create_new_tool,
-        # Special DSL tools
         "overwrite_file_with_block": file_system.overwrite_file_with_block,
         "create_file_with_block": file_system.create_file_with_block,
         "replace_with_git_merge_diff": file_system.replace_with_git_merge_diff,
+
+        # Git Tools
+        "get_git_status": git_tools.get_git_status,
+        "add_to_git": git_tools.add_to_git,
+        "create_git_commit": git_tools.create_git_commit,
+        "revert_git_changes": git_tools.revert_git_changes,
+        "get_last_commit_hash": git_tools.get_last_commit_hash,
+        "promote_commit_to_last_known_good": git_tools.promote_commit_to_last_known_good,
+
+        # Project Tools
+        "get_project_summary": project_tools.get_project_summary,
     }
 
     while True:

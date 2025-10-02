@@ -9,7 +9,6 @@ CRASH_LOG_PATH = "logs/crash.log"
 LAST_GOOD_COMMIT_FILE = ".last_known_good_commit"
 MAX_RESTART_ATTEMPTS = 3  # Max consecutive failures before a rollback is triggered
 RESTART_DELAY_SECONDS = 5  # Delay before restarting the app after a crash
-INITIAL_KNOWN_GOOD_COMMIT = "f7c727c852fe2937b9508c007a1ece6b7319355d"
 
 # --- Logging Setup ---
 logging.basicConfig(
@@ -22,12 +21,28 @@ logging.basicConfig(
 )
 
 def get_last_known_good_commit() -> str:
-    """Reads the last known good commit hash from the state file."""
+    """
+    Reads the last known good commit hash from the state file.
+    If the file doesn't exist, it initializes it with the current HEAD commit.
+    """
     if not os.path.exists(LAST_GOOD_COMMIT_FILE):
-        logging.info(f"'{LAST_GOOD_COMMIT_FILE}' not found, using initial known good commit.")
-        with open(LAST_GOOD_COMMIT_FILE, "w") as f:
-            f.write(INITIAL_KNOWN_GOOD_COMMIT)
-        return INITIAL_KNOWN_GOOD_COMMIT
+        logging.warning(f"'{LAST_GOOD_COMMIT_FILE}' not found. Initializing with current HEAD.")
+        try:
+            # Dynamically get the current commit hash
+            current_commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                check=True, capture_output=True, text=True
+            ).stdout.strip()
+
+            with open(LAST_GOOD_COMMIT_FILE, "w") as f:
+                f.write(current_commit)
+            logging.info(f"Initialized '{LAST_GOOD_COMMIT_FILE}' with commit: {current_commit}")
+            return current_commit
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logging.error(f"FATAL: Could not initialize last known good commit from git. Error: {e}")
+            # If git fails, we cannot proceed with self-healing. Exit.
+            exit(1)
+
     with open(LAST_GOOD_COMMIT_FILE, "r") as f:
         return f.read().strip()
 

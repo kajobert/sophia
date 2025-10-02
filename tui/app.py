@@ -82,18 +82,29 @@ class SophiaTUI(App):
 
             os.remove(crash_log_path)
 
-            RichPrinter.critical("Detekován pád aplikace! Zahajuji proces autonomní opravy.")
+            # Opraveno: Použití RichPrinter.error místo neexistujícího .critical
+            RichPrinter.error("Detekován pád aplikace! Zahajuji proces autonomní opravy.")
 
             recovery_prompt = textwrap.dedent(f"""
                 **KRITICKÉ UPOZORNĚNÍ: Během předchozího spuštění došlo k pádu aplikace.**
 
-                Tvým hlavním a jediným úkolem je analyzovat následující chybový protokol, diagnostikovat hlavní příčinu a implementovat opravu. Po aplikování opravy se pokus ověřit, že problém byl vyřešen.
+                Tvým hlavním a jediným úkolem je analyzovat následující chybový protokol, diagnostikovat hlavní příčinu a implementovat opravu.
 
                 --- ZÁZNAM O SELHÁNÍ ---
                 {crash_content}
                 --- KONEC ZÁZNAMU O SELHÁNÍ ---
 
-                Začni s analýzou a navrhni plán opravy.
+                **POSTUP OPRAVY:**
+                1.  Analyzuj chybu a navrhni plán opravy.
+                2.  Implementuj opravu.
+                3.  Ověř, že oprava funguje (např. spuštěním testů, pokud je to relevantní).
+
+                **DŮLEŽITÝ KROK PO OVĚŘENÍ OPRAVY:**
+                Jakmile je oprava ověřena, **musíš** trvale uložit nový funkční stav. Použij k tomu následující nástroje v tomto pořadí:
+                1.  `create_git_commit` - Vytvoř commit s popisem provedené opravy.
+                2.  `promote_commit_to_last_known_good` - Z výstupu předchozího kroku získej hash nového commitu a použij tento nástroj, aby se aktuální verze stala novým "posledním známým funkčním" stavem.
+
+                Tento druhý krok je klíčový pro evoluci a stabilitu systému. Začni s analýzou.
             """).strip()
 
             recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Oprava", border_style="bold red")
