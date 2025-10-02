@@ -66,42 +66,28 @@ def revert_to_last_known_good():
 def main():
     """
     Main guardian loop to run and monitor the TUI application.
-    Uses Popen to keep the TUI interactive while still capturing stderr for crash detection.
+    It simply launches the TUI and checks its exit code. The TUI is responsible
+    for logging its own crashes, ensuring full interactivity.
     """
     consecutive_failures = 0
 
     while True:
         logging.info(f"Starting TUI application: {TUI_APP_PATH}")
 
-        # Use Popen to allow interactivity. stdin and stdout are inherited from the parent.
-        # We only capture stderr to a pipe for crash logging.
-        process = subprocess.Popen(
-            ["python", TUI_APP_PATH],
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding='utf-8'
-        )
+        # Run the TUI process, allowing it to inherit stdin, stdout, and stderr
+        # to ensure full interactivity. We only need the return code.
+        process = subprocess.run(["python", TUI_APP_PATH])
 
-        # Wait for the process to terminate and read the full stderr output.
-        stderr_output = process.communicate()[1]
-        return_code = process.returncode
-
-        if return_code == 0:
+        if process.returncode == 0:
             logging.info("Application exited cleanly (code 0). Guardian shutting down.")
-            if stderr_output:
-                logging.warning(f"Application exited cleanly but produced stderr output:\n{stderr_output}")
             break  # User likely exited the app normally
 
         # --- Crash Detected ---
+        # A non-zero return code indicates a crash.
+        # The TUI app is expected to have logged the crash details itself.
         consecutive_failures += 1
-        logging.error(f"Application crashed with exit code {return_code}. This is failure #{consecutive_failures}.")
-
-        # Log the error output from stderr
-        os.makedirs(os.path.dirname(CRASH_LOG_PATH), exist_ok=True)
-        with open(CRASH_LOG_PATH, "w", encoding='utf-8') as f:
-            f.write("--- STDERR ---\n")
-            f.write(stderr_output)
-        logging.info(f"Crash log saved to {CRASH_LOG_PATH}")
+        logging.error(f"Application crashed with exit code {process.returncode}. This is failure #{consecutive_failures}.")
+        logging.info(f"A crash log should have been created by the TUI application at '{CRASH_LOG_PATH}'.")
 
         # Check for rollback condition
         if consecutive_failures >= MAX_RESTART_ATTEMPTS:
