@@ -43,7 +43,7 @@ llm_models:
 # Konfigurace pro Orchestrator
 orchestrator:
   # Maximální počet iterací (cyklů), než se agent zastaví.
-  max_iterations: 15
+  max_iterations: 100
 
 # Konfigurace pro Intelligent Guardian
 guardian:

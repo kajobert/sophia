@@ -3,14 +3,14 @@ import time
 import os
 import logging
 
-# --- Configuration ---
+# --- Konfigurace ---
 TUI_APP_PATH = "tui/app.py"
 CRASH_LOG_PATH = "logs/crash.log"
 LAST_GOOD_COMMIT_FILE = ".last_known_good_commit"
-MAX_RESTART_ATTEMPTS = 3  # Max consecutive failures before a rollback is triggered
-RESTART_DELAY_SECONDS = 5  # Delay before restarting the app after a crash
+MAX_RESTART_ATTEMPTS = 3
+RESTART_DELAY_SECONDS = 5
 
-# --- Logging Setup ---
+# --- Nastavení logování ---
 logging.basicConfig(
     level=logging.INFO,
     format="[Guardian] %(asctime)s - %(levelname)s - %(message)s",
@@ -22,13 +22,12 @@ logging.basicConfig(
 
 def get_last_known_good_commit() -> str:
     """
-    Reads the last known good commit hash from the state file.
-    If the file doesn't exist, it initializes it with the current HEAD commit.
+    Přečte hash posledního funkčního commitu. Pokud soubor neexistuje,
+    vytvoří ho s aktuálním HEAD.
     """
     if not os.path.exists(LAST_GOOD_COMMIT_FILE):
         logging.warning(f"'{LAST_GOOD_COMMIT_FILE}' not found. Initializing with current HEAD.")
         try:
-            # Dynamically get the current commit hash
             current_commit = subprocess.run(
                 ["git", "rev-parse", "HEAD"],
                 check=True, capture_output=True, text=True
@@ -40,65 +39,58 @@ def get_last_known_good_commit() -> str:
             return current_commit
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.error(f"FATAL: Could not initialize last known good commit from git. Error: {e}")
-            # If git fails, we cannot proceed with self-healing. Exit.
             exit(1)
 
     with open(LAST_GOOD_COMMIT_FILE, "r") as f:
         return f.read().strip()
 
 def revert_to_last_known_good():
-    """Performs a hard reset to the last known good commit."""
+    """Provede 'git reset --hard' na poslední funkční commit."""
     commit_hash = get_last_known_good_commit()
     logging.warning(f"Attempting to roll back to commit: {commit_hash}")
     try:
-        # Reset all changes to tracked files
         subprocess.run(["git", "reset", "--hard", commit_hash], check=True, capture_output=True, text=True)
-        # Remove all untracked files and directories
         subprocess.run(["git", "clean", "-dfx"], check=True, capture_output=True, text=True)
         logging.info(f"Successfully rolled back to commit {commit_hash}.")
     except subprocess.CalledProcessError as e:
-        logging.error(f"FATAL: Git rollback failed!")
-        logging.error(f"Stderr: {e.stderr}")
-        logging.error(f"Stdout: {e.stdout}")
-        # If rollback fails, we are in a bad state. Exit to prevent loops.
+        logging.error(f"FATAL: Git rollback failed! Stderr: {e.stderr}")
         exit(1)
 
 def main():
     """
-    Main guardian loop to run and monitor the TUI application.
-    It simply launches the TUI and checks its exit code. The TUI is responsible
-    for logging its own crashes, ensuring full interactivity.
+    Hlavní smyčka Guardiana, která spouští a monitoruje TUI aplikaci.
     """
     consecutive_failures = 0
 
     while True:
         logging.info(f"Starting TUI application: {TUI_APP_PATH}")
 
-        # Run the TUI process, allowing it to inherit stdin, stdout, and stderr
-        # to ensure full interactivity. We only need the return code.
+        # Spustíme TUI proces. Důležité je, že nezachytáváme stdout/stderr,
+        # aby TUI mohla plně ovládat terminál.
         process = subprocess.run(["python", TUI_APP_PATH])
 
+        # Pokud je návratový kód 0, aplikace se ukončila korektně (např. přes Ctrl+Q).
         if process.returncode == 0:
             logging.info("Application exited cleanly (code 0). Guardian shutting down.")
-            break  # User likely exited the app normally
+            break
 
-        # --- Crash Detected ---
-        # A non-zero return code indicates a crash.
-        # The TUI app is expected to have logged the crash details itself.
+        # Jakýkoliv jiný kód značí pád.
         consecutive_failures += 1
         logging.error(f"Application crashed with exit code {process.returncode}. This is failure #{consecutive_failures}.")
-        logging.info(f"A crash log should have been created by the TUI application at '{CRASH_LOG_PATH}'.")
+        
+        # TUI aplikace sama by měla zapsat detailní log do crash.log
+        if os.path.exists(CRASH_LOG_PATH):
+             logging.info(f"Detailed crash information should be available in: {CRASH_LOG_PATH}")
 
-        # Check for rollback condition
+        # Pokud aplikace padá opakovaně, provedeme rollback.
         if consecutive_failures >= MAX_RESTART_ATTEMPTS:
             logging.warning(f"Reached {MAX_RESTART_ATTEMPTS} consecutive failures. Triggering rollback.")
             revert_to_last_known_good()
-            consecutive_failures = 0  # Reset counter after rollback
+            consecutive_failures = 0  # Resetujeme počítadlo po rollbacku.
 
         logging.info(f"Restarting application in {RESTART_DELAY_SECONDS} seconds...")
         time.sleep(RESTART_DELAY_SECONDS)
 
 if __name__ == "__main__":
-    # Ensure the logs directory exists on startup
     os.makedirs("logs", exist_ok=True)
     main()
