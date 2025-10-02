@@ -198,5 +198,26 @@ if __name__ == "__main__":
     # Konfigurace logování do souboru pro ladění
     RichPrinter.configure_logging()
 
-    app = SophiaTUI()
-    app.run()
+    # --- Robustní spouštění se záznamem pádů ---
+    CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
+
+    try:
+        app = SophiaTUI()
+        app.run()
+    except Exception as e:
+        import traceback
+
+        # Zajistíme, že adresář pro logy existuje
+        os.makedirs(os.path.dirname(CRASH_LOG_PATH), exist_ok=True)
+
+        # Zapíšeme kompletní traceback do crash logu
+        with open(CRASH_LOG_PATH, "w", encoding="utf-8") as f:
+            f.write("--- APLIKACE TUI SPADLA S NEOČEKÁVANOU VÝJIMKOU ---\n\n")
+            traceback.print_exc(file=f)
+
+        # Vytiskneme chybu i na standardní chybový výstup pro okamžitou viditelnost
+        print(f"\n[FATAL] TUI application crashed. See {CRASH_LOG_PATH} for details.", file=sys.stderr)
+        traceback.print_exc()
+
+        # Ukončíme s nenulovým kódem, aby to Guardian detekoval
+        sys.exit(1)
