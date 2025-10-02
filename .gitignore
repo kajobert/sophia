@@ -119,3 +119,9 @@ dmypy.json
 
 # pytype static analyzer
 .pytype/
+
+# memory
+memory/
+
+# logs
+logs/
