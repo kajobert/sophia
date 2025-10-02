@@ -2,6 +2,7 @@ import subprocess
 import time
 import os
 import logging
+import sys
 
 # --- Konfigurace ---
 TUI_APP_PATH = "tui/app.py"
@@ -39,7 +40,7 @@ def get_last_known_good_commit() -> str:
             return current_commit
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logging.error(f"FATAL: Could not initialize last known good commit from git. Error: {e}")
-            exit(1)
+            sys.exit(1)
 
     with open(LAST_GOOD_COMMIT_FILE, "r") as f:
         return f.read().strip()
@@ -49,17 +50,12 @@ def revert_to_last_known_good():
     commit_hash = get_last_known_good_commit()
     logging.warning(f"Attempting to roll back to commit: {commit_hash}")
     try:
-        # Krok 1: Vrátí všechny SLEDOVANÉ soubory na stav daného commitu.
         subprocess.run(["git", "reset", "--hard", commit_hash], check=True, capture_output=True, text=True)
-        
-        # Krok 2: Smaže NESLEDOVANÉ soubory a adresáře, ale RESPEKTUJE .gitignore.
-        # Odstranili jsme '-x', aby .env a logs/ zůstaly nedotčeny.
         subprocess.run(["git", "clean", "-df"], check=True, capture_output=True, text=True)
-        
         logging.info(f"Successfully rolled back to commit {commit_hash}.")
     except subprocess.CalledProcessError as e:
         logging.error(f"FATAL: Git rollback failed! Stderr: {e.stderr}")
-        exit(1)
+        sys.exit(1)
 
 def main():
     """
@@ -70,14 +66,19 @@ def main():
     while True:
         logging.info(f"Starting TUI application: {TUI_APP_PATH}")
 
-        process = subprocess.run(["python", TUI_APP_PATH])
+        # Použijeme Popen pro lepší kontrolu a správné předání TTY.
+        # Důležité je, že nepředáváme stdin, stdout, stderr, aby si je proces vzal sám.
+        process = subprocess.Popen([sys.executable, TUI_APP_PATH])
+        
+        # Čekáme, dokud proces neskončí.
+        process.wait()
 
         if process.returncode == 0:
-            logging.info("Application exited cleanly (code 0). Guardian shutting down.")
+            logging.info("Application exited with code 0. Assuming clean exit. Guardian shutting down.")
             break
 
         consecutive_failures += 1
-        logging.error(f"Application crashed with exit code {process.returncode}. This is failure #{consecutive_failures}.")
+        logging.error(f"Application crashed with non-zero exit code {process.returncode}. This is failure #{consecutive_failures}.")
         
         if os.path.exists(CRASH_LOG_PATH):
              logging.info(f"Detailed crash information should be available in: {CRASH_LOG_PATH}")
