@@ -75,12 +75,7 @@ class SophiaTUI(App):
 
 
     async def on_mount(self) -> None:
-        """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
-        
-        # ---> PONECH PRO TEST SEBEOPRAVY <---
-        raise RuntimeError("Toto je simulovaný pád pro test sebeopravného mechanismu!")
-        # ---> KONEC TESTOVACÍHO ŘÁDKU <---
-
+        """Spustí se po připojení widgetů a zkontroluje pád aplikace."""        
         RichPrinter.set_message_poster(self.post_message)
         self.initialize_orchestrator()
         self.input_widget.focus()
