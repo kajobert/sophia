@@ -1,6 +1,7 @@
 import sys
 import os
 import asyncio
+import textwrap
 
 # Přidání cesty k projektu, aby bylo možné importovat moduly z `core`
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -63,10 +64,45 @@ class SophiaTUI(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        """Spustí se po připojení widgetů."""
+        """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
         RichPrinter.set_message_poster(self.post_message)
         self.initialize_orchestrator()
         self.input_widget.focus()
+        await self.check_for_crash_and_start_recovery()
+
+    async def check_for_crash_and_start_recovery(self):
+        """Zkontroluje, zda existuje log o pádu, a pokud ano, spustí proces obnovy."""
+        crash_log_path = os.path.join(self.project_root, "logs", "crash.log")
+        if not os.path.exists(crash_log_path):
+            return
+
+        try:
+            with open(crash_log_path, "r", encoding="utf-8") as f:
+                crash_content = f.read()
+
+            os.remove(crash_log_path)
+
+            RichPrinter.critical("Detekován pád aplikace! Zahajuji proces autonomní opravy.")
+
+            recovery_prompt = textwrap.dedent(f"""
+                **KRITICKÉ UPOZORNĚNÍ: Během předchozího spuštění došlo k pádu aplikace.**
+
+                Tvým hlavním a jediným úkolem je analyzovat následující chybový protokol, diagnostikovat hlavní příčinu a implementovat opravu. Po aplikování opravy se pokus ověřit, že problém byl vyřešen.
+
+                --- ZÁZNAM O SELHÁNÍ ---
+                {crash_content}
+                --- KONEC ZÁZNAMU O SELHÁNÍ ---
+
+                Začni s analýzou a navrhni plán opravy.
+            """).strip()
+
+            recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Oprava", border_style="bold red")
+            self.tool_widget.write(recovery_panel)
+
+            self.run_orchestrator_task(recovery_prompt)
+
+        except Exception as e:
+            RichPrinter.error(f"Nepodařilo se zpracovat crash log: {e}")
 
     @work(exclusive=True)
     async def initialize_orchestrator(self):

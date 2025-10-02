@@ -19,5 +19,5 @@ COPY . .
 EXPOSE 8000
 
 # 6. Spouštěcí příkaz
-# Tento příkaz spustí TUI aplikaci.
-CMD ["python", "tui/app.py"]
+# Spustí guardian skript, který se stará o TUI aplikaci.
+CMD ["python", "guardian/runner.py"]
