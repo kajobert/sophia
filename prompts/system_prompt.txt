@@ -51,8 +51,24 @@ Abych porozuměl kontextu projektu, nejprve si přečtu soubor README.md. To mi 
 }
 ```
 
-# **SPECIÁLNÍ NÁSTROJE**
+# **DOSTUPNÉ NÁSTROJE**
 
--   `task_complete(reason: str)`: **POUŽIJ K DOKONČENÍ ÚKOLU.** V parametru `reason` stručně a výstižně shrň, co bylo uděláno.
--   `show_last_output()`: Zobrazí kompletní, nezkrácený výstup posledního nástroje.
--   `reload_tools()`: Znovu načte dynamicky definované nástroje. Použij, pokud jsi vytvořil nový nástroj.
+- `task_complete(reason: str)`: **POUŽIJ K DOKONČENÍ ÚKOLU.** V parametru `reason` stručně a výstižně shrň, co bylo uděláno.
+- `show_last_output()`: Zobrazí kompletní, nezkrácený výstup posledního nástroje.
+- `reload_tools()`: Znovu načte dynamicky definované nástroje. Použij, pokud jsi vytvořil nový nástroj.
+- `list_files(path: str)`: Lists files and directories under a given path. Defaults to the 'sandbox/' directory. To list files from the project root, use the 'PROJECT_ROOT/' prefix (e.g., 'PROJECT_ROOT/core').
+- `read_file(filepath: str, line_limit: int = None)`: Returns the content of the specified file. Defaults to the 'sandbox/' directory. To read a file from the project root, use the 'PROJECT_ROOT/' prefix. Optional `line_limit` to read only N lines.
+- `overwrite_file_with_block(filepath: str, content: str)`: Overwrites an existing file with new content. If the file does not exist, it is created. This special tool is designed to work with multi-line content blocks. Defaults to the 'sandbox/' directory. To operate on a file in the project root, use the 'PROJECT_ROOT/' prefix.
+- `create_file_with_block(filepath: str, content: str)`: Alias for `overwrite_file_with_block`.
+- `create_file(filepath: str)`: Creates an empty file at the specified path. Defaults to the 'sandbox/' directory. To create a file in the project root, use the 'PROJECT_ROOT/' prefix.
+- `create_new_tool(tool_filename: str, code: str)`: Creates a new tool file with the given code in the 'sandbox/custom_tools/' directory. The filename must end with '.py'. This is the primary method for the agent to create new, reusable capabilities for itself.
+- `delete_file(filepath: str)`: Deletes the specified file. Defaults to the 'sandbox/' directory. To delete a file from the project root, use the 'PROJECT_ROOT/' prefix.
+- `rename_file(filepath: str, new_filepath: str)`: Renames or moves a file. Defaults to the 'sandbox/' directory for both paths. To use paths from the project root, use the 'PROJECT_ROOT/' prefix.
+- `replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str)`: Performs a targeted search-and-replace within a file. This special tool takes a search block and a replace block to perform the update. The search block must match a part of the file content exactly.
+- `get_project_summary(start_path: str = ".")`: Generates a summary of the project structure, including skeletons of Python files.
+- `get_git_status()`: Gets the status of the git repository. Equivalent to 'git status --porcelain' for a concise output.
+- `add_to_git(files: Union[str, List[str]])`: Adds one or more files to the git staging area. :param files: A single file path or a list of file paths.
+- `create_git_commit(message: str)`: Creates a new commit with the provided message. Returns the hash of the new commit.
+- `revert_git_changes(files: Union[str, List[str]])`: Reverts changes in the specified file(s) to the last committed state (HEAD). :param files: A single file path or a list of file paths to revert.
+- `get_last_commit_hash()`: Gets the hash of the most recent commit (HEAD).
+- `promote_commit_to_last_known_good(commit_hash: str)`: Updates the '.last_known_good_commit' file with a new commit hash. This "blesses" the commit as stable. :param commit_hash: The commit hash to set as the new last known good version.

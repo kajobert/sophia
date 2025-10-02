@@ -190,32 +190,67 @@ class JulesOrchestrator:
             # Ukončení streamu v TUI
             RichPrinter.finish_explanation_stream()
 
-            # Finální parsování kompletní odpovědi
+            # Finální parsování kompletní odpovědi - APLIKOVÁNA OPRAVA OD NOMÁDA
             explanation = ""
             tool_call_data = None
 
-            try:
-                if "|||TOOL_CALL|||" in response_text:
-                    explanation_part, tool_call_json_str = response_text.split("|||TOOL_CALL|||", 1)
-                    explanation = explanation_part.strip()
-                    tool_call_json_str = tool_call_json_str.strip()
+            if "|||TOOL_CALL|||" in response_text:
+                explanation_part, tool_call_json_str = response_text.split("|||TOOL_CALL|||", 1)
+                explanation = explanation_part.strip()
+                tool_call_json_str = tool_call_json_str.strip()
 
-                    # Robustnější parsování JSONu, který může být obalen v ```json ... ```
-                    match = re.search(r'\{.*\}', tool_call_json_str, re.DOTALL)
+                # Konzervativní přístup od Nomáda - najdi první platný JSON objekt
+                start_idx = tool_call_json_str.find('{')
+                if start_idx != -1:
+                    brace_count = 0
+                    in_string = False
+                    escape_next = False
+                    json_end_idx = -1
+
+                    for i in range(start_idx, len(tool_call_json_str)):
+                        char = tool_call_json_str[i]
+
+                        if escape_next:
+                            escape_next = False
+                            continue
+
+                        if char == '\\':
+                            escape_next = True
+                            continue
+
+                        if char == '\"' and not escape_next:
+                            in_string = not in_string
+                            continue
+
+                        if not in_string:
+                            if char == '{':
+                                brace_count += 1
+                            elif char == '}':
+                                brace_count -= 1
+                                if brace_count == 0:
+                                    json_end_idx = i
+                                    break
+
+                    if json_end_idx != -1:
+                        json_str = tool_call_json_str[start_idx:json_end_idx+1]
+                        try:
+                            tool_call_data = json.loads(json_str)
+                        except json.JSONDecodeError as e:
+                            RichPrinter.error(f"Nepodařilo se zparsovat JSON i po opatrném přístupu: {e}")
+                            RichPrinter.error(f"Parsovaný JSON: {json_str[:200]}..." if len(json_str) > 200 else f"Parsovaný JSON: {json_str}")
+
+                # Fallback: Pokud konzervativní přístup selže, zkusíme omezený regex
+                if tool_call_data is None:
+                    match = re.search(r'\{[^{}]{0,5000}\}', tool_call_json_str)
                     if match:
-                        tool_call_json_str = match.group(0)
-                        tool_call_data = json.loads(tool_call_json_str)
-                    else:
-                        raise json.JSONDecodeError("Nebyl nalezen platný JSON objekt.", tool_call_json_str, 0)
-                else:
-                    explanation = response_text.strip()
-                    RichPrinter.warning("Odpověď LLM neobsahovala separátor '|||TOOL_CALL|||'. Považuji celou odpověď za myšlenkový pochod.")
-
-            except json.JSONDecodeError as e:
-                RichPrinter.error(f"Nepodařilo se zparsovat JSON z odpovědi LLM: {e}")
-                RichPrinter.error(f"Přijatý text pro parsování: {tool_call_json_str if 'tool_call_json_str' in locals() else response_text}")
-                explanation = response_text
-                tool_call_data = None
+                        try:
+                            tool_call_data = json.loads(match.group(0))
+                        except json.JSONDecodeError:
+                            RichPrinter.error("Nepodařilo se zparsovat JSON ani pomocí fallback metody.")
+                            RichPrinter.error(f"Text pro parsování: {tool_call_json_str[:300]}...")
+            else:
+                explanation = response_text.strip()
+                RichPrinter.warning("Odpověď LLM neobsahovala separátor '|||TOOL_CALL|||'. Považuji celou odpověď za myšlenkový pochod.")
 
             if not tool_call_data or "tool_name" not in tool_call_data:
                 RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku nebo se JSON nepodařilo zparsovat. Pokračuji v přemýšlení.")

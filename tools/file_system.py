@@ -51,16 +51,41 @@ def list_files(path: str = ".") -> str:
     except Exception as e:
         return f"Error listing files: {e}"
 
-def read_file(filepath: str) -> str:
+def read_file(filepath: str, line_limit: int = None) -> str:
     """
     Returns the content of the specified file.
     Defaults to the 'sandbox/' directory.
-    To read a file from the project root, use the 'PROJECT_ROOT/' prefix (e.g., 'PROJECT_ROOT/core/orchestrator.py').
+    To read a file from the project root, use the 'PROJECT_ROOT/' prefix.
+    :param filepath: The path to the file to read.
+    :param line_limit: Optional. If provided, only this many lines will be read from the start of the file.
     """
     try:
         safe_path = _resolve_path(filepath)
-        with open(safe_path, 'r') as f:
-            return f.read()
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            # If line_limit is not a positive integer, read the whole file.
+            if not isinstance(line_limit, int) or line_limit <= 0:
+                return f.read()
+
+            lines = []
+            for _ in range(line_limit):
+                try:
+                    lines.append(next(f))
+                except StopIteration:
+                    # Reached end of file before reaching the limit
+                    return "".join(lines)
+
+            content = "".join(lines)
+
+            # Check if there's at least one more line to confirm truncation
+            try:
+                next(f)
+                content.rstrip('\\n')
+                content += f"\\n... (soubor zkrácen na {line_limit} řádků) ..."
+            except StopIteration:
+                # The file has exactly line_limit lines, no truncation message needed
+                pass
+
+            return content
     except FileNotFoundError:
         return f"Error: File not found at '{filepath}'."
     except Exception as e:
