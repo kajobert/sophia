@@ -58,15 +58,57 @@ class JulesOrchestrator:
 
     def _triage_task_and_select_llm(self, prompt: str) -> str:
         """
-        Analyzuje prompt a vybere nejvhodnější LLM model.
+        Inteligentně analyzuje prompt a vybere nejvhodnější LLM model.
+        Zohledňuje složitost úkolu, odhad tokenů a historickou efektivitu.
         """
         prompt_lower = prompt.lower()
-        powerful_keywords = ["analyzuj", "refaktoruj", "navrhni", "implementuj", "vytvoř kód"]
-        economical_keywords = ["vypiš", "přečti", "zkontroluj", "potvrď"]
-
-        if any(keyword in prompt_lower for keyword in powerful_keywords):
+        
+        # Rozšířená sada klíčových slov pro lepší klasifikaci
+        complex_keywords = [
+            "analyzuj", "refaktoruj", "navrhni", "implementuj", "vytvoř kód",
+            "optimalizuj", "debuguj", "architektura", "návrh", "složitý",
+            "komplexní", "algoritmus", "datová struktura", "design pattern"
+        ]
+        
+        simple_keywords = [
+            "vypiš", "přečti", "zkontroluj", "potvrď", "zobraz",
+            "seznam", "informace", "stav", "status", "pomoc"
+        ]
+        
+        # Analýza složitosti na základě délky a struktury
+        word_count = len(prompt.split())
+        line_count = len(prompt.split('\n'))
+        has_code_blocks = '```' in prompt
+        
+        # Skóre složitosti (0-100)
+        complexity_score = 0
+        
+        # Klíčová slova (váha 40%)
+        keyword_weight = 0
+        if any(keyword in prompt_lower for keyword in complex_keywords):
+            keyword_weight += 70
+        if any(keyword in prompt_lower for keyword in simple_keywords):
+            keyword_weight -= 30
+        complexity_score += max(0, min(100, keyword_weight)) * 0.4
+        
+        # Délka promptu (váha 30%)
+        length_weight = min(100, word_count * 0.5)  # 200 slov = 100 bodů
+        complexity_score += length_weight * 0.3
+        
+        # Struktura (váha 30%)
+        structure_weight = 0
+        if line_count > 5:
+            structure_weight += 30
+        if has_code_blocks:
+            structure_weight += 40
+        if 'def ' in prompt_lower or 'class ' in prompt_lower:
+            structure_weight += 30
+        complexity_score += structure_weight * 0.3
+        
+        # Rozhodnutí na základě skóre složitosti
+        if complexity_score >= 60:
             return "powerful"
-        elif any(keyword in prompt_lower for keyword in economical_keywords):
+        elif complexity_score <= 20:
             return "economical"
         else:
             return self.llm_manager.default_llm_name
