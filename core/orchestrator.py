@@ -223,10 +223,12 @@ class JulesOrchestrator:
                     RichPrinter.stream_explanation(chunk)
                     explanation_streamed += chunk
 
-            # Zavoláme LLM se streamováním
+            # Zavoláme LLM se streamováním a vynuceným JSON výstupem
             response_text, usage_data = await model.generate_content_async(
                 prompt,
-                stream_callback=stream_callback
+                stream_callback=stream_callback,
+                tool_choice="any", # Vynutí použití jednoho z nástrojů (v našem případě jediného definovaného)
+                tools=[tool_call_schema] # Předá schéma, kterému se musí odpověď přizpůsobit
             )
 
             # Zpracování nákladů a tokenů
@@ -246,32 +248,7 @@ class JulesOrchestrator:
             # Ukončení streamu v TUI
             RichPrinter.finish_explanation_stream()
 
-            # Finální parsování kompletní odpovědi - VYLEPŠENÁ VERZE S ROBUSTNĚJŠÍM ERROR HANDLINGEM
-            explanation = ""
-            tool_call_data = None
-
-            if "|||TOOL_CALL|||" in response_text:
-                explanation_part, tool_call_json_str = response_text.split("|||TOOL_CALL|||", 1)
-                explanation = explanation_part.strip()
-                tool_call_json_str = tool_call_json_str.strip()
-
-                # VYLEPŠENÍ 1: Více robustní přístup k parsování JSON
-                tool_call_data = self._parse_tool_call_json(tool_call_json_str)
-                
-                if tool_call_data is None:
-                    # VYLEPŠENÍ 2: Podrobnější diagnostika při selhání parsování
-                    RichPrinter.error("Kritické selhání: Nepodařilo se zparsovat JSON z odpovědi LLM.")
-                    RichPrinter.error(f"Text pro parsování (prvních 500 znaků): {tool_call_json_str[:500]}")
-                    # Vytvoříme bezpečnou fallback strukturu
-                    tool_call_data = {
-                        "tool_name": "show_last_output", 
-                        "args": [], 
-                        "kwargs": {}
-                    }
-                    explanation += "\n\n[SYSTÉM]: Automaticky použito 'show_last_output' kvůli chybě parsování JSON."
-            else:
-                explanation = response_text.strip()
-                RichPrinter.warning("Odpověď LLM neobsahovala separátor '|||TOOL_CALL|||'. Považuji celou odpověď za myšlenkový pochod.")
+            explanation, tool_call_data = self._parse_llm_response(response_text)
 
             if not tool_call_data or "tool_name" not in tool_call_data:
                 RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku nebo se JSON nepodařilo zparsovat. Pokračuji v přemýšlení.")
@@ -289,7 +266,7 @@ class JulesOrchestrator:
             RichPrinter.agent_tool_code(json.dumps(tool_call_data, indent=2, ensure_ascii=False))
 
             # Sestavení záznamu do historie (myšlenkový pochod + volání nástroje)
-            history_entry_request = f"{explanation}\n|||TOOL_CALL|||\n{json.dumps(tool_call_data, indent=2)}"
+            history_entry_request = f"Myšlenkový pochod:\n{explanation}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
 
             if tool_name == "task_complete":
                 RichPrinter.info("Agent signalizoval dokončení úkolu. Ukládám vzpomínku...")
@@ -349,6 +326,26 @@ class JulesOrchestrator:
 
         RichPrinter.info(f"### {final_message} (Celkem spotřebováno: {self.total_tokens} tokenů)")
 
+    def _parse_llm_response(self, response_text: str) -> tuple[str, dict | None]:
+        """
+        Paruje JSON odpověď od LLM.
+        Očekává, že odpověď je validní JSON díky vynucenému režimu.
+        Vrací (explanation, tool_call_data).
+        """
+        try:
+            parsed_response = json.loads(response_text)
+            explanation = parsed_response.get("explanation", "").strip()
+            tool_call_data = parsed_response.get("tool_call")
+
+            # Zobrazíme myšlenkový pochod, který jsme dostali v JSONu
+            RichPrinter.stream_explanation(explanation)
+            return explanation, tool_call_data
+
+        except json.JSONDecodeError:
+            RichPrinter.error("Kritické selhání: Odpověď LLM nebyla validní JSON, přestože byl vynucen JSON režim.")
+            RichPrinter.error(f"Přijatá odpověď (prvních 500 znaků): {response_text[:500]}")
+            explanation = f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON. {response_text}"
+            return explanation, None
 
     def _handle_long_output(self, result: str) -> tuple[str, str]:
         """Zpracuje dlouhé výstupy, uloží je a vrátí shrnutí."""
@@ -361,92 +358,3 @@ class JulesOrchestrator:
             summary += "\n\n(Pro zobrazení celého výstupu použijte nástroj 'show_last_output'.)"
             return summary, summary
         return result, result
-
-    def _parse_tool_call_json(self, json_text: str) -> dict | None:
-        """
-        Robustně parsuje JSON z textové odpovědi LLM.
-        
-        Používá více strategií pro maximální úspěšnost:
-        1. Konzervativní parsování s kontrolou závorek
-        2. Regex fallback pro částečné shody
-        3. Částecné parsování s opravou chyb
-        
-        Args:
-            json_text: Text obsahující JSON k parsování
-            
-        Returns:
-            Dictionary s daty nástroje nebo None při útržném selhání
-        """
-        if not json_text or not json_text.strip():
-            return None
-            
-        json_text = json_text.strip()
-        
-        # Strategie 1: Konzervativní parsování s kontrolou závorek
-        start_idx = json_text.find('{')
-        if start_idx != -1:
-            brace_count = 0
-            in_string = False
-            escape_next = False
-            json_end_idx = -1
-
-            for i in range(start_idx, len(json_text)):
-                char = json_text[i]
-
-                if escape_next:
-                    escape_next = False
-                    continue
-
-                if char == '\\':
-                    escape_next = True
-                    continue
-
-                if char == '"' and not escape_next:
-                    in_string = not in_string
-                    continue
-
-                if not in_string:
-                    if char == '{':
-                        brace_count += 1
-                    elif char == '}':
-                        brace_count -= 1
-                        if brace_count == 0:
-                            json_end_idx = i
-                            break
-
-            if json_end_idx != -1:
-                json_str = json_text[start_idx:json_end_idx+1]
-                try:
-                    return json.loads(json_str)
-                except json.JSONDecodeError as e:
-                    RichPrinter.warning(f"Konzervativní parsování selhalo: {e}")
-
-        # Strategie 2: Regex fallback pro nalezení JSON objektu
-        import re
-        json_patterns = [
-            r'\{[^{}]*\}',  # Jednoduchý objekt
-            r'\{[^{}]{1,10000}\}',  # Objekt s více obsahem
-        ]
-        
-        for pattern in json_patterns:
-            matches = re.finditer(pattern, json_text, re.DOTALL)
-            for match in matches:
-                try:
-                    return json.loads(match.group(0))
-                except json.JSONDecodeError:
-                    continue
-
-        # Strategie 3: Částecné parsování s opravou běžných chyb
-        # Odstraníní nadbytečných částí na konci
-        cleaned_text = re.sub(r',\s*\}[^}]*$', '}', json_text)
-        # Oprava neuzavřených závorek
-        if cleaned_text.count('{') > cleaned_text.count('}'):
-            cleaned_text += '}' * (cleaned_text.count('{') - cleaned_text.count('}'))
-        
-        try:
-            return json.loads(cleaned_text)
-        except json.JSONDecodeError:
-            pass
-            
-        # Všechny strategie selhaly
-        return None
