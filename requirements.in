@@ -20,7 +20,10 @@ google-generativeai
 litellm
 memorisdk
 httpx
-marko
+
+# Vector DB for RAG
+chromadb
+sentence-transformers
 
 # Markdown parsing
 marko
