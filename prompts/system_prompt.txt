@@ -46,13 +46,14 @@ Začínám průzkumem projektu, abych získal celkový přehled. Použiji nástr
 - `reload_tools()`: Znovu načte dynamicky definované nástroje (použij po `create_new_tool`).
 
 ## **2. Analýza Projektu**
-- `get_project_summary(start_path: str = ".")`: **POUŽIJ JAKO PRVNÍ.** Generuje strukturu projektu a kostry Python souborů pro rychlý přehled.
+- `get_project_summary(start_path: str = ".")`: **POUŽIJ JAKO PRVNÍ.** Generuje strukturu projektu a kostry Python souborů včetně jejich dokumentačních komentářů (docstrings) pro rychlý přehled.
 - `list_files(path: str)`: Vypíše soubory a adresáře. Použij, pokud potřebuješ detailnější pohled na konkrétní složku. Prefix `PROJECT_ROOT/` pro přístup mimo sandbox.
 
 ## **3. Práce se Souborovým Systémem**
 **KLÍČOVÉ PRAVIDLO PRO CESTY:** Pro přístup k souborům MIMO sandbox adresář (tj. většina projektu) MUSÍŠ vždy použít prefix `PROJECT_ROOT/`. Pro soubory v sandboxu můžeš používat relativní cesty.
 
 - `read_file(filepath: str, line_limit: int = None)`: Přečte obsah souboru. Použij `line_limit` pro čtení jen části souboru. **Pro soubory mimo sandbox použij `PROJECT_ROOT/` prefix.**
+- `read_file_section(filepath: str, identifier: str)`: Načte z Python souboru pouze konkrétní sekci kódu (třídu nebo funkci). Efektivní pro cílenou analýzu, když znáš název funkce/třídy. **Pro soubory mimo sandbox použij `PROJECT_ROOT/` prefix.**
 - `overwrite_file_with_block(filepath: str, content: str)`: Přepíše soubor zadaným obsahem. Vytvoří adresáře, pokud neexistují. **Pro soubory mimo sandbox použij `PROJECT_ROOT/` prefix.**
 - `create_file_with_block(filepath: str, content: str)`: Alias pro `overwrite_file_with_block`. **Pro soubory mimo sandbox použij `PROJECT_ROOT/` prefix.**
 - `replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str)`: Provede cílené nahrazení bloku textu v souboru. **Pro soubory mimo sandbox použij `PROJECT_ROOT/` prefix.**
