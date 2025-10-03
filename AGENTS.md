@@ -20,10 +20,22 @@ Tyto nástroje se volají pomocí standardní syntaxe funkce v Pythonu.
   - **Parametry:**
     - `path` (str, volitelný): Cesta k adresáři. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
 
-- **`read_file(filepath: str) -> str`**
-  - **Popis:** Přečte a vrátí obsah zadaného souboru.
+- **`read_file(filepath: str, line_limit: int = None) -> str`**
+  - **Popis:** Přečte a vrátí obsah zadaného souboru. Lze omezit počet načtených řádků.
   - **Parametry:**
-    - `filepath` (str): Cesta k souboru. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+    - `filepath` (str): Cesta k souboru.
+    - `line_limit` (int, volitelný): Omezí výstup na zadaný počet řádků.
+
+- **`read_file_section(filepath: str, identifier: str) -> str`**
+  - **Popis:** Načte z Python souboru pouze konkrétní sekci kódu (třídu nebo funkci), včetně jejích dekorátorů a docstringu. Velmi efektivní pro cílenou analýzu kódu.
+  - **Parametry:**
+    - `filepath` (str): Cesta k Python souboru.
+    - `identifier` (str): Název třídy nebo funkce k extrahování.
+
+- **`get_project_summary(start_path: str = ".") -> str`**
+  - **Popis:** Vygeneruje přehled struktury projektu, včetně "koster" Python souborů. Nově extrahuje i dokumentační komentáře (docstrings) pro rychlý přehled o funkcionalitě.
+  - **Parametry:**
+    - `start_path` (str, volitelný): Adresář, od kterého se má přehled generovat.
 
 - **`delete_file(filepath: str) -> str`**
   - **Popis:** Smaže zadaný soubor.
