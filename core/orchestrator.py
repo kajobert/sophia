@@ -19,6 +19,7 @@ from core.rich_printer import RichPrinter
 from core.memory_manager import MemoryManager
 from core.llm_manager import LLMManager
 from core.cost_manager import CostManager
+from core.long_term_memory import LongTermMemory
 
 class JulesOrchestrator:
     """
@@ -33,15 +34,28 @@ class JulesOrchestrator:
         self.last_full_output = None
         self.total_tokens = 0
         self.mcp_client = MCPClient(project_root=self.project_root)
-        self.prompt_builder = PromptBuilder(system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"))
         self.memory_manager = MemoryManager()
         self.llm_manager = LLMManager(project_root=self.project_root)
         self.cost_manager = CostManager(project_root=self.project_root)
+        self.ltm = LongTermMemory(project_root=self.project_root)
         self.status_widget = status_widget
 
         # Načtení specifické konfigurace pro orchestrátor
         orchestrator_config = self.llm_manager.config.get("orchestrator", {})
         self.max_iterations = orchestrator_config.get("max_iterations", 15)
+
+        # Načtení konfigurace pro paměťový systém
+        memory_config = self.llm_manager.config.get("memory", {})
+        self.short_term_limit = memory_config.get("short_term_limit", 4)
+        self.long_term_retrieval_limit = memory_config.get("long_term_retrieval_limit", 5)
+
+        # Inicializace PromptBuilderu s přístupem k LTM a konfiguraci
+        self.prompt_builder = PromptBuilder(
+            system_prompt_path=os.path.join(self.project_root, "prompts/system_prompt.txt"),
+            ltm=self.ltm,
+            short_term_limit=self.short_term_limit,
+            long_term_retrieval_limit=self.long_term_retrieval_limit
+        )
 
         RichPrinter.info("V2 Orchestrator initialized with LLMManager and CostManager.")
 
@@ -314,8 +328,14 @@ class JulesOrchestrator:
 
             RichPrinter.info("<<< VÝSLEDEK")
             RichPrinter.agent_tool_output(output_for_display)
+
+            # Uložení do krátkodobé paměti (historie)
             self.history.append((history_entry_request, output_for_history))
             self.memory_manager.save_history(session_id, self.history)
+
+            # Uložení kompletní interakce do dlouhodobé paměti (LTM)
+            ltm_entry = f"Krok {i+1}:\nMyšlenkový pochod a akce:\n{history_entry_request}\n\nVýsledek:\n{output_for_history}"
+            self.ltm.add_memory(ltm_entry, metadata={"session_id": session_id, "iteration": i + 1})
 
         if not task_was_completed_by_agent:
             final_message = f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen."
