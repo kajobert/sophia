@@ -47,27 +47,22 @@ class OpenRouterAdapter(BaseLLMAdapter):
         self,
         prompt: str,
         response_format: dict | None = None,
-        stream_callback=None
+        stream_callback=None,
+        **kwargs
     ) -> tuple[str, dict | None]:
         """
         Odešle požadavek na OpenRouter API s fallback logikou a podporou streamování.
-
-        Args:
-            prompt (str): Vstupní prompt pro model.
-            response_format (dict, optional): Schéma pro vynucení formátu odpovědi (např. JSON).
-            stream_callback (callable, optional): Funkce, která se volá s každým novým kouskem dat při streamování.
-
-        Returns:
-            tuple[str, dict | None]: Kompletní text odpovědi a data o použití.
+        Nově akceptuje a předává jakékoliv další keyword argumenty (např. tool_choice, tools).
         """
         messages = [
             {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": prompt}
         ]
 
-        extra_body = {}
+        # Spojíme kwargs s existující logikou pro response_format
+        api_params = kwargs.copy()
         if response_format:
-            extra_body["response_format"] = response_format
+            api_params["response_format"] = response_format
 
         last_error = None
         for model_name in self.models_to_try:
@@ -75,37 +70,53 @@ class OpenRouterAdapter(BaseLLMAdapter):
                 if model_name != self.model_name:
                     RichPrinter.warning(f"Primární model '{self.model_name}' selhal. Zkouším záložní model: [bold cyan]{model_name}[/bold cyan]")
 
+                # Sestavení parametrů pro API volání
+                request_params = {
+                    "model": model_name,
+                    "messages": messages,
+                    **api_params
+                }
+
                 if stream_callback:
                     # --- Logika pro streamování ---
                     full_response_content = ""
+                    tool_call_args_accumulator = ""
                     usage_data = None
                     stream = await self._client.chat.completions.create(
-                        model=model_name,
-                        messages=messages,
-                        extra_body=extra_body if extra_body else None,
                         stream=True,
+                        **request_params
                     )
                     async for chunk in stream:
-                        chunk_content = chunk.choices[0].delta.content or ""
-                        full_response_content += chunk_content
-                        await stream_callback(chunk_content)
+                        # Zpracování streamu pro tool_calls
+                        if chunk.choices[0].delta.tool_calls:
+                            # Akumulujeme kousky argumentů z JSONu
+                            argument_chunk = chunk.choices[0].delta.tool_calls[0].function.arguments
+                            if argument_chunk:
+                                tool_call_args_accumulator += argument_chunk
+                                await stream_callback(argument_chunk)
 
-                        # Uložíme si data o použití, která přijdou v posledním chunku
+                        # Fallback pro standardní content, pokud by se objevil
+                        chunk_content = chunk.choices[0].delta.content or ""
+                        if chunk_content:
+                            full_response_content += chunk_content
+                            await stream_callback(chunk_content)
+
                         if chunk.usage:
-                             usage_data = {
-                                "id": chunk.id,
-                                "model": chunk.model,
-                                "usage": chunk.usage.model_dump()
-                            }
-                    return full_response_content, usage_data
+                             usage_data = { "id": chunk.id, "model": chunk.model, "usage": chunk.usage.model_dump() }
+
+                    # Pokud jsme dostali odpověď přes tool_calls, má přednost
+                    final_content = tool_call_args_accumulator if tool_call_args_accumulator else full_response_content
+                    return final_content, usage_data
                 else:
                     # --- Logika bez streamování ---
-                    response = await self._client.chat.completions.create(
-                        model=model_name,
-                        messages=messages,
-                        extra_body=extra_body if extra_body else None,
-                    )
-                    content = response.choices[0].message.content
+                    response = await self._client.chat.completions.create(**request_params)
+
+                    # Zpracování odpovědi v JSON režimu
+                    if response.choices[0].message.tool_calls:
+                        content = response.choices[0].message.tool_calls[0].function.arguments
+                    else:
+                        content = response.choices[0].message.content
+
                     usage_data = {
                         "id": response.id,
                         "model": response.model,
