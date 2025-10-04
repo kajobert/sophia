@@ -110,3 +110,29 @@ class RichPrinter:
         """Zobrazí finální shrnutí po dokončení úkolu."""
         RichPrinter._log(logging.INFO, f"AGENT (Task Complete): {reason}")
         RichPrinter._post(ChatMessage(reason, owner='agent', msg_type='task_complete'))
+
+    # --- Metody pro nové komunikační nástroje ---
+
+    @staticmethod
+    def inform(message: str):
+        """Zobrazí informativní zprávu pro uživatele."""
+        RichPrinter._log(logging.INFO, f"USER_INFO: {message}")
+        RichPrinter._post(ChatMessage(message, owner='agent', msg_type='inform'))
+
+    @staticmethod
+    def ask(question: str):
+        """Položí otázku uživateli."""
+        RichPrinter._log(logging.INFO, f"USER_QUESTION: {question}")
+        RichPrinter._post(ChatMessage(question, owner='agent', msg_type='ask'))
+
+    @staticmethod
+    def code(code: str, language: str = "python"):
+        """Zobrazí blok kódu."""
+        RichPrinter._log(logging.INFO, f"DISPLAY_CODE (lang: {language}):\n{code}")
+        RichPrinter._post(ChatMessage({'code': code, 'language': language}, owner='agent', msg_type='code'))
+
+    @staticmethod
+    def table(title: str, headers: list, rows: list):
+        """Zobrazí tabulku."""
+        RichPrinter._log(logging.INFO, f"DISPLAY_TABLE (title: {title})")
+        RichPrinter._post(ChatMessage({'title': title, 'headers': headers, 'rows': rows}, owner='agent', msg_type='table'))

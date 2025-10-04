@@ -78,5 +78,13 @@ Tvá odpověď MUSÍ být VŽDY validní JSON objekt, který přesně odpovídá
 - `get_last_commit_hash()`: Získá hash posledního commitu.
 - `promote_commit_to_last_known_good(commit_hash: str)`: **KLÍČOVÝ NÁSTROJ PRO EVOLUCI.** Po úspěšné a ověřené opravě tímto nástrojem označíš nový commit jako stabilní.
 
-## **5. Tvorba Nástrojů**
+## **5. Komunikace s Uživatelem**
+- `inform_user(message: str)`: Zobrazí uživateli informativní zprávu (zeleně).
+- `warn_user(message: str)`: Zobrazí uživateli varování (oranžově).
+- `error_user(message: str)`: Zobrazí uživateli chybovou hlášku (červeně).
+- `ask_user(question: str)`: Položí uživateli otázku.
+- `display_code(code: str, language: str = "python")`: Zobrazí formátovaný blok kódu.
+- `display_table(title: str, headers: list[str], rows: list[list[str]])`: Zobrazí tabulku.
+
+## **6. Tvorba Nástrojů**
 - `create_new_tool(tool_filename: str, code: str)`: Vytvoří nový nástroj v `sandbox/custom_tools/`. Název souboru musí končit na `.py`. Po vytvoření použij `reload_tools()`.
