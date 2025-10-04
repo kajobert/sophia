@@ -80,29 +80,33 @@ class OpenRouterAdapter(BaseLLMAdapter):
                 if stream_callback:
                     # --- Logika pro streamování ---
                     full_response_content = ""
+                    tool_call_args_accumulator = ""
                     usage_data = None
                     stream = await self._client.chat.completions.create(
                         stream=True,
                         **request_params
                     )
                     async for chunk in stream:
-                        # Vynucený JSON režim může vrátit prázdný content a tool_calls
+                        # Zpracování streamu pro tool_calls
                         if chunk.choices[0].delta.tool_calls:
-                            # Pro jednoduchost vezmeme první tool_call a jeho argumenty
-                            full_response_content = chunk.choices[0].delta.tool_calls[0].function.arguments
-                            await stream_callback(full_response_content)
-                        else:
-                            chunk_content = chunk.choices[0].delta.content or ""
+                            # Akumulujeme kousky argumentů z JSONu
+                            argument_chunk = chunk.choices[0].delta.tool_calls[0].function.arguments
+                            if argument_chunk:
+                                tool_call_args_accumulator += argument_chunk
+                                await stream_callback(argument_chunk)
+
+                        # Fallback pro standardní content, pokud by se objevil
+                        chunk_content = chunk.choices[0].delta.content or ""
+                        if chunk_content:
                             full_response_content += chunk_content
                             await stream_callback(chunk_content)
 
                         if chunk.usage:
-                             usage_data = {
-                                "id": chunk.id,
-                                "model": chunk.model,
-                                "usage": chunk.usage.model_dump()
-                            }
-                    return full_response_content, usage_data
+                             usage_data = { "id": chunk.id, "model": chunk.model, "usage": chunk.usage.model_dump() }
+
+                    # Pokud jsme dostali odpověď přes tool_calls, má přednost
+                    final_content = tool_call_args_accumulator if tool_call_args_accumulator else full_response_content
+                    return final_content, usage_data
                 else:
                     # --- Logika bez streamování ---
                     response = await self._client.chat.completions.create(**request_params)

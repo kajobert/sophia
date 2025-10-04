@@ -197,41 +197,28 @@ class JulesOrchestrator:
             if self.verbose:
                 RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
-            # --- Nová logika pro streamování a parsování ---
+            # --- Finální, robustní logika pro streamování a parsování ---
             full_response_text = ""
-            explanation_streamed = ""
-            tool_call_json_str = None
-            tool_call_started = False
 
-            # Callback pro zpracování streamovaných dat
+            # 1. Callback pouze sbírá data, nic nezobrazuje.
             async def stream_callback(chunk: str):
-                nonlocal full_response_text, explanation_streamed, tool_call_json_str, tool_call_started
+                nonlocal full_response_text
                 full_response_text += chunk
+                # V TUI se bude zobrazovat tečka nebo spinner, ne surový JSON
+                RichPrinter.stream_explanation(".")
 
-                # Jakmile najdeme separátor, vše ostatní je JSON pro volání nástroje
-                if "|||TOOL_CALL|||" in full_response_text and not tool_call_started:
-                    parts = full_response_text.split("|||TOOL_CALL|||", 1)
-                    explanation_chunk = parts[0][len(explanation_streamed):] # Pošleme jen to, co je nové
-                    if explanation_chunk:
-                         RichPrinter.stream_explanation(explanation_chunk)
-                    explanation_streamed = parts[0]
-                    tool_call_started = True
-                    # Zbytek je začátek JSONu, zatím ho neparsujeme
-
-                # Pokud streamujeme myšlenkový pochod
-                elif not tool_call_started:
-                    RichPrinter.stream_explanation(chunk)
-                    explanation_streamed += chunk
-
-            # Zavoláme LLM se streamováním a vynuceným JSON výstupem
+            # 2. Zavoláme LLM se streamováním a vynuceným JSON výstupem.
             response_text, usage_data = await model.generate_content_async(
                 prompt,
                 stream_callback=stream_callback,
-                tool_choice="any", # Vynutí použití jednoho z nástrojů (v našem případě jediného definovaného)
-                tools=[tool_call_schema] # Předá schéma, kterému se musí odpověď přizpůsobit
+                tool_choice="any",
+                tools=[tool_call_schema]
             )
 
-            # Zpracování nákladů a tokenů
+            # Ukončíme "načítací" animaci v TUI
+            RichPrinter.finish_explanation_stream()
+
+            # 3. Zpracujeme náklady a tokeny
             if usage_data:
                 generation_id = usage_data.get("id")
                 if generation_id:
@@ -244,10 +231,7 @@ class JulesOrchestrator:
                     self.total_tokens += token_count
                     RichPrinter.info(f"Počet spotřebovaných tokenů v tomto kroku: {token_count}")
 
-
-            # Ukončení streamu v TUI
-            RichPrinter.finish_explanation_stream()
-
+            # 4. Až zde, s kompletní odpovědí, parsujeme a zobrazujeme.
             explanation, tool_call_data = self._parse_llm_response(response_text)
 
             if not tool_call_data or "tool_name" not in tool_call_data:
@@ -330,10 +314,17 @@ class JulesOrchestrator:
         """
         Paruje JSON odpověď od LLM.
         Očekává, že odpověď je validní JSON díky vynucenému režimu.
+        Zvládá i případy, kdy je JSON zabalen v Markdown bloku.
         Vrací (explanation, tool_call_data).
         """
+        # Odstranění případného Markdown obalu
+        cleaned_text = response_text.strip()
+        match = re.search(r"```(json)?\s*\n(.*?)\n```", cleaned_text, re.DOTALL)
+        if match:
+            cleaned_text = match.group(2).strip()
+
         try:
-            parsed_response = json.loads(response_text)
+            parsed_response = json.loads(cleaned_text)
             explanation = parsed_response.get("explanation", "").strip()
             tool_call_data = parsed_response.get("tool_call")
 
@@ -343,8 +334,8 @@ class JulesOrchestrator:
 
         except json.JSONDecodeError:
             RichPrinter.error("Kritické selhání: Odpověď LLM nebyla validní JSON, přestože byl vynucen JSON režim.")
-            RichPrinter.error(f"Přijatá odpověď (prvních 500 znaků): {response_text[:500]}")
-            explanation = f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON. {response_text}"
+            RichPrinter.error(f"Přijatá odpověď (po čištění, prvních 500 znaků): {cleaned_text[:500]}")
+            explanation = f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON. {cleaned_text}"
             return explanation, None
 
     def _handle_long_output(self, result: str) -> tuple[str, str]:

@@ -87,3 +87,21 @@ def test_parse_llm_response_invalid_json(orchestrator_instance):
 
     assert "CHYBA PARSOVÁNÍ JSON" in explanation
     assert tool_call is None
+
+def test_parse_llm_response_wrapped_in_markdown(orchestrator_instance):
+    """Testuje parsování JSON odpovědi, která je zabalená v Markdown bloku."""
+    raw_response = """
+```json
+{
+  "explanation": "This response is wrapped in a markdown code block.",
+  "tool_call": {
+    "tool_name": "markdown_test_tool"
+  }
+}
+```
+"""
+    explanation, tool_call = orchestrator_instance._parse_llm_response(raw_response)
+
+    assert explanation == "This response is wrapped in a markdown code block."
+    assert tool_call is not None
+    assert tool_call['tool_name'] == "markdown_test_tool"
