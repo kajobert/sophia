@@ -45,6 +45,25 @@ orchestrator:
   # Maximální počet iterací (cyklů), než se agent zastaví.
   max_iterations: 100
 
+# Konfigurace pro Orchestrator
+orchestrator:
+  # Maximální počet iterací (cyklů), než se agent zastaví.
+  max_iterations: 100
+
+# Konfigurace pro paměťový systém
+memory:
+  # Počet posledních interakcí, které se uchovávají v pracovní (krátkodobé) paměti.
+  short_term_limit: 4
+  # Počet nejrelevantnějších záznamů, které se načítají z dlouhodobé paměti.
+  long_term_retrieval_limit: 5
+
+# Konfigurace pro vektorovou databázi (ChromaDB)
+vector_database:
+  # Cesta k databázi. Může být lokální soubor nebo adresa serveru.
+  path: "db/chroma.db"
+  # Název kolekce, kde se budou ukládat paměťové záznamy.
+  collection_name: "sophia_memory"
+
 # Konfigurace pro Intelligent Guardian
 guardian:
   cpu_threshold: 90.0
