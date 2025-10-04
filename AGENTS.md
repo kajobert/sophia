@@ -1,7 +1,7 @@
 # 🤖 Manuál pro AI Agenta: Jules (Nomad)
 
-**Verze:** 1.1
-**Datum:** 2025-09-29
+**Verze:** 2.0
+**Datum:** 2025-10-03
 
 Tento dokument slouží jako technická a provozní příručka pro AI agenta "Jules". Popisuje jeho dostupné nástroje, pracovní postupy a základní principy, které řídí jeho operace v rámci projektu Sophia.
 
@@ -13,32 +13,52 @@ Jules má k dispozici dvě kategorie nástrojů: **Standardní Nástroje** s Pyt
 
 ### 1.1. Standardní Nástroje
 
-Tyto nástroje se volají pomocí standardní syntaxe funkce v Pythonu.
+Tyto nástroje jsou seskupeny podle jejich primárního účelu.
 
-- **`list_files(path: str = ".") -> list[str]`**
-  - **Popis:** Vypíše soubory a adresáře v zadané cestě. Adresáře jsou označeny lomítkem (`/`).
-  - **Parametry:**
-    - `path` (str, volitelný): Cesta k adresáři. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+#### **Základní Práce se Soubory**
+- **`list_files(path: str = ".") -> str`**: Vypíše soubory a adresáře v zadané cestě.
+- **`read_file(filepath: str, line_limit: int = None) -> str`**: Přečte obsah souboru. Lze omezit počet načtených řádků.
+- **`read_file_section(filepath: str, identifier: str) -> str`**: Načte z Python souboru pouze konkrétní třídu nebo funkci.
+- **`delete_file(filepath: str) -> str`**: Smaže zadaný soubor.
+- **`rename_file(filepath: str, new_filepath: str) -> str`**: Přejmenuje nebo přesune soubor.
 
-- **`read_file(filepath: str) -> str`**
-  - **Popis:** Přečte a vrátí obsah zadaného souboru.
-  - **Parametry:**
-    - `filepath` (str): Cesta k souboru. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+#### **Analýza Kódu a Projektu**
+- **`get_project_summary(start_path: str = ".") -> str`**: Vygeneruje přehled struktury projektu, včetně docstringů pro rychlý přehled.
+- **`profile_code_execution(command: str) -> str`**: Spustí příkaz pomocí cProfile a vrátí report o výkonu.
+- **`run_static_code_analyzer(path: str) -> str`**: Spustí Pylint na soubor/adresář a vrátí report o kvalitě kódu.
+- **`get_code_complexity(path: str) -> str`**: Spustí Radon na soubor/adresář a vrátí report o složitosti a udržovatelnosti.
 
-- **`delete_file(filepath: str) -> str`**
-  - **Popis:** Smaže zadaný soubor.
-  - **Parametry:**
-    - `filepath` (str): Cesta k souboru, který se má smazat. Výchozí je `sandbox/`.
+#### **Plánování a Správa Úkolů**
+- **`create_task(description: str, parent_id: str = None) -> str`**: Vytvoří nový úkol nebo podúkol pro hierarchické plánování.
+- **`get_task_tree() -> str`**: Zobrazí stromovou strukturu všech aktuálních úkolů a jejich stav.
+- **`update_task_status(task_id: str, status: str) -> str`**: Aktualizuje stav úkolu (např. 'in_progress', 'completed').
+- **`get_task_details(task_id: str) -> str`**: Vrátí detailní informace o konkrétním úkolu.
+- **`summarize_text(text_to_summarize: str) -> str`**: Využije LLM k sumarizaci dlouhého textu.
 
-- **`rename_file(filepath: str, new_filepath: str) -> str`**
-  - **Popis:** Přejmenuje nebo přesune soubor.
-  - **Parametry:**
-    - `filepath` (str): Původní cesta k souboru.
-    - `new_filepath` (str): Nová cesta k souboru.
+#### **Evoluce a Experimentování (Sandbox)**
+- **`create_code_sandbox(files_to_copy: list[str]) -> str`**: Vytvoří dočasný, izolovaný adresář a zkopíruje do něj soubory pro bezpečné experimentování.
+- **`run_in_sandbox(command: str) -> str`**: Spustí příkaz uvnitř aktivního sandboxu.
+- **`compare_sandbox_changes(original_filepath: str) -> str`**: Porovná soubor v sandboxu s jeho originálem a vrátí 'diff'.
+- **`destroy_sandbox() -> str`**: Smaže aktivní sandbox a jeho obsah.
 
+#### **Evoluce a Učení**
+- **`run_playwright_test(script_content: str) -> str`**: Spustí E2E test pomocí Playwright.
+- **`propose_refactoring(filepath: str, class_or_function: str) -> str`**: Využije LLM k navržení vylepšení pro zadaný kód.
+- **`archive_completed_task(task_id: str, summary: str, history: list) -> str`**: Uloží kompletní záznam o dokončeném úkolu do archivu.
+- **`search_task_archive(query: str) -> str`**: Prohledá archiv dokončených úkolů a najde relevantní "vzpomínky".
+- **`update_self_knowledge(new_knowledge: str) -> str`**: Přidá nový poznatek do agentovy báze znalostí.
+
+#### **Komunikace s Uživatelem**
+- **`inform_user(message: str) -> str`**: Zobrazí uživateli informativní zprávu (zeleně).
+- **`warn_user(message: str) -> str`**: Zobrazí uživateli varování (oranžově).
+- **`error_user(message: str) -> str`**: Zobrazí uživateli chybovou hlášku (červeně).
+- **`ask_user(question: str) -> str`**: Položí uživateli otázku.
+- **`display_code(code: str, language: str = "python") -> str`**: Zobrazí formátovaný blok kódu.
+- **`display_table(title: str, headers: list[str], rows: list[list[str]]) -> str`**: Zobrazí tabulku.
+
+#### **Řízení Agenta**
 - **`set_plan(plan: str) -> None`**
 - **`plan_step_complete(message: str) -> None`**
-- **`message_user(message: str, continue_working: bool) -> None`**
 - **`request_user_input(message: str) -> None`**
 - **`request_code_review() -> str`**
 - **`submit(...)`**
@@ -56,7 +76,7 @@ Tyto nástroje používají specifickou DSL syntaxi, kde je název nástroje na 
     ```
 
 - **`create_file_with_block`**
-  - **Popis:** Vytvoří nový soubor a zapíše do něj zadaný obsah. Pokud soubor již existuje, bude přepsán.
+  - **Popis:** Vytvoří nový soubor a zapíše do něj zadaný obsah.
   - **Syntax:**
     ```
     create_file_with_block
@@ -65,7 +85,7 @@ Tyto nástroje používají specifickou DSL syntaxi, kde je název nástroje na 
     ```
 
 - **`overwrite_file_with_block`**
-  - **Popis:** Kompletně přepíše existující soubor novým obsahem. Jedná se o alias pro `create_file_with_block`.
+  - **Popis:** Kompletně přepíše existující soubor novým obsahem.
   - **Syntax:**
     ```
     overwrite_file_with_block
@@ -74,7 +94,7 @@ Tyto nástroje používají specifickou DSL syntaxi, kde je název nástroje na 
     ```
 
 - **`replace_with_git_merge_diff`**
-  - **Popis:** Provede cílenou úpravu části souboru. Vyhledá `search_block` a nahradí jej `replace_block`.
+  - **Popis:** Provede cílenou úpravu části souboru.
   - **Syntax:**
     ```
     replace_with_git_merge_diff
