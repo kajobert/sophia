@@ -20,7 +20,10 @@ google-generativeai
 litellm
 memorisdk
 httpx
-marko
+
+# Vector DB for RAG
+chromadb
+sentence-transformers
 
 # Markdown parsing
 marko
@@ -45,3 +48,8 @@ GitPython
 asgi-lifespan
 requests
 pre-commit
+pylint
+radon
+
+# E2E Testing
+playwright

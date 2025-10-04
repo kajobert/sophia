@@ -36,10 +36,13 @@ class MCPClient:
     async def _start_and_init_server(self, server_name: str, script_path: str):
         """Pomocná metoda pro spuštění a inicializaci jednoho serveru."""
         from .rich_printer import RichPrinter
+        # Nastavíme vyšší limit pro buffer, aby prošly i velké odpovědi nástrojů
+        limit = 2 * 1024 * 1024  # 2MB
         process = await asyncio.create_subprocess_exec(
             sys.executable, script_path,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            cwd=self.project_root
+            cwd=self.project_root,
+            limit=limit
         )
         self.servers[server_name] = process
         RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
