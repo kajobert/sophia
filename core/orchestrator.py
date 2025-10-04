@@ -166,34 +166,6 @@ class JulesOrchestrator:
             RichPrinter.info(f"### Iterace č. {i+1} | Celkem tokenů: {self.total_tokens}")
             RichPrinter.info(f"Přemýšlím... (model: {model.model_name})")
 
-            # Schéma pro vynucení JSON odpovědi
-            tool_call_schema = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "tool_call_with_explanation",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "explanation": {
-                                "type": "string",
-                                "description": "Tvůj myšlenkový pochod krok za krokem, zdůvodnění a vysvětlení, proč volíš tento nástroj a tyto parametry. Musí být v češtině."
-                            },
-                            "tool_call": {
-                                "type": "object",
-                                "properties": {
-                                    "tool_name": {"type": "string"},
-                                    "args": {"type": "array", "items": {}},
-                                    "kwargs": {"type": "object"}
-                                },
-                                "required": ["tool_name"]
-                            }
-                        },
-                        "required": ["explanation", "tool_call"]
-                    }
-                }
-            }
-
             if self.verbose:
                 RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
 
@@ -211,8 +183,7 @@ class JulesOrchestrator:
             response_text, usage_data = await model.generate_content_async(
                 prompt,
                 stream_callback=stream_callback,
-                tool_choice="any",
-                tools=[tool_call_schema]
+                response_format={"type": "json_object"} # Správný způsob, jak vynutit JSON
             )
 
             # Ukončíme "načítací" animaci v TUI

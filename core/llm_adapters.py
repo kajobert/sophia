@@ -104,19 +104,11 @@ class OpenRouterAdapter(BaseLLMAdapter):
                         if chunk.usage:
                              usage_data = { "id": chunk.id, "model": chunk.model, "usage": chunk.usage.model_dump() }
 
-                    # Pokud jsme dostali odpověď přes tool_calls, má přednost
-                    final_content = tool_call_args_accumulator if tool_call_args_accumulator else full_response_content
-                    return final_content, usage_data
+                    return full_response_content, usage_data
                 else:
                     # --- Logika bez streamování ---
                     response = await self._client.chat.completions.create(**request_params)
-
-                    # Zpracování odpovědi v JSON režimu
-                    if response.choices[0].message.tool_calls:
-                        content = response.choices[0].message.tool_calls[0].function.arguments
-                    else:
-                        content = response.choices[0].message.content
-
+                    content = response.choices[0].message.content
                     usage_data = {
                         "id": response.id,
                         "model": response.model,
