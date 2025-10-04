@@ -61,7 +61,7 @@ class SophiaTUI(App):
 
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
-        
+
 
 
         RichPrinter.set_message_poster(self.post_message)
@@ -117,20 +117,20 @@ class SophiaTUI(App):
                 RichPrinter.error("LLM manažer nevrátil model, ale nevyvolal výjimku. Agent je v offline režimu.")
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se inicializovat LLM: {e}. Agent je v offline režimu.")
-    
+
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Zpracuje odeslání vstupu od uživatele."""
         prompt = message.value
         if not prompt:
             return
-    
+
         user_panel = Panel(f"{prompt}", title="Uživatel", border_style="green")
         self.tool_widget.write(user_panel)
         self.input_widget.clear()
-    
+
         self.current_explanation = ""
         self.explanation_widget.update("")
-    
+
         self.run_orchestrator_task(prompt)
 
     @work(exclusive=True)
@@ -139,7 +139,7 @@ class SophiaTUI(App):
         await self.orchestrator.run(prompt, session_id=self.session_id)
         if self.session_id is None and hasattr(self.orchestrator, 'session_id'):
              self.session_id = self.orchestrator.session_id
-    
+
     def on_log_message(self, message: LogMessage) -> None:
         """Zpracuje logovací zprávu a zobrazí ji v záložce Logy."""
         self.log_widget.add_log(message.text, message.level)
@@ -169,9 +169,9 @@ class SophiaTUI(App):
             panel_content = content
             title = "Úkol Dokončen"
             self.tool_widget.write(Panel(panel_content, title=title, border_style="bold green"))
-        else: 
+        else:
             self.log_widget.add_log(f"Neznámý typ zprávy '{msg_type}': {content}", "WARNING")
-    
+
     async def action_request_quit(self):
         """Bezpečně ukončí aplikaci."""
         RichPrinter.info("Zahajuji ukončování...")
@@ -181,7 +181,7 @@ class SophiaTUI(App):
 
 if __name__ == "__main__":
     RichPrinter.configure_logging()
-    
+
     try:
         app = SophiaTUI()
         app.run()
@@ -192,10 +192,10 @@ if __name__ == "__main__":
         with open(CRASH_LOG_PATH, "w", encoding="utf-8") as f:
             f.write("--- APLIKACE TUI SPADLA S NEOČEKÁVANOU VÝJIMKOU ---\n\n")
             traceback.print_exc(file=f)
-        
+
         # Vytiskneme chybu i na standardní chybový výstup
         print(f"\n[FATAL] TUI application crashed. See {CRASH_LOG_PATH} for details.", file=sys.stderr)
         traceback.print_exc()
-        
+
         # Ukončíme s nenulovým kódem, aby to Guardian detekoval
         sys.exit(1)
