@@ -74,22 +74,32 @@ class OpenRouterAdapter(BaseLLMAdapter):
                 request_params = {
                     "model": model_name,
                     "messages": messages,
-                    "max_tokens": 4096,  # Zajistí dostatečný prostor pro odpověď
                     **api_params
                 }
 
                 if stream_callback:
                     # --- Logika pro streamování ---
                     full_response_content = ""
+                    tool_call_args_accumulator = ""
                     usage_data = None
                     stream = await self._client.chat.completions.create(
                         stream=True,
                         **request_params
                     )
                     async for chunk in stream:
+                        # Zpracování streamu pro tool_calls
+                        if chunk.choices[0].delta.tool_calls:
+                            # Akumulujeme kousky argumentů z JSONu
+                            argument_chunk = chunk.choices[0].delta.tool_calls[0].function.arguments
+                            if argument_chunk:
+                                tool_call_args_accumulator += argument_chunk
+                                await stream_callback(argument_chunk)
+
+                        # Fallback pro standardní content, pokud by se objevil
                         chunk_content = chunk.choices[0].delta.content or ""
-                        full_response_content += chunk_content
-                        await stream_callback(chunk_content)
+                        if chunk_content:
+                            full_response_content += chunk_content
+                            await stream_callback(chunk_content)
 
                         if chunk.usage:
                              usage_data = { "id": chunk.id, "model": chunk.model, "usage": chunk.usage.model_dump() }
