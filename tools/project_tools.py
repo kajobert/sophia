@@ -4,7 +4,7 @@ from typing import List
 
 class SkeletonVisitor(ast.NodeVisitor):
     """
-    An AST visitor that extracts the skeleton of a Python file.
+    An AST visitor that extracts the skeleton of a Python file, including docstrings.
     It collects class and function definitions with correct indentation.
     """
     def __init__(self):
@@ -20,6 +20,12 @@ class SkeletonVisitor(ast.NodeVisitor):
         """Handles visiting a class definition node."""
         indent = "    " * self.indent_level
         self.skeleton.append(f"{indent}class {node.name}:")
+
+        docstring = ast.get_docstring(node)
+        doc_indent = "    " * (self.indent_level + 1)
+        if docstring:
+            self.skeleton.append(f'{doc_indent}"""{docstring}"""')
+
         self.indent_level += 1
         # Visit only direct children to process methods
         for child in node.body:
@@ -33,7 +39,15 @@ class SkeletonVisitor(ast.NodeVisitor):
         """Handles visiting a function or method definition node."""
         indent = "    " * self.indent_level
         args = self._get_args(node)
-        self.skeleton.append(f"{indent}def {node.name}({args}): ...")
+
+        docstring = ast.get_docstring(node)
+        if docstring:
+            self.skeleton.append(f"{indent}def {node.name}({args}):")
+            doc_indent = "    " * (self.indent_level + 1)
+            self.skeleton.append(f'{doc_indent}"""{docstring}"""')
+        else:
+            # Keep original behavior for functions without docstrings
+            self.skeleton.append(f"{indent}def {node.name}({args}): ...")
 
 def _extract_python_skeleton(filepath: str) -> str:
     """
