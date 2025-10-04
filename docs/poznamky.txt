@@ -1,0 +1,11 @@
+# projekty pro inspiraci
+claude-coder
+OpenManus
+Roo-coder
+
+# napady
+LLM pro kodovani oddelena od LLM pro mysleni a LLM pro komunikaci
+Planovani kroku pred spustenim tasku, vzdy jen jeden krok kvuli velikosti kontextoveho okna
+
+# nastroje
+nastroj pro komunikaci s uzivatelem - odpoved / dotaz / informace / chyba ...
