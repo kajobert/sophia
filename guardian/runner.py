@@ -80,8 +80,11 @@ def main():
         consecutive_failures += 1
         logging.error(f"Application crashed with non-zero exit code {process.returncode}. This is failure #{consecutive_failures}.")
         
+        # Vylepšené logování o crash logu pro lepší diagnostiku
         if os.path.exists(CRASH_LOG_PATH):
-             logging.info(f"Detailed crash information should be available in: {CRASH_LOG_PATH}")
+             logging.warning(f"A crash log has been found. See details in: {CRASH_LOG_PATH}")
+        else:
+             logging.warning(f"Application crashed, but no crash log was found at {CRASH_LOG_PATH}.")
 
         if consecutive_failures >= MAX_RESTART_ATTEMPTS:
             logging.warning(f"Reached {MAX_RESTART_ATTEMPTS} consecutive failures. Triggering rollback.")
