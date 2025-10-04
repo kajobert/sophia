@@ -8,7 +8,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 # Importujeme nástroje a třídu, kterou budeme mockovat
-from mcp_servers import tui_tools
+from mcp_servers import tui_tools_server as tui_tools
 from core.rich_printer import RichPrinter
 
 @pytest.fixture

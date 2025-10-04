@@ -48,3 +48,8 @@ GitPython
 asgi-lifespan
 requests
 pre-commit
+pylint
+radon
+
+# E2E Testing
+playwright
