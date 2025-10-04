@@ -123,3 +123,58 @@ def test_replace_diff_with_nonexistent_search_block():
     # Ensure the file was not modified
     with open(os.path.join(TEST_SANDBOX_DIR, filepath), 'r') as f:
         assert f.read() == original_content
+
+# --- Tests for read_file_section ---
+
+@pytest.fixture(scope="module")
+def sample_py_file_for_section_read():
+    """Creates a sample Python file for testing read_file_section within the module-scoped sandbox."""
+    filepath = "sample_for_section.py"
+    file_content = """
+# This is a comment at the top
+
+class MyTestClass:
+    \"\"\"A test class.\"\"\"
+    def __init__(self):
+        self.value = 1
+
+    def my_method(self):
+        return self.value
+
+@my_decorator
+def decorated_function(x, y):
+    \"\"\"A decorated function.\"\"\"
+    return x + y
+
+def another_function():
+    return "hello"
+"""
+    # We use the existing file_system tools which are aware of the TEST_SANDBOX_DIR
+    file_system.create_file_with_block(filepath, file_content)
+    return filepath
+
+def test_read_file_section_class(sample_py_file_for_section_read):
+    """Tests extracting an entire class."""
+    result = file_system.read_file_section(sample_py_file_for_section_read, "MyTestClass")
+    assert "class MyTestClass:" in result
+    assert "def my_method(self):" in result
+    assert "def decorated_function" not in result
+
+def test_read_file_section_decorated_function(sample_py_file_for_section_read):
+    """Tests extracting a function with a decorator."""
+    result = file_system.read_file_section(sample_py_file_for_section_read, "decorated_function")
+    assert "@my_decorator" in result
+    assert "def decorated_function(x, y):" in result
+    assert "class MyTestClass:" not in result
+
+def test_read_file_section_not_found(sample_py_file_for_section_read):
+    """Tests the case where the identifier is not found in the file."""
+    result = file_system.read_file_section(sample_py_file_for_section_read, "non_existent_function")
+    assert "Error: Identifier 'non_existent_function' not found" in result
+
+def test_read_file_section_syntax_error():
+    """Tests reading from a file with a syntax error."""
+    filepath = "bad_syntax.py"
+    file_system.create_file_with_block(filepath, "def bad_function(:\n    pass")
+    result = file_system.read_file_section(filepath, "bad_function")
+    assert "Error: Could not parse Python file" in result

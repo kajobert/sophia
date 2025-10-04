@@ -1,4 +1,5 @@
 import os
+import ast
 
 SANDBOX_DIR = "sandbox"
 PROJECT_ROOT_PREFIX = "PROJECT_ROOT/"
@@ -200,3 +201,54 @@ def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block:
             return f"File '{filepath}' updated successfully via replace/diff."
     except Exception as e:
         return f"Error applying replace/diff: {e}"
+
+
+def read_file_section(filepath: str, identifier: str) -> str:
+    """
+    Reads a specific section (a function or a class) from a Python file.
+    This is useful for focusing on a specific piece of code without loading the entire file.
+    Defaults to the 'sandbox/' directory. To read from the project root, use the 'PROJECT_ROOT/' prefix.
+
+    :param filepath: The path to the Python file.
+    :param identifier: The name of the function or class to extract.
+    :return: A string containing the source code of the specified section, or an error message.
+    """
+    try:
+        safe_path = _resolve_path(filepath)
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            source_code = f.read()
+
+        tree = ast.parse(source_code)
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name == identifier:
+                # If the node is a function with decorators, adjust the start line
+                # to include the decorators in the source segment.
+                if isinstance(node, ast.FunctionDef) and node.decorator_list:
+                    first_decorator = node.decorator_list[0]
+                    # Create a new dummy node or adjust coordinates to span the whole block
+                    # In this case, we can simply get the source from the first decorator
+                    # to the end of the function.
+                    # Note: ast.get_source_segment is sensitive to the node's line numbers.
+                    # A robust way is to find the start of the first decorator.
+                    start_lineno = first_decorator.lineno
+
+                    # Manually find the source segment from the original code
+                    lines = source_code.splitlines(True)
+                    # The end line number is available from the node
+                    end_lineno = node.end_lineno
+
+                    # Extract lines from start of decorator to end of function
+                    return "".join(lines[start_lineno-1:end_lineno])
+
+                # For classes or functions without decorators, the default behavior is correct
+                return ast.get_source_segment(source_code, node)
+
+        return f"Error: Identifier '{identifier}' not found in file '{filepath}'."
+
+    except FileNotFoundError:
+        return f"Error: File not found at '{filepath}'."
+    except SyntaxError as e:
+        return f"Error: Could not parse Python file '{filepath}'. Invalid syntax: {e}"
+    except Exception as e:
+        return f"Error reading file section: {e}"
