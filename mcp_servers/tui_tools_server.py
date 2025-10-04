@@ -18,7 +18,7 @@ def inform_user(message: str) -> str:
     Použij pro běžná sdělení, potvrzení akcí nebo pozitivní výsledky.
     """
     RichPrinter.inform(message)
-    return "Informativní zpráva byla úspěšně zobrazena uživateli."
+    return message
 
 def warn_user(message: str) -> str:
     """
@@ -26,7 +26,7 @@ def warn_user(message: str) -> str:
     Použij pro upozornění na méně závažné problémy, které nevyžadují okamžitý zásah.
     """
     RichPrinter.warning(message)
-    return "Varovná zpráva byla úspěšně zobrazena uživateli."
+    return message
 
 def error_user(message: str) -> str:
     """
@@ -34,7 +34,7 @@ def error_user(message: str) -> str:
     Použij pro informování o závažných chybách, selhání operací nebo problémech.
     """
     RichPrinter.error(message)
-    return "Chybová hláška byla úspěšně zobrazena uživateli."
+    return message
 
 def ask_user(question: str) -> str:
     """
@@ -43,21 +43,23 @@ def ask_user(question: str) -> str:
     Systém automaticky zpracuje odpověď, nemusíš na ni čekat.
     """
     RichPrinter.ask(question)
-    return "Otázka byla položena uživateli. Jeho odpověď bude poskytnuta v dalším kroku."
+    return f"Byla položena otázka: {question}"
 
 def display_code(code: str, language: str = "python") -> str:
     """
     Zobrazí uživateli formátovaný blok kódu se zvýrazněním syntaxe.
     """
     RichPrinter.code(code, language)
-    return "Blok kódu byl úspěšně zobrazen."
+    return f"Zobrazen kód (jazyk: {language}):\n---\n{code}\n---"
 
 def display_table(title: str, headers: list[str], rows: list[list[str]]) -> str:
     """
     Zobrazí uživateli přehlednou tabulku s daty.
     """
     RichPrinter.table(title, headers, rows)
-    return "Tabulka byla úspěšně zobrazena."
+    header_str = " | ".join(map(str, headers))
+    rows_str = "\n".join([" | ".join(map(str, row)) for row in rows])
+    return f"Zobrazena tabulka '{title}':\n{header_str}\n{'-' * len(header_str)}\n{rows_str}"
 
 # --- MCP Server Boilerplate ---
 

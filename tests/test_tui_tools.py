@@ -31,7 +31,6 @@ def mock_rich_printer(monkeypatch):
     monkeypatch.setattr(RichPrinter, 'code', mock_code)
     monkeypatch.setattr(RichPrinter, 'table', mock_table)
 
-    # Vrátíme slovník s mocky, abychom k nim měli v testech přístup
     return {
         "inform": mock_inform,
         "warning": mock_warning,
@@ -44,32 +43,33 @@ def mock_rich_printer(monkeypatch):
 def test_inform_user_calls_rich_printer(mock_rich_printer):
     message = "This is an info message."
     result = tui_tools.inform_user(message)
-    assert "úspěšně zobrazena" in result
+    assert result == message
     mock_rich_printer["inform"].assert_called_once_with(message)
 
 def test_warn_user_calls_rich_printer(mock_rich_printer):
     message = "This is a warning."
     result = tui_tools.warn_user(message)
-    assert "úspěšně zobrazena" in result
+    assert result == message
     mock_rich_printer["warning"].assert_called_once_with(message)
 
 def test_error_user_calls_rich_printer(mock_rich_printer):
     message = "This is an error."
     result = tui_tools.error_user(message)
-    assert "úspěšně zobrazena" in result
+    assert result == message
     mock_rich_printer["error"].assert_called_once_with(message)
 
 def test_ask_user_calls_rich_printer(mock_rich_printer):
     question = "What is your name?"
     result = tui_tools.ask_user(question)
-    assert "otázka byla položena" in result.lower()
+    assert question in result
     mock_rich_printer["ask"].assert_called_once_with(question)
 
 def test_display_code_calls_rich_printer(mock_rich_printer):
     code = "print('Hello, World!')"
     language = "python"
     result = tui_tools.display_code(code, language)
-    assert "úspěšně zobrazen" in result
+    assert code in result
+    assert language in result
     mock_rich_printer["code"].assert_called_once_with(code, language)
 
 def test_display_table_calls_rich_printer(mock_rich_printer):
@@ -77,5 +77,6 @@ def test_display_table_calls_rich_printer(mock_rich_printer):
     headers = ["ID", "Name"]
     rows = [["1", "Alice"], ["2", "Bob"]]
     result = tui_tools.display_table(title, headers, rows)
-    assert "úspěšně zobrazena" in result
+    assert title in result
+    assert "Alice" in result
     mock_rich_printer["table"].assert_called_once_with(title, headers, rows)

@@ -129,6 +129,15 @@ class JulesOrchestrator:
 
     async def run(self, initial_task: str, session_id: str | None = None):
         """Hlavní rozhodovací smyčka agenta."""
+        TERMINAL_TOOLS = [
+            "inform_user",
+            "warn_user",
+            "error_user",
+            "display_code",
+            "display_table",
+            "ask_user"
+        ]
+
         if session_id:
             RichPrinter.info(f"### Obnovuji sezení: {session_id}")
             loaded_history = self.memory_manager.load_history(session_id)
@@ -256,6 +265,13 @@ class JulesOrchestrator:
             else:
                 result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
 
+            # --- Inteligentní ukončení úkolu ---
+            # Pokud byl použit "terminální" nástroj, považujeme úkol za dokončený.
+            if tool_name in TERMINAL_TOOLS:
+                RichPrinter.info(f"Terminální nástroj '{tool_name}' byl použit. Úkol se automaticky ukončuje.")
+                task_was_completed_by_agent = True
+                # Výstup nástroje se ještě zpracuje a uloží, ale smyčka se poté ukončí.
+
             output_for_display, output_for_history = self._handle_long_output(result)
 
             RichPrinter.info("<<< VÝSLEDEK")
@@ -268,6 +284,10 @@ class JulesOrchestrator:
             # Uložení kompletní interakce do dlouhodobé paměti (LTM)
             ltm_entry = f"Krok {i+1}:\nMyšlenkový pochod a akce:\n{history_entry_request}\n\nVýsledek:\n{output_for_history}"
             self.ltm.add_memory(ltm_entry, metadata={"session_id": session_id, "iteration": i + 1})
+
+            # Pokud byl použit terminální nástroj, ukončíme smyčku zde.
+            if task_was_completed_by_agent:
+                break
 
         if not task_was_completed_by_agent:
             final_message = f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen."
