@@ -66,9 +66,25 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        result = await loop.run_in_executor(
-                            None, tools[tool_name], *tool_args, **tool_kwargs
-                        )
+                        if tool_name == "task_complete":
+                            # Make the tool more robust to LLM formatting errors
+                            summary = "Nebylo poskytnuto žádné shrnutí."
+                            if "reason" in tool_kwargs:
+                                summary = tool_kwargs["reason"]
+                            elif tool_args:
+                                summary = tool_args[0]
+                            elif tool_kwargs:
+                                summary = list(tool_kwargs.values())[0]
+
+                            result = await loop.run_in_executor(
+                                None, tools[tool_name], reason=summary
+                            )
+                        else:
+                            # Default execution for other tools
+                            result = await loop.run_in_executor(
+                                None, tools[tool_name], *tool_args, **tool_kwargs
+                            )
+
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
