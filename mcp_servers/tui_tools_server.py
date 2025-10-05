@@ -10,34 +10,46 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# RichPrinter se zde již nepoužívá, volání se přesouvá do orchestratoru
+# --- Odolné TUI Nástroje ---
 
-def inform_user(message: str) -> str:
+def _get_first_string_value(*args, **kwargs) -> str:
+    """Pomocná funkce, která najde první textovou hodnotu v argumentech."""
+    if args:
+        return str(args[0])
+    if kwargs:
+        return str(next(iter(kwargs.values())))
+    return "Agent neposkytl žádný text pro zobrazení."
+
+def inform_user(*args, **kwargs) -> str:
     """
-    Pošle informativní zprávu do TUI.
+    Pošle informativní zprávu do TUI. Flexibilní na vstupní argumenty.
     Vrací JSON pro zpracování v orchestratoru.
     """
+    message = _get_first_string_value(*args, **kwargs)
     return json.dumps({"display": "inform", "content": message})
 
-def warn_user(message: str) -> str:
+def warn_user(*args, **kwargs) -> str:
     """
-    Pošle varovnou zprávu do TUI.
+    Pošle varovnou zprávu do TUI. Flexibilní na vstupní argumenty.
     Vrací JSON pro zpracování v orchestratoru.
     """
+    message = _get_first_string_value(*args, **kwargs)
     return json.dumps({"display": "warning", "content": message})
 
-def error_user(message: str) -> str:
+def error_user(*args, **kwargs) -> str:
     """
-    Pošle chybovou zprávu do TUI.
+    Pošle chybovou zprávu do TUI. Flexibilní na vstupní argumenty.
     Vrací JSON pro zpracování v orchestratoru.
     """
+    message = _get_first_string_value(*args, **kwargs)
     return json.dumps({"display": "error", "content": message})
 
-def ask_user(question: str) -> str:
+def ask_user(*args, **kwargs) -> str:
     """
-    Položí otázku v TUI.
+    Položí otázku v TUI. Flexibilní na vstupní argumenty.
     Vrací JSON pro zpracování v orchestratoru.
     """
+    question = _get_first_string_value(*args, **kwargs)
     return json.dumps({"display": "ask", "content": question})
 
 def display_code(code: str, language: str = "python") -> str:
@@ -55,6 +67,7 @@ def display_table(title: str, headers: list[str], rows: list[list[str]]) -> str:
     """
     content = {"title": title, "headers": headers, "rows": rows}
     return json.dumps({"display": "table", "content": content})
+
 
 # --- MCP Server Boilerplate ---
 
