@@ -61,7 +61,8 @@ def test_get_task_details():
     assert details["description"] == "Detailní úkol"
     assert details["status"] == "new"
 
-def test_summarize_text(monkeypatch):
+@pytest.mark.asyncio
+async def test_summarize_text(monkeypatch):
     """
     Testuje sumarizaci textu s mockovaným LLM.
     """
@@ -73,7 +74,7 @@ def test_summarize_text(monkeypatch):
     monkeypatch.setattr("mcp_servers.planning_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
 
     long_text = "Toto je velmi dlouhý text, který potřebuje shrnout."
-    summary = planning_server.summarize_text(long_text)
+    summary = await planning_server.summarize_text(long_text)
 
     assert "Shrnutí textu:" in summary
     assert "Toto je shrnutí." in summary
