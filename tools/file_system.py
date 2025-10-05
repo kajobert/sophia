@@ -1,64 +1,57 @@
 import os
 import ast
 
-SANDBOX_DIR = "sandbox"
-PROJECT_ROOT_PREFIX = "PROJECT_ROOT/"
-
 def _resolve_path(user_path: str) -> str:
     """
-    Safely resolves a user-provided path.
-    - If the path starts with 'PROJECT_ROOT/', it resolves from the project root.
-    - Otherwise, it defaults to the 'sandbox/' directory.
-    - Prevents any path traversal attacks ('..').
+    Safely resolves a user-provided path relative to the project root.
+    Prevents any path traversal attacks ('..').
     """
-    # Normalize to prevent basic traversal
+    # Prevent absolute paths immediately.
+    if os.path.isabs(user_path):
+        raise ValueError(f"Path traversal detected. Absolute paths are not allowed. Provided: '{user_path}'")
+
+    # Normalize path to resolve things like 'a/b/../c' -> 'a/c'.
+    # This is done on the user_path which is confirmed to be relative.
     norm_user_path = os.path.normpath(user_path)
-    if os.path.isabs(norm_user_path) or norm_user_path.startswith(".."):
-        raise ValueError(f"Path traversal detected. Absolute paths and '..' are not allowed. Provided: '{user_path}'")
 
-    if user_path.startswith("PROJECT_ROOT"):
-        # Path is relative to the project root
-        base_dir = "."
-        # Strip "PROJECT_ROOT" and then any leading slashes from the remainder
-        path_to_join = user_path.removeprefix("PROJECT_ROOT").lstrip('/')
-    else:
-        # Path is relative to the sandbox
-        base_dir = SANDBOX_DIR
-        path_to_join = user_path
-        # Create sandbox if it doesn't exist for sandbox operations
-        if not os.path.exists(SANDBOX_DIR):
-            os.makedirs(SANDBOX_DIR)
+    # After normalization, check for '..' components again.
+    # This catches attempts like '../' or 'a/../../b' which normpath might not fully resolve
+    # if the path doesn't exist.
+    if '..' in norm_user_path.split(os.path.sep):
+        raise ValueError(f"Path traversal detected. '..' is not allowed. Provided: '{user_path}'")
 
-    # Safely join the path
-    safe_path = os.path.join(base_dir, path_to_join)
+    # All paths are relative to the project root.
+    base_dir = os.path.abspath(".")
 
-    # Final check to ensure the resolved path is within the intended directory
-    abs_base_dir = os.path.abspath(base_dir)
-    abs_safe_path = os.path.abspath(safe_path)
+    # Safely join the path.
+    safe_path = os.path.join(base_dir, norm_user_path)
 
-    if not abs_safe_path.startswith(abs_base_dir):
-        raise ValueError(f"Path traversal detected. Final path '{safe_path}' is outside the allowed directory.")
+    # Final, most important check: ensure the fully resolved path is within the project directory.
+    # This is the ultimate safeguard against any clever traversal techniques.
+    if not os.path.abspath(safe_path).startswith(base_dir):
+        raise ValueError(f"Path traversal detected. Final path '{safe_path}' is outside the allowed project directory.")
 
     return safe_path
 
 def list_files(path: str = ".") -> str:
     """
-    Lists files and directories under a given path.
-    Defaults to the 'sandbox/' directory.
-    To list files from the project root, use the 'PROJECT_ROOT/' prefix (e.g., 'PROJECT_ROOT/core').
+    Lists files and directories under a given path, relative to the project root.
+    For example, `list_files("core")` will list files in the 'core' directory.
+    Defaults to the project root.
     """
     try:
         safe_path = _resolve_path(path)
+        # Check if the path exists and is a directory
+        if not os.path.isdir(safe_path):
+            return f"Error: Path '{path}' is not a valid directory."
         return "\n".join(os.listdir(safe_path))
     except Exception as e:
         return f"Error listing files: {e}"
 
 def read_file(filepath: str, line_limit: int = None) -> str:
     """
-    Returns the content of the specified file.
-    Defaults to the 'sandbox/' directory.
-    To read a file from the project root, use the 'PROJECT_ROOT/' prefix.
-    :param filepath: The path to the file to read.
+    Returns the content of the specified file, relative to the project root.
+    :param filepath: The path to the file to read (e.g., 'tools/file_system.py').
     :param line_limit: Optional. If provided, only this many lines will be read from the start of the file.
     """
     try:
@@ -95,9 +88,8 @@ def read_file(filepath: str, line_limit: int = None) -> str:
 
 def overwrite_file_with_block(filepath: str, content: str) -> str:
     """
-    Overwrites an existing file with new content. If the file does not exist, it is created.
+    Overwrites or creates a file with new content, relative to the project root.
     This special tool is designed to work with multi-line content blocks.
-    Defaults to the 'sandbox/' directory. To operate on a file in the project root, use the 'PROJECT_ROOT/' prefix.
     """
     try:
         safe_path = _resolve_path(filepath)
@@ -113,44 +105,13 @@ create_file_with_block = overwrite_file_with_block
 
 def create_file(filepath: str) -> str:
     """
-    Creates an empty file at the specified path.
-    Defaults to the 'sandbox/' directory.
-    To create a file in the project root, use the 'PROJECT_ROOT/' prefix.
+    Creates an empty file at the specified path, relative to the project root.
     """
     return overwrite_file_with_block(filepath, "")
 
-def create_new_tool(tool_filename: str, code: str) -> str:
-    """
-    Creates a new tool file with the given code in the 'sandbox/custom_tools/' directory.
-    The filename must end with '.py'.
-    This is the primary method for the agent to create new, reusable capabilities for itself.
-    """
-    if not tool_filename.endswith(".py"):
-        return "Error: Tool filename must end with .py"
-    if "/" in tool_filename or "\\" in tool_filename:
-        return "Error: Tool filename cannot contain path separators. It must be a simple filename."
-
-    # Ensure the custom_tools directory exists
-    custom_tools_dir = os.path.join(SANDBOX_DIR, "custom_tools")
-    if not os.path.exists(custom_tools_dir):
-        os.makedirs(custom_tools_dir)
-
-    # Safely construct the final path
-    safe_path = os.path.join(custom_tools_dir, tool_filename)
-
-    try:
-        with open(safe_path, 'w') as f:
-            f.write(code)
-        return f"New tool '{tool_filename}' created successfully in 'sandbox/custom_tools/'."
-    except Exception as e:
-        return f"Error creating new tool: {e}"
-
-
 def delete_file(filepath: str) -> str:
     """
-    Deletes the specified file.
-    Defaults to the 'sandbox/' directory.
-    To delete a file from the project root, use the 'PROJECT_ROOT/' prefix.
+    Deletes the specified file, relative to the project root.
     """
     try:
         safe_path = _resolve_path(filepath)
@@ -164,9 +125,7 @@ def delete_file(filepath: str) -> str:
 
 def rename_file(filepath: str, new_filepath: str) -> str:
     """
-    Renames or moves a file.
-    Defaults to the 'sandbox/' directory for both paths.
-    To use paths from the project root, use the 'PROJECT_ROOT/' prefix.
+    Renames or moves a file, with paths relative to the project root.
     """
     try:
         safe_old_path = _resolve_path(filepath)
@@ -181,7 +140,7 @@ def rename_file(filepath: str, new_filepath: str) -> str:
 
 def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str) -> str:
     """
-    Performs a targeted search-and-replace within a file.
+    Performs a targeted search-and-replace within a file, relative to the project root.
     This special tool takes a search block and a replace block to perform the update.
     The search block must match a part of the file content exactly.
     """
@@ -206,11 +165,10 @@ def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block:
 
 def read_file_section(filepath: str, identifier: str) -> str:
     """
-    Reads a specific section (a function or a class) from a Python file.
+    Reads a specific section (a function or a class) from a Python file, relative to the project root.
     This is useful for focusing on a specific piece of code without loading the entire file.
-    Defaults to the 'sandbox/' directory. To read from the project root, use the 'PROJECT_ROOT/' prefix.
 
-    :param filepath: The path to the Python file.
+    :param filepath: The path to the Python file (e.g., 'tools/file_system.py').
     :param identifier: The name of the function or class to extract.
     :return: A string containing the source code of the specified section, or an error message.
     """
