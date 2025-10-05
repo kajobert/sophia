@@ -44,7 +44,6 @@ async def main():
         "create_file": file_system.create_file,
         "delete_file": file_system.delete_file,
         "rename_file": file_system.rename_file,
-        "create_new_tool": file_system.create_new_tool,
         "overwrite_file_with_block": file_system.overwrite_file_with_block,
         "create_file_with_block": file_system.create_file_with_block,
         "replace_with_git_merge_diff": file_system.replace_with_git_merge_diff,
