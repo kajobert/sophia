@@ -34,7 +34,7 @@ def test_sandbox_workflow():
     with open(sandbox_file_path, "w") as f:
         f.write("modified content")
     result_compare = evolution_server.compare_sandbox_changes("test_file.txt")
-    assert "---" in result_compare # '---' is typical for diff output
+    assert "---" in result_compare
     assert "modified content" in result_compare
     result_run = evolution_server.run_in_sandbox("ls -l")
     assert "test_file.txt" in result_run
@@ -42,7 +42,8 @@ def test_sandbox_workflow():
     assert "byl úspěšně zničen" in result_destroy
     os.remove("test_file.txt")
 
-def test_propose_refactoring(monkeypatch):
+@pytest.mark.asyncio
+async def test_propose_refactoring(monkeypatch):
     """Testuje navrhování refaktoringu s mockovaným LLM."""
     mock_read_section = MagicMock(return_value="def old_func(): pass")
     monkeypatch.setattr("mcp_servers.evolution_server.read_file_section", mock_read_section)
@@ -54,7 +55,7 @@ def test_propose_refactoring(monkeypatch):
     mock_llm_manager_instance.get_llm.return_value = mock_model
     monkeypatch.setattr("mcp_servers.evolution_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
 
-    result = evolution_server.propose_refactoring("dummy/path.py", "old_func")
+    result = await evolution_server.propose_refactoring("dummy/path.py", "old_func")
 
     assert "Návrh na refaktoring" in result
     assert "def new_func()" in result

@@ -114,7 +114,7 @@ def run_playwright_test(script_content: str) -> str:
     except Exception as e:
         return f"Chyba při spouštění Playwright testu: {e}"
 
-def propose_refactoring(filepath: str, class_or_function: str) -> str:
+async def propose_refactoring(filepath: str, class_or_function: str) -> str:
     """
     Vezme konkrétní kus kódu, pošle ho LLM a vrátí 'čistší' verzi tohoto kódu.
     """
@@ -126,8 +126,7 @@ def propose_refactoring(filepath: str, class_or_function: str) -> str:
         model = llm_manager.get_llm("powerful")
         prompt = f"Jsi expert na refaktoring a čistý kód. Navrhni vylepšenou verzi následujícího kódu. Zaměř se na čitelnost, efektivitu a dodržování osvědčených postupů. Vrať POUZE kód, bez jakéhokoliv dalšího textu nebo vysvětlení.\n\nKód k refaktoringu:\n---\n{code_section}\n---"
 
-        # Bezpečně spustíme asynchronní funkci ze synchronního kontextu
-        refactored_code, _ = asyncio.run(model.generate_content_async(prompt))
+        refactored_code, _ = await model.generate_content_async(prompt)
         return f"Návrh na refaktoring pro '{class_or_function}':\n```python\n{refactored_code}\n```"
     except Exception as e:
         return f"Chyba při navrhování refaktoringu: {e}"
@@ -210,8 +209,12 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
-                        result = await loop.run_in_executor(None, tool_call)
+                        tool_func = tools[tool_name]
+                        if asyncio.iscoroutinefunction(tool_func):
+                            result = await tool_func(*tool_args, **tool_kwargs)
+                        else:
+                            tool_call = functools.partial(tool_func, *tool_args, **tool_kwargs)
+                            result = await loop.run_in_executor(None, tool_call)
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")

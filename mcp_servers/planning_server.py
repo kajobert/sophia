@@ -74,7 +74,7 @@ def get_task_details(task_id: str) -> str:
     if task_id not in TASK_DATABASE: return f"Chyba: Úkol s ID '{task_id}' nebyl nalezen."
     return json.dumps(TASK_DATABASE[task_id], indent=2)
 
-def summarize_text(text_to_summarize: str) -> str:
+async def summarize_text(text_to_summarize: str) -> str:
     """
     Využije ekonomický LLM model k sumarizaci dlouhého textu.
     """
@@ -84,7 +84,7 @@ def summarize_text(text_to_summarize: str) -> str:
         summarizer_model = llm_manager.get_llm("economical")
         prompt = f"Prosím, shrň následující text do několika klíčových bodů. Zaměř se na nejdůležitější informace a buď stručný. Text ke shrnutí:\n\n---\n{text_to_summarize}\n---"
         RichPrinter.info("Sumarizuji text...")
-        summary, _ = asyncio.run(summarizer_model.generate_content_async(prompt))
+        summary, _ = await summarizer_model.generate_content_async(prompt)
         return f"Shrnutí textu:\n{summary}"
     except Exception as e:
         RichPrinter.error(f"Došlo k chybě při sumarizaci textu: {e}")
@@ -153,8 +153,12 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
-                        result = await loop.run_in_executor(None, tool_call)
+                        tool_func = tools[tool_name]
+                        if asyncio.iscoroutinefunction(tool_func):
+                            result = await tool_func(*tool_args, **tool_kwargs)
+                        else:
+                            tool_call = functools.partial(tool_func, *tool_args, **tool_kwargs)
+                            result = await loop.run_in_executor(None, tool_call)
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
