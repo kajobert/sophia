@@ -59,7 +59,7 @@ async def test_propose_refactoring(monkeypatch):
 
     assert "Návrh na refaktoring" in result
     assert "def new_func()" in result
-    mock_read_section.assert_called_once_with("PROJECT_ROOT/dummy/path.py", "old_func")
+    mock_read_section.assert_called_once_with("dummy/path.py", "old_func")
     mock_llm_manager_instance.get_llm.assert_called_once_with("powerful")
     mock_model.generate_content_async.assert_called_once()
 

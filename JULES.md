@@ -16,19 +16,19 @@ Jules má k dispozici dvě kategorie nástrojů: **Standardní Nástroje** s Pyt
 Tyto nástroje se volají pomocí standardní syntaxe funkce v Pythonu.
 
 - **`list_files(path: str = ".") -> list[str]`**
-  - **Popis:** Vypíše soubory a adresáře v zadané cestě. Adresáře jsou označeny lomítkem (`/`).
+  - **Popis:** Vypíše soubory a adresáře v zadané cestě, relativně ke kořenovému adresáři projektu. Adresáře jsou označeny lomítkem (`/`).
   - **Parametry:**
-    - `path` (str, volitelný): Cesta k adresáři. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+    - `path` (str, volitelný): Cesta k adresáři. Výchozí je kořenový adresář projektu (`.`).
 
 - **`read_file(filepath: str) -> str`**
-  - **Popis:** Přečte a vrátí obsah zadaného souboru.
+  - **Popis:** Přečte a vrátí obsah zadaného souboru, relativně ke kořenovému adresáři projektu.
   - **Parametry:**
-    - `filepath` (str): Cesta k souboru. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+    - `filepath` (str): Cesta k souboru (např. `tools/file_system.py`).
 
 - **`delete_file(filepath: str) -> str`**
-  - **Popis:** Smaže zadaný soubor.
+  - **Popis:** Smaže zadaný soubor, relativně ke kořenovému adresáři projektu.
   - **Parametry:**
-    - `filepath` (str): Cesta k souboru, který se má smazat. Výchozí je `sandbox/`.
+    - `filepath` (str): Cesta k souboru, který se má smazat.
 
 - **`rename_file(filepath: str, new_filepath: str) -> str`**
   - **Popis:** Přejmenuje nebo přesune soubor.

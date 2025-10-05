@@ -119,7 +119,7 @@ async def propose_refactoring(filepath: str, class_or_function: str) -> str:
     Vezme konkrétní kus kódu, pošle ho LLM a vrátí 'čistší' verzi tohoto kódu.
     """
     try:
-        code_section = read_file_section(f"PROJECT_ROOT/{filepath}", class_or_function)
+        code_section = read_file_section(filepath, class_or_function)
         if code_section.startswith("Error:"): return code_section
 
         llm_manager = LLMManager(project_root=project_root)

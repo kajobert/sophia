@@ -73,7 +73,7 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
     - Vytvořen specializovaný `MCPClient` pro správu a komunikaci s nástrojovými servery.
     - Vytvořen specializovaný `PromptBuilder` pro dynamické sestavování promptů.
     - Finální `JulesOrchestrator` nyní slouží jako čistá řídící jednotka delegující práci.
-- **Implementace Flexibilního Sandboxingu:** Nástroje pro práci se soubory nyní podporují prefix `PROJECT_ROOT/` pro bezpečný přístup k souborům mimo `/sandbox`.
+- **Zjednodušení Práce se Soubory:** Nástroje pro práci se souborovým systémem byly sjednoceny, aby pracovaly bezpečně a transparentně přímo v kořenovém adresáři projektu, což odstranilo potřebu speciálních prefixů.
 - **Implementace Robustních Nástrojů:** Systém volání nástrojů byl kompletně přepsán na JSON-based formát, což eliminuje chyby při parsování složitých argumentů.
 - **Obnova Vstupních Bodů:** Byly vytvořeny čisté a funkční verze `interactive_session.py` a `main.py` pro interaktivní i jednorázové spouštění.
 - **Oprava a Vylepšení:** Opravena chyba v načítání API klíče (`GEMINI_API_KEY`) a implementováno konfigurovatelné logování pro lepší transparentnost.
@@ -87,7 +87,7 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 - **Problém:** Selhávání parsování argumentů nástrojů.
 - **Řešení:** Přechod na plně JSON-based komunikaci mezi LLM a nástroji.
 - **Problém:** Omezení sandboxu a nemožnost upravovat vlastní kód.
-- **Řešení:** Implementace bezpečného, ale flexibilního přístupu k souborům projektu s prefixem `PROJECT_ROOT/`.
+- **Řešení:** Sjednocení a zjednodušení nástrojů pro práci se soubory, které nyní operují bezpečně v celém projektu bez nutnosti speciálních prefixů.
 
 **Dopad na Projekt:**
 - Agent je nyní plně autonomní a schopen plnit komplexní, více-krokové úkoly.

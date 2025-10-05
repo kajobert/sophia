@@ -77,15 +77,10 @@ def get_project_summary(start_path: str = ".") -> str:
     ignoring common unnecessary files/directories. For each Python file, it extracts
     class and function definitions to provide a quick overview of its purpose.
 
-    :param start_path: The directory to start the summary from. Defaults to the project root.
-                       Use 'PROJECT_ROOT' or 'PROJECT_ROOT/' to specify the project root explicitly.
+    :param start_path: The directory to start the summary from, relative to the project root. Defaults to the project root (`.`).
     :return: A string containing the formatted project summary.
     """
-    # Resolve the start path to handle 'PROJECT_ROOT' variants
-    if start_path.startswith("PROJECT_ROOT"):
-        path_to_walk = "."
-    else:
-        path_to_walk = start_path
+    path_to_walk = start_path
 
     ignore_dirs = {
         '__pycache__', '.venv', '.git', 'logs', 'node_modules',
