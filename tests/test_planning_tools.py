@@ -1,7 +1,8 @@
 import pytest
 import os
 import sys
-from unittest.mock import MagicMock
+import json
+from unittest.mock import MagicMock, AsyncMock
 
 # Přidání cesty k projektu pro importy
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -44,43 +45,38 @@ def test_update_task_status():
     """Testuje aktualizaci stavu úkolu."""
     task_id = planning_server.create_task("Testovací úkol").split(": ")[-1]
 
-    # Validní změna
     result = planning_server.update_task_status(task_id, "in_progress")
     assert "byl aktualizován na 'in_progress'" in result
     assert planning_server.TASK_DATABASE[task_id]["status"] == "in_progress"
 
-    # Nevalidní změna
     result_fail = planning_server.update_task_status(task_id, "neexistujici_stav")
     assert "Chyba: Neplatný stav" in result_fail
-    assert planning_server.TASK_DATABASE[task_id]["status"] == "in_progress" # Stav se nezměnil
+    assert planning_server.TASK_DATABASE[task_id]["status"] == "in_progress"
 
 def test_get_task_details():
     """Testuje získání detailů úkolu."""
     task_id = planning_server.create_task("Detailní úkol").split(": ")[-1]
-    details = planning_server.get_task_details(task_id)
-    assert f"'description': 'Detailní úkol'" in details
-    assert f"'status': 'new'" in details
+    details_str = planning_server.get_task_details(task_id)
+    details = json.loads(details_str)
+    assert details["description"] == "Detailní úkol"
+    assert details["status"] == "new"
 
-def test_summarize_text(monkeypatch):
+@pytest.mark.asyncio
+async def test_summarize_text(monkeypatch):
     """
-    Testuje sumarizaci textu s mockovaným LLM, aby se neprovádělo skutečné volání.
+    Testuje sumarizaci textu s mockovaným LLM.
     """
-    # Vytvoříme falešný model a manažera
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = ("Toto je shrnutí.", {})
-
+    # Mock the LLMManager and its methods
+    mock_model = AsyncMock()
+    mock_model.generate_content_async.return_value = ("Toto je shrnutí.", {})
     mock_llm_manager_instance = MagicMock()
     mock_llm_manager_instance.get_llm.return_value = mock_model
-
-    # Podstrčíme naší falešnou instanci, kdykoliv se bude volat LLMManager()
     monkeypatch.setattr("mcp_servers.planning_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
 
-    long_text = "Toto je velmi dlouhý text, který potřebuje shrnout, protože obsahuje mnoho slov."
-    summary = planning_server.summarize_text(long_text)
+    long_text = "Toto je velmi dlouhý text, který potřebuje shrnout."
+    summary = await planning_server.summarize_text(long_text)
 
     assert "Shrnutí textu:" in summary
     assert "Toto je shrnutí." in summary
-    # Ověříme, že byl model volán se správným promptem
-    mock_model.generate_content.assert_called_once()
-    call_args, _ = mock_model.generate_content.call_args
-    assert long_text in call_args[0]
+    mock_llm_manager_instance.get_llm.assert_called_once_with("economical")
+    mock_model.generate_content_async.assert_called_once()

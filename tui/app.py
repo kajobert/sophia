@@ -14,6 +14,7 @@ from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichL
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.markdown import Markdown
+from rich.table import Table
 
 from core.orchestrator import JulesOrchestrator
 from core.rich_printer import RichPrinter
@@ -149,6 +150,9 @@ class SophiaTUI(App):
         msg_type = message.msg_type
         content = message.content
 
+        def write_to_tool_widget(panel_content, title, border_style):
+            self.tool_widget.write(Panel(panel_content, title=title, border_style=border_style))
+
         if msg_type == "explanation_chunk":
             self.current_explanation += content
             md_panel = Panel(Markdown(self.current_explanation), border_style="blue", title="Myšlenkový pochod")
@@ -156,19 +160,38 @@ class SophiaTUI(App):
             self.query_one("#explanation-container", VerticalScroll).scroll_end(animate=False)
         elif msg_type == "explanation_end":
             self.query_one("#explanation-container", VerticalScroll).scroll_end(animate=True)
-            pass
         elif msg_type == "tool_code":
             panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
-            title = "Volání nástroje"
-            self.tool_widget.write(Panel(panel_content, title=title, border_style="yellow"))
+            write_to_tool_widget(panel_content, "Volání nástroje", "yellow")
         elif msg_type == "tool_output":
-            panel_content = content
-            title = "Výstup nástroje"
-            self.tool_widget.write(Panel(panel_content, title=title, border_style="cyan"))
+            write_to_tool_widget(content, "Výstup nástroje", "cyan")
+        elif msg_type == "inform":
+            write_to_tool_widget(content, "Informace pro uživatele", "green")
+        elif msg_type == "warn":
+            write_to_tool_widget(content, "Varování pro uživatele", "orange3")
+        elif msg_type == "error":
+            write_to_tool_widget(content, "Chyba pro uživatele", "bold red")
+        elif msg_type == "ask":
+            write_to_tool_widget(content, "Otázka pro uživatele", "magenta")
+        elif msg_type == "code":
+            code_content = content.get('code', '')
+            lang = content.get('language', 'python')
+            panel_content = Syntax(code_content, lang, theme="monokai", line_numbers=True)
+            write_to_tool_widget(panel_content, f"Zobrazení kódu ({lang})", "blue")
+        elif msg_type == "table":
+            try:
+                table = Table(title=content.get('title'), border_style="blue")
+                headers = content.get('headers', [])
+                rows = content.get('rows', [])
+                for header in headers:
+                    table.add_column(str(header), justify="left")
+                for row in rows:
+                    table.add_row(*[str(item) for item in row])
+                self.tool_widget.write(table)
+            except Exception as e:
+                self.log_widget.add_log(f"Chyba při vykreslování tabulky: {e}", "ERROR")
         elif msg_type == "task_complete":
-            panel_content = content
-            title = "Úkol Dokončen"
-            self.tool_widget.write(Panel(panel_content, title=title, border_style="bold green"))
+            write_to_tool_widget(content, "Úkol Dokončen", "bold green")
         else:
             self.log_widget.add_log(f"Neznámý typ zprávy '{msg_type}': {content}", "WARNING")
 

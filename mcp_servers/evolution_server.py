@@ -33,7 +33,7 @@ KNOWLEDGE_FILE = os.path.join(project_root, "memory", "self_knowledge.md")
 
 def create_code_sandbox(files_to_copy: list[str]) -> str:
     """
-    Vytvoří dočasný, izolovaný adresář (sandbox) a zkopíruje do něj zadané soubory
+    Vytvoří izolovaný adresář (sandbox) v '.sandbox/' a zkopíruje do něj zadané soubory
     z kořenového adresáře projektu. To umožňuje bezpečně experimentovat se změnami.
     Vrátí cestu k vytvořenému sandboxu.
     """
@@ -41,19 +41,26 @@ def create_code_sandbox(files_to_copy: list[str]) -> str:
     if ACTIVE_SANDBOX_PATH:
         return f"Chyba: Již existuje aktivní sandbox v '{ACTIVE_SANDBOX_PATH}'. Nejdříve ho zničte pomocí 'destroy_sandbox'."
     try:
-        sandbox_path = tempfile.mkdtemp(prefix="agent_sandbox_")
+        sandbox_dir = os.path.join(project_root, ".sandbox")
+        os.makedirs(sandbox_dir, exist_ok=True)
+        sandbox_instance_name = f"agent_sandbox_{uuid.uuid4().hex[:8]}"
+        sandbox_path = os.path.join(sandbox_dir, sandbox_instance_name)
+        os.makedirs(sandbox_path)
         ACTIVE_SANDBOX_PATH = sandbox_path
-        copied_files = [f for f in files_to_copy if os.path.exists(os.path.join(project_root, f))]
-        for file_path in copied_files:
-            shutil.copy(os.path.join(project_root, file_path), sandbox_path)
-        return f"Sandbox byl úspěšně vytvořen v '{sandbox_path}' s {len(copied_files)} zkopírovanými soubory."
+        copied_files = []
+        for file_path_str in files_to_copy:
+            source_path = os.path.join(project_root, file_path_str.lstrip('/'))
+            if os.path.exists(source_path):
+                shutil.copy(source_path, sandbox_path)
+                copied_files.append(file_path_str)
+        relative_sandbox_path = os.path.relpath(sandbox_path, project_root)
+        return f"Sandbox byl úspěšně vytvořen v '{relative_sandbox_path}' s {len(copied_files)} zkopírovanými soubory."
     except Exception as e:
         return f"Chyba při vytváření sandboxu: {e}"
 
 def run_in_sandbox(command: str) -> str:
     """
     Spustí zadaný příkaz uvnitř aktivního sandboxu.
-    Užitečné pro spouštění testů nebo skriptů na upravené verzi kódu.
     """
     global ACTIVE_SANDBOX_PATH
     if not ACTIVE_SANDBOX_PATH: return "Chyba: Žádný aktivní sandbox nebyl nalezen."
@@ -94,7 +101,6 @@ def destroy_sandbox() -> str:
 def run_playwright_test(script_content: str) -> str:
     """
     Přijme obsah Playwright skriptu, uloží ho do dočasného souboru a spustí ho.
-    Vrátí výsledek testu a případně cestu k pořízeným screenshotům.
     """
     try:
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.py', dir='.') as tmp_file:
@@ -108,26 +114,26 @@ def run_playwright_test(script_content: str) -> str:
     except Exception as e:
         return f"Chyba při spouštění Playwright testu: {e}"
 
-def propose_refactoring(filepath: str, class_or_function: str) -> str:
+async def propose_refactoring(filepath: str, class_or_function: str) -> str:
     """
-    Vezme konkrétní kus kódu, pošle ho LLM se speciálním promptem zaměřeným na refaktoring
-    a vrátí 'čistší' nebo efektivnější verzi tohoto kódu.
+    Vezme konkrétní kus kódu, pošle ho LLM a vrátí 'čistší' verzi tohoto kódu.
     """
     try:
         code_section = read_file_section(f"PROJECT_ROOT/{filepath}", class_or_function)
         if code_section.startswith("Error:"): return code_section
+
         llm_manager = LLMManager(project_root=project_root)
         model = llm_manager.get_llm("powerful")
         prompt = f"Jsi expert na refaktoring a čistý kód. Navrhni vylepšenou verzi následujícího kódu. Zaměř se na čitelnost, efektivitu a dodržování osvědčených postupů. Vrať POUZE kód, bez jakéhokoliv dalšího textu nebo vysvětlení.\n\nKód k refaktoringu:\n---\n{code_section}\n---"
-        refactored_code, _ = model.generate_content(prompt)
+
+        refactored_code, _ = await model.generate_content_async(prompt)
         return f"Návrh na refaktoring pro '{class_or_function}':\n```python\n{refactored_code}\n```"
     except Exception as e:
         return f"Chyba při navrhování refaktoringu: {e}"
 
 def archive_completed_task(task_id: str, summary: str, history: list) -> str:
     """
-    Po úspěšném dokončení úkolu vezme celou jeho historii, kontext a finální řešení
-    a uloží je do samostatné, komprimované 'vzpomínky' v archivu.
+    Uloží kompletní záznam o dokončeném úkolu do archivu.
     """
     try:
         archive_file = os.path.join(ARCHIVE_DIR, f"{task_id}.json")
@@ -148,8 +154,7 @@ def search_task_archive(query: str) -> str:
 
 def update_self_knowledge(new_knowledge: str) -> str:
     """
-    Přidá novou znalost, strategii nebo poznatek do agentovy báze znalostí.
-    Tento soubor se používá pro dlouhodobé učení a vylepšování strategií.
+    Přidá novou znalost do agentovy báze znalostí.
     """
     try:
         with open(KNOWLEDGE_FILE, 'a', encoding='utf-8') as f: f.write(f"\n\n---\n*Záznam přidaný {str(uuid.uuid4())}*\n{new_knowledge}")
@@ -180,6 +185,7 @@ async def main():
         "archive_completed_task": archive_completed_task,
         "search_task_archive": search_task_archive,
         "update_self_knowledge": update_self_knowledge,
+        "read_file_section": read_file_section,
     }
 
     while True:
@@ -203,8 +209,12 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
-                        result = await loop.run_in_executor(None, tool_call)
+                        tool_func = tools[tool_name]
+                        if asyncio.iscoroutinefunction(tool_func):
+                            result = await tool_func(*tool_args, **tool_kwargs)
+                        else:
+                            tool_call = functools.partial(tool_func, *tool_args, **tool_kwargs)
+                            result = await loop.run_in_executor(None, tool_call)
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")

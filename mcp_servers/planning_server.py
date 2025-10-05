@@ -29,6 +29,7 @@ def create_task(description: str, parent_id: str = None) -> str:
     """
     task_id = str(uuid.uuid4())
     TASK_DATABASE[task_id] = {
+        "id": task_id,
         "description": description,
         "parent_id": parent_id,
         "subtasks": [],
@@ -71,12 +72,11 @@ def update_task_status(task_id: str, status: str) -> str:
 def get_task_details(task_id: str) -> str:
     """Vrátí detailní informace o konkrétním úkolu."""
     if task_id not in TASK_DATABASE: return f"Chyba: Úkol s ID '{task_id}' nebyl nalezen."
-    return str(TASK_DATABASE[task_id])
+    return json.dumps(TASK_DATABASE[task_id], indent=2)
 
-def summarize_text(text_to_summarize: str) -> str:
+async def summarize_text(text_to_summarize: str) -> str:
     """
     Využije ekonomický LLM model k sumarizaci dlouhého textu.
-    Užitečné pro zpracování obsahu souborů, dlouhých logů nebo historie konverzace.
     """
     try:
         RichPrinter.info("Inicializuji LLM pro sumarizaci...")
@@ -84,11 +84,28 @@ def summarize_text(text_to_summarize: str) -> str:
         summarizer_model = llm_manager.get_llm("economical")
         prompt = f"Prosím, shrň následující text do několika klíčových bodů. Zaměř se na nejdůležitější informace a buď stručný. Text ke shrnutí:\n\n---\n{text_to_summarize}\n---"
         RichPrinter.info("Sumarizuji text...")
-        summary, _ = summarizer_model.generate_content(prompt)
+        summary, _ = await summarizer_model.generate_content_async(prompt)
         return f"Shrnutí textu:\n{summary}"
     except Exception as e:
         RichPrinter.error(f"Došlo k chybě při sumarizaci textu: {e}")
         return f"Chyba: Nepodařilo se sumarizovat text. Důvod: {e}"
+
+# Placeholder implementations for missing tools
+def set_plan(plan: str) -> str:
+    """Sets or updates the plan for how to solve the issue."""
+    return f"Plán byl nastaven na: {plan}"
+
+def plan_step_complete(message: str) -> str:
+    """Marks the current plan step as complete."""
+    return f"Krok plánu dokončen: {message}"
+
+def request_user_input(message: str) -> str:
+    """Asks the user a question or asks for input and waits for a response."""
+    return f"Požadavek na vstup od uživatele: {message}"
+
+def request_code_review() -> str:
+    """Provides a review of the current changes."""
+    return "Požadavek na revizi kódu byl odeslán."
 
 # --- MCP Server Boilerplate ---
 
@@ -109,6 +126,10 @@ async def main():
         "update_task_status": update_task_status,
         "get_task_details": get_task_details,
         "summarize_text": summarize_text,
+        "set_plan": set_plan,
+        "plan_step_complete": plan_step_complete,
+        "request_user_input": request_user_input,
+        "request_code_review": request_code_review,
     }
 
     while True:
@@ -132,8 +153,12 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
-                        result = await loop.run_in_executor(None, tool_call)
+                        tool_func = tools[tool_name]
+                        if asyncio.iscoroutinefunction(tool_func):
+                            result = await tool_func(*tool_args, **tool_kwargs)
+                        else:
+                            tool_call = functools.partial(tool_func, *tool_args, **tool_kwargs)
+                            result = await loop.run_in_executor(None, tool_call)
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
