@@ -10,56 +10,51 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from core.rich_printer import RichPrinter
+# RichPrinter se zde již nepoužívá, volání se přesouvá do orchestratoru
 
 def inform_user(message: str) -> str:
     """
-    Zobrazí uživateli informativní zprávu se zeleným označením.
-    Použij pro běžná sdělení, potvrzení akcí nebo pozitivní výsledky.
+    Pošle informativní zprávu do TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.inform(message)
-    return message
+    return json.dumps({"display": "inform", "content": message})
 
 def warn_user(message: str) -> str:
     """
-    Zobrazí uživateli varování s oranžovým označením.
-    Použij pro upozornění na méně závažné problémy, které nevyžadují okamžitý zásah.
+    Pošle varovnou zprávu do TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.warning(message)
-    return message
+    return json.dumps({"display": "warning", "content": message})
 
 def error_user(message: str) -> str:
     """
-    Zobrazí uživateli chybovou hlášku s červeným označením.
-    Použij pro informování o závažných chybách, selhání operací nebo problémech.
+    Pošle chybovou zprávu do TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.error(message)
-    return message
+    return json.dumps({"display": "error", "content": message})
 
 def ask_user(question: str) -> str:
     """
-    Položí uživateli otázku a počká na jeho odpověď.
-    Tento nástroj by se měl používat střídmě, pouze když je interakce nezbytná.
-    Systém automaticky zpracuje odpověď, nemusíš na ni čekat.
+    Položí otázku v TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.ask(question)
-    return f"Byla položena otázka: {question}"
+    return json.dumps({"display": "ask", "content": question})
 
 def display_code(code: str, language: str = "python") -> str:
     """
-    Zobrazí uživateli formátovaný blok kódu se zvýrazněním syntaxe.
+    Pošle blok kódu pro zobrazení v TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.code(code, language)
-    return f"Zobrazen kód (jazyk: {language}):\n---\n{code}\n---"
+    content = {"code": code, "language": language}
+    return json.dumps({"display": "code", "content": content})
 
 def display_table(title: str, headers: list[str], rows: list[list[str]]) -> str:
     """
-    Zobrazí uživateli přehlednou tabulku s daty.
+    Pošle data pro zobrazení tabulky v TUI.
+    Vrací JSON pro zpracování v orchestratoru.
     """
-    RichPrinter.table(title, headers, rows)
-    header_str = " | ".join(map(str, headers))
-    rows_str = "\n".join([" | ".join(map(str, row)) for row in rows])
-    return f"Zobrazena tabulka '{title}':\n{header_str}\n{'-' * len(header_str)}\n{rows_str}"
+    content = {"title": title, "headers": headers, "rows": rows}
+    return json.dumps({"display": "table", "content": content})
 
 # --- MCP Server Boilerplate ---
 
