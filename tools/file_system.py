@@ -16,10 +16,11 @@ def _resolve_path(user_path: str) -> str:
     if os.path.isabs(norm_user_path) or norm_user_path.startswith(".."):
         raise ValueError(f"Path traversal detected. Absolute paths and '..' are not allowed. Provided: '{user_path}'")
 
-    if user_path.startswith(PROJECT_ROOT_PREFIX):
+    if user_path.startswith("PROJECT_ROOT"):
         # Path is relative to the project root
         base_dir = "."
-        path_to_join = user_path[len(PROJECT_ROOT_PREFIX):]
+        # Strip "PROJECT_ROOT" and then any leading slashes from the remainder
+        path_to_join = user_path.removeprefix("PROJECT_ROOT").lstrip('/')
     else:
         # Path is relative to the sandbox
         base_dir = SANDBOX_DIR

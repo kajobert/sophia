@@ -78,8 +78,15 @@ def get_project_summary(start_path: str = ".") -> str:
     class and function definitions to provide a quick overview of its purpose.
 
     :param start_path: The directory to start the summary from. Defaults to the project root.
+                       Use 'PROJECT_ROOT' or 'PROJECT_ROOT/' to specify the project root explicitly.
     :return: A string containing the formatted project summary.
     """
+    # Resolve the start path to handle 'PROJECT_ROOT' variants
+    if start_path.startswith("PROJECT_ROOT"):
+        path_to_walk = "."
+    else:
+        path_to_walk = start_path
+
     ignore_dirs = {
         '__pycache__', '.venv', '.git', 'logs', 'node_modules',
         'build', 'dist', 'site', 'docs'
@@ -87,12 +94,12 @@ def get_project_summary(start_path: str = ".") -> str:
     ignore_files = {'.DS_Store', 'requirements.txt'}
 
     summary = []
-    for root, dirs, files in os.walk(start_path, topdown=True):
+    for root, dirs, files in os.walk(path_to_walk, topdown=True):
         # Exclude specified directories from traversal
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
 
         # Calculate indentation level based on directory depth
-        relative_path = os.path.relpath(root, start_path)
+        relative_path = os.path.relpath(root, path_to_walk)
         if relative_path == ".":
             level = 0
         else:
