@@ -71,13 +71,17 @@ class RichPrinter:
 
     @staticmethod
     def warning(message: str):
+        """Loguje varování a posílá ho do log panelu i do chat panelu TUI."""
         RichPrinter._log(logging.WARNING, message)
         RichPrinter._post(LogMessage(message, "WARNING"))
+        RichPrinter._post(ChatMessage(message, owner='agent', msg_type='warning'))
 
     @staticmethod
     def error(message: str):
+        """Loguje chybu a posílá ji do log panelu i do chat panelu TUI."""
         RichPrinter._log(logging.ERROR, message)
         RichPrinter._post(LogMessage(message, "ERROR"))
+        RichPrinter._post(ChatMessage(message, owner='agent', msg_type='error'))
 
     # --- Metody pro zobrazení v TUI (pro nové widgety) ---
 
