@@ -265,6 +265,32 @@ class JulesOrchestrator:
             else:
                 result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
 
+            # --- Nová logika pro zpracování TUI nástrojů ---
+            try:
+                data = json.loads(result)
+                if isinstance(data, dict) and 'display' in data:
+                    content = data.get('content')
+                    display_type = data['display']
+
+                    if display_type == 'inform':
+                        RichPrinter.inform(content)
+                    elif display_type == 'warning':
+                        RichPrinter.warning(content)
+                    elif display_type == 'error':
+                        RichPrinter.error(content)
+                    elif display_type == 'ask':
+                        RichPrinter.ask(content)
+                    elif display_type == 'code' and isinstance(content, dict):
+                        RichPrinter.code(content.get('code', ''), content.get('language', 'python'))
+                    elif display_type == 'table' and isinstance(content, dict):
+                        RichPrinter.table(content.get('title', ''), content.get('headers', []), content.get('rows', []))
+
+                    result = "OK. Message displayed to user."
+            except (json.JSONDecodeError, TypeError):
+                # Není to JSON pro TUI, zpracuje se jako normální výstup
+                pass
+            # --- Konec nové logiky ---
+
             # --- Inteligentní ukončení úkolu ---
             # Pokud byl použit "terminální" nástroj, považujeme úkol za dokončený.
             if tool_name in TERMINAL_TOOLS:
