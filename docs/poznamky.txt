@@ -9,3 +9,6 @@ Planovani kroku pred spustenim tasku, vzdy jen jeden krok kvuli velikosti kontex
 
 # nastroje
 (HOTOVO) nastroj pro komunikaci s uzivatelem - odpoved / dotaz / informace / chyba ...
+
+VYŘEŠIT:
+nástroje warn_user a error_user se nevykreslují v TUI, pravděpodobně konflikt s LOG záložkou v TUI... Opravit
