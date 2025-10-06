@@ -54,7 +54,7 @@ class MCPClient:
 
         # Try to read the response, with a timeout.
         try:
-            response_line = await asyncio.wait_for(process.stdout.readline(), timeout=2.0)
+            response_line = await asyncio.wait_for(process.stdout.readline(), timeout=20.0)
         except asyncio.TimeoutError:
             response_line = None
 
