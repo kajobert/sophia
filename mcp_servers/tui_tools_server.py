@@ -34,7 +34,7 @@ def warn_user(*args, **kwargs) -> str:
     Vrací JSON pro zpracování v orchestratoru.
     """
     message = _get_first_string_value(*args, **kwargs)
-    return json.dumps({"display": "warning", "content": message})
+    return json.dumps({"display": "warn", "content": message})
 
 def error_user(*args, **kwargs) -> str:
     """

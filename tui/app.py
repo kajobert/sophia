@@ -164,15 +164,15 @@ class SophiaTUI(App):
             panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
             write_to_tool_widget(panel_content, "Volání nástroje", "yellow")
         elif msg_type == "tool_output":
-            write_to_tool_widget(content, "Výstup nástroje", "cyan")
+            write_to_tool_widget(content, "Výstup nástroje", "bright_cyan")
         elif msg_type == "inform":
-            write_to_tool_widget(content, "Informace pro uživatele", "green")
+            write_to_tool_widget(content, "Informace pro uživatele", "bright_green")
         elif msg_type == "warn":
-            write_to_tool_widget(content, "Varování pro uživatele", "orange3")
+            write_to_tool_widget(content, "Varování pro uživatele", "bright_yellow")
         elif msg_type == "error":
-            write_to_tool_widget(content, "Chyba pro uživatele", "bold red")
+            write_to_tool_widget(content, "Chyba pro uživatele", "bright_red")
         elif msg_type == "ask":
-            write_to_tool_widget(content, "Otázka pro uživatele", "magenta")
+            write_to_tool_widget(content, "Otázka pro uživatele", "bright_magenta")
         elif msg_type == "code":
             code_content = content.get('code', '')
             lang = content.get('language', 'python')

@@ -21,7 +21,7 @@ def warn_user(message: str) -> str:
     Zobrazí uživateli varování s oranžovým označením.
     Použij pro upozornění na méně závažné problémy, které nevyžadují okamžitý zásah.
     """
-    RichPrinter.warning(message)
+    RichPrinter.warn(message)
     return "Varovná zpráva byla úspěšně zobrazena uživateli."
 
 def error_user(message: str) -> str:
