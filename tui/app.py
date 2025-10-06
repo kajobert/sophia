@@ -168,7 +168,7 @@ class SophiaTUI(App):
         elif msg_type == "inform":
             write_to_tool_widget(content, "Informace pro uživatele", "green")
         elif msg_type == "warn":
-            write_to_tool_widget(content, "Varování pro uživatele", "yellow")
+            write_to_tool_widget(content, "Varování pro uživatele", "orange3")
         elif msg_type == "error":
             write_to_tool_widget(content, "Chyba pro uživatele", "bold red")
         elif msg_type == "ask":

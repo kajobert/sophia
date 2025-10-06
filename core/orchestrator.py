@@ -13,6 +13,7 @@ project_root_for_import = os.path.abspath(os.path.join(os.path.dirname(__file__)
 if project_root_for_import not in sys.path:
     sys.path.insert(0, project_root_for_import)
 
+from tui.messages import ChatMessage
 from core.mcp_client import MCPClient
 from core.prompt_builder import PromptBuilder
 from core.rich_printer import RichPrinter
@@ -152,6 +153,7 @@ class JulesOrchestrator:
             RichPrinter.info(f"### Zahájení nového sezení (ID: {session_id})")
 
         RichPrinter.info(f"Úkol: {initial_task}")
+        RichPrinter._post(ChatMessage(f"{initial_task}", owner='user', msg_type='user_input')) # Zobrazíme vstup uživatele
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
         self.memory_manager.save_history(session_id, self.history)
 
@@ -176,17 +178,16 @@ class JulesOrchestrator:
             RichPrinter.info(f"Přemýšlím... (model: {model.model_name})")
 
             if self.verbose:
-                RichPrinter.agent_markdown(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```")
+                RichPrinter._post(ChatMessage(f"**Prompt odeslaný do LLM:**\n\n```\n{prompt}\n```", owner='agent', msg_type='verbose'))
 
             # --- Finální, robustní logika pro streamování a parsování ---
             full_response_text = ""
 
-            # 1. Callback pouze sbírá data, nic nezobrazuje.
+            # 1. Callback pouze sbírá data a posílá je do TUI.
             async def stream_callback(chunk: str):
                 nonlocal full_response_text
                 full_response_text += chunk
-                # V TUI se bude zobrazovat tečka nebo spinner, ne surový JSON
-                RichPrinter.stream_explanation(".")
+                RichPrinter._post(ChatMessage(chunk, owner='agent', msg_type='explanation_chunk'))
 
             # 2. Zavoláme LLM se streamováním a vynuceným JSON výstupem.
             response_text, usage_data = await model.generate_content_async(
@@ -196,7 +197,7 @@ class JulesOrchestrator:
             )
 
             # Ukončíme "načítací" animaci v TUI
-            RichPrinter.finish_explanation_stream()
+            RichPrinter._post(ChatMessage("", owner='agent', msg_type='explanation_end'))
 
             # 3. Zpracujeme náklady a tokeny
             if usage_data:
@@ -216,7 +217,6 @@ class JulesOrchestrator:
 
             if not tool_call_data or "tool_name" not in tool_call_data:
                 RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku nebo se JSON nepodařilo zparsovat. Pokračuji v přemýšlení.")
-                # I když se streamovalo, finální vysvětlení uložíme do historie
                 if explanation:
                     self.history.append((explanation, "Žádná akce."))
                     self.memory_manager.save_history(session_id, self.history)
@@ -227,21 +227,17 @@ class JulesOrchestrator:
             kwargs = tool_call_data.get("kwargs", {})
 
             RichPrinter.info(">>> AKCE")
-            RichPrinter.agent_tool_code(json.dumps(tool_call_data, indent=2, ensure_ascii=False))
+            RichPrinter._post(ChatMessage(json.dumps(tool_call_data, indent=2, ensure_ascii=False), owner='agent', msg_type='tool_code'))
 
-            # Sestavení záznamu do historie (myšlenkový pochod + volání nástroje)
             history_entry_request = f"Myšlenkový pochod:\n{explanation}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
 
             if tool_name == "task_complete":
                 RichPrinter.info("Agent signalizoval dokončení úkolu. Ukládám vzpomínku...")
                 summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
-
-                # Zobrazíme finální shrnutí ve speciálním panelu v TUI
-                RichPrinter.show_task_complete(summary)
-
+                RichPrinter._post(ChatMessage(summary, owner='agent', msg_type='task_complete'))
                 self.memory_manager.save_session(session_id, initial_task, summary)
                 RichPrinter.info(f"Vzpomínka pro session {session_id} byla úspěšně uložena.")
-                task_was_completed_by_agent = True # Nastavíme příznak
+                task_was_completed_by_agent = True
                 break
 
             if tool_name == "show_last_output":
@@ -249,11 +245,9 @@ class JulesOrchestrator:
                 output = "V paměti není žádný předchozí dlouhý výstup."
                 if self.last_full_output:
                     output = self.last_full_output
-                    RichPrinter.agent_tool_output(output)
+                    RichPrinter._post(ChatMessage(output, owner='agent', msg_type='tool_output'))
                 else:
                     RichPrinter.warning(output)
-
-                # Klíčová oprava: Přidáme plný výstup do historie, aby se přerušila smyčka
                 self.history.append((history_entry_request, output))
                 self.memory_manager.save_history(session_id, self.history)
                 continue
@@ -271,54 +265,34 @@ class JulesOrchestrator:
                 if isinstance(data, dict) and 'display' in data:
                     content = data.get('content')
                     display_type = data['display']
-
-                    if display_type == 'inform':
-                        RichPrinter.inform(content)
-                    elif display_type == 'warning':
-                        RichPrinter.warning(content)
-                    elif display_type == 'error':
-                        RichPrinter.error(content)
-                    elif display_type == 'ask':
-                        RichPrinter.ask(content)
-                    elif display_type == 'code' and isinstance(content, dict):
-                        RichPrinter.code(content.get('code', ''), content.get('language', 'python'))
-                    elif display_type == 'table' and isinstance(content, dict):
-                        RichPrinter.table(content.get('title', ''), content.get('headers', []), content.get('rows', []))
-
-                    result = "OK. Message displayed to user."
+                    # Orchestrator přímo posílá ChatMessage, RichPrinter se už nepoužívá pro zobrazování.
+                    RichPrinter._post(ChatMessage(content, owner='agent', msg_type=display_type))
+                    result = "OK. Zpráva zobrazena uživateli."
             except (json.JSONDecodeError, TypeError):
                 # Není to JSON pro TUI, zpracuje se jako normální výstup
                 pass
             # --- Konec nové logiky ---
 
-            # --- Inteligentní ukončení úkolu ---
-            # Pokud byl použit "terminální" nástroj, považujeme úkol za dokončený.
             if tool_name in TERMINAL_TOOLS:
                 RichPrinter.info(f"Terminální nástroj '{tool_name}' byl použit. Úkol se automaticky ukončuje.")
                 task_was_completed_by_agent = True
-                # Výstup nástroje se ještě zpracuje a uloží, ale smyčka se poté ukončí.
 
             output_for_display, output_for_history = self._handle_long_output(result)
 
             RichPrinter.info("<<< VÝSLEDEK")
-            RichPrinter.agent_tool_output(output_for_display)
+            RichPrinter._post(ChatMessage(output_for_display, owner='agent', msg_type='tool_output'))
 
-            # Uložení do krátkodobé paměti (historie)
             self.history.append((history_entry_request, output_for_history))
             self.memory_manager.save_history(session_id, self.history)
-
-            # Uložení kompletní interakce do dlouhodobé paměti (LTM)
             ltm_entry = f"Krok {i+1}:\nMyšlenkový pochod a akce:\n{history_entry_request}\n\nVýsledek:\n{output_for_history}"
             self.ltm.add_memory(ltm_entry, metadata={"session_id": session_id, "iteration": i + 1})
 
-            # Pokud byl použit terminální nástroj, ukončíme smyčku zde.
             if task_was_completed_by_agent:
                 break
 
         if not task_was_completed_by_agent:
             final_message = f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen."
             RichPrinter.warning(final_message)
-            # Uložíme session i v tomto případě, ale s jiným shrnutím
             summary = f"Úkol byl automaticky ukončen po dosažení limitu {self.max_iterations} iterací."
             self.memory_manager.save_session(session_id, initial_task, summary)
             RichPrinter.info(f"Vzpomínka pro session {session_id} byla uložena s poznámkou o přerušení.")
@@ -334,7 +308,6 @@ class JulesOrchestrator:
         Zvládá i případy, kdy je JSON zabalen v Markdown bloku.
         Vrací (explanation, tool_call_data).
         """
-        # Odstranění případného Markdown obalu
         cleaned_text = response_text.strip()
         match = re.search(r"```(json)?\s*\n(.*?)\n```", cleaned_text, re.DOTALL)
         if match:
@@ -344,11 +317,8 @@ class JulesOrchestrator:
             parsed_response = json.loads(cleaned_text)
             explanation = parsed_response.get("explanation", "").strip()
             tool_call_data = parsed_response.get("tool_call")
-
-            # Zobrazíme myšlenkový pochod, který jsme dostali v JSONu
-            RichPrinter.stream_explanation(explanation)
+            # Myšlenkový pochod se nyní streamuje přímo, zde ho jen vrátíme.
             return explanation, tool_call_data
-
         except json.JSONDecodeError:
             RichPrinter.error("Kritické selhání: Odpověď LLM nebyla validní JSON, přestože byl vynucen JSON režim.")
             RichPrinter.error(f"Přijatá odpověď (po čištění, prvních 500 znaků): {cleaned_text[:500]}")
