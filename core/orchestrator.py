@@ -153,7 +153,8 @@ class JulesOrchestrator:
             RichPrinter.info(f"### Zahájení nového sezení (ID: {session_id})")
 
         RichPrinter.info(f"Úkol: {initial_task}")
-        RichPrinter._post(ChatMessage(f"{initial_task}", owner='user', msg_type='user_input')) # Zobrazíme vstup uživatele
+        RichPrinter._post(ChatMessage(f"{initial_task}", owner='user', msg_type='user_input'))
+        RichPrinter.log_communication("Vstup od uživatele", initial_task, style="green")
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
         self.memory_manager.save_history(session_id, self.history)
 
@@ -170,7 +171,13 @@ class JulesOrchestrator:
                 model = self.llm_manager.get_llm(selected_model_name)
                 RichPrinter.info(f"Vybrán model: [bold cyan]{model.model_name}[/bold cyan] (alias: {selected_model_name})")
             except (ValueError, FileNotFoundError) as e:
-                RichPrinter.error(f"Nepodařilo se načíst model '{selected_model_name}': {e}")
+                error_title = "Selhání načtení LLM modelu"
+                error_content = (
+                    f"Nepodařilo se načíst nebo inicializovat požadovaný model '{selected_model_name}'. "
+                    "To může být způsobeno chybějící konfigurací, neplatným API klíčem nebo nedostupností služby."
+                )
+                RichPrinter.log_error_panel(error_title, error_content, exception=e)
+                # Po kritické chybě, která brání pokračování, ukončíme smyčku.
                 break
 
             # Fáze 2: Volání LLM s vynuceným JSON formátem
@@ -215,8 +222,12 @@ class JulesOrchestrator:
             # 4. Až zde, s kompletní odpovědí, parsujeme a zobrazujeme.
             explanation, tool_call_data = self._parse_llm_response(response_text)
 
+            if explanation:
+                RichPrinter.log_communication("Myšlenkový pochod", explanation, style="dim blue")
+
             if not tool_call_data or "tool_name" not in tool_call_data:
                 RichPrinter.warning("LLM se rozhodl nepoužít nástroj v tomto kroku nebo se JSON nepodařilo zparsovat. Pokračuji v přemýšlení.")
+                RichPrinter.log_communication("Rozhodnutí agenta", "Žádná akce v tomto kroku.", style="yellow")
                 if explanation:
                     self.history.append((explanation, "Žádná akce."))
                     self.memory_manager.save_history(session_id, self.history)
@@ -227,7 +238,8 @@ class JulesOrchestrator:
             kwargs = tool_call_data.get("kwargs", {})
 
             RichPrinter.info(">>> AKCE")
-            RichPrinter._post(ChatMessage(json.dumps(tool_call_data, indent=2, ensure_ascii=False), owner='agent', msg_type='tool_code'))
+            # RichPrinter._post(ChatMessage(json.dumps(tool_call_data, indent=2, ensure_ascii=False), owner='agent', msg_type='tool_code')) # Nahrazeno log_communication
+            RichPrinter.log_communication("Volání nástroje", tool_call_data, style="yellow")
 
             history_entry_request = f"Myšlenkový pochod:\n{explanation}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
 
@@ -280,6 +292,7 @@ class JulesOrchestrator:
             output_for_display, output_for_history = self._handle_long_output(result)
 
             RichPrinter.info("<<< VÝSLEDEK")
+            RichPrinter.log_communication("Výsledek nástroje", output_for_history, style="cyan")
             RichPrinter._post(ChatMessage(output_for_display, owner='agent', msg_type='tool_output'))
 
             self.history.append((history_entry_request, output_for_history))
@@ -317,12 +330,19 @@ class JulesOrchestrator:
             parsed_response = json.loads(cleaned_text)
             explanation = parsed_response.get("explanation", "").strip()
             tool_call_data = parsed_response.get("tool_call")
-            # Myšlenkový pochod se nyní streamuje přímo, zde ho jen vrátíme.
             return explanation, tool_call_data
-        except json.JSONDecodeError:
-            RichPrinter.error("Kritické selhání: Odpověď LLM nebyla validní JSON, přestože byl vynucen JSON režim.")
-            RichPrinter.error(f"Přijatá odpověď (po čištění, prvních 500 znaků): {cleaned_text[:500]}")
-            explanation = f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON. {cleaned_text}"
+        except json.JSONDecodeError as e:
+            error_title = "Selhání parsování JSON odpovědi"
+            error_content = (
+                "Odpověď od LLM se nepodařilo zpracovat jako validní JSON, "
+                "i když byl vynucen JSON režim. To může indikovat problém s modelem nebo s promptem.\n\n"
+                f"**Přijatá odpověď (po čištění, prvních 500 znaků):**\n"
+                f"```\n{cleaned_text[:500]}\n```"
+            )
+            RichPrinter.log_error_panel(error_title, error_content, exception=e)
+
+            # Vytvoříme vysvětlení pro historii, aby bylo jasné, co se stalo
+            explanation = f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON. Podrobnosti byly zaznamenány do chybových logů."
             return explanation, None
 
     def _handle_long_output(self, result: str) -> tuple[str, str]:

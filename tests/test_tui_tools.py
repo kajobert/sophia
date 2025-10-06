@@ -22,7 +22,7 @@ def test_warn_user_returns_correct_json():
     message = "This is a warning."
     result = tui_tools.warn_user(message)
     data = json.loads(result)
-    assert data == {"display": "warning", "content": message}
+    assert data == {"display": "warn", "content": message}
 
 def test_error_user_returns_correct_json():
     message = "This is an error."
