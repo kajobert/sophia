@@ -53,10 +53,11 @@ class PromptBuilder:
                 RichPrinter.info(f"Prohledávám LTM s dotazem: '{query_text[:150]}...'")
                 relevant_memories = self.ltm.search_memory(query_text, n_results=self.long_term_retrieval_limit)
 
-                if relevant_memories:
+                documents = relevant_memories.get('documents', [[]])[0]
+                if documents:
                     prompt_parts.append("\n# **RELEVANTNÍ KONTEXT Z ARCHIVU**\n")
                     prompt_parts.append("Toto jsou úryvky z tvé dlouhodobé paměti, které by mohly být relevantní pro aktuální úkol:\n")
-                    for i, memory in enumerate(relevant_memories):
+                    for i, memory in enumerate(documents):
                         prompt_parts.append(f"--- Archivní záznam {i+1} ---\n{memory}\n--------------------------\n")
                     prompt_parts.append("\n")
 
