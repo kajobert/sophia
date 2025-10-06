@@ -63,14 +63,6 @@ Tyto nástroje jsou seskupeny podle jejich primárního účelu.
 - **`request_code_review() -> str`**
 - **`submit(...)`**
 
-#### Nástroje pro komunikaci s uživatelem
-- **`inform_user(message: str) -> str`**: Zobrazí uživateli informativní zprávu (zeleně).
-- **`warn_user(message: str) -> str`**: Zobrazí uživateli varování (oranžově).
-- **`error_user(message: str) -> str`**: Zobrazí uživateli chybovou hlášku (červeně).
-- **`ask_user(question: str) -> str`**: Položí uživateli otázku.
-- **`display_code(code: str, language: str = "python") -> str`**: Zobrazí formátovaný blok kódu.
-- **`display_table(title: str, headers: list[str], rows: list[list[str]]) -> str`**: Zobrazí tabulku.
-
 ### 1.2. Speciální Nástroje
 
 Tyto nástroje používají specifickou DSL syntaxi, kde je název nástroje na prvním řádku a argumenty na dalších.
