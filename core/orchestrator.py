@@ -303,7 +303,7 @@ class JulesOrchestrator:
 
     def _parse_llm_response(self, response_text: str) -> tuple[str, dict | None]:
         """
-        Paruje JSON odpověď od LLM.
+        Parsuje JSON odpověď od LLM.
         Očekává, že odpověď je validní JSON díky vynucenému režimu.
         Zvládá i případy, kdy je JSON zabalen v Markdown bloku.
         Vrací (explanation, tool_call_data).
