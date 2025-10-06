@@ -1,22 +1,34 @@
 import sqlite3
 import os
 from datetime import datetime
+from .long_term_memory import LongTermMemory
 
 DB_FILE = "memory.db"
 MEMORY_DIR = "memory"
 
 class MemoryManager:
     """
-    Spravuje perzistentní paměť agenta pomocí SQLite databáze.
+    Spravuje perzistentní paměť agenta pomocí SQLite databáze (pro strukturovaná data)
+    a vektorové databáze ChromaDB (pro sémantické vyhledávání).
     """
-    def __init__(self, db_path=None):
+    def __init__(self, db_path=None, ltm_db_path=None, ltm_collection_name=None):
         if db_path is None:
-            # Zajistí, že adresář pro paměť existuje
             os.makedirs(MEMORY_DIR, exist_ok=True)
             db_path = os.path.join(MEMORY_DIR, DB_FILE)
 
         self.conn = sqlite3.connect(db_path)
         self._create_table()
+
+        # Inicializace dlouhodobé sémantické paměti s možností přepsání cest pro testování
+        try:
+            self.ltm = LongTermMemory(
+                db_path_override=ltm_db_path,
+                collection_name_override=ltm_collection_name
+            )
+        except Exception as e:
+            self.ltm = None
+            print(f"Chyba: Nepodařilo se inicializovat LongTermMemory: {e}")
+
 
     def _create_table(self):
         """Vytvoří tabulky pro sessions a historii konverzace, pokud neexistují."""
@@ -49,13 +61,9 @@ class MemoryManager:
     def save_history(self, session_id: str, history: list[tuple[str, str]]):
         """
         Uloží kompletní historii konverzace pro dané sezení.
-        Před uložením vymaže starou historii pro toto sezení.
         """
         with self.conn:
-            # Nejprve vymažeme starou historii pro dané sezení
             self.conn.execute("DELETE FROM conversation_history WHERE session_id = ?", (session_id,))
-
-            # Vložíme nové záznamy
             rows = [
                 (session_id, i, request, response)
                 for i, (request, response) in enumerate(history)
@@ -75,41 +83,51 @@ class MemoryManager:
         return cursor.fetchall()
 
     def save_session(self, session_id: str, task_prompt: str, summary: str):
-        """Uloží shrnutí dokončeného úkolu do databáze."""
+        """
+        Uloží shrnutí dokončeného úkolu do databáze a do vektorové paměti.
+        """
+        # Uložení do SQLite
         query = "INSERT INTO sessions (session_id, task_prompt, summary) VALUES (?, ?, ?)"
         cursor = self.conn.cursor()
         cursor.execute(query, (session_id, task_prompt, summary))
         self.conn.commit()
+
+        # Uložení do vektorové paměti
+        if self.ltm and summary:
+            metadata = {"session_id": session_id, "task": task_prompt, "timestamp": datetime.now().isoformat()}
+            self.ltm.add_memory(summary, metadata)
+
         return cursor.lastrowid
 
-    def get_relevant_memories(self, keywords: list[str], limit: int = 5) -> list[dict]:
+    def get_relevant_memories(self, query: str, limit: int = 5) -> list[dict]:
         """
-        Vyhledá relevantní vzpomínky na základě klíčových slov.
-        Vrací seznam slovníků s detaily o session.
+        Vyhledá relevantní vzpomínky pomocí sémantického vyhledávání.
         """
-        if not keywords:
+        if not self.ltm:
+            print("Varování: LongTermMemory není k dispozici. Vyhledávání není možné.")
             return []
 
-        # Sestavení dynamického WHERE dotazu
-        where_clauses = " OR ".join(["summary LIKE ?"] * len(keywords))
-        query = f"SELECT task_prompt, summary, created_at FROM sessions WHERE {where_clauses} ORDER BY created_at DESC LIMIT ?"
+        results = self.ltm.search_memory(query, n_results=limit)
 
-        # Přidání '%' pro LIKE vyhledávání
-        like_keywords = [f"%{kw}%" for kw in keywords]
-
-        cursor = self.conn.cursor()
-        cursor.execute(query, (*like_keywords, limit))
-
-        rows = cursor.fetchall()
         memories = []
-        for row in rows:
-            memories.append({"task": row[0], "summary": row[1], "timestamp": row[2]})
+        if results and results.get('documents'):
+            # Spojení dokumentů a metadat do jednoho seznamu slovníků
+            docs = results.get('documents', [[]])[0]
+            metadatas = results.get('metadatas', [[]])[0]
 
+            for i, doc in enumerate(docs):
+                meta = metadatas[i]
+                memories.append({
+                    "task": meta.get("task", "N/A"),
+                    "summary": doc,
+                    "timestamp": meta.get("timestamp", "N/A")
+                })
         return memories
+
 
     def get_all_memories(self, limit: int = 100) -> list[dict]:
         """
-        Získá všechny uložené vzpomínky (sessions), seřazené od nejnovější.
+        Získá všechny uložené vzpomínky (sessions) z SQLite, seřazené od nejnovější.
         """
         query = "SELECT task_prompt, summary, created_at FROM sessions ORDER BY created_at DESC LIMIT ?"
         cursor = self.conn.cursor()
@@ -123,6 +141,8 @@ class MemoryManager:
         return memories
 
     def close(self):
-        """Uzavře spojení s databází."""
+        """Uzavře spojení s oběma databázemi."""
         if self.conn:
             self.conn.close()
+        if self.ltm:
+            self.ltm.shutdown()

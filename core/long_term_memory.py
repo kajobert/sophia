@@ -15,11 +15,6 @@ class LongTermMemory:
         """
         Inicializuje klienta databáze, načte nebo vytvoří kolekci
         a připraví model pro tvorbu vektorových embeddings.
-
-        Args:
-            project_root (str): Kořenový adresář projektu.
-            db_path_override (str, optional): Cesta k DB pro testování.
-            collection_name_override (str, optional): Název kolekce pro testování.
         """
         self.project_root = os.path.abspath(project_root)
         self._load_config()
@@ -39,7 +34,6 @@ class LongTermMemory:
 
         except Exception as e:
             RichPrinter.error(f"Kritická chyba při inicializaci ChromaDB nebo SentenceTransformer: {e}")
-            # Znovu vyvoláme chybu, aby vyšší vrstvy (včetně testů) věděly, že se inicializace nepovedla.
             raise
 
     def _load_config(self):
@@ -56,7 +50,6 @@ class LongTermMemory:
     def add_memory(self, text_chunk: str, metadata: dict = None):
         """
         Přidá textový záznam do dlouhodobé paměti.
-        Vygeneruje pro něj embedding a uloží ho do vektorové databáze.
         """
         if not self.collection or not self.model:
             RichPrinter.error("LTM není správně inicializována. Nelze přidat paměť.")
@@ -66,15 +59,10 @@ class LongTermMemory:
             embedding = self.model.encode([text_chunk])[0].tolist()
             doc_id = str(uuid.uuid4())
 
-            # ChromaDB vyžaduje, aby metadata měla hodnoty typu int, float, nebo str.
-            # Pro jistotu převedeme všechny hodnoty.
             safe_metadata = {}
             if metadata:
                 for key, value in metadata.items():
-                    if isinstance(value, (int, float, str)):
-                        safe_metadata[key] = value
-                    else:
-                        safe_metadata[key] = str(value)
+                    safe_metadata[key] = str(value)
 
             add_params = {
                 'ids': [doc_id],
@@ -85,35 +73,33 @@ class LongTermMemory:
                 add_params['metadatas'] = [safe_metadata]
 
             self.collection.add(**add_params)
-            RichPrinter.info(f"Nový záznam přidán do LTM (ID: {doc_id}).")
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se přidat záznam do ChromaDB: {e}")
             raise
 
-    def search_memory(self, query_text: str, n_results: int = 5) -> list[str]:
+    def search_memory(self, query_text: str, n_results: int = 5) -> dict:
         """
         Prohledá dlouhodobou paměť a vrátí N nejrelevantnějších záznamů.
         """
         if not self.collection or not self.model:
             RichPrinter.error("LTM není správně inicializována. Nelze prohledat paměť.")
-            return []
+            return {}
 
         if not query_text:
-            return []
+            return {}
 
         try:
             query_embedding = self.model.encode([query_text])[0].tolist()
-            # Ujistíme se, že n_results nepřesahuje počet záznamů v kolekci
             count = self.collection.count()
             if count == 0:
-                return []
+                return {}
 
             results = self.collection.query(
                 query_embeddings=[query_embedding],
-                n_results=min(n_results, count)
+                n_results=min(n_results, count),
+                include=["metadatas", "documents"]
             )
-
-            return results.get('documents', [[]])[0]
+            return results
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se prohledat ChromaDB: {e}")
             raise
@@ -121,7 +107,6 @@ class LongTermMemory:
     def clear_memory(self):
         """
         Kompletně vymaže (smaže a znovu vytvoří) aktuální kolekci.
-        Užitečné pro testování.
         """
         if not self.client:
             RichPrinter.error("LTM není správně inicializována. Nelze vymazat paměť.")
@@ -139,9 +124,8 @@ class LongTermMemory:
         Bezpečně ukončí spojení s databází a vyčistí zdroje.
         Zásadní pro testování, aby se předešlo zamykání souborů.
         """
-        if self.client:
-            try:
-                self.client.reset()
-                RichPrinter.info("ChromaDB klient byl úspěšně resetován.")
-            except Exception as e:
-                RichPrinter.error(f"Nepodařilo se resetovat ChromaDB klienta: {e}")
+        # Uvolníme reference, což pomůže garbage collectoru uvolnit zámky souborů.
+        # Metoda reset() je v cílovém prostředí zakázána.
+        self.client = None
+        self.collection = None
+        RichPrinter.info("LongTermMemory shutdown.")
