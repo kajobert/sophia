@@ -41,8 +41,16 @@ class SophiaTUI(App):
         self.current_explanation = ""
         self.tool_widget = RichLog(id="tool_output", highlight=True, markup=True)
         self.tool_widget.border_title = "Výstup nástrojů"
-        self.log_widget = StatusWidget(id="log_view")
-        self.log_widget.border_title = "Systémové logy"
+
+        self.system_log_widget = StatusWidget(id="system_log_view")
+        self.system_log_widget.border_title = "Systémové Logy"
+
+        self.communication_log_widget = RichLog(id="communication_log_view", highlight=True, markup=True)
+        self.communication_log_widget.border_title = "Záznam Komunikace"
+
+        self.error_log_widget = RichLog(id="error_log_view", highlight=True, markup=True)
+        self.error_log_widget.border_title = "Záznam Chyb"
+
         self.orchestrator = JulesOrchestrator(project_root=self.project_root)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
         self.session_id = None
@@ -55,8 +63,12 @@ class SophiaTUI(App):
                 with VerticalScroll(id="explanation-container"):
                     yield self.explanation_widget
                 yield self.tool_widget
-            with TabPane("Logy", id="log_tab"):
-                yield self.log_widget
+            with TabPane("Komunikace", id="communication_tab"):
+                yield self.communication_log_widget
+            with TabPane("Systémové logy", id="system_log_tab"):
+                yield self.system_log_widget
+            with TabPane("Chyby", id="error_log_tab"):
+                yield self.error_log_widget
         yield self.input_widget
         yield Footer()
 
@@ -142,8 +154,8 @@ class SophiaTUI(App):
              self.session_id = self.orchestrator.session_id
 
     def on_log_message(self, message: LogMessage) -> None:
-        """Zpracuje logovací zprávu a zobrazí ji v záložce Logy."""
-        self.log_widget.add_log(message.text, message.level)
+        """Zpracuje logovací zprávu a zobrazí ji v záložce Systémové logy."""
+        self.system_log_widget.add_log(message.text, message.level)
 
     def on_chat_message(self, message: ChatMessage) -> None:
         """Zpracuje zprávu pro agenta a zobrazí ji ve správném widgetu."""
@@ -189,11 +201,20 @@ class SophiaTUI(App):
                     table.add_row(*[str(item) for item in row])
                 self.tool_widget.write(table)
             except Exception as e:
-                self.log_widget.add_log(f"Chyba při vykreslování tabulky: {e}", "ERROR")
+                self.system_log_widget.add_log(f"Chyba při vykreslování tabulky: {e}", "ERROR")
         elif msg_type == "task_complete":
             write_to_tool_widget(content, "Úkol Dokončen", "bold green")
+        elif msg_type == "user_input":
+            # Tento typ zprávy se již vizuálně zpracovává v `on_input_submitted`.
+            # Zpráva od orchestrátoru slouží pro interní účely (paměť, logování).
+            # Zde ji pouze zaznamenáme do systémových logů, aby se předešlo varování.
+            self.system_log_widget.add_log(f"Přijat vstup od uživatele: {content}", "INFO")
+        elif msg_type == "communication_log":
+            self.communication_log_widget.write(content)
+        elif msg_type == "error_log":
+            self.error_log_widget.write(content)
         else:
-            self.log_widget.add_log(f"Neznámý typ zprávy '{msg_type}': {content}", "WARNING")
+            self.system_log_widget.add_log(f"Neznámý typ zprávy '{msg_type}': {content}", "WARNING")
 
     async def action_request_quit(self):
         """Bezpečně ukončí aplikaci."""
