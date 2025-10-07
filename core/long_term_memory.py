@@ -56,6 +56,11 @@ class LongTermMemory:
             return
 
         try:
+            RichPrinter.memory_log(
+                operation="WRITE",
+                source="LTM (ChromaDB)",
+                content={"text_chunk": text_chunk, "metadata": metadata},
+            )
             embedding = self.model.encode([text_chunk])[0].tolist()
             doc_id = str(uuid.uuid4())
 
@@ -89,6 +94,11 @@ class LongTermMemory:
             return {}
 
         try:
+            RichPrinter.memory_log(
+                operation="READ",
+                source="LTM (ChromaDB)",
+                content={"query": query_text, "n_results": n_results},
+            )
             query_embedding = self.model.encode([query_text])[0].tolist()
             count = self.collection.count()
             if count == 0:
@@ -98,6 +108,11 @@ class LongTermMemory:
                 query_embeddings=[query_embedding],
                 n_results=min(n_results, count),
                 include=["metadatas", "documents"]
+            )
+            RichPrinter.memory_log(
+                operation="READ",
+                source="LTM (ChromaDB) - Result",
+                content={"results_found": len(results.get("documents", [[]])[0]), "results": results},
             )
             return results
         except Exception as e:
@@ -113,6 +128,11 @@ class LongTermMemory:
             return
 
         try:
+            RichPrinter.memory_log(
+                operation="CLEAR",
+                source="LTM (ChromaDB)",
+                content={"collection_name": self.collection_name},
+            )
             self.client.delete_collection(name=self.collection_name)
             self.collection = self.client.get_or_create_collection(name=self.collection_name)
             RichPrinter.warning(f"Kolekce '{self.collection_name}' byla kompletně vymazána.")
