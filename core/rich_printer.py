@@ -148,6 +148,18 @@ class RichPrinter:
         panel = Panel(Markdown(full_content_md), title=f"Chyba: {title}", border_style="bold red")
         RichPrinter._post(ChatMessage(panel, owner='system', msg_type='error_log'))
 
+    @staticmethod
+    def memory_log(operation: str, source: str, content: dict):
+        """
+        Vytvoří a odešle zprávu o paměťové operaci do TUI.
+        """
+        log_data = {
+            "operation": operation,
+            "source": source,
+            "content": content,
+        }
+        RichPrinter._post(ChatMessage(log_data, owner='system', msg_type='memory_log'))
+
 
     # --- Metody pro zobrazení v TUI ---
     # Od verze s refaktoringem je za posílání ChatMessage zodpovědný Orchestrator,
