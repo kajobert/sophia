@@ -4,6 +4,7 @@ MCP Server pro nástroje určené k hierarchickému plánování, správě úkol
 import sys
 import os
 import uuid
+import time
 from typing import Dict, Any
 import json
 import inspect
@@ -25,7 +26,7 @@ TASK_DATABASE: Dict[str, Dict[str, Any]] = {}
 def create_task(description: str, parent_id: str = None) -> str:
     """
     Vytvoří nový úkol nebo podúkol. Umožňuje rozdělit komplexní problémy na menší,
-    zvládnutelné kroky. Každý úkol dostane unikátní ID.
+    zvládnutelné kroky. Každý úkol dostane unikátní ID a časovou značku.
     """
     task_id = str(uuid.uuid4())
     TASK_DATABASE[task_id] = {
@@ -33,7 +34,8 @@ def create_task(description: str, parent_id: str = None) -> str:
         "description": description,
         "parent_id": parent_id,
         "subtasks": [],
-        "status": "new"
+        "status": "new",
+        "created_at": time.time()  # Přidána časová značka pro správné řazení
     }
     if parent_id and parent_id in TASK_DATABASE:
         TASK_DATABASE[parent_id]["subtasks"].append(task_id)
@@ -41,21 +43,39 @@ def create_task(description: str, parent_id: str = None) -> str:
 
 def get_task_tree() -> str:
     """
-    Vrátí stromovou strukturu všech aktuálních úkolů a podúkolů, včetně jejich stavu.
-    Poskytuje přehled o postupu práce.
+    Vrátí stromovou strukturu všech aktuálních úkolů a podúkolů, včetně jejich stavu,
+    seřazenou podle času vytvoření. Poskytuje přehled o postupu práce.
     """
-    if not TASK_DATABASE: return "Žádné úkoly nebyly vytvořeny."
-    def build_tree(task_id: str, level: int = 0) -> str:
-        task = TASK_DATABASE[task_id]
-        indent = "    " * level
-        tree_str = f"{indent}- [{task['status']}] {task['description']} (ID: {task_id})\n"
-        for subtask_id in task["subtasks"]:
-            tree_str += build_tree(subtask_id, level + 1)
+    if not TASK_DATABASE:
+        return "Žádné úkoly nebyly vytvořeny."
+
+    # Vytvoříme slovník dětí pro každého rodiče a seznam kořenových úkolů
+    children_by_parent = {}
+    root_tasks = []
+
+    # Seřadíme všechny úkoly hned na začátku
+    sorted_tasks = sorted(TASK_DATABASE.values(), key=lambda t: t.get('created_at', 0))
+
+    for task in sorted_tasks:
+        parent_id = task.get("parent_id")
+        if parent_id:
+            if parent_id not in children_by_parent:
+                children_by_parent[parent_id] = []
+            children_by_parent[parent_id].append(task)
+        else:
+            root_tasks.append(task)
+
+    def build_tree_recursive(tasks, level=0):
+        tree_str = ""
+        for task in tasks:
+            indent = "    " * level
+            tree_str += f"- [{task['status']}] {task['description']} (ID: {task['id']})\n"
+            if task['id'] in children_by_parent:
+                tree_str += build_tree_recursive(children_by_parent[task['id']], level + 1)
         return tree_str
-    root_tasks = [task_id for task_id, task in TASK_DATABASE.items() if not task.get("parent_id")]
+
     full_tree = "Strom aktuálních úkolů:\n"
-    for task_id in root_tasks:
-        full_tree += build_tree(task_id)
+    full_tree += build_tree_recursive(root_tasks)
     return full_tree.strip()
 
 def update_task_status(task_id: str, status: str) -> str:
@@ -76,15 +96,13 @@ def get_task_details(task_id: str) -> str:
 
 def get_next_executable_task() -> str:
     """
-    Najde a vrátí první proveditelný úkol. Prohledá databázi úkolů a najde první úkol,
-    který je ve stavu 'new' a všechny jeho podúkoly jsou označeny jako 'completed'.
-    Jakmile je úkol vrácen, jeho stav je aktualizován na 'in_progress', aby se zabránilo
-    jeho opětovnému výběru v následujících krocích.
-    Tento nástroj je klíčový pro řízení autonomního provádění plánu.
+    Najde a vrátí první proveditelný úkol na základě času vytvoření (FIFO).
+    Prohledá databázi úkolů, najde všechny úkoly ve stavu 'new', jejichž podúkoly jsou 'completed',
+    seřadí je podle času vytvoření a vrátí ten nejstarší.
+    Jakmile je úkol vrácen, jeho stav je aktualizován na 'in_progress'.
     """
-    sorted_task_ids = sorted(TASK_DATABASE.keys())
-    for task_id in sorted_task_ids:
-        task = TASK_DATABASE[task_id]
+    executable_tasks = []
+    for task in TASK_DATABASE.values():
         if task['status'] == 'new':
             subtasks = task.get("subtasks", [])
             all_subtasks_completed = all(
@@ -92,14 +110,25 @@ def get_next_executable_task() -> str:
                 for sub_id in subtasks
             )
             if all_subtasks_completed:
-                TASK_DATABASE[task_id]['status'] = 'in_progress'
-                task_info = {
-                    "id": task["id"],
-                    "description": task["description"],
-                    "parent_id": task.get("parent_id")
-                }
-                return json.dumps(task_info, indent=2)
-    return "Žádné další proveditelné úkoly nebyly nalezeny."
+                executable_tasks.append(task)
+
+    if not executable_tasks:
+        return "Žádné další proveditelné úkoly nebyly nalezeny."
+
+    # Seřadit proveditelné úkoly podle 'created_at' (nejstarší první)
+    executable_tasks.sort(key=lambda t: t.get('created_at', float('inf')))
+
+    next_task = executable_tasks[0]
+    task_id = next_task['id']
+
+    TASK_DATABASE[task_id]['status'] = 'in_progress'
+
+    task_info = {
+        "id": next_task["id"],
+        "description": next_task["description"],
+        "parent_id": next_task.get("parent_id")
+    }
+    return json.dumps(task_info, indent=2)
 
 async def summarize_text(text_to_summarize: str) -> str:
     """
