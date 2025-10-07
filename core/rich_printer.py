@@ -35,6 +35,7 @@ class RichPrinter:
     _logger: logging.Logger | None = None
     _communication_logger: logging.Logger | None = None
     _error_logger: logging.Logger | None = None
+    _memory_logger: logging.Logger | None = None
     _message_poster: Callable[[Any], None] | None = None
 
     @staticmethod
@@ -70,7 +71,11 @@ class RichPrinter:
         error_log_path = os.path.join(log_dir, "errors.log")
         RichPrinter._error_logger = RichPrinter._setup_logger("ErrorLog", error_log_path)
 
-        RichPrinter.info(f"Logging configured. System log: {system_log_path}, Communication log: {comm_log_path}, Error log: {error_log_path}")
+        # Log pro paměťové operace
+        memory_log_path = os.path.join(log_dir, "memory.log")
+        RichPrinter._memory_logger = RichPrinter._setup_logger("MemoryLog", memory_log_path)
+
+        RichPrinter.info(f"Logging configured. System log: {system_log_path}, Communication log: {comm_log_path}, Error log: {error_log_path}, Memory log: {memory_log_path}")
 
     @staticmethod
     def set_message_poster(poster: Callable[[Any], None]):
@@ -147,6 +152,32 @@ class RichPrinter:
 
         panel = Panel(Markdown(full_content_md), title=f"Chyba: {title}", border_style="bold red")
         RichPrinter._post(ChatMessage(panel, owner='system', msg_type='error_log'))
+    
+    @staticmethod
+    def memory_log(operation: str, source: str, content: dict):
+        """
+        Vytvoří a odešle zprávu o paměťové operaci do TUI a zapíše ji do souboru.
+        """
+        log_data = {
+            "operation": operation,
+            "source": source,
+            "content": content,
+        }
+
+        # Zápis do souboru jako JSON
+        if RichPrinter._memory_logger:
+            try:
+                # Pro jednoduchost logujeme celý JSON jako jeden řetězec.
+                # Standardní formatter loggeru přidá časové razítko.
+                log_json_string = json.dumps(log_data, ensure_ascii=False)
+                RichPrinter._memory_logger.info(log_json_string)
+            except TypeError as e:
+                # Ošetření pro případy, kdy obsah není serializovatelný
+                RichPrinter.warning(f"Memory log content not JSON serializable: {e}. Logging as string.")
+                RichPrinter._memory_logger.info(str(log_data))
+
+        # Odeslání do TUI
+        RichPrinter._post(ChatMessage(log_data, owner='system', msg_type='memory_log'))
 
 
     # --- Metody pro zobrazení v TUI ---

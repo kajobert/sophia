@@ -57,6 +57,10 @@ docker-compose.override.yml
 .env
 .env.*
 
+# Memory
+db/
+memory/
+
 # Other
 .DS_Store
 *.local
