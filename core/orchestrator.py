@@ -64,12 +64,67 @@ class JulesOrchestrator:
         self.memory_manager.close()
         RichPrinter.info("Všechny služby byly bezpečně ukončeny.")
 
-    def _triage_task_and_select_llm(self, prompt: str) -> str:
-        prompt_lower = prompt.lower()
-        complex_keywords = ["analyzuj", "refaktoruj", "navrhni", "implementuj", "vytvoř kód", "optimalizuj", "debuguj", "architektura"]
-        if any(keyword in prompt_lower for keyword in complex_keywords):
-            return "powerful"
-        return self.llm_manager.default_model_name
+    async def _triage_user_request(self, user_input: str) -> str:
+        """Klasifikuje požadavek uživatele na základě triage promptu."""
+        try:
+            with open(os.path.join(self.project_root, "prompts/triage_prompt.txt"), "r", encoding="utf-8") as f:
+                triage_prompt_template = f.read()
+        except FileNotFoundError:
+            RichPrinter.log_error_panel("Triage prompt not found", "Soubor prompts/triage_prompt.txt chybí.")
+            return "COMPLEX_TASK"
+
+        prompt = triage_prompt_template.format(user_input=user_input)
+        # Pro klasifikaci použijeme výchozí, rychlý model
+        model = self.llm_manager.get_llm()
+
+        RichPrinter.info("Klasifikuji požadavek...")
+        response, _ = await model.generate_content_async(prompt, max_tokens=20) # Zvýšeno pro jistotu
+
+        task_type = response.strip().upper()
+        # Odstranění případných ```json a podobných artefaktů
+        task_type = re.sub(r'[^A-Z_]', '', task_type)
+
+        if task_type not in ["SIMPLE_QUERY", "DIRECT_COMMAND", "COMPLEX_TASK"]:
+            RichPrinter.warning(f"Neznámý typ úkolu '{task_type}', bude použit fallback na COMPLEX_TASK.")
+            return "COMPLEX_TASK"
+
+        RichPrinter.info(f"Typ požadavku: [bold yellow]{task_type}[/bold yellow]")
+        return task_type
+
+    async def _handle_simple_query(self, user_input: str, session_id: str):
+        """Zpracuje jednoduchý dotaz bez použití nástrojů."""
+        RichPrinter.info("Zpracovávám jednoduchý dotaz...")
+
+        # Vytvoříme jednoduchý prompt pro konverzační odpověď
+        # Zjednodušená historie pro přímou odpověď
+        history_summary = "\n".join([f"Uživatel: {h[1]}\nAgent: {h[0]}" for h in self.history[-self.short_term_limit:] if h[0]])
+
+        prompt = textwrap.dedent(f"""
+            Jsi konverzační AI asistent Jules. Odpověz na poslední dotaz uživatele stručně a přátelsky.
+
+            Předchozí konverzace:
+            {history_summary}
+
+            Poslední dotaz: "{user_input}"
+
+            Tvoje odpověď:
+        """).strip()
+
+        model = self.llm_manager.get_llm()
+
+        full_response_text = ""
+        async def stream_callback(chunk: str):
+            nonlocal full_response_text
+            full_response_text += chunk
+            RichPrinter._post(ChatMessage(chunk, owner='agent', msg_type='explanation_chunk'))
+
+        # Pro jednoduchou odpověď nepotřebujeme JSON formát
+        await model.generate_content_async(prompt, stream_callback=stream_callback)
+        RichPrinter._post(ChatMessage("", owner='agent', msg_type='explanation_end'))
+
+        self.history.append((full_response_text, f"UŽIVATELSKÝ VSTUP: {user_input}"))
+        self.memory_manager.save_history(session_id, self.history)
+        self.ltm.add_memory(f"Uživatel: {user_input}\nAgent: {full_response_text}", metadata={"session_id": session_id, "is_query": True})
 
     async def run(self, initial_task: str, session_id: str | None = None):
         """Hlavní rozhodovací smyčka agenta."""
@@ -85,6 +140,17 @@ class JulesOrchestrator:
         RichPrinter.info(f"Úkol: {initial_task}")
         RichPrinter._post(ChatMessage(f"{initial_task}", owner='user', msg_type='user_input'))
         RichPrinter.log_communication("Vstup od uživatele", initial_task, style="green")
+
+        # --- NOVÁ TRIAGE LOGIKA ---
+        # Triage provádíme jen u prvního požadavku v sezení, kde ještě není historie.
+        if not self.history:
+            task_type = await self._triage_user_request(initial_task)
+            if task_type == "SIMPLE_QUERY":
+                await self._handle_simple_query(initial_task, session_id)
+                return  # Ukončíme běh po přímé odpovědi
+            # Pro DIRECT_COMMAND a COMPLEX_TASK pokračujeme do hlavní smyčky
+        # --- KONEC TRIAGE LOGIKY ---
+
         if not self.history:
             self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
             self.memory_manager.save_history(session_id, self.history)
@@ -99,10 +165,10 @@ class JulesOrchestrator:
 
             prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=main_goal)
 
-            selected_model_name = self._triage_task_and_select_llm(prompt)
+            # Prozatím použijeme výchozí model. Výběr modelu lze v budoucnu vylepšit.
             try:
-                model = self.llm_manager.get_llm(selected_model_name)
-                RichPrinter.info(f"Vybrán model: [bold cyan]{model.model_name}[/bold cyan] (alias: {selected_model_name})")
+                model = self.llm_manager.get_llm()
+                RichPrinter.info(f"Vybrán model: [bold cyan]{model.model_name}[/bold cyan]")
             except (ValueError, FileNotFoundError) as e:
                 RichPrinter.log_error_panel("Selhání načtení LLM modelu", str(e), exception=e)
                 break
@@ -142,14 +208,22 @@ class JulesOrchestrator:
             RichPrinter.log_communication("Volání nástroje", tool_call_data, style="yellow")
             history_entry_request = f"Myšlenkový pochod:\n{explanation}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
 
+            # Zpracování `task_complete` je nyní součástí běžného toku, aby se využila
+            # robustní logika v `control_server.py`.
+            # Zde pouze detekujeme, že se má cyklus ukončit.
             if tool_name == "task_complete":
-                summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
-                RichPrinter._post(ChatMessage(summary, owner='agent', msg_type='task_complete'))
-                self.memory_manager.save_session(session_id, initial_task, summary)
                 task_was_completed_by_agent = True
-                break
 
             result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
+
+            # Po vykonání `task_complete` se cyklus přirozeně ukončí v další iteraci,
+            # protože `task_was_completed_by_agent` je True.
+            if task_was_completed_by_agent:
+                # Uložíme finální stav se shrnutím, které vrátil nástroj
+                summary = result if isinstance(result, str) else "Úkol dokončen."
+                self.memory_manager.save_session(session_id, initial_task, summary)
+                RichPrinter._post(ChatMessage(summary, owner='agent', msg_type='task_complete'))
+                break
 
             try:
                 data = json.loads(result)

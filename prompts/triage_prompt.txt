@@ -1,0 +1,17 @@
+# Triage Prompt
+
+Analyzuj následující požadavek od uživatele a klasifikuj ho do jedné z následujících kategorií. Odpověz pouze jedním slovem: `SIMPLE_QUERY`, `DIRECT_COMMAND`, nebo `COMPLEX_TASK`.
+
+- **SIMPLE_QUERY**: Běžná konverzace, pozdravy, jednoduché otázky, které nevyžadují použití nástrojů nebo úpravu souborů.
+  - Příklady: "Ahoj, jak se máš?", "Co umíš?", "Kdo jsi?", "Shrň naši minulou konverzaci."
+
+- **DIRECT_COMMAND**: Jasný, jednoznačný příkaz, který lze splnit pomocí jednoho nebo několika málo volání nástrojů. Nevyžaduje komplexní plánování.
+  - Příklady: "Přečti soubor README.md a shrň ho.", "Vytvoř soubor 'test.py' s obsahem 'print("hello")'.", "Vypiš všechny soubory v adresáři 'src'."
+
+- **COMPLEX_TASK**: Složitý úkol, který vyžaduje analýzu, dekompozici na více kroků, psaní nebo úpravu kódu, testování a hlubší pochopení problému. Vyžaduje plný cyklus PLÁNOVAT -> PROVÉST.
+  - Příklady: "Implementuj novou funkci pro výpočet Fibonacciho posloupnosti a přidej pro ni testy.", "Refaktoruj třídu 'DatabaseManager' pro lepší výkon.", "Najdi a oprav chybu, která způsobuje pád aplikace při startu."
+
+Požadavek uživatele:
+---
+{user_input}
+---

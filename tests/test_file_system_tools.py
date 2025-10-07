@@ -1,6 +1,7 @@
 import pytest
 import os
 import shutil
+import json
 from tools import file_system
 
 # Define a sandbox directory for these specific tests
@@ -39,9 +40,13 @@ def test_create_and_read_file():
     assert "successfully" in result_create
     assert os.path.exists(filepath)
 
-    # Read file
-    read_content = file_system.read_file(filepath)
-    assert read_content == content
+    # Read file and parse JSON
+    read_json = file_system.read_file(filepath)
+    read_data = json.loads(read_json)
+
+    assert read_data["content"] == content
+    assert read_data["total_lines"] == 1
+    assert not read_data["is_truncated"]
 
 def test_overwrite_file():
     """Tests overwriting a file."""
@@ -57,8 +62,9 @@ def test_overwrite_file():
     assert "successfully" in result_overwrite
 
     # Verify
-    read_content = file_system.read_file(filepath)
-    assert read_content == content2
+    read_json = file_system.read_file(filepath)
+    read_data = json.loads(read_json)
+    assert read_data["content"] == content2
 
 def test_delete_file():
     """Tests the delete_file function."""
@@ -107,8 +113,9 @@ def test_replace_with_git_merge_diff():
     assert "successfully" in result
 
     # Verify the content
-    final_content = file_system.read_file(filepath)
-    assert final_content == expected_content
+    final_json = file_system.read_file(filepath)
+    final_data = json.loads(final_json)
+    assert final_data["content"] == expected_content
 
 def test_list_files():
     """Tests listing files in a directory."""

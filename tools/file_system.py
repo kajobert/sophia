@@ -1,5 +1,6 @@
 import os
 import ast
+import json
 
 def _resolve_path(user_path: str) -> str:
     """
@@ -48,43 +49,41 @@ def list_files(path: str = ".") -> str:
     except Exception as e:
         return f"Error listing files: {e}"
 
-def read_file(filepath: str, line_limit: int = None) -> str:
+def read_file(filepath: str, line_limit: int = 100) -> str:
     """
-    Returns the content of the specified file, relative to the project root.
-    :param filepath: The path to the file to read (e.g., 'tools/file_system.py').
-    :param line_limit: Optional. If provided, only this many lines will be read from the start of the file.
+    Vrátí obsah zadaného souboru jako JSON objekt.
+    Umožňuje omezit počet načtených řádků a informuje o celkové velikosti souboru.
+
+    :param filepath: Cesta k souboru (např. 'tools/file_system.py').
+    :param line_limit: Maximální počet řádků k načtení. Výchozí je 100.
+    :return: JSON string s klíči 'content', 'total_lines', 'lines_read', 'is_truncated'.
     """
     try:
         safe_path = _resolve_path(filepath)
         with open(safe_path, 'r', encoding='utf-8') as f:
-            # If line_limit is not a positive integer, read the whole file.
-            if not isinstance(line_limit, int) or line_limit <= 0:
-                return f.read()
+            all_lines = f.readlines()
 
-            lines = []
-            for _ in range(line_limit):
-                try:
-                    lines.append(next(f))
-                except StopIteration:
-                    # Reached end of file before reaching the limit
-                    return "".join(lines)
+        total_lines = len(all_lines)
+        is_truncated = total_lines > line_limit
 
-            content = "".join(lines)
+        # Omezení počtu řádků, pokud je to nutné
+        content_lines = all_lines[:line_limit]
+        content = "".join(content_lines)
+        lines_read = len(content_lines)
 
-            # Check if there's at least one more line to confirm truncation
-            try:
-                next(f)
-                content.rstrip('\\n')
-                content += f"\\n... (soubor zkrácen na {line_limit} řádků) ..."
-            except StopIteration:
-                # The file has exactly line_limit lines, no truncation message needed
-                pass
+        response = {
+            "content": content,
+            "total_lines": total_lines,
+            "lines_read": lines_read,
+            "is_truncated": is_truncated
+        }
 
-            return content
+        return json.dumps(response, ensure_ascii=False, indent=2)
+
     except FileNotFoundError:
-        return f"Error: File not found at '{filepath}'."
+        return json.dumps({"error": f"File not found at '{filepath}'"})
     except Exception as e:
-        return f"Error reading file: {e}"
+        return json.dumps({"error": f"Error reading file: {e}"})
 
 def overwrite_file_with_block(filepath: str, content: str) -> str:
     """
@@ -145,9 +144,18 @@ def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block:
     The search block must match a part of the file content exactly.
     """
     try:
-        original_content = read_file(filepath)
-        if original_content.startswith("Error:"):
-            return original_content
+        # read_file now returns a JSON string, so we need to parse it.
+        original_content_json = read_file(filepath)
+
+        try:
+            original_content_data = json.loads(original_content_json)
+        except json.JSONDecodeError:
+            return f"Error: Could not decode JSON from read_file for '{filepath}'. Returned: {original_content_json}"
+
+        if "error" in original_content_data:
+            return f"Error reading file for replacement: {original_content_data['error']}"
+
+        original_content = original_content_data.get("content", "")
 
         if search_block not in original_content:
             return f"Error: SEARCH block not found in file '{filepath}'. Please ensure the search block is an exact match."

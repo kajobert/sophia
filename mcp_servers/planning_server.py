@@ -103,27 +103,31 @@ def get_task_details(task_id: str) -> str:
 
 def get_next_executable_task() -> str:
     """
-    Najde a vrátí první proveditelný úkol na základě času vytvoření (FIFO).
+    Najde a vrátí další proveditelný úkol. Upřednostňuje nové úkoly,
+    ale pokud žádné nejsou, pokusí se zotavit z nejstaršího selhaného úkolu.
     """
-    executable_tasks = []
-    for task in TASK_DATABASE.values():
+    # Seřadíme úkoly podle času vytvoření, abychom zajistili FIFO
+    sorted_tasks = sorted(TASK_DATABASE.values(), key=lambda t: t.get('created_at', float('inf')))
+
+    # 1. Hledání proveditelných 'new' úkolů
+    for task in sorted_tasks:
         if task['status'] == 'new':
-            all_subtasks_completed = all(
-                TASK_DATABASE.get(sub_id, {}).get('status') == 'completed'
-                for sub_id in task.get("subtasks", [])
-            )
-            if all_subtasks_completed:
-                executable_tasks.append(task)
-    if not executable_tasks:
-        return "Žádné další proveditelné úkoly nebyly nalezeny."
-    executable_tasks.sort(key=lambda t: t.get('created_at', float('inf')))
-    next_task = executable_tasks[0]
-    TASK_DATABASE[next_task['id']]['status'] = 'in_progress'
-    return json.dumps({
-        "id": next_task["id"],
-        "description": next_task["description"],
-        "parent_id": next_task.get("parent_id")
-    }, indent=2)
+            # Zkontrolujeme, zda jsou všechny podúkoly dokončeny
+            subtasks = task.get("subtasks", [])
+            if not subtasks or all(TASK_DATABASE.get(sub_id, {}).get('status') == 'completed' for sub_id in subtasks):
+                RichPrinter.memory_log(f"Nalezen nový proveditelný úkol: {task['id']}")
+                TASK_DATABASE[task['id']]['status'] = 'in_progress'
+                return json.dumps({"id": task["id"], "description": task["description"], "parent_id": task.get("parent_id")}, indent=2)
+
+    # 2. Pokud nejsou 'new' úkoly, hledání 'failed' úkolů pro zotavení
+    for task in sorted_tasks:
+        if task['status'] == 'failed':
+            RichPrinter.memory_log(f"Nalezen selhaný úkol k opravě: {task['id']}", msg_type='warn')
+            # Resetujeme stav, aby se mohl agent pokusit o opravu
+            TASK_DATABASE[task['id']]['status'] = 'in_progress'
+            return json.dumps({"id": task["id"], "description": task["description"], "parent_id": task.get("parent_id")}, indent=2)
+
+    return "Žádné další proveditelné úkoly nebyly nalezeny."
 
 async def summarize_text(text_to_summarize: str) -> str:
     """
