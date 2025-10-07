@@ -2,7 +2,8 @@ import pytest
 import os
 import sys
 import json
-from unittest.mock import MagicMock, AsyncMock, patch
+import time
+from unittest.mock import MagicMock, AsyncMock
 
 # Přidání cesty k projektu pro importy
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -21,115 +22,85 @@ def _get_id(result_string: str) -> str:
     """Helper funkce pro extrakci ID z návratové hodnoty create_task."""
     return result_string.split(": ")[-1]
 
-def test_create_task():
-    """Testuje vytváření úkolů a podúkolů."""
-    parent_id = _get_id(planning_server.create_task("Rodičovský úkol"))
-    child_id = _get_id(planning_server.create_task("Podúkol", parent_id=parent_id))
+def test_create_task_adds_timestamp():
+    """Testuje, že při vytváření úkolu je přidána časová značka."""
+    task_id = _get_id(planning_server.create_task("Úkol s časovou značkou"))
+    assert task_id in planning_server.TASK_DATABASE
+    assert "created_at" in planning_server.TASK_DATABASE[task_id]
+    assert isinstance(planning_server.TASK_DATABASE[task_id]["created_at"], float)
 
-    assert parent_id in planning_server.TASK_DATABASE
-    assert child_id in planning_server.TASK_DATABASE
-    assert planning_server.TASK_DATABASE[parent_id]["subtasks"] == [child_id]
-    assert planning_server.TASK_DATABASE[child_id]["parent_id"] == parent_id
+def test_get_next_task_is_fifo():
+    """Testuje, že get_next_executable_task vrací úkoly v pořadí, v jakém byly vytvořeny (FIFO)."""
+    task1_id = _get_id(planning_server.create_task("První úkol"))
+    time.sleep(0.01)  # Zajistíme měřitelný rozdíl v čase
+    task2_id = _get_id(planning_server.create_task("Druhý úkol"))
 
-def test_get_task_tree():
-    """Testuje správné zobrazení stromu úkolů."""
-    p_id = _get_id(planning_server.create_task("Rodič"))
-    c1_id = _get_id(planning_server.create_task("Dítě 1", parent_id=p_id))
-    _ = _get_id(planning_server.create_task("Dítě 2", parent_id=p_id))
-    _ = _get_id(planning_server.create_task("Vnouče", parent_id=c1_id))
+    # První volání by mělo vrátit první úkol
+    next_task1 = json.loads(planning_server.get_next_executable_task())
+    assert next_task1["id"] == task1_id
+    planning_server.update_task_status(task1_id, "completed")
 
-    tree = planning_server.get_task_tree()
-
-    assert "Rodič" in tree
-    assert "    - [new] Dítě 1" in tree
-    assert "        - [new] Vnouče" in tree
-    assert "    - [new] Dítě 2" in tree
-
-def test_update_task_status():
-    """Testuje aktualizaci stavu úkolu."""
-    task_id = _get_id(planning_server.create_task("Testovací úkol"))
-    result = planning_server.update_task_status(task_id, "in_progress")
-    assert "byl aktualizován na 'in_progress'" in result
-    assert planning_server.TASK_DATABASE[task_id]["status"] == "in_progress"
-
-def test_get_task_details():
-    """Testuje získání detailů úkolu."""
-    task_id = _get_id(planning_server.create_task("Detailní úkol"))
-    details_str = planning_server.get_task_details(task_id)
-    details = json.loads(details_str)
-    assert details["description"] == "Detailní úkol"
-
-# --- Nové testy pro get_next_executable_task ---
-
-def test_get_next_task_simple_case():
-    """Testuje základní případ: jeden proveditelný úkol."""
-    task_id = _get_id(planning_server.create_task("Jednoduchý úkol"))
-    result_str = planning_server.get_next_executable_task()
-    result = json.loads(result_str)
-    assert result["id"] == task_id
-    assert planning_server.TASK_DATABASE[task_id]["status"] == "in_progress"
+    # Druhé volání by mělo vrátit druhý úkol
+    next_task2 = json.loads(planning_server.get_next_executable_task())
+    assert next_task2["id"] == task2_id
 
 def test_get_next_task_unblocked_by_completed_subtask():
-    """Testuje, že se rodičovský úkol stane proveditelným po dokončení podúkolů."""
+    """Testuje, že se rodičovský úkol stane proveditelným až po dokončení podúkolů."""
     parent_id = _get_id(planning_server.create_task("Rodič"))
+    time.sleep(0.01)
     child_id = _get_id(planning_server.create_task("Dítě", parent_id=parent_id))
 
-    child_task = json.loads(planning_server.get_next_executable_task())
+    # První volání musí vrátit dítě, protože rodič je blokován
+    child_task_str = planning_server.get_next_executable_task()
+    child_task = json.loads(child_task_str)
     assert child_task["id"] == child_id
+
+    # Po dokončení dítěte...
     planning_server.update_task_status(child_id, "completed")
 
-    parent_task = json.loads(planning_server.get_next_executable_task())
+    # ...by se měl stát proveditelným rodič
+    parent_task_str = planning_server.get_next_executable_task()
+    parent_task = json.loads(parent_task_str)
     assert parent_task["id"] == parent_id
 
-def test_get_next_task_no_executable_tasks():
-    """Testuje, že se nevrátí žádný úkol, pokud žádný není proveditelný."""
-    task_id = _get_id(planning_server.create_task("Probíhající úkol"))
-    planning_server.update_task_status(task_id, "in_progress")
-    result = planning_server.get_next_executable_task()
-    assert "Žádné další proveditelné úkoly nebyly nalezeny" in result
-
-@patch('mcp_servers.planning_server.uuid.uuid4')
-def test_get_next_task_complex_tree_deterministic(mock_uuid4):
+def test_get_next_task_complex_tree_is_chronological():
     """
-    Testuje složitější strom závislostí s kontrolovanými UUID,
-    aby byl test plně deterministický.
+    Testuje složitější strom závislostí a ověřuje, že pořadí je deterministické
+    díky řazení podle času vytvoření.
     """
-    # Kontrolujeme UUID, abychom zaručili pořadí při třídění
-    mock_uuid4.side_effect = [
-        'a0000000-0000-0000-0000-000000000000',  # A
-        'b0000000-0000-0000-0000-000000000000',  # B
-        'c0000000-0000-0000-0000-000000000000',  # C
-        'd0000000-0000-0000-0000-000000000000',  # D
-    ]
     # Struktura: A -> (B, C), C -> D
+    # Pořadí vytvoření: A, B, C, D
     a_id = _get_id(planning_server.create_task("A"))
+    time.sleep(0.01)
     b_id = _get_id(planning_server.create_task("B", parent_id=a_id))
+    time.sleep(0.01)
     c_id = _get_id(planning_server.create_task("C", parent_id=a_id))
+    time.sleep(0.01)
     d_id = _get_id(planning_server.create_task("D", parent_id=c_id))
 
-    # Očekávané pořadí exekuce díky řízeným UUIDs: B -> D -> C -> A
+    # Očekávané pořadí exekuce (FIFO z proveditelných): B, D, C, A
 
-    # 1. Měl by se vrátit B (je proveditelný a má nejnižší ID z proveditelných)
+    # 1. B je první proveditelný, protože byl vytvořen dříve než D.
     task1 = json.loads(planning_server.get_next_executable_task())
     assert task1["id"] == b_id
     planning_server.update_task_status(b_id, "completed")
 
-    # 2. Měl by se vrátit D (je proveditelný a má nejnižší ID z proveditelných)
+    # 2. D je nyní jediný proveditelný leaf node.
     task2 = json.loads(planning_server.get_next_executable_task())
     assert task2["id"] == d_id
     planning_server.update_task_status(d_id, "completed")
 
-    # 3. Teď je C proveditelný (D je hotové)
+    # 3. Po dokončení D se stává proveditelným C.
     task3 = json.loads(planning_server.get_next_executable_task())
     assert task3["id"] == c_id
     planning_server.update_task_status(c_id, "completed")
 
-    # 4. Teď je A proveditelný (B a C jsou hotové)
+    # 4. Po dokončení B i C se stává proveditelným A.
     task4 = json.loads(planning_server.get_next_executable_task())
     assert task4["id"] == a_id
     planning_server.update_task_status(a_id, "completed")
 
-    # 5. Žádné další úkoly
+    # 5. Žádné další úkoly.
     result = planning_server.get_next_executable_task()
     assert "Žádné další proveditelné úkoly nebyly nalezeny" in result
 

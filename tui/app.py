@@ -19,7 +19,6 @@ from rich.table import Table
 from core.orchestrator import JulesOrchestrator
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
-from tui.widgets.memory_log_widget import MemoryLogWidget
 from tui.messages import LogMessage, ChatMessage
 
 CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
@@ -52,8 +51,6 @@ class SophiaTUI(App):
         self.error_log_widget = RichLog(id="error_log_view", highlight=True, markup=True)
         self.error_log_widget.border_title = "Záznam Chyb"
 
-        self.memory_log_widget = MemoryLogWidget(id="memory_log_view")
-
         self.orchestrator = JulesOrchestrator(project_root=self.project_root)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
         self.session_id = None
@@ -70,8 +67,6 @@ class SophiaTUI(App):
                 yield self.communication_log_widget
             with TabPane("Systémové logy", id="system_log_tab"):
                 yield self.system_log_widget
-            with TabPane("Paměť", id="memory_tab"):
-                yield self.memory_log_widget
             with TabPane("Chyby", id="error_log_tab"):
                 yield self.error_log_widget
         yield self.input_widget
@@ -218,11 +213,6 @@ class SophiaTUI(App):
             self.communication_log_widget.write(content)
         elif msg_type == "error_log":
             self.error_log_widget.write(content)
-        elif msg_type == "memory_log":
-            op = content.get("operation")
-            source = content.get("source")
-            log_content = content.get("content")
-            self.memory_log_widget.add_log(op, source, log_content)
         else:
             self.system_log_widget.add_log(f"Neznámý typ zprávy '{msg_type}': {content}", "WARNING")
 

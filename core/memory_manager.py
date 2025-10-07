@@ -1,8 +1,7 @@
 import sqlite3
 import os
 from datetime import datetime
-from core.long_term_memory import LongTermMemory
-from core.rich_printer import RichPrinter
+from .long_term_memory import LongTermMemory
 
 DB_FILE = "memory.db"
 MEMORY_DIR = "memory"
@@ -63,15 +62,6 @@ class MemoryManager:
         """
         Uloží kompletní historii konverzace pro dané sezení.
         """
-        RichPrinter.memory_log(
-            operation="WRITE",
-            source="STM (SQLite)",
-            content={
-                "method": "save_history",
-                "session_id": session_id,
-                "history_length": len(history),
-            },
-        )
         with self.conn:
             self.conn.execute("DELETE FROM conversation_history WHERE session_id = ?", (session_id,))
             rows = [
@@ -85,42 +75,17 @@ class MemoryManager:
 
     def load_history(self, session_id: str) -> list[tuple[str, str]]:
         """Načte historii konverzace pro dané sezení."""
-        RichPrinter.memory_log(
-            operation="READ",
-            source="STM (SQLite)",
-            content={"method": "load_history", "session_id": session_id},
-        )
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT request, response FROM conversation_history WHERE session_id = ? ORDER BY turn_index ASC",
             (session_id,)
         )
-        results = cursor.fetchall()
-        RichPrinter.memory_log(
-            operation="READ",
-            source="STM (SQLite) - Result",
-            content={
-                "method": "load_history",
-                "session_id": session_id,
-                "rows_found": len(results),
-            },
-        )
-        return results
+        return cursor.fetchall()
 
     def save_session(self, session_id: str, task_prompt: str, summary: str):
         """
         Uloží shrnutí dokončeného úkolu do databáze a do vektorové paměti.
         """
-        RichPrinter.memory_log(
-            operation="WRITE",
-            source="STM (SQLite)",
-            content={
-                "method": "save_session",
-                "session_id": session_id,
-                "task_prompt": task_prompt,
-                "summary": summary,
-            },
-        )
         # Uložení do SQLite
         query = "INSERT INTO sessions (session_id, task_prompt, summary) VALUES (?, ?, ?)"
         cursor = self.conn.cursor()
@@ -164,21 +129,11 @@ class MemoryManager:
         """
         Získá všechny uložené vzpomínky (sessions) z SQLite, seřazené od nejnovější.
         """
-        RichPrinter.memory_log(
-            operation="READ",
-            source="STM (SQLite)",
-            content={"method": "get_all_memories", "limit": limit},
-        )
         query = "SELECT task_prompt, summary, created_at FROM sessions ORDER BY created_at DESC LIMIT ?"
         cursor = self.conn.cursor()
         cursor.execute(query, (limit,))
 
         rows = cursor.fetchall()
-        RichPrinter.memory_log(
-            operation="READ",
-            source="STM (SQLite) - Result",
-            content={"method": "get_all_memories", "rows_found": len(rows)},
-        )
         memories = []
         for row in rows:
             memories.append({"task": row[0], "summary": row[1], "timestamp": row[2]})
