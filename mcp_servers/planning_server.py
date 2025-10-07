@@ -74,6 +74,33 @@ def get_task_details(task_id: str) -> str:
     if task_id not in TASK_DATABASE: return f"Chyba: Úkol s ID '{task_id}' nebyl nalezen."
     return json.dumps(TASK_DATABASE[task_id], indent=2)
 
+def get_next_executable_task() -> str:
+    """
+    Najde a vrátí první proveditelný úkol. Prohledá databázi úkolů a najde první úkol,
+    který je ve stavu 'new' a všechny jeho podúkoly jsou označeny jako 'completed'.
+    Jakmile je úkol vrácen, jeho stav je aktualizován na 'in_progress', aby se zabránilo
+    jeho opětovnému výběru v následujících krocích.
+    Tento nástroj je klíčový pro řízení autonomního provádění plánu.
+    """
+    sorted_task_ids = sorted(TASK_DATABASE.keys())
+    for task_id in sorted_task_ids:
+        task = TASK_DATABASE[task_id]
+        if task['status'] == 'new':
+            subtasks = task.get("subtasks", [])
+            all_subtasks_completed = all(
+                TASK_DATABASE.get(sub_id, {}).get('status') == 'completed'
+                for sub_id in subtasks
+            )
+            if all_subtasks_completed:
+                TASK_DATABASE[task_id]['status'] = 'in_progress'
+                task_info = {
+                    "id": task["id"],
+                    "description": task["description"],
+                    "parent_id": task.get("parent_id")
+                }
+                return json.dumps(task_info, indent=2)
+    return "Žádné další proveditelné úkoly nebyly nalezeny."
+
 async def summarize_text(text_to_summarize: str) -> str:
     """
     Využije ekonomický LLM model k sumarizaci dlouhého textu.
@@ -89,23 +116,6 @@ async def summarize_text(text_to_summarize: str) -> str:
     except Exception as e:
         RichPrinter.error(f"Došlo k chybě při sumarizaci textu: {e}")
         return f"Chyba: Nepodařilo se sumarizovat text. Důvod: {e}"
-
-# Placeholder implementations for missing tools
-def set_plan(plan: str) -> str:
-    """Sets or updates the plan for how to solve the issue."""
-    return f"Plán byl nastaven na: {plan}"
-
-def plan_step_complete(message: str) -> str:
-    """Marks the current plan step as complete."""
-    return f"Krok plánu dokončen: {message}"
-
-def request_user_input(message: str) -> str:
-    """Asks the user a question or asks for input and waits for a response."""
-    return f"Požadavek na vstup od uživatele: {message}"
-
-def request_code_review() -> str:
-    """Provides a review of the current changes."""
-    return "Požadavek na revizi kódu byl odeslán."
 
 # --- MCP Server Boilerplate ---
 
@@ -125,11 +135,8 @@ async def main():
         "get_task_tree": get_task_tree,
         "update_task_status": update_task_status,
         "get_task_details": get_task_details,
+        "get_next_executable_task": get_next_executable_task,
         "summarize_text": summarize_text,
-        "set_plan": set_plan,
-        "plan_step_complete": plan_step_complete,
-        "request_user_input": request_user_input,
-        "request_code_review": request_code_review,
     }
 
     while True:
