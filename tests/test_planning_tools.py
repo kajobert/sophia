@@ -29,18 +29,30 @@ def test_create_task_adds_timestamp():
     assert "created_at" in planning_server.TASK_DATABASE[task_id]
     assert isinstance(planning_server.TASK_DATABASE[task_id]["created_at"], float)
 
+def test_get_main_goal():
+    """Testuje, že funkce správně vrací hlavní cíl."""
+    main_goal_desc = "Toto je hlavní cíl"
+    parent_id = _get_id(planning_server.create_task(main_goal_desc))
+    time.sleep(0.01)
+    _ = _get_id(planning_server.create_task("Podúkol", parent_id=parent_id))
+
+    # I když existují podúkoly, funkce by měla vrátit popis kořenového úkolu
+    assert planning_server.get_main_goal() == main_goal_desc
+
+def test_get_main_goal_no_tasks():
+    """Testuje chování, když neexistují žádné úkoly."""
+    assert "Není definován žádný hlavní cíl" in planning_server.get_main_goal()
+
 def test_get_next_task_is_fifo():
     """Testuje, že get_next_executable_task vrací úkoly v pořadí, v jakém byly vytvořeny (FIFO)."""
     task1_id = _get_id(planning_server.create_task("První úkol"))
-    time.sleep(0.01)  # Zajistíme měřitelný rozdíl v čase
+    time.sleep(0.01)
     task2_id = _get_id(planning_server.create_task("Druhý úkol"))
 
-    # První volání by mělo vrátit první úkol
     next_task1 = json.loads(planning_server.get_next_executable_task())
     assert next_task1["id"] == task1_id
     planning_server.update_task_status(task1_id, "completed")
 
-    # Druhé volání by mělo vrátit druhý úkol
     next_task2 = json.loads(planning_server.get_next_executable_task())
     assert next_task2["id"] == task2_id
 
@@ -50,26 +62,18 @@ def test_get_next_task_unblocked_by_completed_subtask():
     time.sleep(0.01)
     child_id = _get_id(planning_server.create_task("Dítě", parent_id=parent_id))
 
-    # První volání musí vrátit dítě, protože rodič je blokován
-    child_task_str = planning_server.get_next_executable_task()
-    child_task = json.loads(child_task_str)
+    child_task = json.loads(planning_server.get_next_executable_task())
     assert child_task["id"] == child_id
 
-    # Po dokončení dítěte...
     planning_server.update_task_status(child_id, "completed")
 
-    # ...by se měl stát proveditelným rodič
-    parent_task_str = planning_server.get_next_executable_task()
-    parent_task = json.loads(parent_task_str)
+    parent_task = json.loads(planning_server.get_next_executable_task())
     assert parent_task["id"] == parent_id
 
 def test_get_next_task_complex_tree_is_chronological():
     """
-    Testuje složitější strom závislostí a ověřuje, že pořadí je deterministické
-    díky řazení podle času vytvoření.
+    Testuje složitější strom závislostí a ověřuje, že pořadí je deterministické.
     """
-    # Struktura: A -> (B, C), C -> D
-    # Pořadí vytvoření: A, B, C, D
     a_id = _get_id(planning_server.create_task("A"))
     time.sleep(0.01)
     b_id = _get_id(planning_server.create_task("B", parent_id=a_id))
@@ -78,29 +82,22 @@ def test_get_next_task_complex_tree_is_chronological():
     time.sleep(0.01)
     d_id = _get_id(planning_server.create_task("D", parent_id=c_id))
 
-    # Očekávané pořadí exekuce (FIFO z proveditelných): B, D, C, A
-
-    # 1. B je první proveditelný, protože byl vytvořen dříve než D.
     task1 = json.loads(planning_server.get_next_executable_task())
     assert task1["id"] == b_id
     planning_server.update_task_status(b_id, "completed")
 
-    # 2. D je nyní jediný proveditelný leaf node.
     task2 = json.loads(planning_server.get_next_executable_task())
     assert task2["id"] == d_id
     planning_server.update_task_status(d_id, "completed")
 
-    # 3. Po dokončení D se stává proveditelným C.
     task3 = json.loads(planning_server.get_next_executable_task())
     assert task3["id"] == c_id
     planning_server.update_task_status(c_id, "completed")
 
-    # 4. Po dokončení B i C se stává proveditelným A.
     task4 = json.loads(planning_server.get_next_executable_task())
     assert task4["id"] == a_id
     planning_server.update_task_status(a_id, "completed")
 
-    # 5. Žádné další úkoly.
     result = planning_server.get_next_executable_task()
     assert "Žádné další proveditelné úkoly nebyly nalezeny" in result
 

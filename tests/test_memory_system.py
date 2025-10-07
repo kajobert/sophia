@@ -85,7 +85,7 @@ def test_prompt_builder_rag_integration(memory_system):
     assert "Rustu" not in prompt
     assert "# **NEDÁVNÁ HISTORIE (PRACOVNÍ PAMĚŤ)**" in prompt
     assert "staré a pomalé SQL dotazy" in prompt
-    assert "Analyzuj KONTEXT Z ARCHIVU a NEDÁVNOU HISTORII" in prompt
+    assert "Analyzuj HLAVNÍ CÍL MISE, KONTEXT Z ARCHIVU a NEDÁVNOU HISTORII" in prompt
 
 
 def test_prompt_builder_empty_ltm(memory_system):

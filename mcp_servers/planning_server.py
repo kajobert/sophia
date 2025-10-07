@@ -35,11 +35,23 @@ def create_task(description: str, parent_id: str = None) -> str:
         "parent_id": parent_id,
         "subtasks": [],
         "status": "new",
-        "created_at": time.time()  # Přidána časová značka pro správné řazení
+        "created_at": time.time()
     }
     if parent_id and parent_id in TASK_DATABASE:
         TASK_DATABASE[parent_id]["subtasks"].append(task_id)
     return f"Úkol '{description[:30]}...' byl úspěšně vytvořen s ID: {task_id}"
+
+def get_main_goal() -> str:
+    """
+    Najde a vrátí popis hlavního cíle (kořenového úkolu).
+    Předpokládá se, že existuje pouze jeden kořenový úkol.
+    """
+    root_tasks = [task for task in TASK_DATABASE.values() if not task.get("parent_id")]
+    if not root_tasks:
+        return "Není definován žádný hlavní cíl."
+    # Seřadíme pro případ, že by jich bylo více, a vezmeme nejstarší
+    root_tasks.sort(key=lambda t: t.get('created_at', float('inf')))
+    return root_tasks[0].get('description', 'Popis hlavního cíle není k dispozici.')
 
 def get_task_tree() -> str:
     """
@@ -48,14 +60,9 @@ def get_task_tree() -> str:
     """
     if not TASK_DATABASE:
         return "Žádné úkoly nebyly vytvořeny."
-
-    # Vytvoříme slovník dětí pro každého rodiče a seznam kořenových úkolů
     children_by_parent = {}
     root_tasks = []
-
-    # Seřadíme všechny úkoly hned na začátku
     sorted_tasks = sorted(TASK_DATABASE.values(), key=lambda t: t.get('created_at', 0))
-
     for task in sorted_tasks:
         parent_id = task.get("parent_id")
         if parent_id:
@@ -97,53 +104,38 @@ def get_task_details(task_id: str) -> str:
 def get_next_executable_task() -> str:
     """
     Najde a vrátí první proveditelný úkol na základě času vytvoření (FIFO).
-    Prohledá databázi úkolů, najde všechny úkoly ve stavu 'new', jejichž podúkoly jsou 'completed',
-    seřadí je podle času vytvoření a vrátí ten nejstarší.
-    Jakmile je úkol vrácen, jeho stav je aktualizován na 'in_progress'.
     """
     executable_tasks = []
     for task in TASK_DATABASE.values():
         if task['status'] == 'new':
-            subtasks = task.get("subtasks", [])
             all_subtasks_completed = all(
                 TASK_DATABASE.get(sub_id, {}).get('status') == 'completed'
-                for sub_id in subtasks
+                for sub_id in task.get("subtasks", [])
             )
             if all_subtasks_completed:
                 executable_tasks.append(task)
-
     if not executable_tasks:
         return "Žádné další proveditelné úkoly nebyly nalezeny."
-
-    # Seřadit proveditelné úkoly podle 'created_at' (nejstarší první)
     executable_tasks.sort(key=lambda t: t.get('created_at', float('inf')))
-
     next_task = executable_tasks[0]
-    task_id = next_task['id']
-
-    TASK_DATABASE[task_id]['status'] = 'in_progress'
-
-    task_info = {
+    TASK_DATABASE[next_task['id']]['status'] = 'in_progress'
+    return json.dumps({
         "id": next_task["id"],
         "description": next_task["description"],
         "parent_id": next_task.get("parent_id")
-    }
-    return json.dumps(task_info, indent=2)
+    }, indent=2)
 
 async def summarize_text(text_to_summarize: str) -> str:
     """
     Využije ekonomický LLM model k sumarizaci dlouhého textu.
     """
     try:
-        RichPrinter.info("Inicializuji LLM pro sumarizaci...")
         llm_manager = LLMManager(project_root=project_root)
         summarizer_model = llm_manager.get_llm("economical")
         prompt = f"Prosím, shrň následující text do několika klíčových bodů. Zaměř se na nejdůležitější informace a buď stručný. Text ke shrnutí:\n\n---\n{text_to_summarize}\n---"
-        RichPrinter.info("Sumarizuji text...")
         summary, _ = await summarizer_model.generate_content_async(prompt)
         return f"Shrnutí textu:\n{summary}"
     except Exception as e:
-        RichPrinter.error(f"Došlo k chybě při sumarizaci textu: {e}")
         return f"Chyba: Nepodařilo se sumarizovat text. Důvod: {e}"
 
 # --- MCP Server Boilerplate ---
@@ -161,6 +153,7 @@ async def main():
 
     tools = {
         "create_task": create_task,
+        "get_main_goal": get_main_goal,
         "get_task_tree": get_task_tree,
         "update_task_status": update_task_status,
         "get_task_details": get_task_details,
@@ -175,36 +168,27 @@ async def main():
             request = json.loads(line)
             request_id = request.get("id")
             method = request.get("method")
-            response = None
-
             if method == "initialize":
                 tool_definitions = [{"name": name, "description": inspect.getdoc(func) or ""} for name, func in tools.items()]
                 response = create_response(request_id, {"capabilities": {"tools": tool_definitions}})
-
             elif method == "mcp/tool/execute":
                 params = request.get("params", {})
                 tool_name = params.get("name")
                 tool_args = params.get("args", [])
                 tool_kwargs = params.get("kwargs", {})
-
                 if tool_name in tools:
-                    try:
-                        tool_func = tools[tool_name]
-                        if asyncio.iscoroutinefunction(tool_func):
-                            result = await tool_func(*tool_args, **tool_kwargs)
-                        else:
-                            tool_call = functools.partial(tool_func, *tool_args, **tool_kwargs)
-                            result = await loop.run_in_executor(None, tool_call)
-                        response = create_response(request_id, {"result": str(result)})
-                    except Exception as e:
-                        response = create_error_response(request_id, -32000, f"Tool error: {e}")
+                    tool_func = tools[tool_name]
+                    if asyncio.iscoroutinefunction(tool_func):
+                        result = await tool_func(*tool_args, **tool_kwargs)
+                    else:
+                        result = await loop.run_in_executor(None, functools.partial(tool_func, *tool_args, **tool_kwargs))
+                    response = create_response(request_id, {"result": str(result)})
                 else:
                     response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
             else:
                 response = create_error_response(request_id, -32601, "Method not found")
         except Exception as e:
             response = create_error_response(None, -32603, f"Internal error: {e}")
-
         if response:
             print(response)
             sys.stdout.flush()
