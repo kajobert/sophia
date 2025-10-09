@@ -86,3 +86,36 @@ class PromptBuilder:
 
         # Fallback, pokud v krátkodobé historii není uživatelský vstup
         return "\n".join(f"{a}\n{r}" for a, r in history_slice)
+
+    def build_prompt_for_simple_query(self, user_input: str, history: list) -> str:
+        """
+        Sestaví zjednodušený prompt pro přímou konverzační odpověď.
+        """
+        simple_system_prompt = (
+            "Jsi přátelský a nápomocný AI asistent jménem Jules. "
+            "Tvojí úlohou je vést konverzaci a odpovídat na dotazy uživatele. Odpověz stručně a přímo."
+        )
+
+        prompt_parts = [simple_system_prompt, "\n\n## Konverzace:\n"]
+
+        short_term_history = history[-self.short_term_limit:]
+
+        history_text = ""
+        # Procházíme historii a snažíme se z ní extrahovat dialog
+        for action, result in short_term_history:
+            if "UŽIVATELSKÝ VSTUP" in result and not action:
+                history_text += f"Uživatel: {result.replace('UŽIVATELSKÝ VSTUP:', '').strip()}\n"
+            elif "UŽIVATELSKÝ VSTUP" in action:
+                history_text += f"Uživatel: {action.replace('UŽIVATELSKÝ VSTUP:', '').strip()}\n"
+                # Pokud výsledek nevypadá jako JSON nebo dlouhý výstup, považujeme ho za odpověď
+                if len(result) < 500 and not result.strip().startswith('{'):
+                    history_text += f"Jules: {result}\n"
+
+        if not history_text.strip():
+            prompt_parts.append("Toto je začátek konverzace.\n")
+        else:
+            prompt_parts.append(history_text)
+
+        prompt_parts.append(f"\nUživatel: {user_input}\nJules:")
+
+        return "".join(prompt_parts)

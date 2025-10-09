@@ -9,102 +9,106 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 # Mockování modulů PŘED jejich importem v orchestrátoru
-sys.modules['core.long_term_memory'] = MagicMock()
+# Tyto moduly mají vedlejší efekty (logování, TUI), které v testech nechceme.
 sys.modules['core.rich_printer'] = MagicMock()
 
-# Musíme nechat PromptBuilder jako skutečnou třídu, abychom mohli mockovat jeho metody
-from core.prompt_builder import PromptBuilder
-
-from core.orchestrator import JulesOrchestrator
-from core.llm_manager import LLMManager
+from core.orchestrator import JulesOrchestrator, TaskType
 from core.mcp_client import MCPClient
+from tests.mocks import MockLLMManager
 
 @pytest.fixture
 def orchestrator_instance(monkeypatch):
     """
-    Vytvoří bezpečnou a izolovanou instanci orchestrátoru pro testování.
+    Vytvoří instanci orchestrátoru s mockovanými závislostmi pro testování.
     """
-    monkeypatch.setenv('OPENROUTER_API_KEY', 'mock_key')
+    # Mock MCPClient to avoid running real servers
+    mock_mcp_client = MagicMock(spec=MCPClient)
+    mock_mcp_client.start_servers = AsyncMock()
+    monkeypatch.setattr('core.orchestrator.MCPClient', lambda *args, **kwargs: mock_mcp_client)
 
-    def mock_load_config(self):
-        self.config = {
-            "llm_models": {"default": "mock", "aliases": {}, "models": {"mock": {}}},
-            "orchestrator": {"max_iterations": 10},
-            "memory": {"short_term_limit": 3, "long_term_retrieval_limit": 3},
-        }
-    monkeypatch.setattr(LLMManager, "_load_config", mock_load_config)
+    # VERY IMPORTANT: Patch the LLMManager class *before* orchestrator is instantiated
+    # This prevents the real LLMManager from trying to load API keys.
+    monkeypatch.setattr('core.orchestrator.LLMManager', MockLLMManager)
 
-    async def mock_start_servers(self):
-        pass
-    monkeypatch.setattr(MCPClient, "start_servers", mock_start_servers)
-
-    # Mockujeme PromptBuilder, abychom se vyhnuli čtení souboru a LTM
-    mock_prompt_builder_instance = MagicMock(spec=PromptBuilder)
-    mock_prompt_builder_instance.build_prompt.return_value = "Mocked prompt"
-    monkeypatch.setattr('core.orchestrator.PromptBuilder', lambda *args, **kwargs: mock_prompt_builder_instance)
-
+    # Now, create the orchestrator instance. It will use MockLLMManager internally.
     orc = JulesOrchestrator(project_root='.')
-    # Připojíme si mock pro pozdější kontrolu
-    orc.prompt_builder = mock_prompt_builder_instance
+
+    # Replace the real PromptBuilder, which reads files
+    mock_prompt_builder = MagicMock()
+    mock_prompt_builder.build_prompt.return_value = "Mocked complex prompt"
+    mock_prompt_builder.build_prompt_for_simple_query.return_value = "Mocked simple prompt"
+    orc.prompt_builder = mock_prompt_builder
+
     return orc
 
-def test_parse_llm_response_valid(orchestrator_instance):
+def test_parse_llm_response_valid_json(orchestrator_instance):
     """Testuje parsování validní JSON odpovědi."""
-    response_text = json.dumps({"explanation": "Test.", "tool_call": {"tool_name": "test_tool"}})
-    explanation, tool_call = orchestrator_instance._parse_llm_response(response_text)
-    assert explanation == "Test."
-    assert tool_call['tool_name'] == "test_tool"
+    response_text = json.dumps({"key": "value"})
+    parsed = orchestrator_instance._parse_llm_response(response_text)
+    assert parsed == {"key": "value"}
 
 def test_parse_llm_response_invalid_json(orchestrator_instance):
     """Testuje, jak si parsování poradí s nevalidním JSON."""
-    explanation, tool_call = orchestrator_instance._parse_llm_response("not json")
-    assert "CHYBA PARSOVÁNÍ JSON" in explanation
-    assert tool_call is None
+    parsed = orchestrator_instance._parse_llm_response("this is not json")
+    assert "error" in parsed
+    assert parsed["error"] == "JSON_DECODE_ERROR"
 
 def test_parse_llm_response_wrapped_in_markdown(orchestrator_instance):
-    """Testuje parsování JSON odpovědi, která je zabalená v Markdown bloku."""
-    raw_response = '```json\n{"explanation": "Wrapped", "tool_call": {"tool_name": "wrapped_tool"}}\n```'
-    explanation, tool_call = orchestrator_instance._parse_llm_response(raw_response)
-    assert explanation == "Wrapped"
-    assert tool_call['tool_name'] == "wrapped_tool"
+    """Testuje parsování JSONu, který je zabalený v Markdown bloku."""
+    raw_response = '```json\n{"key": "wrapped"}\n```'
+    parsed = orchestrator_instance._parse_llm_response(raw_response)
+    assert parsed == {"key": "wrapped"}
 
 @pytest.mark.asyncio
-async def test_orchestrator_gets_and_passes_main_goal(orchestrator_instance, monkeypatch):
+async def test_triage_simple_query(orchestrator_instance, monkeypatch):
     """
-    Ověřuje, že Orchestrator zavolá `get_main_goal` a předá výsledek do PromptBuilderu.
+    Ověřuje, že vstup klasifikovaný jako SIMPLE_QUERY zavolá _handle_simple_query.
     """
-    # Mockujeme metody, které se volají uvnitř hlavní smyčky `run`
-    mock_mcp_client = MagicMock(spec=MCPClient)
-    mock_mcp_client.get_tool_descriptions.return_value = "Mocked tool descriptions"
+    triage_response = {"task_type": "SIMPLE_QUERY", "details": "User is asking a question."}
+    orchestrator_instance.llm_manager.configure_llm_response('default', {
+        "klasifikuj typ úkolu": triage_response
+    })
 
-    # Klíčový mock: Simulujeme vrácení hlavního cíle
-    expected_main_goal = "Toto je hlavní cíl mise."
-    async def mock_execute_tool(tool_name, *args, **kwargs):
-        if tool_name == "get_main_goal":
-            return expected_main_goal
-        return "{}" # Vracíme prázdný JSON pro ostatní nástroje
-    mock_mcp_client.execute_tool = AsyncMock(side_effect=mock_execute_tool)
-    orchestrator_instance.mcp_client = mock_mcp_client
+    mock_handler = AsyncMock()
+    monkeypatch.setattr(orchestrator_instance, '_handle_simple_query', mock_handler)
 
-    # Mockujeme LLM, aby se smyčka neukončila předčasně
-    mock_llm = MagicMock()
-    # Klíčová oprava: metoda musí být AsyncMock, aby se dala 'await'-ovat
-    mock_llm.generate_content_async = AsyncMock(return_value=(json.dumps({
-        "explanation": "Ukončuji test.",
-        "tool_call": {"tool_name": "task_complete"}
-    }), {}))
-    monkeypatch.setattr(orchestrator_instance.llm_manager, "get_llm", lambda *args: mock_llm)
+    await orchestrator_instance.run("Jak se máš?")
 
-    # Spustíme hlavní smyčku (očekáváme, že proběhne alespoň jednou)
-    await orchestrator_instance.run("Testovací úkol")
+    mock_handler.assert_called_once()
+    call_args, _ = mock_handler.call_args
+    assert call_args[0] == "Jak se máš?"
+    assert call_args[1] == "User is asking a question."
 
-    # Ověříme, že `get_main_goal` byl zavolán
-    mock_mcp_client.execute_tool.assert_any_call("get_main_goal", [], {}, False)
+@pytest.mark.asyncio
+async def test_triage_direct_command(orchestrator_instance, monkeypatch):
+    """
+    Ověřuje, že vstup klasifikovaný jako DIRECT_COMMAND zavolá _handle_direct_command.
+    """
+    triage_response = {"task_type": "DIRECT_COMMAND"}
+    orchestrator_instance.llm_manager.configure_llm_response('default', {
+        "klasifikuj typ úkolu": triage_response
+    })
 
-    # Nejdůležitější ověření: Zkontrolujeme, s jakými argumenty byl volán PromptBuilder
-    orchestrator_instance.prompt_builder.build_prompt.assert_called_once()
-    call_args, call_kwargs = orchestrator_instance.prompt_builder.build_prompt.call_args
+    mock_handler = AsyncMock()
+    monkeypatch.setattr(orchestrator_instance, '_handle_direct_command', mock_handler)
 
-    # Zkontrolujeme, že `main_goal` je v keyword argumentech a má správnou hodnotu
-    assert "main_goal" in call_kwargs
-    assert call_kwargs["main_goal"] == expected_main_goal
+    await orchestrator_instance.run("vypiš soubory")
+
+    mock_handler.assert_called_once_with("vypiš soubory")
+
+@pytest.mark.asyncio
+async def test_triage_complex_task(orchestrator_instance, monkeypatch):
+    """
+    Ověřuje, že vstup klasifikovaný jako COMPLEX_TASK zavolá _execute_complex_task.
+    """
+    triage_response = {"task_type": "COMPLEX_TASK"}
+    orchestrator_instance.llm_manager.configure_llm_response('default', {
+        "klasifikuj typ úkolu": triage_response
+    })
+
+    mock_handler = AsyncMock()
+    monkeypatch.setattr(orchestrator_instance, '_execute_complex_task', mock_handler)
+
+    await orchestrator_instance.run("Refaktoruj celý projekt")
+
+    mock_handler.assert_called_once_with("Refaktoruj celý projekt")

@@ -1,0 +1,38 @@
+Na základě následujícího vstupu od uživatele a historie konverzace, klasifikuj typ úkolu.
+
+**Historie Konverzace (posledních pár zpráv):**
+```
+{conversation_history}
+```
+
+**Aktuální vstup od uživatele:**
+```
+{user_input}
+```
+
+---
+
+**Dostupné Typy Úkolů:**
+
+1.  **`SIMPLE_QUERY`**: Jednoduchý dotaz nebo konverzační odpověď.
+    -   Příklady: "Jak se máš?", "Co je to Python?", "Děkuji, to je vše."
+    -   Uživatel neočekává, že budeš provádět akce v systému.
+
+2.  **`DIRECT_COMMAND`**: Příkaz, který vyžaduje použití jednoho specifického nástroje.
+    -   Příklady: "Vypiš soubory v aktuálním adresáři.", "Přečti soubor `README.md`.", "Jaká je složitost kódu v `core/main.py`?"
+    -   Úkol je atomický a lze ho dokončit v jednom kroku.
+
+3.  **`COMPLEX_TASK`**: Složitý úkol, který vyžaduje plánování, více kroků nebo kombinaci více nástrojů.
+    -   Příklady: "Analyzuj celý projekt a navrhni vylepšení.", "Implementuj novou funkci pro ukládání dat do databáze.", "Najdi a oprav chybu, která způsobuje pád aplikace."
+    -   Vyžaduje delší myšlenkový proces a iterativní postup.
+
+---
+
+Odpověz **pouze** ve formátu JSON s jedním klíčem `task_type`, jehož hodnota je jedna z výše uvedených možností.
+
+**Příklad Odpovědi:**
+```json
+{{
+  "task_type": "COMPLEX_TASK"
+}}
+```
