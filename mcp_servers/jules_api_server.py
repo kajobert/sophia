@@ -1,86 +1,154 @@
 import sys
 import os
+import json
+import inspect
 import asyncio
+import httpx
+import yaml
 
-# Add project root to path for correct module resolution
+# --- Konfigurace a Inicializace ---
+
+# Dynamické přidání kořenového adresáře projektu do sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from core.base_server import BaseServer
+from core.rich_printer import RichPrinter
 
-class JulesApiServer(BaseServer):
+class JulesAPIClient:
+    """Spravuje komunikaci s externím Jules API."""
+    def __init__(self):
+        try:
+            config_path = os.path.join(project_root, 'config/config.yaml')
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+
+            self.api_key = os.getenv("JULES_API_KEY", config.get('jules_api', {}).get('api_key'))
+            if not self.api_key:
+                raise ValueError("JULES_API_KEY not found in environment or config.")
+
+            self.repo_path = config.get('jules_api', {}).get('repository')
+            if not self.repo_path:
+                raise ValueError("Jules repository path not found in config.")
+
+            self.base_url = "https://jules.googleapis.com/v1alpha"
+            self.headers = {
+                "X-Goog-Api-Key": self.api_key,
+                "Content-Type": "application/json"
+            }
+            self.client = httpx.AsyncClient(headers=self.headers)
+            RichPrinter.info("JulesAPIClient initialized successfully.")
+        except Exception as e:
+            RichPrinter.error(f"Failed to initialize JulesAPIClient: {e}")
+            self.client = None
+
+    async def _get_source_by_path(self):
+        """Najde plný název zdroje na základě cesty v repozitáři."""
+        if not self.client: return None
+        try:
+            response = await self.client.get(f"{self.base_url}/sources")
+            response.raise_for_status()
+            sources = response.json().get('sources', [])
+            for source in sources:
+                # Očekáváme, že 'name' bude formátu 'sources/github/OWNER/REPO'
+                if self.repo_path in source.get('name', ''):
+                    return source['name']
+            return None
+        except httpx.HTTPStatusError as e:
+            RichPrinter.error(f"Error listing Jules sources: {e.response.text}")
+            return None
+
+    async def create_session(self, prompt: str):
+        """Vytvoří novou session v Jules API."""
+        if not self.client:
+            return {"error": "Jules client not initialized."}
+
+        source_name = await self._get_source_by_path()
+        if not source_name:
+            return {"error": f"Could not find a configured source matching '{self.repo_path}'."}
+
+        try:
+            payload = {"prompt": prompt, "source": source_name}
+            response = await self.client.post(f"{self.base_url}/sessions", json=payload)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            RichPrinter.error(f"Error creating Jules session: {e.response.text}")
+            return {"error": str(e)}
+
+# Globální instance klienta
+jules_client = JulesAPIClient()
+
+# --- Nástroje ---
+
+async def delegate_task_to_jules(specification: str) -> dict:
     """
-    Tento server simuluje rozhraní pro budoucí integraci s externím Jules API.
-    Poskytuje nástroje, které agentovi umožní delegovat komplexní úkoly.
+    Deleguje obecný úkol na Jules API.
+    Vytvoří novou session a vrátí její detaily.
+
+    Args:
+        specification: Detailní popis požadovaného úkolu.
     """
+    RichPrinter.info(f"Delegating task to Jules API: {specification[:80]}...")
+    session = await jules_client.create_session(specification)
+    return session
 
-    def __init__(self, host, port, project_root):
-        super().__init__(host, port, project_root)
-        self.add_tool(self.get_jules_api_capabilities)
-        self.add_tool(self.delegate_coding_to_jules)
-        self.add_tool(self.delegate_testing_to_jules)
+# --- Jádro JSON-RPC Serveru ---
 
-    async def get_jules_api_capabilities(self) -> str:
-        """
-        Vrátí popis schopností, které jsou dostupné přes Jules API.
-        Agent může tento nástroj použít k rozhodnutí, zda je delegování vhodné.
-        """
-        capabilities = {
-            "description": "Jules API je specializovaná služba pro provádění komplexních softwarových úkolů.",
-            "available_delegations": {
-                "delegate_coding_to_jules": "Deleguje napsání nebo úpravu kódu podle specifikace.",
-                "delegate_testing_to_jules": "Deleguje vytvoření a spuštění testů pro ověření funkčnosti."
-            },
-            "api_status": "operational"
-        }
-        return self.tool_response("get_jules_api_capabilities", capabilities)
+def create_response(request_id, result):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
 
-    async def delegate_coding_to_jules(self, specification: str) -> str:
-        """
-        Deleguje úkol na napsání nebo úpravu kódu na Jules API.
+def create_error_response(request_id, code, message):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}})
 
-        Args:
-            specification: Detailní popis požadované funkcionality nebo změny.
+async def main():
+    loop = asyncio.get_running_loop()
+    reader = asyncio.StreamReader()
+    await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
-        Returns:
-            Potvrzení o přijetí úkolu a (v budoucnu) ID pro sledování.
-        """
-        # V této fázi pouze simulujeme přijetí úkolu
-        response = {
-            "status": "success",
-            "message": "Úkol na kódování byl úspěšně delegován na Jules API.",
-            "task_id": "jules_task_mock_12345"
-        }
-        return self.tool_response("delegate_coding_to_jules", response)
+    tools = {
+        "delegate_task_to_jules": delegate_task_to_jules,
+    }
 
-    async def delegate_testing_to_jules(self, test_description: str) -> str:
-        """
-        Deleguje úkol na vytvoření a spuštění testů na Jules API.
+    while True:
+        line = await reader.readline()
+        if not line: break
+        try:
+            request = json.loads(line)
+            request_id = request.get("id")
+            method = request.get("method")
+            response = None
 
-        Args:
-            test_description: Popis toho, co by testy měly ověřovat.
+            if method == "initialize":
+                tool_definitions = [{"name": n, "description": inspect.getdoc(f) or ""} for n, f in tools.items()]
+                response = create_response(request_id, {"capabilities": {"tools": tool_definitions}})
+            elif method == "mcp/tool/execute":
+                params = request.get("params", {})
+                tool_name = params.get("name")
+                if tool_name in tools:
+                    kwargs = params.get("kwargs", {})
+                    try:
+                        result = await tools[tool_name](**kwargs)
+                        response = create_response(request_id, {"result": json.dumps(result)})
+                    except Exception as e:
+                        response = create_error_response(request_id, -32000, f"Tool error in '{tool_name}': {e}")
+                else:
+                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
+            else:
+                response = create_error_response(request_id, -32601, f"Method not found: {method}")
+        except Exception as e:
+            response = create_error_response(None, -32603, f"Internal server error: {e}")
 
-        Returns:
-            Potvrzení o přijetí úkolu.
-        """
-        response = {
-            "status": "success",
-            "message": "Úkol na testování byl úspěšně delegován na Jules API.",
-            "task_id": "jules_test_mock_67890"
-        }
-        return self.tool_response("delegate_testing_to_jules", response)
+        if response:
+            print(response)
+            sys.stdout.flush()
 
 if __name__ == "__main__":
-    async def main():
-        server = JulesApiServer("127.0.0.1", 8770, ".")
-        await server.start()
-        # Keep the server running until interrupted
-        try:
-            while True:
-                await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            await server.stop()
-            print("Server stopped.")
-
-    asyncio.run(main())
+    try:
+        RichPrinter.configure_logging()
+        # Načtení .env souboru pro lokální spuštění
+        from dotenv import load_dotenv
+        load_dotenv()
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        RichPrinter.info("Jules API server shutting down.")

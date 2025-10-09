@@ -24,9 +24,9 @@ from tui.messages import LogMessage, ChatMessage
 CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
 
 class SophiaTUI(App):
-    """Moderní TUI pro interakci s agentem Jules s podporou záložek."""
+    """Moderní TUI pro interakci s agentem Nomádem s podporou záložek."""
 
-    TITLE = "Jules - AI Software Engineer"
+    TITLE = "Nomad - Autonomous AI Software Engineer"
     SUB_TITLE = "Powered by Sophia Protocol"
 
     BINDINGS = [

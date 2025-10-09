@@ -28,6 +28,7 @@ class ConversationalManager:
         self.session_id = None
         self.state = ManagerState.LISTENING
         self.welcome_prompt_template = self._load_welcome_prompt()
+        self.final_response_prompt_template = self._load_final_response_prompt()
         RichPrinter.info("Conversational Manager initialized.")
 
     def _set_state(self, new_state: ManagerState):
@@ -87,9 +88,19 @@ class ConversationalManager:
         RichPrinter._post(ChatMessage(content=welcome_message, owner='agent', msg_type='inform'))
 
 
+    def _load_final_response_prompt(self) -> str:
+        """Načte prompt pro finální odpověď ze souboru."""
+        try:
+            path = os.path.join(self.project_root, "prompts/final_response_prompt.txt")
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except FileNotFoundError:
+            RichPrinter.error("Final response prompt not found. Using a default fallback.")
+            return "Summarize the result for the user."
+
     async def run(self, user_input: str):
         """
-        Přijme vstup od uživatele, informuje ho a deleguje práci na workera.
+        Přijme vstup, deleguje práci na workera a po dokončení vygeneruje finální odpověď.
         """
         if self.session_id is None and hasattr(self.worker, 'session_id'):
             self.session_id = self.worker.session_id
@@ -99,7 +110,21 @@ class ConversationalManager:
         RichPrinter._post(ChatMessage(content="Rozumím. Předávám úkol ke zpracování...", owner='agent', msg_type='inform'))
 
         self._set_state(ManagerState.WAITING_FOR_WORKER)
-        await self.worker.run(user_input, session_id=self.session_id)
+        worker_result = await self.worker.run(user_input, session_id=self.session_id)
+
+        self._set_state(ManagerState.PROCESSING)
+
+        # Sestavení promptu pro finální odpověď
+        final_prompt = self.final_response_prompt_template.format(
+            user_input=user_input,
+            worker_summary=json.dumps(worker_result, indent=2, ensure_ascii=False)
+        )
+
+        model = self.worker.llm_manager.get_llm("fast")
+        final_response, _ = await model.generate_content_async(final_prompt)
+
+        RichPrinter._post(ChatMessage(content=final_response, owner='agent', msg_type='inform'))
+
         self._set_state(ManagerState.LISTENING)
 
     async def shutdown(self):

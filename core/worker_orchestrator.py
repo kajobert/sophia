@@ -122,92 +122,99 @@ class WorkerOrchestrator:
         return {"task_type": task_type, "details": parsed_response.get("details")}
 
 
-    async def run(self, user_input: str, session_id: str | None = None):
-        """Hlavní vstupní bod pro zpracování uživatelského vstupu."""
+    async def run(self, user_input: str, session_id: str | None = None) -> dict:
+        """
+        Hlavní vstupní bod pro zpracování uživatelského vstupu.
+        Vrací slovník s výsledkem operace.
+        """
         if not self.session_id:
             self.session_id = session_id or str(uuid.uuid4())
             RichPrinter.info(f"### Zahájení nového sezení (ID: {self.session_id})")
             self.history = self.memory_manager.load_history(self.session_id) or []
 
-        RichPrinter.info(f"Úkol: {user_input}")
-        RichPrinter._post(ChatMessage(f"{user_input}", owner='user', msg_type='user_input'))
-        RichPrinter.log_communication("Vstup od uživatele", user_input, style="green")
+        RichPrinter.info(f"Úkol pro workera: {user_input}")
+        RichPrinter.log_communication("Vstup od uživatele pro workera", user_input, style="green")
 
         triage_result = await self._triage_user_request(user_input)
         task_type = triage_result["task_type"]
 
+        final_result = {}
         if task_type == TaskType.SIMPLE_QUERY:
-            await self._handle_simple_query(user_input, triage_result.get("details"))
+            final_result = await self._handle_simple_query(user_input, triage_result.get("details"))
         elif task_type == TaskType.DIRECT_COMMAND:
-            await self._handle_direct_command(user_input)
+            final_result = await self._handle_direct_command(user_input)
         elif task_type == TaskType.MULTI_STEP_COMMAND:
-            await self._handle_multi_step_command(user_input)
+            final_result = await self._handle_multi_step_command(user_input)
         elif task_type == TaskType.COMPLEX_TASK:
-            await self._execute_complex_task(user_input)
+            final_result = await self._execute_complex_task(user_input)
 
         self._set_state(AgentState.IDLE)
+        return final_result
 
-    async def _handle_simple_query(self, user_input: str, details: str | None):
-        """Zpracuje jednoduchý dotaz a pošle odpověď."""
+    async def _handle_simple_query(self, user_input: str, details: str | None) -> dict:
+        """Zpracuje jednoduchý dotaz, pošle odpověď a vrátí výsledek."""
         RichPrinter.info("Zpracovávám jednoduchý dotaz...")
-        # For a simple query, we might just need a direct answer from the LLM
-        # without using tools.
         prompt = self.prompt_builder.build_prompt_for_simple_query(user_input, self.history)
-        model = self.llm_manager.get_llm("fast") # Use a faster model for simple chat
+        model = self.llm_manager.get_llm("fast")
 
         response, _ = await model.generate_content_async(prompt)
 
         RichPrinter._post(ChatMessage(response, owner='agent', msg_type='inform'))
         self.history.append((f"UŽIVATELSKÝ VSTUP: {user_input}", response))
         self.memory_manager.save_history(self.session_id, self.history)
+        return {"status": "completed", "summary": "Odpověděl jsem na jednoduchý dotaz.", "final_answer": response}
 
-    async def _handle_direct_command(self, user_input: str):
-        """Provede jeden cyklus myšlenka -> nástroj -> výsledek."""
+    async def _handle_direct_command(self, user_input: str) -> dict:
+        """Provede jeden cyklus myšlenka -> nástroj -> výsledek a vrátí výsledek."""
         RichPrinter.info("Zpracovávám přímý příkaz...")
         self._set_state(AgentState.EXECUTING)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {user_input}"))
-        await self._execute_iteration(user_input, is_direct_command=True)
+        result = await self._execute_iteration(user_input, is_direct_command=True)
         self.memory_manager.save_history(self.session_id, self.history)
+        return result or {"status": "unknown", "summary": "Přímý příkaz byl proveden, ale nevrátil konečný stav."}
 
-    async def _handle_multi_step_command(self, initial_task: str):
-        """Zpracuje příkaz, který může vyžadovat několik kroků, bez formálního plánu."""
+    async def _handle_multi_step_command(self, initial_task: str) -> dict:
+        """Zpracuje příkaz, který může vyžadovat několik kroků, a vrátí výsledek."""
         RichPrinter.info("Zahajuji řešení více-krokového příkazu...")
         self._set_state(AgentState.EXECUTING)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
 
-        # Omezený počet iterací pro jednoduché sekvence akcí
-        max_steps = 5
+        max_steps = self.llm_manager.config.get("orchestrator", {}).get("multi_step_command_max_iterations", 5)
         for i in range(max_steps):
             RichPrinter.info(f"### Krokový příkaz, iterace č. {i+1}/{max_steps}")
-            completed = await self._execute_iteration(initial_task)
+            result = await self._execute_iteration(initial_task)
             self.memory_manager.save_history(self.session_id, self.history)
-            if completed:
+            if result:
                 RichPrinter.info("Více-krokový příkaz dokončen.")
-                break
-        else:
-            RichPrinter.warning(f"Agent dosáhl maximálního počtu kroků ({max_steps}) pro tento příkaz.")
+                return result
 
+        RichPrinter.warning(f"Agent dosáhl maximálního počtu kroků ({max_steps}) pro tento příkaz.")
+        return {"status": "max_steps_reached", "summary": f"Bylo dosaženo maximálního počtu kroků ({max_steps})."}
 
-    async def _execute_complex_task(self, initial_task: str):
-        """Spustí hlavní smyčku pro řešení komplexního úkolu."""
+    async def _execute_complex_task(self, initial_task: str) -> dict:
+        """Spustí hlavní smyčku pro řešení komplexního úkolu a vrátí výsledek."""
         RichPrinter.info("Zahajuji řešení komplexního úkolu...")
-        self._set_state(AgentState.PLANNING) # Or EXECUTING if plan exists
+        self._set_state(AgentState.PLANNING)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
 
         for i in range(len(self.history), self.max_iterations):
             RichPrinter.info(f"### Iterace č. {i+1} | Stav: {self.state.name}")
-            completed = await self._execute_iteration(initial_task)
+            result = await self._execute_iteration(initial_task)
             self.memory_manager.save_history(self.session_id, self.history)
-            if completed:
+            if result:
                 RichPrinter.info("Agent dokončil komplexní úkol.")
-                break
-        else:
-            RichPrinter.warning(f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen.")
-            self.memory_manager.save_session(self.session_id, initial_task, f"Přerušeno po {self.max_iterations} iteracích.")
+                return result
 
+        summary = f"Přerušeno po {self.max_iterations} iteracích."
+        RichPrinter.warning(f"Agent dosáhl maximálního počtu iterací ({self.max_iterations}). Úkol byl ukončen.")
+        self.memory_manager.save_session(self.session_id, initial_task, summary)
+        return {"status": "max_iterations_reached", "summary": summary}
 
-    async def _execute_iteration(self, initial_task: str, is_direct_command: bool = False) -> bool:
-        """Provede jednu úplnou iteraci cyklu myšlení-akce."""
+    async def _execute_iteration(self, initial_task: str, is_direct_command: bool = False) -> dict | None:
+        """
+        Provede jednu úplnou iteraci cyklu myšlení-akce.
+        Vrací slovník s výsledkem, pokud je úkol dokončen, jinak None.
+        """
         TERMINAL_TOOLS = ["inform_user", "warn_user", "error_user", "display_code", "display_table", "ask_user"]
 
         tool_descriptions = await self.mcp_client.get_tool_descriptions()
@@ -216,7 +223,7 @@ class WorkerOrchestrator:
 
         prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=main_goal)
 
-        model = self.llm_manager.get_llm("powerful") # Complex tasks need the best model
+        model = self.llm_manager.get_llm("powerful")
 
         full_response_text = ""
         async def stream_callback(chunk: str):
@@ -242,7 +249,7 @@ class WorkerOrchestrator:
         if not tool_call_data or "tool_name" not in tool_call_data:
             RichPrinter.warning("LLM se rozhodl nepoužít nástroj.")
             self.history.append((explanation, "Žádná akce."))
-            return False
+            return None
 
         tool_name = tool_call_data["tool_name"]
         args = tool_call_data.get("args", [])
@@ -255,7 +262,7 @@ class WorkerOrchestrator:
             summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
             RichPrinter._post(ChatMessage(summary, owner='agent', msg_type='task_complete'))
             self.memory_manager.save_session(self.session_id, initial_task, summary)
-            return True
+            return {"status": "completed", "summary": summary}
 
         result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
 
@@ -275,9 +282,9 @@ class WorkerOrchestrator:
         self.ltm.add_memory(f"Krok:\n{history_entry_request}\n\nVýsledek:\n{output_for_history}", metadata={"session_id": self.session_id})
 
         if is_direct_command or tool_name in TERMINAL_TOOLS:
-            return True # End after one cycle for direct commands or terminal tools
+            return {"status": "completed", "summary": f"Terminální nástroj '{tool_name}' byl úspěšně proveden.", "final_answer": result}
 
-        return False
+        return None
 
 
     def _parse_llm_response(self, response_text: str) -> dict:
