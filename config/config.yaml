@@ -24,8 +24,8 @@ llm_models:
   # LLM Manager ho překládá na konkrétní model.
   aliases:
     powerful: "google/gemini-2.5-flash-lite-preview-09-2025"
-    economical: "google/gemma-3-12b-it"
-    fast: "google/gemma-3-12b-it" # Pro rychlé odpovědi, jako jsou jednoduché dotazy
+    economical: "google/gemini-2.5-flash-lite-preview-09-2025"
+    fast: "google/gemini-2.5-flash-lite-preview-09-2025" # Pro rychlé odpovědi, jako jsou jednoduché dotazy
 
   # Seznam dostupných modelů s jejich OpenRouter identifikátory.
   # Pro každý model lze přidat specifickou konfiguraci.
