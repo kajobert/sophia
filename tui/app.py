@@ -9,13 +9,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog
+from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog, Static
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.markdown import Markdown
 from rich.table import Table
 
-from core.orchestrator import JulesOrchestrator
+from core.conversational_manager import ConversationalManager
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.widgets.memory_log_widget import MemoryLogWidget
@@ -38,9 +38,13 @@ class SophiaTUI(App):
         super().__init__()
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-        # Sjednocený widget pro zobrazení veškeré aktivity agenta
-        self.agent_display = RichLog(id="agent_display", highlight=True, markup=True)
-        self.agent_display.border_title = "Konzole Agenta"
+        # Widgety pro nové TUI rozložení
+        self.chat_display = RichLog(id="chat_display", highlight=True, markup=True)
+        self.chat_display.border_title = "Chat s Nomádem"
+
+        self.worker_console = RichLog(id="worker_console", highlight=True, markup=True)
+        self.worker_console.border_title = "Konzole Workera (Myšlenkové pochody a nástroje)"
+
         self.current_explanation = ""
 
         # Ostatní logovací widgety pro záložky
@@ -49,31 +53,39 @@ class SophiaTUI(App):
         self.error_log_widget = RichLog(id="error_log_view", highlight=True, markup=True)
         self.memory_log_widget = MemoryLogWidget(id="memory_log_view")
 
-        self.orchestrator = JulesOrchestrator(project_root=self.project_root)
+        # Widget pro stavový řádek
+        self.status_bar = Static("Stav: Inicializace...", id="status_bar")
+
+        self.manager = ConversationalManager(project_root=self.project_root)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
         self.session_id = None
 
+        # Uchování posledního známého stavu pro zobrazení v status baru
+        self.manager_status = "Inicializace..."
+        self.worker_status = "Čeká"
+
     def compose(self) -> ComposeResult:
-        """Sestaví layout TUI."""
+        """Sestaví layout TUI dle nové dvouvrstvé architektury."""
         yield Header()
-        with TabbedContent(initial="agent_tab"):
-            with TabPane("Agent", id="agent_tab"):
-                yield self.agent_display
-            with TabPane("Komunikace", id="communication_tab"):
-                yield self.communication_log_widget
+        with TabbedContent(initial="chat_tab"):
+            with TabPane("Chat s Nomádem", id="chat_tab"):
+                yield self.chat_display
+            with TabPane("Konzole Workera", id="worker_console_tab"):
+                yield self.worker_console
             with TabPane("Systémové logy", id="system_log_tab"):
                 yield self.system_log_widget
             with TabPane("Paměť", id="memory_tab"):
                 yield self.memory_log_widget
             with TabPane("Chyby", id="error_log_tab"):
                 yield self.error_log_widget
+        yield self.status_bar
         yield self.input_widget
         yield Footer()
 
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů."""
         RichPrinter.set_message_poster(self.post_message)
-        self.initialize_orchestrator()
+        self.initialize_manager()
         self.input_widget.focus()
         await self.check_for_crash_and_start_recovery()
 
@@ -91,11 +103,11 @@ class SophiaTUI(App):
             RichPrinter.error(f"Nepodařilo se zpracovat crash log: {e}")
 
     @work(exclusive=True)
-    async def initialize_orchestrator(self):
-        """Inicializuje orchestrátor v samostatném workeru."""
-        RichPrinter.info("Inicializace jádra agenta...")
-        await self.orchestrator.initialize()
-        RichPrinter.info("Jádro agenta připraveno.")
+    async def initialize_manager(self):
+        """Inicializuje ConversationalManager a jeho podřízené komponenty."""
+        RichPrinter.info("Inicializace manažera konverzace...")
+        await self.manager.initialize()
+        RichPrinter.info("Manažer konverzace je připraven.")
 
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Zpracuje odeslání vstupu od uživatele."""
@@ -103,81 +115,95 @@ class SophiaTUI(App):
         if not prompt:
             return
 
-        # Zobrazíme vstup od uživatele v hlavní konzoli
+        # Zobrazíme vstup od uživatele v chatovacím okně
         user_panel = Panel(f"{prompt}", title="Uživatel", border_style="green")
-        self.agent_display.write(user_panel)
+        self.chat_display.write(user_panel)
 
         self.input_widget.clear()
         self.current_explanation = "" # Vynulujeme pro nový myšlenkový pochod
-        self.run_orchestrator_task(prompt)
+        self.run_manager_task(prompt)
 
     @work(exclusive=True)
-    async def run_orchestrator_task(self, prompt: str):
-        """Spustí `orchestrator.run` v samostatném workeru."""
-        await self.orchestrator.run(prompt, session_id=self.session_id)
-        if self.session_id is None and hasattr(self.orchestrator, 'session_id'):
-             self.session_id = self.orchestrator.session_id
+    async def run_manager_task(self, prompt: str):
+        """Spustí `manager.run` v samostatném workeru."""
+        await self.manager.run(prompt)
+        # Session ID je nyní spravováno uvnitř manažeru
+        if self.session_id is None and hasattr(self.manager, 'session_id'):
+             self.session_id = self.manager.session_id
 
     def on_log_message(self, message: LogMessage) -> None:
         self.system_log_widget.add_log(message.text, message.level)
 
     def on_chat_message(self, message: ChatMessage) -> None:
-        """Zpracuje zprávu od agenta a zobrazí ji ve sjednocené konzoli."""
+        """Zpracuje zprávu od agenta a zobrazí ji ve správném widgetu."""
         msg_type = message.msg_type
         content = message.content
 
-        # Pomocná funkce pro zápis panelu
-        def write_panel(panel_content, title, border_style):
-            self.agent_display.write(Panel(panel_content, title=title, border_style=border_style))
+        # Zprávy pro "Konzoli Workera" (technické detaily)
+        if msg_type in ("explanation_chunk", "explanation_end", "tool_code", "tool_output"):
+            if msg_type == "explanation_chunk":
+                self.current_explanation += content
+            elif msg_type == "explanation_end":
+                if self.current_explanation:
+                    md = Markdown(self.current_explanation)
+                    self.worker_console.write(Panel(md, title="Myšlenkový pochod", border_style="blue"))
+                self.current_explanation = ""
+            elif msg_type == "tool_code":
+                panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
+                self.worker_console.write(Panel(panel_content, title="Volání nástroje", border_style="yellow"))
+            elif msg_type == "tool_output":
+                self.worker_console.write(Panel(content, title="Výstup nástroje", border_style="bright_cyan"))
 
-        if msg_type == "explanation_chunk":
-            # Sbíráme části myšlenkového pochodu
-            self.current_explanation += content
-        elif msg_type == "explanation_end":
-            # Na konci streamu zobrazíme celý myšlenkový pochod
-            if self.current_explanation:
-                md = Markdown(self.current_explanation)
-                write_panel(md, "Myšlenkový pochod", "blue")
-            self.current_explanation = "" # Vynulujeme pro příští použití
-        elif msg_type == "tool_code":
-            panel_content = Syntax(content, "json", theme="monokai", line_numbers=True)
-            write_panel(panel_content, "Volání nástroje", "yellow")
-        elif msg_type == "tool_output":
-            write_panel(content, "Výstup nástroje", "bright_cyan")
-        elif msg_type in ("inform", "warn", "error", "ask", "task_complete"):
-            style_map = {
-                "inform": ("Informace", "bright_green"),
-                "warn": ("Varování", "bright_yellow"),
-                "error": ("Chyba", "bright_red"),
-                "ask": ("Otázka", "bright_magenta"),
-                "task_complete": ("Úkol Dokončen", "bold green"),
-            }
-            title, border_style = style_map[msg_type]
-            write_panel(content, title, border_style)
-        elif msg_type == "code":
-            lang = content.get('language', 'python')
-            panel_content = Syntax(content.get('code', ''), lang, theme="monokai", line_numbers=True)
-            write_panel(panel_content, f"Zobrazení kódu ({lang})", "blue")
-        elif msg_type == "table":
-            try:
-                table = Table(title=content.get('title'), border_style="blue")
-                for header in content.get('headers', []): table.add_column(str(header))
-                for row in content.get('rows', []): table.add_row(*[str(item) for item in row])
-                self.agent_display.write(table)
-            except Exception as e:
-                self.system_log_widget.add_log(f"Chyba při vykreslování tabulky: {e}", "ERROR")
+        # Zprávy pro "Chat s Nomádem" (přímá komunikace s uživatelem)
+        elif msg_type in ("inform", "warn", "error", "ask", "task_complete", "code", "table"):
+            if msg_type in ("inform", "warn", "error", "ask", "task_complete"):
+                style_map = {
+                    "inform": ("Informace", "bright_green"),
+                    "warn": ("Varování", "bright_yellow"),
+                    "error": ("Chyba", "bright_red"),
+                    "ask": ("Otázka", "bright_magenta"),
+                    "task_complete": ("Úkol Dokončen", "bold green"),
+                }
+                title, border_style = style_map[msg_type]
+                self.chat_display.write(Panel(content, title=title, border_style=border_style))
+            elif msg_type == "code":
+                lang = content.get('language', 'python')
+                panel_content = Syntax(content.get('code', ''), lang, theme="monokai", line_numbers=True)
+                self.chat_display.write(Panel(panel_content, f"Zobrazení kódu ({lang})", border_style="blue"))
+            elif msg_type == "table":
+                try:
+                    table = Table(title=content.get('title'), border_style="blue")
+                    for header in content.get('headers', []): table.add_column(str(header))
+                    for row in content.get('rows', []): table.add_row(*[str(item) for item in row])
+                    self.chat_display.write(table)
+                except Exception as e:
+                    self.system_log_widget.add_log(f"Chyba při vykreslování tabulky: {e}", "ERROR")
+
+        # Zprávy pro ostatní specializované logovací záložky
         elif msg_type in ("communication_log", "error_log", "memory_log"):
-            # Tyto zprávy patří do svých vlastních záložek
             if msg_type == "communication_log": self.communication_log_widget.write(content)
             elif msg_type == "error_log": self.error_log_widget.write(content)
             elif msg_type == "memory_log": self.memory_log_widget.add_log(content.get("operation"), content.get("source"), content.get("content"))
-        elif msg_type != "user_input": # user_input již zobrazujeme v on_input_submitted
+
+        # Zpráva pro aktualizaci stavového řádku
+        elif msg_type == "status_update":
+            source = content.get("source")
+            status_text = content.get("details", "N/A")
+            if source == "manager":
+                self.manager_status = status_text
+            elif source == "worker":
+                self.worker_status = status_text
+
+            self.status_bar.update(f"Manažer: [bold cyan]{self.manager_status}[/] | Worker: [bold yellow]{self.worker_status}[/]")
+
+        # Ostatní zprávy jdou do systémového logu
+        elif msg_type != "user_input":
             self.system_log_widget.add_log(f"Neznámý typ zprávy '{msg_type}'", "WARNING")
 
     async def action_request_quit(self):
         """Bezpečně ukončí aplikaci."""
         RichPrinter.info("Zahajuji ukončování...")
-        await self.orchestrator.shutdown()
+        await self.manager.shutdown()
         self.exit()
 
 if __name__ == "__main__":

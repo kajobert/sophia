@@ -1,5 +1,13 @@
+import sys
+import os
 import asyncio
-from mcp_servers.base_server import BaseServer
+
+# Add project root to path for correct module resolution
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from core.base_server import BaseServer
 
 class JulesApiServer(BaseServer):
     """

@@ -12,26 +12,25 @@ sys.path.insert(0, project_root)
 # Tyto moduly mají vedlejší efekty (logování, TUI), které v testech nechceme.
 sys.modules['core.rich_printer'] = MagicMock()
 
-from core.orchestrator import JulesOrchestrator, TaskType
+from core.worker_orchestrator import WorkerOrchestrator, TaskType
 from core.mcp_client import MCPClient
 from tests.mocks import MockLLMManager
 
 @pytest.fixture
 def orchestrator_instance(monkeypatch):
     """
-    Vytvoří instanci orchestrátoru s mockovanými závislostmi pro testování.
+    Vytvoří instanci WorkerOrchestrator s mockovanými závislostmi pro testování.
     """
     # Mock MCPClient to avoid running real servers
     mock_mcp_client = MagicMock(spec=MCPClient)
     mock_mcp_client.start_servers = AsyncMock()
-    monkeypatch.setattr('core.orchestrator.MCPClient', lambda *args, **kwargs: mock_mcp_client)
+    monkeypatch.setattr('core.worker_orchestrator.MCPClient', lambda *args, **kwargs: mock_mcp_client)
 
-    # VERY IMPORTANT: Patch the LLMManager class *before* orchestrator is instantiated
-    # This prevents the real LLMManager from trying to load API keys.
-    monkeypatch.setattr('core.orchestrator.LLMManager', MockLLMManager)
+    # Patch the LLMManager class *before* orchestrator is instantiated
+    monkeypatch.setattr('core.worker_orchestrator.LLMManager', MockLLMManager)
 
-    # Now, create the orchestrator instance. It will use MockLLMManager internally.
-    orc = JulesOrchestrator(project_root='.')
+    # Now, create the orchestrator instance.
+    orc = WorkerOrchestrator(project_root='.')
 
     # Replace the real PromptBuilder, which reads files
     mock_prompt_builder = MagicMock()

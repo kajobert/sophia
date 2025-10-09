@@ -23,6 +23,7 @@ from core.long_term_memory import LongTermMemory
 class TaskType(Enum):
     SIMPLE_QUERY = "Jednoduchý dotaz"
     DIRECT_COMMAND = "Přímý příkaz"
+    MULTI_STEP_COMMAND = "Vykrokový příkaz"
     COMPLEX_TASK = "Komplexní úkol"
 
 class AgentState(Enum):
@@ -31,9 +32,10 @@ class AgentState(Enum):
     PLANNING = "Plánování"
     EXECUTING = "Provádění"
 
-class JulesOrchestrator:
+class WorkerOrchestrator:
     """
-    Orchestrátor řídí agenta, klasifikuje úkoly, spravuje stav a komunikuje s LLM.
+    Tento orchestrátor je "motor" agenta. Zpracovává konkrétní úkoly na pozadí,
+    zatímco ConversationalManager komunikuje s uživatelem.
     """
     def __init__(self, project_root: str = ".", status_widget=None):
         self.project_root = os.path.abspath(project_root)
@@ -83,9 +85,19 @@ class JulesOrchestrator:
         self.memory_manager.close()
         RichPrinter.info("Všechny služby byly bezpečně ukončeny.")
 
+    def _set_state(self, new_state: AgentState):
+        """Nastaví nový stav a odešle zprávu pro aktualizaci TUI."""
+        self.state = new_state
+        RichPrinter.info(f"Worker state changed to: {new_state.name}")
+        RichPrinter._post(ChatMessage(
+            content={"source": "worker", "status": new_state.name, "details": new_state.value},
+            owner="system",
+            msg_type="status_update"
+        ))
+
     async def _triage_user_request(self, user_input: str) -> dict:
         """Klasifikuje požadavek uživatele pomocí LLM."""
-        self.state = AgentState.TRIAGE
+        self._set_state(AgentState.TRIAGE)
         RichPrinter.info("Provádím klasifikaci úkolu...")
 
         conversation_history = "\n".join([f"Q: {q}\nA: {a}" for q, a in self.history[-3:]])
@@ -128,10 +140,12 @@ class JulesOrchestrator:
             await self._handle_simple_query(user_input, triage_result.get("details"))
         elif task_type == TaskType.DIRECT_COMMAND:
             await self._handle_direct_command(user_input)
+        elif task_type == TaskType.MULTI_STEP_COMMAND:
+            await self._handle_multi_step_command(user_input)
         elif task_type == TaskType.COMPLEX_TASK:
             await self._execute_complex_task(user_input)
 
-        self.state = AgentState.IDLE
+        self._set_state(AgentState.IDLE)
 
     async def _handle_simple_query(self, user_input: str, details: str | None):
         """Zpracuje jednoduchý dotaz a pošle odpověď."""
@@ -150,16 +164,34 @@ class JulesOrchestrator:
     async def _handle_direct_command(self, user_input: str):
         """Provede jeden cyklus myšlenka -> nástroj -> výsledek."""
         RichPrinter.info("Zpracovávám přímý příkaz...")
-        self.state = AgentState.EXECUTING
+        self._set_state(AgentState.EXECUTING)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {user_input}"))
         await self._execute_iteration(user_input, is_direct_command=True)
         self.memory_manager.save_history(self.session_id, self.history)
+
+    async def _handle_multi_step_command(self, initial_task: str):
+        """Zpracuje příkaz, který může vyžadovat několik kroků, bez formálního plánu."""
+        RichPrinter.info("Zahajuji řešení více-krokového příkazu...")
+        self._set_state(AgentState.EXECUTING)
+        self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
+
+        # Omezený počet iterací pro jednoduché sekvence akcí
+        max_steps = 5
+        for i in range(max_steps):
+            RichPrinter.info(f"### Krokový příkaz, iterace č. {i+1}/{max_steps}")
+            completed = await self._execute_iteration(initial_task)
+            self.memory_manager.save_history(self.session_id, self.history)
+            if completed:
+                RichPrinter.info("Více-krokový příkaz dokončen.")
+                break
+        else:
+            RichPrinter.warning(f"Agent dosáhl maximálního počtu kroků ({max_steps}) pro tento příkaz.")
 
 
     async def _execute_complex_task(self, initial_task: str):
         """Spustí hlavní smyčku pro řešení komplexního úkolu."""
         RichPrinter.info("Zahajuji řešení komplexního úkolu...")
-        self.state = AgentState.PLANNING # Or EXECUTING if plan exists
+        self._set_state(AgentState.PLANNING) # Or EXECUTING if plan exists
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
 
         for i in range(len(self.history), self.max_iterations):
