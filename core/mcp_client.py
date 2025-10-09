@@ -11,19 +11,20 @@ class MCPClient:
     Zapouzdřuje logiku pro spouštění, ukončování a komunikaci
     se subprocesy MCP serverů.
     """
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str, profile: str):
         self.project_root = project_root
+        self.profile = profile
         self.servers = {}
         self.tool_to_server = {}
         self.tool_definitions = []
         self.server_scripts = {} # Uloží cesty ke skriptům pro možnost restartu
 
     async def start_servers(self):
-        """Spustí a inicializuje všechny MCP servery nalezené v adresáři mcp_servers."""
-        servers_dir = os.path.join(self.project_root, "mcp_servers")
+        """Spustí a inicializuje všechny MCP servery pro daný profil."""
+        servers_dir = os.path.join(self.project_root, "mcp_servers", self.profile)
         if not os.path.isdir(servers_dir):
             from .rich_printer import RichPrinter
-            RichPrinter.warning(f"Adresář MCP serverů '{servers_dir}' nebyl nalezen.")
+            RichPrinter.warning(f"Adresář MCP serverů pro profil '{self.profile}' ('{servers_dir}') nebyl nalezen.")
             return
 
         for filename in os.listdir(servers_dir):
@@ -45,7 +46,7 @@ class MCPClient:
             limit=limit
         )
         self.servers[server_name] = process
-        RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
+        RichPrinter.info(f"MCPClient (profil: {self.profile}) spustil server '{server_name}' (PID: {process.pid}).")
 
         init_request = json.dumps({"jsonrpc": "2.0", "method": "initialize", "id": 1})
         if process.stdin:

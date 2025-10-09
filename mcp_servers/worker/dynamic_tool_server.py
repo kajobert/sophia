@@ -3,40 +3,55 @@ import os
 import json
 import inspect
 import asyncio
-import functools
+import importlib.util
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tools import memory_tools
-
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
-    return json.dumps({
-        "jsonrpc": "2.0",
-        "id": request_id,
-        "result": result
-    })
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
 
 def create_error_response(request_id, code, message):
     """Vytvoří standardní JSON-RPC chybovou odpověď."""
-    return json.dumps({
-        "jsonrpc": "2.0",
-        "id": request_id,
-        "error": {"code": code, "message": message}
-    })
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}})
+
+def load_dynamic_tools():
+    """Dynamicky načte všechny nástroje z adresáře sandbox/custom_tools."""
+    tools = {}
+    custom_tools_dir = os.path.join(project_root, "sandbox", "custom_tools")
+    if not os.path.isdir(custom_tools_dir):
+        return tools
+
+    for filename in os.listdir(custom_tools_dir):
+        if filename.endswith(".py"):
+            module_name = f"custom_tools.{filename[:-3]}"
+            filepath = os.path.join(custom_tools_dir, filename)
+
+            try:
+                spec = importlib.util.spec_from_file_location(module_name, filepath)
+                module = importlib.util.module_from_spec(spec)
+                # Přidání do sys.modules, aby fungovaly případné další importy v nástroji
+                sys.modules[module_name] = module
+                spec.loader.exec_module(module)
+
+                for name, func in inspect.getmembers(module, inspect.isfunction):
+                    if not name.startswith("_"):
+                        tools[name] = func
+            except Exception as e:
+                # V případě chyby logujeme, ale nepadáme
+                print(f"Error loading dynamic tool from {filename}: {e}", file=sys.stderr)
+    return tools
 
 async def main():
-    """Hlavní asynchronní smyčka MCP serveru pro paměťové nástroje."""
+    """Hlavní asynchronní smyčka pro dynamický MCP server."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
-    tools = {
-        "recall_past_tasks": memory_tools.recall_past_tasks,
-    }
+    tools = load_dynamic_tools()
 
     while True:
         line = await reader.readline()
@@ -67,10 +82,8 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        # Vytvoříme parciální funkci, která zapouzdří funkci i její argumenty
-                        func_to_run = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
                         result = await loop.run_in_executor(
-                            None, func_to_run
+                            None, tools[tool_name], *tool_args, **tool_kwargs
                         )
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:

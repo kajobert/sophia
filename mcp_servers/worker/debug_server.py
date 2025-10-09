@@ -3,55 +3,39 @@ import os
 import json
 import inspect
 import asyncio
-import importlib.util
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+from tools import debug
+
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
-    return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
+    return json.dumps({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "result": result
+    })
 
 def create_error_response(request_id, code, message):
     """Vytvoří standardní JSON-RPC chybovou odpověď."""
-    return json.dumps({"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}})
-
-def load_dynamic_tools():
-    """Dynamicky načte všechny nástroje z adresáře sandbox/custom_tools."""
-    tools = {}
-    custom_tools_dir = os.path.join(project_root, "sandbox", "custom_tools")
-    if not os.path.isdir(custom_tools_dir):
-        return tools
-
-    for filename in os.listdir(custom_tools_dir):
-        if filename.endswith(".py"):
-            module_name = f"custom_tools.{filename[:-3]}"
-            filepath = os.path.join(custom_tools_dir, filename)
-
-            try:
-                spec = importlib.util.spec_from_file_location(module_name, filepath)
-                module = importlib.util.module_from_spec(spec)
-                # Přidání do sys.modules, aby fungovaly případné další importy v nástroji
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
-
-                for name, func in inspect.getmembers(module, inspect.isfunction):
-                    if not name.startswith("_"):
-                        tools[name] = func
-            except Exception as e:
-                # V případě chyby logujeme, ale nepadáme
-                print(f"Error loading dynamic tool from {filename}: {e}", file=sys.stderr)
-    return tools
+    return json.dumps({
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "error": {"code": code, "message": message}
+    })
 
 async def main():
-    """Hlavní asynchronní smyčka pro dynamický MCP server."""
+    """Hlavní asynchronní smyčka MCP serveru pro debugovací nástroje."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
-    tools = load_dynamic_tools()
+    tools = {
+        "show_last_output": debug.show_last_output,
+    }
 
     while True:
         line = await reader.readline()
@@ -89,7 +73,7 @@ async def main():
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
                 else:
-                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
+                    response = create_error_response(request_id, -32601, "Method not found")
 
             else:
                 response = create_error_response(request_id, -32601, "Method not found")

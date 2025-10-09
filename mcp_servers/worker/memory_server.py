@@ -3,13 +3,14 @@ import os
 import json
 import inspect
 import asyncio
+import functools
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tools import shell
+from tools import memory_tools
 
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
@@ -28,13 +29,13 @@ def create_error_response(request_id, code, message):
     })
 
 async def main():
-    """Hlavní asynchronní smyčka MCP serveru."""
+    """Hlavní asynchronní smyčka MCP serveru pro paměťové nástroje."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
     tools = {
-        "run_in_bash_session": shell.run_in_bash_session,
+        "recall_past_tasks": memory_tools.recall_past_tasks,
     }
 
     while True:
@@ -66,8 +67,10 @@ async def main():
 
                 if tool_name in tools:
                     try:
+                        # Vytvoříme parciální funkci, která zapouzdří funkci i její argumenty
+                        func_to_run = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
                         result = await loop.run_in_executor(
-                            None, tools[tool_name], *tool_args, **tool_kwargs
+                            None, func_to_run
                         )
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:

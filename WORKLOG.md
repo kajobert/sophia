@@ -36,6 +36,39 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 ```
 
 ---
+**Datum**: 2025-10-09
+**Autor**: Jules (Nomad)
+**Ticket/Task**: Refactoring to Manager/Worker Architecture & Bug Fixes
+
+### Téma: Implementace a stabilizace architektury Manager/Worker.
+
+**Popis Práce:**
+- Proveden velký refaktoring aplikace na dvouúrovňovou architekturu Manager/Worker s cílem oddělit konverzační logiku od provádění úkolů.
+- `ConversationalManager` (`core/conversational_manager.py`) byl implementován jako nová nejvyšší vrstva pro interakci s uživatelem, rozhodování a delegování úkolů.
+- Původní `JulesOrchestrator` byl přejmenován na `WorkerOrchestrator` (`core/orchestrator.py`) a nyní slouží jako specializovaná výkonná jednotka.
+- `MCPClient` byl upraven tak, aby podporoval "profily", a všechny nástrojové servery byly přesunuty do adresáře `mcp_servers/worker/`.
+- Byly opraveny kritické `ModuleNotFoundError`, které vznikly v důsledku přesunu souborů serverů, a to systematickou úpravou `sys.path` v každém z nich.
+- Byla opravena chyba `ValueError`, která způsobovala pád TUI, nastavením platného výchozího LLM modelu v `config/config.yaml`.
+- Byla opravena chyba v testu `test_profile_code_execution`, čímž byla zajištěna 100% úspěšnost testovací sady.
+- Byla komplexně aktualizována dokumentace (`ARCHITECTURE.md`, `DEVELOPER_GUIDE.md`, `NOMAD_0.8_plan_implementace.md`), aby odrážela novou architekturu.
+
+**Důvod a Kontext:**
+- Původní monolitická architektura byla náchylná k chybám a neumožňovala jasné oddělení zodpovědností. Nová architektura umožňuje, aby se `ConversationalManager` soustředil na porozumění uživateli a vedení konverzace, zatímco `WorkerOrchestrator` se specializuje na provádění složitých úkolů.
+
+**Narazené Problémy a Řešení:**
+- **Problém:** Po refaktoringu servery v `mcp_servers/worker/` nemohly najít moduly v `core/` a `tools/` kvůli nesprávným relativním cestám.
+- **Řešení:** Systematická oprava `sys.path` v každém souboru serveru tak, aby ukazoval o dvě úrovně výše (`../..`).
+- **Problém:** Aplikace padala při startu kvůli chybějící nebo nesprávné konfiguraci výchozího LLM modelu.
+- **Řešení:** Úprava `config/config.yaml` a nastavení platného a existujícího modelu jako výchozího.
+- **Problém:** Jeden z testů selhával kvůli nesprávně formátovanému příkazu předávanému nástroji.
+- **Řešení:** Oprava testovací funkce tak, aby volala testovaný nástroj se správnými argumenty.
+
+**Dopad na Projekt:**
+- Aplikace je nyní stabilní a plně funkční s novou, robustnější architekturou.
+- Struktura kódu je čistší, modulárnější a lépe připravená na budoucí rozšiřování.
+- Dokumentace je plně aktuální a odpovídá implementaci.
+---
+---
 **Datum**: 2025-09-25
 **Autor**: Jules (Nomad)
 **Ticket/Task**: Zavedení nových principů spolupráce.

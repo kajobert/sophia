@@ -5,11 +5,11 @@ import inspect
 import asyncio
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tools import debug
+from tools import shell
 
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
@@ -28,13 +28,13 @@ def create_error_response(request_id, code, message):
     })
 
 async def main():
-    """Hlavní asynchronní smyčka MCP serveru pro debugovací nástroje."""
+    """Hlavní asynchronní smyčka MCP serveru."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
     tools = {
-        "show_last_output": debug.show_last_output,
+        "run_in_bash_session": shell.run_in_bash_session,
     }
 
     while True:
@@ -73,7 +73,7 @@ async def main():
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")
                 else:
-                    response = create_error_response(request_id, -32601, "Method not found")
+                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
 
             else:
                 response = create_error_response(request_id, -32601, "Method not found")

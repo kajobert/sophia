@@ -15,7 +15,7 @@ sys.modules['core.rich_printer'] = MagicMock()
 # Musíme nechat PromptBuilder jako skutečnou třídu, abychom mohli mockovat jeho metody
 from core.prompt_builder import PromptBuilder
 
-from core.orchestrator import JulesOrchestrator
+from core.orchestrator import WorkerOrchestrator # Změněno z JulesOrchestrator
 from core.llm_manager import LLMManager
 from core.mcp_client import MCPClient
 
@@ -34,18 +34,24 @@ def orchestrator_instance(monkeypatch):
         }
     monkeypatch.setattr(LLMManager, "_load_config", mock_load_config)
 
+    # MCPClient nyní vyžaduje 'profile' v __init__
     async def mock_start_servers(self):
         pass
+    monkeypatch.setattr(MCPClient, "__init__", lambda self, project_root, profile: None)
     monkeypatch.setattr(MCPClient, "start_servers", mock_start_servers)
+
 
     # Mockujeme PromptBuilder, abychom se vyhnuli čtení souboru a LTM
     mock_prompt_builder_instance = MagicMock(spec=PromptBuilder)
     mock_prompt_builder_instance.build_prompt.return_value = "Mocked prompt"
     monkeypatch.setattr('core.orchestrator.PromptBuilder', lambda *args, **kwargs: mock_prompt_builder_instance)
 
-    orc = JulesOrchestrator(project_root='.')
+    # Instancujeme novou třídu
+    orc = WorkerOrchestrator(project_root='.')
     # Připojíme si mock pro pozdější kontrolu
     orc.prompt_builder = mock_prompt_builder_instance
+    # Mockujeme klienta i po inicializaci, abychom měli plnou kontrolu
+    orc.mcp_client = MagicMock(spec=MCPClient)
     return orc
 
 def test_parse_llm_response_valid(orchestrator_instance):
@@ -71,40 +77,36 @@ def test_parse_llm_response_wrapped_in_markdown(orchestrator_instance):
 @pytest.mark.asyncio
 async def test_orchestrator_gets_and_passes_main_goal(orchestrator_instance, monkeypatch):
     """
-    Ověřuje, že Orchestrator zavolá `get_main_goal` a předá výsledek do PromptBuilderu.
+    Ověřuje, že WorkerOrchestrator zavolá `get_main_goal` a předá výsledek do PromptBuilderu.
     """
-    # Mockujeme metody, které se volají uvnitř hlavní smyčky `run`
-    mock_mcp_client = MagicMock(spec=MCPClient)
+    mock_mcp_client = orchestrator_instance.mcp_client
     mock_mcp_client.get_tool_descriptions.return_value = "Mocked tool descriptions"
 
-    # Klíčový mock: Simulujeme vrácení hlavního cíle
     expected_main_goal = "Toto je hlavní cíl mise."
     async def mock_execute_tool(tool_name, *args, **kwargs):
         if tool_name == "get_main_goal":
             return expected_main_goal
-        return "{}" # Vracíme prázdný JSON pro ostatní nástroje
+        # Simulujeme dokončení úkolu, aby se smyčka ukončila
+        if tool_name == "task_complete":
+            return '{"status": "completed"}'
+        return "{}"
     mock_mcp_client.execute_tool = AsyncMock(side_effect=mock_execute_tool)
-    orchestrator_instance.mcp_client = mock_mcp_client
 
-    # Mockujeme LLM, aby se smyčka neukončila předčasně
     mock_llm = MagicMock()
-    # Klíčová oprava: metoda musí být AsyncMock, aby se dala 'await'-ovat
     mock_llm.generate_content_async = AsyncMock(return_value=(json.dumps({
         "explanation": "Ukončuji test.",
         "tool_call": {"tool_name": "task_complete"}
     }), {}))
     monkeypatch.setattr(orchestrator_instance.llm_manager, "get_llm", lambda *args: mock_llm)
 
-    # Spustíme hlavní smyčku (očekáváme, že proběhne alespoň jednou)
-    await orchestrator_instance.run("Testovací úkol")
+    # Spustíme `run` s budgetem 1, aby proběhla jen jedna iterace
+    await orchestrator_instance.run("Testovací úkol", budget=1)
 
     # Ověříme, že `get_main_goal` byl zavolán
     mock_mcp_client.execute_tool.assert_any_call("get_main_goal", [], {}, False)
 
-    # Nejdůležitější ověření: Zkontrolujeme, s jakými argumenty byl volán PromptBuilder
+    # Ověříme, že PromptBuilder byl volán se správným `main_goal`
     orchestrator_instance.prompt_builder.build_prompt.assert_called_once()
     call_args, call_kwargs = orchestrator_instance.prompt_builder.build_prompt.call_args
-
-    # Zkontrolujeme, že `main_goal` je v keyword argumentech a má správnou hodnotu
     assert "main_goal" in call_kwargs
     assert call_kwargs["main_goal"] == expected_main_goal

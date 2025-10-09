@@ -7,7 +7,7 @@ import shutil
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from mcp_servers import debugging_server
+from mcp_servers.worker import debugging_server
 
 # Defiujeme cestu k testovacímu adresáři
 TEST_DIR = os.path.join(project_root, "tests/temp_debug_files")
@@ -33,6 +33,8 @@ def my_function(x):
 class MyClass:
     def __init__(self):
         pass
+
+print("Sample script executed.")
 """)
 
     yield file_path
@@ -44,8 +46,9 @@ def test_profile_code_execution(temp_test_file):
     """
     Testuje, zda profile_code_execution vrací výstup z cProfile.
     """
-    # Použijeme samotný testovací soubor jako skript ke spuštění
-    command_to_run = f"{sys.executable} {temp_test_file}"
+    # Nástroj `profile_code_execution` očekává jako vstup pouze cestu ke skriptu
+    # nebo příkaz bez samotného `python` interpretu.
+    command_to_run = temp_test_file
     result = debugging_server.profile_code_execution(command_to_run)
 
     assert "ncalls" in result
@@ -53,6 +56,7 @@ def test_profile_code_execution(temp_test_file):
     assert "percall" in result
     assert "cumtime" in result
     assert "filename:lineno(function)" in result
+    assert "sample_to_debug.py" in result # Ověříme, že náš skript byl profilován
 
 def test_run_static_code_analyzer(temp_test_file):
     """

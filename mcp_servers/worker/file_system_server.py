@@ -3,13 +3,16 @@ import os
 import json
 import inspect
 import asyncio
+import functools
 
 # Dynamické přidání kořenového adresáře projektu do sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tools import control
+from tools import file_system
+from tools import git_tools
+from tools import project_tools
 
 def create_response(request_id, result):
     """Vytvoří standardní JSON-RPC odpověď."""
@@ -28,13 +31,33 @@ def create_error_response(request_id, code, message):
     })
 
 async def main():
-    """Hlavní asynchronní smyčka MCP serveru pro kontrolní nástroje."""
+    """Hlavní asynchronní smyčka MCP serveru."""
     loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
+    # Konsolidace všech core nástrojů do jednoho serveru pro robustnost
     tools = {
-        "task_complete": control.task_complete,
+        # File System Tools
+        "list_files": file_system.list_files,
+        "read_file": file_system.read_file,
+        "create_file": file_system.create_file,
+        "delete_file": file_system.delete_file,
+        "rename_file": file_system.rename_file,
+        "overwrite_file_with_block": file_system.overwrite_file_with_block,
+        "create_file_with_block": file_system.create_file_with_block,
+        "replace_with_git_merge_diff": file_system.replace_with_git_merge_diff,
+
+        # Git Tools
+        "get_git_status": git_tools.get_git_status,
+        "add_to_git": git_tools.add_to_git,
+        "create_git_commit": git_tools.create_git_commit,
+        "revert_git_changes": git_tools.revert_git_changes,
+        "get_last_commit_hash": git_tools.get_last_commit_hash,
+        "promote_commit_to_last_known_good": git_tools.promote_commit_to_last_known_good,
+
+        # Project Tools
+        "get_project_summary": project_tools.get_project_summary,
     }
 
     while True:
@@ -66,25 +89,11 @@ async def main():
 
                 if tool_name in tools:
                     try:
-                        if tool_name == "task_complete":
-                            # Make the tool more robust to LLM formatting errors
-                            summary = "Nebylo poskytnuto žádné shrnutí."
-                            if "reason" in tool_kwargs:
-                                summary = tool_kwargs["reason"]
-                            elif tool_args:
-                                summary = tool_args[0]
-                            elif tool_kwargs:
-                                summary = list(tool_kwargs.values())[0]
-
-                            result = await loop.run_in_executor(
-                                None, tools[tool_name], reason=summary
-                            )
-                        else:
-                            # Default execution for other tools
-                            result = await loop.run_in_executor(
-                                None, tools[tool_name], *tool_args, **tool_kwargs
-                            )
-
+                        # Wrap the tool call with functools.partial to handle both args and kwargs
+                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
+                        result = await loop.run_in_executor(
+                            None, tool_call
+                        )
                         response = create_response(request_id, {"result": str(result)})
                     except Exception as e:
                         response = create_error_response(request_id, -32000, f"Tool error: {e}")

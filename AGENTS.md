@@ -138,7 +138,8 @@ Jules funguje v cyklu, který je řízen "meta-promptem" a interakcí s LLM (Gem
     - **Proces:**
         1.  **Aktualizace Dokumentace:** Aktualizuje relevantní dokumenty.
         2.  **Revize Kódu:** Vyžádá si revizi kódu pomocí `request_code_review()`.
-        3.  **Odevzdání:** Po schválení revize odevzdá práci pomocí `submit`.
+        3.  **Aktualizace WORKLOG.md (!!!POVINNÉ!!!):** Před každým zavoláním `submit` musíš aktualizovat soubor `WORKLOG.md`. Přidej stručný, ale výstižný záznam o dokončeném úkolu, jeho výsledku a provedených změnách.
+        4.  **Odevzdání:** Po schválení revize a aktualizaci worklogu odevzdá práci pomocí `submit`.
 
 ---
 
