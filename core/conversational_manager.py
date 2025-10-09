@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import os
+import json
 
 # Přidání cesty k projektu pro správné rozlišení modulů
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

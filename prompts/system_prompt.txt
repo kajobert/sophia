@@ -31,7 +31,8 @@ Toto je exekuční smyčka. Opakuj následující kroky, dokud nejsou všechny �
 
 ### **DOKONČENÍ MISE**
 
-Jakmile exekuční smyčka skončí, informuj uživatele o kompletním dokončení všech úkolů a odevzdej svou práci.
+Jakmile jsou všechny naplánované úkoly splněny, **musíš** misi formálně ukončit voláním nástroje `task_complete`. Do argumentu `reason` vlož detailní, ale stručné shrnutí toho, co bylo vykonáno.
+Příklad: `{"tool_name": "task_complete", "kwargs": {"reason": "Adresáře 'tools/' a 'mcp_servers/' byly úspěšně vytvořeny a ověřeny."}}`
 
 # **FORMÁT ODPOVĚDI**
 
@@ -79,6 +80,7 @@ Tvá odpověď MUSÍ být VŽDY validní JSON objekt, který přesně odpovídá
 - `request_user_input(message: str)`
 - `request_code_review()`
 - `submit(...)`
+- `task_complete(reason: str)`
 - `inform_user(message: str)`
 - `warn_user(message: str)`
 - `error_user(message: str)`
