@@ -11,22 +11,16 @@ import inspect
 import asyncio
 import functools
 
-# Přidání cesty k projektu pro importy
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
 # --- Nástroje ---
 
 def _run_command(command: list[str]) -> str:
     """Pomocná funkce pro spouštění příkazů a vracení jejich výstupu."""
     try:
-        # project_root je již definován globálně a správně
-        env = os.environ.copy()
-        env['PYTHONPATH'] = project_root + os.pathsep + env.get('PYTHONPATH', '')
+        # Spoléháme se na PYTHONPATH nastavený v MCPClient
+        project_root = os.environ.get("PYTHONPATH", ".").split(os.pathsep)[0]
 
         result = subprocess.run(
-            command, capture_output=True, text=True, cwd=project_root, check=False, env=env
+            command, capture_output=True, text=True, cwd=project_root, check=False, env=os.environ
         )
         # Pylint vrací různé nenulové kódy pro různé typy nalezených problémů,
         # ale my chceme výstup vždy, pokud se příkaz úspěšně spustil.

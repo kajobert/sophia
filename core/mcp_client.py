@@ -39,11 +39,16 @@ class MCPClient:
         from .rich_printer import RichPrinter
         # Nastavíme vyšší limit pro buffer, aby prošly i velké odpovědi nástrojů
         limit = 2 * 1024 * 1024  # 2MB
+        # Vytvoření kopie aktuálního prostředí a nastavení PYTHONPATH
+        env = os.environ.copy()
+        env['PYTHONPATH'] = self.project_root + os.pathsep + env.get('PYTHONPATH', '')
+
         process = await asyncio.create_subprocess_exec(
             sys.executable, script_path,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             cwd=self.project_root,
-            limit=limit
+            limit=limit,
+            env=env
         )
         self.servers[server_name] = process
         RichPrinter.info(f"MCPClient (profil: {self.profile}) spustil server '{server_name}' (PID: {process.pid}).")

@@ -53,23 +53,32 @@ class LLMManager:
         Nejprve zkontroluje, zda je 'name' alias, a pokud ano, přeloží ho.
         Pokud jméno není specifikováno, vrátí výchozí model.
         """
-        model_alias = name or self.default_model_name
-        if not model_alias:
+        # Určení identifikátoru modelu. Pokud je 'name' None nebo 'default', použije se nakonfigurovaný výchozí model.
+        # Jinak se použije poskytnutý název (což může být alias nebo přímý název modelu).
+        model_identifier = self.default_model_name if name is None or name == "default" else name
+
+        if not model_identifier:
             raise ValueError("Není definován žádný výchozí model ani alias.")
 
-        # Přeložení aliasu na skutečný název modelu
-        actual_model_name = self.aliases.get(model_alias, model_alias)
+        # Přeložení identifikátoru. Pokud je to alias, získá se skutečný název modelu.
+        # Pokud to není alias, předpokládá se, že identifikátor je samotný název modelu.
+        actual_model_name = self.aliases.get(model_identifier, model_identifier)
 
         if actual_model_name not in self.models_config:
-            raise ValueError(f"Model s názvem '{actual_model_name}' (přeloženo z aliasu '{model_alias}') nebyl nalezen v 'config.yaml' v sekci 'models'.")
+            raise ValueError(f"Model s názvem '{actual_model_name}' (přeloženo z aliasu '{model_identifier}') nebyl nalezen v 'config.yaml' v sekci 'models'.")
 
-        # Získání konfigurace pro daný model. Pokud je None (prázdná hodnota v YAML), použije se prázdný slovník.
-        model_specific_config = self.models_config.get(actual_model_name) or {}
+        # Získání konfigurace pro daný model.
+        model_specific_config = self.models_config.get(actual_model_name)
+
+        # Ověření, že konfigurace je slovník (mapping).
+        # Pokud je None nebo jiný typ (např. string), použije se prázdný slovník.
+        if not isinstance(model_specific_config, dict):
+            model_specific_config = {}
 
         # Předáme sdíleného klienta, specifickou konfiguraci modelu a fallback strategii do adaptéru
         return OpenRouterAdapter(
             model_name=actual_model_name,
             client=self._client,
             fallback_models=self.fallback_models,
-            **model_specific_config  # Bezpečné rozbalení, protože je to vždy slovník
+            **model_specific_config
         )
