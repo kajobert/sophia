@@ -24,8 +24,7 @@ llm_models:
   # LLM Manager ho překládá na konkrétní model.
   aliases:
     powerful: "google/gemini-2.5-flash-lite-preview-09-2025"
-    economical: "google/gemini-2.5-flash-lite-preview-09-2025"
-    fast: "google/gemini-2.5-flash-lite-preview-09-2025" # Pro rychlé odpovědi, jako jsou jednoduché dotazy
+    economical: "google/gemma-3-12b-it"
 
   # Seznam dostupných modelů s jejich OpenRouter identifikátory.
   # Pro každý model lze přidat specifickou konfiguraci.
@@ -43,10 +42,8 @@ llm_models:
 
 # Konfigurace pro Orchestrator
 orchestrator:
-  # Maximální počet iterací (cyklů), než se agent zastaví při komplexním úkolu.
+  # Maximální počet iterací (cyklů), než se agent zastaví.
   max_iterations: 100
-  # Maximální počet kroků pro MULTI_STEP_COMMAND.
-  multi_step_command_max_iterations: 10
 
 # Konfigurace pro paměťový systém
 memory:
@@ -66,8 +63,3 @@ vector_database:
 guardian:
   cpu_threshold: 90.0
   ram_threshold: 90.0
-
-# Konfigurace pro externí Jules API
-jules_api:
-  username: "kajobert"
-  repository: "kajobert/sophia/nomad/0.7.2-core-stabilization"
