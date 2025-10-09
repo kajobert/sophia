@@ -1,67 +1,74 @@
-# Architektura: Nomad Core
+# Architektura: Nomad Core (Manager/Worker)
 
-Tento dokument popisuje aktuální technickou architekturu projektu, která vznikla po rozsáhlém refaktoringu. Nové jádro, s kódovým označením **Nomad**, je navrženo pro robustnost, modularitu a interaktivní použití přes terminálové rozhraní (TUI).
+Tento dokument popisuje aktuální technickou architekturu projektu, která vznikla po rozsáhlém refaktoringu. Nové jádro, postavené na architektuře **Manager/Worker**, je navrženo pro robustnost, modularitu a oddělení zodpovědností.
 
 ## Klíčové principy
 
 Architektura je postavena na několika klíčových principech:
-1.  **Oddělení zodpovědností:** Každá klíčová funkce (uživatelské rozhraní, řízení agenta, vykonávání nástrojů) je zapouzdřena ve vlastní komponentě.
+1.  **Oddělení zodpovědností:** Konverzační logika (Manager) je striktně oddělena od logiky pro provádění úkolů (Worker).
 2.  **Asynchronní zpracování:** Všechny operace jsou navrženy jako asynchronní, aby se zabránilo blokování a zajistila se plynulost uživatelského rozhraní.
-3.  **Modularita nástrojů:** Nástroje, které agent používá, jsou izolovány v samostatných serverových procesech, což umožňuje jejich snadnou správu, rozšiřování a restartování.
+3.  **Modularita nástrojů:** Nástroje, které Worker používá, jsou izolovány v samostatných serverových procesech, což umožňuje jejich snadnou správu a rozšiřování.
 
 ## Hlavní komponenty
 
 Následující diagram znázorňuje tok informací mezi hlavními komponentami systému:
 
 ```
-+------------------+      (1) Uživ. vstup      +----------------------+      (3) Spuštění      +---------------------+
-|                  | ------------------------> |                      | -------------------> |                     |
-|  TUI (app.py)    |                           |  JulesOrchestrator   |                      |     MCP Servery     |
-|  (Textual)       |      (2) Zobrazení        |  (core/orchestrator) | <------------------+ | (mcp_servers/*.py)  |
-|                  | <------------------------ |                      |      (4) Výsledek    |                     |
-+------------------+      (zprávy)             +----------+-----------+                      +---------------------+
-        ^                                                  |
-        | (zprávy)                                         | (2) Volání LLM
-        |                                                  |
-+-------+----------+                                       v
-|                  |                               +----------------------+
-|   RichPrinter    |                               |                      |
-| (core/printer)   | ----------------------------> |   Gemini API / LLM   |
-|                  |      (1) Logování             |                      |
-+------------------+                               +----------------------+
-
++------------------+      (1) Uživ. vstup      +---------------------------+      (3) Delegování úkolu      +-----------------------+
+|                  | ------------------------> |                           | -------------------------> |                       |
+|  TUI (app.py)    |                           |  ConversationalManager    |                            |  WorkerOrchestrator   |
+|                  |      (2) Zobrazení        |  (core/conversational...) |                            | (core/orchestrator)   |
+|                  | <------------------------ |                           | <------------------------- |                       |
++------------------+      (zprávy)             +-------------+-------------+      (4) Výsledek úkolu      +-----------+-----------+
+                                                            |                                            |
+                                                            | (LLM pro rozhodnutí)                       | (LLM pro kroky)
+                                                            |                                            |
+                                                            v                                            v
+                                                    +----------------------+                 +---------------------+
+                                                    |                      |                 |                     |
+                                                    |   Gemini API / LLM   |                 |     MCP Servery     |
+                                                    |                      | <---------------> | (mcp_servers/worker)|
+                                                    +----------------------+                 +---------------------+
 ```
 
 ### 1. Textual User Interface (TUI)
 - **Soubor:** `tui/app.py`
 - **Technologie:** [Textual](https://textual.textualize.io/)
-- **Popis:** TUI je hlavním vstupním bodem celé aplikace a nahrazuje původní `interactive_session.py`. Je zodpovědná za:
-    - Vytvoření a správu grafického rozhraní v terminálu (chatovací okno, logy, vstupní pole).
-    - Přijímání vstupů od uživatele.
-    - Spouštění `JulesOrchestrator` v asynchronním "workeru", aby se neblokovalo UI.
-    - Zpracovávání zpráv od `RichPrinter` a jejich zobrazování v příslušných widgetech.
+- **Popis:** TUI je hlavním vstupním bodem aplikace.
+    - Vytváří a spravuje grafické rozhraní v terminálu.
+    - Přijímá vstupy od uživatele a předává je `ConversationalManageru`.
+    - Spouští `ConversationalManager` v asynchronním "workeru", aby se neblokovalo UI.
+    - Zpracovává zprávy od `RichPrinter` a zobrazuje je v příslušných widgetech.
 
-### 2. JulesOrchestrator
+### 2. ConversationalManager
+- **Soubor:** `core/conversational_manager.py`
+- **Popis:** Je to nový nejvyšší řídící prvek agenta, který funguje jako "osvícený manažer". Jeho zodpovědnosti jsou:
+    - Vedení konverzace s uživatelem.
+    - Použití LLM k primárnímu rozhodnutí na základě vstupu: má se jednat o dotaz na stav, nebo o komplexní úkol?
+    - Volání svých interních metod (např. `_get_worker_status`) pro jednoduché dotazy.
+    - Delegování komplexních úkolů na `WorkerOrchestrator`.
+    - Formulování finální, srozumitelné odpovědi pro uživatele na základě výsledků.
+
+### 3. WorkerOrchestrator
 - **Soubor:** `core/orchestrator.py`
-- **Popis:** Je to mozek celého agenta. Jeho zodpovědnosti jsou:
-    - Udržování kontextu a historie konverzace pro dané sezení (`session_id`).
-    - Komunikace s LLM (sestavování promptů, odesílání požadavků).
-    - Parsování odpovědí od LLM a rozhodování, který nástroj zavolat.
-    - Volání nástrojů prostřednictvím `MCPClient`.
-    - Využívání `RichPrinter` pro odesílání informací o svém stavu a výsledcích do TUI.
+- **Popis:** Je to "pracant" systému, který vykonává delegované úkoly.
+    - Pracuje v rámci "rozpočtu na složitost" (definovaný počet kroků), aby se zabránilo zacyklení u jednoduchých úkolů.
+    - Udržuje si vlastní kontext a historii pro řešení daného úkolu.
+    - Komunikuje s LLM pro sekvenční provádění jednotlivých kroků vedoucích ke splnění úkolu.
+    - Volá nástroje z profilu `worker` prostřednictvím `MCPClient`.
+    - Vrací finální výsledek (např. `completed`, `needs_planning`) zpět `ConversationalManageru`.
 
-### 3. MCP (Modular Component Protocol) Servery
-- **Složka:** `mcp_servers/`
-- **Popis:** Každý soubor `*_server.py` představuje samostatný, na pozadí běžící proces, který poskytuje sadu souvisejících nástrojů. Například `file_system_server.py` obsahuje nástroje pro čtení a zápis souborů.
-- **Komunikace:** Orchestrátor s nimi komunikuje přes `MCPClient` pomocí jednoduchého JSON-RPC protokolu přes standardní vstup/výstup.
-- **Výhody:** Tato architektura umožňuje restartovat jednotlivé sady nástrojů (např. po vytvoření nového nástroje) bez nutnosti restartu celé aplikace.
+### 4. MCP (Modular Component Protocol) Servery
+- **Složka:** `mcp_servers/worker/`
+- **Popis:** Každý soubor `*_server.py` v této složce představuje samostatný, na pozadí běžící proces, který poskytuje sadu souvisejících nástrojů.
+- **Komunikace:** `WorkerOrchestrator` s nimi komunikuje přes `MCPClient` pomocí jednoduchého JSON-RPC protokolu.
+- **Profily:** Architektura podporuje profily (`worker`, `manager`). V současné implementaci jsou všechny nástroje pro provádění práce v profilu `worker`.
 
-### 4. RichPrinter
+### 5. RichPrinter
 - **Soubor:** `core/rich_printer.py`
-- **Popis:** Funguje jako prostředník mezi logikou aplikace a jejím zobrazením. Místo přímého tisku do konzole emituje strukturované zprávy (`LogMessage`, `ChatMessage`).
-- **Integrace s TUI:** V TUI režimu jsou tyto zprávy zachyceny a zobrazeny v příslušných widgetech. Pokud aplikace běží bez TUI, zprávy jsou ignorovány, ale logování do souboru stále funguje.
+- **Popis:** Funguje jako prostředník mezi logikou aplikace a jejím zobrazením. Místo přímého tisku do konzole emituje strukturované zprávy (`LogMessage`, `ChatMessage`), které TUI zachytává a zobrazuje.
 
-### 5. MemoryManager
+### 6. MemoryManager
 - **Soubor:** `core/memory_manager.py`
 - **Technologie:** SQLite
 - **Popis:** Zajišťuje perzistenci dat. Ukládá kompletní historii konverzace pro každé sezení, což umožňuje navázat na přerušenou práci.

@@ -8,7 +8,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 # Importujeme pouze testované nástroje
-from mcp_servers import tui_tools_server as tui_tools
+from mcp_servers.worker import tui_tools_server as tui_tools
 
 # Mockování RichPrinteru již není potřeba, protože nástroje ho přímo nevolají.
 

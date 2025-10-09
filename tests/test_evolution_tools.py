@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, AsyncMock
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from mcp_servers import evolution_server
+from mcp_servers.worker import evolution_server
 
 @pytest.fixture(scope="function", autouse=True)
 def cleanup_evolution_server_state():
@@ -46,14 +46,16 @@ def test_sandbox_workflow():
 async def test_propose_refactoring(monkeypatch):
     """Testuje navrhování refaktoringu s mockovaným LLM."""
     mock_read_section = MagicMock(return_value="def old_func(): pass")
-    monkeypatch.setattr("mcp_servers.evolution_server.read_file_section", mock_read_section)
+    # Změna cesty pro monkeypatch
+    monkeypatch.setattr("mcp_servers.worker.evolution_server.read_file_section", mock_read_section)
 
     # Mock the LLMManager and its methods
     mock_model = AsyncMock()
     mock_model.generate_content_async.return_value = ("def new_func():\n    # New and improved\n    pass", {})
     mock_llm_manager_instance = MagicMock()
     mock_llm_manager_instance.get_llm.return_value = mock_model
-    monkeypatch.setattr("mcp_servers.evolution_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
+    # Změna cesty pro monkeypatch
+    monkeypatch.setattr("mcp_servers.worker.evolution_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
 
     result = await evolution_server.propose_refactoring("dummy/path.py", "old_func")
 

@@ -7,7 +7,7 @@ import shutil
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from mcp_servers import debugging_server
+from mcp_servers.worker import debugging_server
 
 # Defiujeme cestu k testovacímu adresáři
 TEST_DIR = os.path.join(project_root, "tests/temp_debug_files")

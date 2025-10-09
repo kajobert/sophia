@@ -16,7 +16,7 @@ from rich.syntax import Syntax
 from rich.markdown import Markdown
 from rich.table import Table
 
-from core.orchestrator import JulesOrchestrator
+from core.conversational_manager import ConversationalManager
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.widgets.memory_log_widget import MemoryLogWidget
@@ -28,7 +28,7 @@ class SophiaTUI(App):
     """Moderní TUI pro interakci s agentem Jules s podporou záložek."""
 
     TITLE = "Jules - AI Software Engineer"
-    SUB_TITLE = "Powered by Sophia Protocol"
+    SUB_TITLE = "Powered by Sophia Protocol (Manager/Worker Architektura)"
 
     BINDINGS = [
         ("ctrl+d", "toggle_dark", "Přepnout tmavý režim"),
@@ -54,9 +54,10 @@ class SophiaTUI(App):
 
         self.memory_log_widget = MemoryLogWidget(id="memory_log_view")
 
-        self.orchestrator = JulesOrchestrator(project_root=self.project_root)
+        # Nahrazení Orchestratoru za ConversationalManager
+        self.manager = ConversationalManager(project_root=self.project_root)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
-        self.session_id = None
+        self.session_id = None # Session ID se nyní spravuje v manažerovi
 
     def compose(self) -> ComposeResult:
         """Sestaví layout TUI."""
@@ -79,11 +80,8 @@ class SophiaTUI(App):
 
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
-
-
-
         RichPrinter.set_message_poster(self.post_message)
-        self.initialize_orchestrator()
+        self.initialize_manager() # Přejmenováno z initialize_orchestrator
         self.input_widget.focus()
         await self.check_for_crash_and_start_recovery()
 
@@ -119,22 +117,17 @@ class SophiaTUI(App):
 
             recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Oprava", border_style="bold red")
             self.tool_widget.write(recovery_panel)
-            self.run_orchestrator_task(recovery_prompt)
+            self.run_manager_task(recovery_prompt) # Přejmenováno
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se zpracovat crash log: {e}")
 
     @work(exclusive=True)
-    async def initialize_orchestrator(self):
-        """Inicializuje orchestrátor v samostatném workeru."""
-        RichPrinter.info("Inicializace jádra agenta...")
-        await self.orchestrator.initialize()
-        try:
-            if self.orchestrator.llm_manager.get_llm():
-                RichPrinter.info("Jádro agenta připraveno.")
-            else:
-                RichPrinter.error("LLM manažer nevrátil model, ale nevyvolal výjimku. Agent je v offline režimu.")
-        except Exception as e:
-            RichPrinter.error(f"Nepodařilo se inicializovat LLM: {e}. Agent je v offline režimu.")
+    async def initialize_manager(self): # Přejmenováno
+        """Inicializuje manažer v samostatném workeru."""
+        RichPrinter.info("Inicializace jádra agenta (Manažer)...")
+        await self.manager.initialize()
+        RichPrinter.info("Jádro agenta připraveno.")
+
 
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Zpracuje odeslání vstupu od uživatele."""
@@ -149,14 +142,12 @@ class SophiaTUI(App):
         self.current_explanation = ""
         self.explanation_widget.update("")
 
-        self.run_orchestrator_task(prompt)
+        self.run_manager_task(prompt) # Přejmenováno
 
     @work(exclusive=True)
-    async def run_orchestrator_task(self, prompt: str):
-        """Spustí `orchestrator.run` v samostatném workeru, aby neblokoval UI."""
-        await self.orchestrator.run(prompt, session_id=self.session_id)
-        if self.session_id is None and hasattr(self.orchestrator, 'session_id'):
-             self.session_id = self.orchestrator.session_id
+    async def run_manager_task(self, prompt: str): # Přejmenováno
+        """Spustí `manager.handle_user_input` v samostatném workeru, aby neblokoval UI."""
+        await self.manager.handle_user_input(prompt)
 
     def on_log_message(self, message: LogMessage) -> None:
         """Zpracuje logovací zprávu a zobrazí ji v záložce Systémové logy."""
@@ -210,9 +201,6 @@ class SophiaTUI(App):
         elif msg_type == "task_complete":
             write_to_tool_widget(content, "Úkol Dokončen", "bold green")
         elif msg_type == "user_input":
-            # Tento typ zprávy se již vizuálně zpracovává v `on_input_submitted`.
-            # Zpráva od orchestrátoru slouží pro interní účely (paměť, logování).
-            # Zde ji pouze zaznamenáme do systémových logů, aby se předešlo varování.
             self.system_log_widget.add_log(f"Přijat vstup od uživatele: {content}", "INFO")
         elif msg_type == "communication_log":
             self.communication_log_widget.write(content)
@@ -229,7 +217,7 @@ class SophiaTUI(App):
     async def action_request_quit(self):
         """Bezpečně ukončí aplikaci."""
         RichPrinter.info("Zahajuji ukončování...")
-        await self.orchestrator.shutdown()
+        await self.manager.shutdown() # Přejmenováno
         self.exit()
 
 

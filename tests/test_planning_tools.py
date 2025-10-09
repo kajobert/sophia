@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
 # Importujeme server, který budeme testovat
-from mcp_servers import planning_server
+from mcp_servers.worker import planning_server
 
 @pytest.fixture(autouse=True)
 def clean_task_database():
@@ -108,6 +108,6 @@ async def test_summarize_text(monkeypatch):
     mock_model.generate_content_async.return_value = ("Toto je shrnutí.", {})
     mock_llm_manager_instance = MagicMock()
     mock_llm_manager_instance.get_llm.return_value = mock_model
-    monkeypatch.setattr("mcp_servers.planning_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
+    monkeypatch.setattr("mcp_servers.worker.planning_server.LLMManager", lambda *args, **kwargs: mock_llm_manager_instance)
     summary = await planning_server.summarize_text("Dlouhý text.")
     assert "Toto je shrnutí." in summary
