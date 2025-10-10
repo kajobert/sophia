@@ -61,6 +61,8 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 - **Řešení:** Závislost byla odstraněna a kód byl opraven tak, aby používal `TextArea` z `textual.widgets`, což odstranilo chybu a zjednodušilo kód.
 - **Problém:** Po odinstalování chybné závislosti došlo k deaktivaci virtuálního prostředí v shellu, což vedlo k selhání testů.
 - **Řešení:** Prostředí bylo obnoveno přeinstalováním všech závislostí pomocí `uv pip install -r requirements.in`.
+- **Problém:** Aplikace spadla s `TypeError`, protože `TextArea` nepodporuje argument `placeholder`.
+- **Řešení:** Argument `placeholder` byl odstraněn z volání `TextArea` v `tui/app.py`.
 
 **Dopad na Projekt:**
 - TUI nyní obsahuje výkonný nástroj pro experimentování s prompty a nabízí vylepšené uživatelské rozhraní pro zadávání komplexních, víceřádkových úkolů.

@@ -58,7 +58,7 @@ class SophiaTUI(App):
 
         # Nahrazení Orchestratoru za ConversationalManager
         self.manager = ConversationalManager(project_root=self.project_root)
-        self.input_widget = TextArea(placeholder="Zadejte svůj úkol nebo zprávu...", theme="monokai")
+        self.input_widget = TextArea(theme="monokai")
         self.session_id = None # Session ID se nyní spravuje v manažerovi
 
     def compose(self) -> ComposeResult:
