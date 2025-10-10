@@ -50,6 +50,7 @@ async def main():
 
         # Git Tools
         "get_git_status": git_tools.get_git_status,
+        "get_git_branch_name": git_tools.get_git_branch_name,
         "add_to_git": git_tools.add_to_git,
         "create_git_commit": git_tools.create_git_commit,
         "revert_git_changes": git_tools.revert_git_changes,

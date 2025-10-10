@@ -87,6 +87,12 @@ def get_last_commit_hash() -> str:
     """
     return _run_git_command(["git", "rev-parse", "HEAD"])
 
+def get_git_branch_name() -> str:
+    """
+    Gets the name of the current active Git branch.
+    """
+    return _run_git_command(["git", "branch", "--show-current"])
+
 def promote_commit_to_last_known_good(commit_hash: str) -> str:
     """
     Updates the '.last_known_good_commit' file with a new commit hash.

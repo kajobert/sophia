@@ -72,15 +72,19 @@ class MissionManager:
         else:
             # V ostatních případech sestavíme plný kontext pro pokračování mise.
             RichPrinter.info(f"Pokračuji v misi. Vstup od uživatele: '{user_input}'")
-            # Správné sestavení kontextu pro LLM
-            history_str = "\n".join([f"{role}: {text}" for role, text in self.mission_history])
+
+            # Zformátujeme historii pro lepší čitelnost
+            history_str = "\n".join([f"- {role.capitalize()}: {text}" for role, text in self.mission_history])
+
+            # Vytvoříme jasně strukturovaný prompt
             contextual_prompt = (
-                f"Jsi uprostřed plnění dlouhodobé mise. Tvůj hlavní cíl je: '{self.mission_prompt}'.\n\n"
-                f"--- DOSAVADNÍ PRŮBĚH MISE ---\n{history_str}\n\n"
-                f"--- AKTUÁLNÍ ÚKOL ---\nNyní uživatel zadal následující pokyn: '{user_input}'.\n"
-                f"Tento pokyn je dalším krokem v plnění hlavní mise. Zanalyzuj ho, navrhni další postup a proveď ho.\n"
-                f"--- KONEC PROMPTU ---"
+                f"**CELKOVÝ CÍL MISE:**\n{self.mission_prompt}\n\n"
+                f"**HISTORIE MISE:**\n{history_str}\n\n"
+                f"**OKAMŽITÝ CÍL:**\n{user_input}\n\n"
+                f"---\n"
+                f"**TVŮJ ÚKOL:**\nNa základě **OKAMŽITÉHO CÍLE** a s ohledem na **CELKOVÝ CÍL MISE** a **HISTORII** navrhni a proveď další krok."
             )
+
             await self.conversational_manager.handle_user_input(contextual_prompt)
 
         # Přidáme vstup do historie mise bez ohledu na cestu.
