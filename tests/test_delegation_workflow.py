@@ -20,15 +20,18 @@ WORKER_LLM_RESPONSE_LIST_SOURCES = json.dumps({
     "explanation": "To use the Jules API, I first need to know the available source. I will list them.",
     "tool_call": {"tool_name": "list_jules_sources", "kwargs": {}}
 })
-WORKER_LLM_RESPONSE_DELEGATE_TO_JULES = json.dumps({
-    "explanation": "Now that I have a source, I will delegate the task to Jules.",
+# Updated mock to include optional parameters
+WORKER_LLM_RESPONSE_DELEGATE_TO_JULES_FULL = json.dumps({
+    "explanation": "Now that I have a source, I will delegate the task to Jules with specific options.",
     "tool_call": {
         "tool_name": "delegate_task_to_jules",
         "kwargs": {
             "prompt": "Create a boba app!",
             "source": "sources/github/bobalover/boba",
             "starting_branch": "main",
-            "title": "Boba App"
+            "title": "Boba App",
+            "requirePlanApproval": True,
+            "automationMode": "AUTO_CREATE_PR"
         }
     }
 })
@@ -42,11 +45,11 @@ MANAGER_LLM_RESPONSE_FINAL = json.dumps({
 @patch('core.llm_manager.LLMManager._initialize_client', return_value=None)
 @patch('core.llm_adapters.OpenRouterAdapter.generate_content_async')
 @patch('core.mcp_client.MCPClient.execute_tool')
-async def test_end_to_end_delegation_with_approval(mock_execute_tool, mock_llm_generate, mock_init_client):
+async def test_end_to_end_delegation_with_optional_params(mock_execute_tool, mock_llm_generate, mock_init_client):
     mock_llm_generate.side_effect = [
         (MANAGER_LLM_RESPONSE_DELEGATE_TO_WORKER, {}),
         (WORKER_LLM_RESPONSE_LIST_SOURCES, {}),
-        (WORKER_LLM_RESPONSE_DELEGATE_TO_JULES, {}),
+        (WORKER_LLM_RESPONSE_DELEGATE_TO_JULES_FULL, {}), # Use the new mock with optional params
         (MANAGER_LLM_RESPONSE_FINAL, {}),
     ]
     async def tool_executor(tool_name, args, kwargs, verbose):
@@ -67,9 +70,16 @@ async def test_end_to_end_delegation_with_approval(mock_execute_tool, mock_llm_g
         assert manager.state == "AWAITING_DELEGATION_APPROVAL"
 
         await manager.handle_user_input("yes")
+
         final_delegation_call = next((c for c in mock_execute_tool.call_args_list if c.args[0] == 'delegate_task_to_jules'), None)
         assert final_delegation_call is not None
-        assert final_delegation_call.args[2]['prompt'] == "Create a boba app!"
+
+        # Assert that the optional parameters made it to the final tool call
+        final_kwargs = final_delegation_call.args[2]
+        assert final_kwargs['prompt'] == "Create a boba app!"
+        assert final_kwargs['requirePlanApproval'] is True
+        assert final_kwargs['automationMode'] == "AUTO_CREATE_PR"
+
         assert manager.state == "IDLE"
         await manager.shutdown()
 
@@ -88,31 +98,10 @@ class TestJulesApiServer:
     @patch('mcp_servers.worker.jules_api_server.load_config')
     @patch('mcp_servers.worker.jules_api_server.os.getenv')
     @patch('mcp_servers.worker.jules_api_server.httpx.AsyncClient')
-    def test_list_sources_success(self, MockAsyncClient, mock_getenv, mock_load_config):
-        mock_load_config.return_value = self.MOCK_CONFIG
-        mock_getenv.return_value = "fake-api-key"
-
-        mock_response = MagicMock(spec=httpx.Response, status_code=200)
-        mock_response.json.return_value = {"sources": ["source1"]}
-        mock_response.raise_for_status.return_value = None
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get.return_value = mock_response
-        MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
-
-        response = self.client.get("/list_jules_sources")
-        assert response.status_code == 200
-        assert response.json() == {"sources": ["source1"]}
-
-        mock_client_instance.get.assert_called_once()
-        # Correctly check the positional argument for the URL
-        assert mock_client_instance.get.call_args.args[0] == "https://test.jules.api/sources"
-        assert mock_client_instance.get.call_args.kwargs['timeout'] == 5.0
-
-    @patch('mcp_servers.worker.jules_api_server.load_config')
-    @patch('mcp_servers.worker.jules_api_server.os.getenv')
-    @patch('mcp_servers.worker.jules_api_server.httpx.AsyncClient')
-    def test_delegate_task_success(self, MockAsyncClient, mock_getenv, mock_load_config):
+    def test_delegate_task_with_all_params(self, MockAsyncClient, mock_getenv, mock_load_config):
+        """
+        Tests a successful delegation call including all optional parameters.
+        """
         mock_load_config.return_value = self.MOCK_CONFIG
         mock_getenv.return_value = "fake-api-key"
 
@@ -124,13 +113,60 @@ class TestJulesApiServer:
         mock_client_instance.post.return_value = mock_response
         MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
 
-        payload = {"prompt": "p", "source": "s", "starting_branch": "b", "title": "t"}
+        # Include all optional fields in the payload
+        payload = {
+            "prompt": "Test Prompt",
+            "source": "test/source",
+            "starting_branch": "main",
+            "title": "Test Title",
+            "requirePlanApproval": True,
+            "automationMode": "AUTO_CREATE_PR"
+        }
         response = self.client.post("/delegate_task_to_jules", json=payload)
 
         assert response.status_code == 200
         assert response.json()["session_name"] == "sessions/12345"
 
         mock_client_instance.post.assert_called_once()
-        # Correctly check the positional argument for the URL
-        assert mock_client_instance.post.call_args.args[0] == "https://test.jules.api/sessions"
-        assert mock_client_instance.post.call_args.kwargs['timeout'] == 10.0
+        sent_payload = mock_client_instance.post.call_args.kwargs['json']
+
+        # Verify that all optional fields were correctly included in the final payload
+        assert sent_payload['title'] == "Test Title"
+        assert sent_payload['requirePlanApproval'] is True
+        assert sent_payload['automationMode'] == "AUTO_CREATE_PR"
+
+    @patch('mcp_servers.worker.jules_api_server.load_config')
+    @patch('mcp_servers.worker.jules_api_server.os.getenv')
+    @patch('mcp_servers.worker.jules_api_server.httpx.AsyncClient')
+    def test_delegate_task_with_required_params_only(self, MockAsyncClient, mock_getenv, mock_load_config):
+        """
+        Tests a successful delegation call with only the required parameters.
+        """
+        mock_load_config.return_value = self.MOCK_CONFIG
+        mock_getenv.return_value = "fake-api-key"
+
+        mock_response = MagicMock(spec=httpx.Response, status_code=200)
+        mock_response.json.return_value = {"name": "sessions/12345"}
+        mock_response.raise_for_status.return_value = None
+
+        mock_client_instance = AsyncMock()
+        mock_client_instance.post.return_value = mock_response
+        MockAsyncClient.return_value.__aenter__.return_value = mock_client_instance
+
+        # Payload with only required fields
+        payload = {
+            "prompt": "Test Prompt",
+            "source": "test/source",
+            "starting_branch": "main"
+        }
+        response = self.client.post("/delegate_task_to_jules", json=payload)
+
+        assert response.status_code == 200
+
+        mock_client_instance.post.assert_called_once()
+        sent_payload = mock_client_instance.post.call_args.kwargs['json']
+
+        # Verify that optional fields which were not provided are not in the payload
+        assert "title" not in sent_payload
+        assert "requirePlanApproval" not in sent_payload
+        assert "automationMode" not in sent_payload

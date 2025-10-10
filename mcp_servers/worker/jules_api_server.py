@@ -3,6 +3,7 @@ import httpx
 import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 import logging
 
 # --- Configuration Loading Function ---
@@ -27,10 +28,14 @@ app = FastAPI()
 
 # --- Pydantic Models ---
 class DelegationRequest(BaseModel):
+    # Required fields
     prompt: str
     source: str
     starting_branch: str
-    title: str
+    # Optional fields based on API documentation
+    title: Optional[str] = None
+    requirePlanApproval: Optional[bool] = None
+    automationMode: Optional[str] = None # e.g., "AUTO_CREATE_PR"
 
 # --- API Endpoints ---
 @app.get("/list_jules_sources")
@@ -38,7 +43,6 @@ async def list_jules_sources():
     """
     Lists all available sources (e.g., GitHub repositories) that Jules can work with.
     """
-    # Load config inside the endpoint for testability
     config = load_config()
     jules_api_config = config.get("jules_api", {})
     base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
@@ -69,13 +73,12 @@ async def delegate_task_to_jules(request: DelegationRequest):
     """
     Creates a new session in the Jules API to delegate a task.
     """
-    # Load config inside the endpoint for testability
     config = load_config()
     jules_api_config = config.get("jules_api", {})
     base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
     timeout = jules_api_config.get("delegate_task_timeout", 45.0)
 
-    logger.info(f"Received request to create Jules session: '{request.title}'")
+    logger.info(f"Received request to create Jules session.")
 
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
@@ -87,17 +90,23 @@ async def delegate_task_to_jules(request: DelegationRequest):
         "Content-Type": "application/json",
     }
 
+    # Dynamically build the payload with required and optional fields
     payload = {
         "prompt": request.prompt,
         "sourceContext": {
             "source": request.source,
             "githubRepoContext": {"startingBranch": request.starting_branch}
-        },
-        "title": request.title
+        }
     }
+    if request.title:
+        payload["title"] = request.title
+    if request.requirePlanApproval is not None:
+        payload["requirePlanApproval"] = request.requirePlanApproval
+    if request.automationMode:
+        payload["automationMode"] = request.automationMode
 
     url = f"{base_url}/sessions"
-    logger.info(f"Sending request to Jules API at {url}")
+    logger.info(f"Sending request to Jules API at {url} with payload: {payload}")
 
     try:
         async with httpx.AsyncClient() as client:
