@@ -70,11 +70,25 @@ class MCPClient:
             response_line = None
 
         if not response_line:
-            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek v časovém limitu.")
-            # Přečteme a zalogujeme případné chybové hlášky
+            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek v časovém limitu. Pokouším se přečíst výstup pro diagnostiku...")
+
+            # --- Enhanced Error Logging ---
+            stdout_output = await process.stdout.read()
             stderr_output = await process.stderr.read()
+
+            if stdout_output:
+                RichPrinter.warning(f"Standardní výstup ze selhaného serveru '{server_name}':\n{stdout_output.decode(errors='ignore')}")
+
             if stderr_output:
-                RichPrinter.error(f"Chybový výstup ze serveru '{server_name}':\n{stderr_output.decode(errors='ignore')}")
+                RichPrinter.error(f"Chybový výstup ze selhaného serveru '{server_name}':\n{stderr_output.decode(errors='ignore')}")
+
+            if not stdout_output and not stderr_output:
+                RichPrinter.warning(f"Server '{server_name}' neposkytl žádný standardní ani chybový výstup.")
+
+            # Ensure the process is terminated
+            if process.returncode is None:
+                process.terminate()
+                await process.wait()
             return
 
         response = json.loads(response_line)
