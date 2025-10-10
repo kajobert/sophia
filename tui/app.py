@@ -20,6 +20,7 @@ from core.conversational_manager import ConversationalManager
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.widgets.memory_log_widget import MemoryLogWidget
+from tui.widgets.prompt_lab_widget import PromptLabWidget
 from tui.messages import LogMessage, ChatMessage
 
 CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
@@ -73,6 +74,8 @@ class SophiaTUI(App):
                 yield self.system_log_widget
             with TabPane("Paměť", id="memory_tab"):
                 yield self.memory_log_widget
+            with TabPane("Prompt Lab", id="prompt_lab_tab"):
+                yield PromptLabWidget(manager=self.manager)
             with TabPane("Chyby", id="error_log_tab"):
                 yield self.error_log_widget
         yield self.input_widget

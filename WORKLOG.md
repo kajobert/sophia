@@ -38,6 +38,27 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 ---
 **Datum**: 2025-10-10
 **Autor**: Jules (Nomad)
+**Ticket/Task**: Implementace 'Prompt Lab'
+
+### Téma: Přidání nové záložky 'Prompt Lab' do TUI.
+
+**Popis Práce:**
+- Vytvořen nový widget `tui/widgets/prompt_lab_widget.py` pro porovnávání výstupů dvou systémových promptů.
+- Integrován nový widget do `tui/app.py` jako nová záložka.
+- Implementována logika pro porovnání dvou systémových promptů pomocí `ConversationalManager`.
+
+**Důvod a Kontext:**
+- Cílem bylo vytvořit nástroj pro rychlé a efektivní porovnávání různých systémových promptů, což usnadní jejich ladění a optimalizaci.
+
+**Narazené Problémy a Řešení:**
+- Žádné.
+
+**Dopad na Projekt:**
+- TUI nyní obsahuje nástroj pro experimentování s prompty, což může vést k vylepšení kvality odpovědí agenta.
+---
+---
+**Datum**: 2025-10-10
+**Autor**: Jules (Nomad)
 **Ticket/Task**: Dokončení dokumentace pro Fázi 3
 
 ### Téma: Finalizace a aktualizace dokumentace po implementaci Fáze 3.
