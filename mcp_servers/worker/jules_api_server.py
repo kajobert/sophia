@@ -92,6 +92,54 @@ async def delegate_task_to_jules(
     except Exception as e:
         return json.dumps({"error": f"Failed to delegate task to Jules: {e}"})
 
+async def get_jules_task_status(task_id: str) -> str:
+    """
+    Fetches the status of a task from the Jules API.
+    """
+    config = load_config()
+    jules_api_config = config.get("jules_api", {})
+    base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
+    timeout = jules_api_config.get("get_status_timeout", 30.0)
+
+    jules_api_key = os.getenv("JULES_API_KEY")
+    if not jules_api_key:
+        return json.dumps({"error": "JULES_API_KEY is not configured."})
+
+    headers = {"X-Goog-Api-Key": jules_api_key}
+    url = f"{base_url}/sessions/{task_id}"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            return json.dumps(response.json())
+    except Exception as e:
+        return json.dumps({"error": f"Failed to get Jules task status: {e}"})
+
+async def get_jules_task_result(task_id: str) -> str:
+    """
+    Downloads the result of a completed task from the Jules API.
+    """
+    config = load_config()
+    jules_api_config = config.get("jules_api", {})
+    base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
+    timeout = jules_api_config.get("get_result_timeout", 60.0)
+
+    jules_api_key = os.getenv("JULES_API_KEY")
+    if not jules_api_key:
+        return json.dumps({"error": "JULES_API_KEY is not configured."})
+
+    headers = {"X-Goog-Api-Key": jules_api_key}
+    url = f"{base_url}/sessions/{task_id}/result"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            return json.dumps(response.json())
+    except Exception as e:
+        return json.dumps({"error": f"Failed to get Jules task result: {e}"})
+
 # --- Tool Metadata with Examples ---
 TOOLS = {
     "list_jules_sources": {
@@ -113,6 +161,24 @@ TOOLS = {
             {
                 "use_case": "Delegovat komplexní refaktoring a vyžadovat manuální schválení plánu agenta, než začne pracovat.",
                 "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Refactor the database schema for performance", "source": "sources/github/your_org/your_repo", "starting_branch": "develop", "requirePlanApproval": true}}'
+            }
+        ]
+    },
+    "get_jules_task_status": {
+        "func": get_jules_task_status,
+        "examples": [
+            {
+                "use_case": "Zkontrolovat stav úkolu, který byl dříve delegován na Jules.",
+                "code": '{"tool_name": "get_jules_task_status", "kwargs": {"task_id": "session-id-12345"}}'
+            }
+        ]
+    },
+    "get_jules_task_result": {
+        "func": get_jules_task_result,
+        "examples": [
+            {
+                "use_case": "Stáhnout výsledek dokončeného úkolu od Jules.",
+                "code": '{"tool_name": "get_jules_task_result", "kwargs": {"task_id": "session-id-12345"}}'
             }
         ]
     }

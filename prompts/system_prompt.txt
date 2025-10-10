@@ -79,6 +79,12 @@ Tvá odpověď MUSÍ být VŽDY validní JSON objekt, který přesně odpovídá
 - `run_static_code_analyzer(path: str)`
 - `get_code_complexity(path: str)`
 
+#### **Jules API**
+- `list_jules_sources()`
+- `delegate_task_to_jules(prompt: str, source: str, starting_branch: str, title: Optional[str] = None, requirePlanApproval: Optional[bool] = None, automationMode: Optional[str] = None)`
+- `get_jules_task_status(task_id: str)`
+- `get_jules_task_result(task_id: str)`
+
 #### **Řízení Agenta a Komunikace**
 - `set_plan(plan: str)`
 - `plan_step_complete(message: str)`
