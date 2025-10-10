@@ -1,8 +1,10 @@
 import os
+import yaml
 from typing import Optional
 
 from core.conversational_manager import ConversationalManager
 from core.rich_printer import RichPrinter
+from tools.git_tools import get_git_branch_name
 
 class MissionManager:
     """
@@ -15,6 +17,19 @@ class MissionManager:
         self.mission_prompt: Optional[str] = None
         self.mission_history: list[tuple[str, str]] = []
         self.is_mission_active = False
+        self.default_jules_source = None
+        self._load_config()
+
+    def _load_config(self):
+        """Načte konfiguraci a nastaví výchozí zdroj pro Jules."""
+        try:
+            config_path = os.path.join(self.project_root, "config/config.yaml")
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+                self.default_jules_source = config.get("jules_api", {}).get("default_source")
+        except (FileNotFoundError, yaml.YAMLError):
+            self.default_jules_source = None
+            RichPrinter.warning("Nepodařilo se načíst výchozí zdroj pro Jules z config.yaml.")
 
     async def initialize(self):
         """Inicializuje podřízeného konverzačního manažera."""
@@ -73,16 +88,22 @@ class MissionManager:
             # V ostatních případech sestavíme plný kontext pro pokračování mise.
             RichPrinter.info(f"Pokračuji v misi. Vstup od uživatele: '{user_input}'")
 
-            # Zformátujeme historii pro lepší čitelnost
             history_str = "\n".join([f"- {role.capitalize()}: {text}" for role, text in self.mission_history])
+            current_branch = get_git_branch_name() or "neznámá větev"
 
-            # Vytvoříme jasně strukturovaný prompt
+            delegation_context = (
+                f"**KONTEXT PRO DELEGACI:**\n"
+                f"- Cílový repozitář (source): `{self.default_jules_source or 'není nastaven'}`\n"
+                f"- Aktuální větev (branch): `{current_branch}`\n\n"
+            ) if self.default_jules_source else ""
+
             contextual_prompt = (
+                f"{delegation_context}"
                 f"**CELKOVÝ CÍL MISE:**\n{self.mission_prompt}\n\n"
                 f"**HISTORIE MISE:**\n{history_str}\n\n"
                 f"**OKAMŽITÝ CÍL:**\n{user_input}\n\n"
                 f"---\n"
-                f"**TVŮJ ÚKOL:**\nNa základě **OKAMŽITÉHO CÍLE** a s ohledem na **CELKOVÝ CÍL MISE** a **HISTORII** navrhni a proveď další krok."
+                f"**TVŮJ ÚKOL:**\nNa základě **OKAMŽITÉHO CÍLE** a s ohledem na **CELKOVÝ CÍL MISE** a poskytnutý **KONTEXT PRO DELEGACI** navrhni a proveď další krok."
             )
 
             await self.conversational_manager.handle_user_input(contextual_prompt)

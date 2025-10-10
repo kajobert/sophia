@@ -176,25 +176,27 @@ class ConversationalManager:
             self.history.append(("", f"UŽIVATELSKÝ VSTUP (rozhodnutí o delegování): {user_input}"))
             normalized_input = user_input.lower().strip()
 
-            # PŘIDANÝ DEBUGGOVACÍ ŘÁDEK
-            RichPrinter.warning(f"DEBUG: Zpracovávám schválení. Hodnota 'normalized_input' je: '{normalized_input}'")
-
             if normalized_input in ["ano", "yes", "souhlasím"]:
                 RichPrinter.info("Uživatel schválil delegování. Pokračuji v exekuci...")
-                # Execute the approved tool call directly
+
                 tool_call = self.pending_tool_call
-                tool_name = tool_call['tool_name']
-                args = tool_call.get('args', [])
-                kwargs = tool_call.get('kwargs', {})
+                tool_name = tool_call.get("tool_name")
+                args = tool_call.get("args", [])
+                kwargs = tool_call.get("kwargs", {})
 
-                # We need to re-engage the worker to execute the task and continue its loop
-                # For now, let's just execute the tool and report back. A more robust solution
-                # would continue the worker's original loop.
-                RichPrinter._post(ChatMessage("Dobře, provádím delegování...", owner='agent', msg_type='inform'))
-                result = await self.worker.mcp_client.execute_tool(tool_name, args, kwargs, self.worker.verbose)
+                RichPrinter._post(ChatMessage("Dobře, provádím schválené delegování...", owner='agent', msg_type='inform'))
 
-                tool_result_context = f"Delegování na Jules bylo úspěšně provedeno. Výsledek: {result}"
+                result = await self.worker.mcp_client.execute_tool(tool_name, args, kwargs)
 
+                try:
+                    result_data = json.loads(result)
+                    if "error" in result_data:
+                        RichPrinter.error(f"Při delegování došlo k chybě: {result_data['error']}")
+                        tool_result_context = f"Pokus o delegování selhal s chybou: {result_data['error']}"
+                    else:
+                        tool_result_context = f"Delegování na Jules bylo úspěšně provedeno. Výsledek: {result}"
+                except json.JSONDecodeError:
+                    tool_result_context = f"Delegování na Jules bylo provedeno, ale odpověď nebyla ve formátu JSON: {result}"
             else: # User denied
                 RichPrinter.warning("Uživatel zamítl delegování.")
                 # Instruct the worker to find another solution
@@ -263,16 +265,21 @@ class ConversationalManager:
             if worker_result.get("status") == "needs_delegation_approval":
                 self.state = "AWAITING_DELEGATION_APPROVAL"
                 self.pending_tool_call = worker_result.get("tool_call")
-                self.history.append((explanation, json.dumps(worker_result))) # Save context
+                self.history.append((explanation, json.dumps(worker_result)))
 
-                delegation_task_desc = self.pending_tool_call.get('kwargs', {}).get('task_description', 'Nespecifikovaný úkol.')
+                # Získáme popis úkolu z argumentů volání
+                tool_args = self.pending_tool_call.get('args', [])
+                tool_kwargs = self.pending_tool_call.get('kwargs', {})
+                # 'prompt' je první argument funkce delegate_task_to_jules
+                delegation_task_desc = tool_kwargs.get('prompt') or (tool_args[0] if tool_args else 'Nespecifikovaný úkol.')
+
                 question = (
                     f"Můj Worker navrhuje delegovat následující úkol na externího specializovaného agenta Jules:\n\n"
                     f"> {delegation_task_desc}\n\n"
                     f"Souhlasíte s tímto postupem? (ano/ne)"
                 )
                 RichPrinter._post(ChatMessage(question, owner='agent', msg_type='ask'))
-                return # Stop execution and wait for the user's response
+                return
 
             # --- Handle other worker outcomes (completed, needs_planning, etc.) ---
             touched_files = worker_result.get("touched_files", [])
