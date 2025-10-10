@@ -110,21 +110,21 @@ class WorkerOrchestrator:
 
                 if tool_name == "task_complete":
                     summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
-                    return {"status": "completed", "summary": summary}
+                    return {"status": "completed", "summary": summary, "history": self.history}
 
                 result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
                 self.history.append((history_entry_request, result))
                 self.memory_manager.save_history(session_id, self.history)
 
                 if tool_name in TERMINAL_TOOLS:
-                    return {"status": "completed", "summary": f"Task finished by terminal tool: {tool_name}"}
+                    return {"status": "completed", "summary": f"Task finished by terminal tool: {tool_name}", "history": self.history}
 
             summary = "Úkol je složitější a vyžaduje formální plán. Vyčerpal jsem rozpočet."
-            return {"status": "needs_planning", "summary": summary}
+            return {"status": "needs_planning", "summary": summary, "history": self.history}
 
         except Exception as e:
             RichPrinter.log_error_panel("Chyba v běhu Workera", str(e), exception=e)
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "message": str(e), "history": self.history}
 
         finally:
             # Resetování stavu na konci běhu

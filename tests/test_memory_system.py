@@ -49,8 +49,10 @@ def test_ltm_add_and_search(memory_system):
     ltm, _ = memory_system
     ltm.clear_memory()
 
-    ltm.add_memory("První záznam se týká opravy chyby v přihlašování.")
-    ltm.add_memory("Druhý záznam popisuje nasazení nové verze na produkci.")
+    ltm.add(documents=[
+        "První záznam se týká opravy chyby v přihlašování.",
+        "Druhý záznam popisuje nasazení nové verze na produkci."
+    ])
 
     # Prohledáme paměť s dotazem, který je sémanticky blízko prvnímu záznamu
     results = ltm.search_memory("Jak opravit login?", n_results=1)
@@ -68,9 +70,13 @@ def test_prompt_builder_rag_integration(memory_system):
     ltm, builder = memory_system
     ltm.clear_memory()
 
-    ltm.add_memory("Historický záznam: Uživatel v minulosti často řešil problémy s výkonem databáze.")
-    ltm.add_memory("Historický záznam: Dříve byla chyba v API pro fakturaci, která byla opravena.")
-    ltm.add_memory("Historický záznam: Klíčová komponenta pro notifikace byla přepsána v Rustu.")
+    docs = [
+        "Historický záznam: Uživatel v minulosti často řešil problémy s výkonem databáze.",
+        "Historický záznam: Dříve byla chyba v API pro fakturaci, která byla opravena.",
+        "Historický záznam: Klíčová komponenta pro notifikace byla přepsána v Rustu."
+    ]
+    metadatas = [{"type": "history"}] * len(docs)
+    ltm.add(documents=docs, metadatas=metadatas)
 
     short_term_history = [
         ("Akce 1: list_files()", "Výsledek: main.py, db_connector.py, ..."),

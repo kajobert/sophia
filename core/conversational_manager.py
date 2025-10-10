@@ -146,6 +146,12 @@ class ConversationalManager:
             tool_result_context = f"Worker dokončil úkol. Jeho finální stav je: {worker_result.get('status')}. Jeho shrnutí je: {worker_result.get('summary')}."
             self.history.append((explanation, json.dumps(worker_result)))
 
+            # --- FÁZE 2: Sebereflexe ---
+            task_history = worker_result.get("history")
+            if task_history:
+                await self._run_reflection(task_history)
+            # ---------------------------
+
         else:
             RichPrinter.error(f"Manažer se pokusil zavolat neznámou interní metodu: {tool_name}")
             tool_result_context = f"Došlo k interní chybě, nepodařilo se najít nástroj '{tool_name}'."
@@ -155,3 +161,40 @@ class ConversationalManager:
         final_response = await self._generate_final_response(tool_result_context)
         RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
         RichPrinter.info("Manažer dokončil plný cyklus zpracování úkolu.")
+
+
+    async def _run_reflection(self, task_history: list):
+        """
+        Spustí proces sebereflexe. Vezme historii úkolu, vygeneruje "poučení"
+        a uloží ho do dlouhodobé paměti.
+        """
+        RichPrinter.info("Spouštím sebereflexi na základě dokončeného úkolu...")
+
+        # 1. Připrav prompt
+        try:
+            with open(os.path.join(self.project_root, "prompts/reflection_prompt.txt"), "r", encoding="utf-8") as f:
+                reflection_prompt_template = f.read()
+        except FileNotFoundError:
+            RichPrinter.error("Prompt pro sebereflexi nebyl nalezen. Přeskakuji.")
+            return
+
+        history_str = "\n".join([f"Krok {i+1}:\nMyšlenka: {thought}\nAkce/Výsledek: {action}" for i, (thought, action) in enumerate(task_history)])
+        prompt = reflection_prompt_template.format(task_history=history_str)
+
+        # 2. Zavolej LLM
+        model = self.llm_manager.get_llm("default")
+        learning, _ = await model.generate_content_async(prompt)
+        learning = learning.strip()
+
+        if not learning or len(learning) < 10:
+            RichPrinter.warning("Vytvořený poznatek je příliš krátký, ignoruji.")
+            return
+
+        # 3. Ulož poznatek do LTM
+        # Použijeme samotný poznatek jako obsah pro embedding
+        self.worker.ltm.add(
+            documents=[learning],
+            metadatas=[{"type": "learning"}],
+            ids=[str(uuid.uuid4())]
+        )
+        RichPrinter.log_communication("Nový poznatek uložen do LTM", learning, style="bold green")

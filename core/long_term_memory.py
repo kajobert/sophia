@@ -47,44 +47,61 @@ class LongTermMemory:
             RichPrinter.warning("Konfigurační soubor 'config.yaml' nebyl nalezen. Používám výchozí hodnoty pro LTM.")
             self.config = {}
 
-    def add_memory(self, text_chunk: str, metadata: dict = None):
+    def add(self, documents: list[str], metadatas: list[dict] = None, ids: list[str] = None):
         """
-        Přidá textový záznam do dlouhodobé paměti.
+        Přidá jeden nebo více dokumentů do dlouhodobé paměti.
+        Automaticky generuje embeddings a UUID, pokud nejsou poskytnuty.
         """
         if not self.collection or not self.model:
             RichPrinter.error("LTM není správně inicializována. Nelze přidat paměť.")
             return
 
+        if not documents:
+            RichPrinter.warning("Pokus o přidání prázdného seznamu dokumentů do LTM.")
+            return
+
         try:
+            embeddings = self.model.encode(documents).tolist()
+
+            if not ids:
+                ids = [str(uuid.uuid4()) for _ in documents]
+
+            safe_metadatas = None
+            if metadatas:
+                if len(metadatas) != len(documents):
+                    RichPrinter.error("Počet metadat se neshoduje s počtem dokumentů. Metadata nebudou přidána.")
+                else:
+                    safe_metadatas = []
+                    for metadata in metadatas:
+                        safe_meta = {}
+                        if metadata:
+                            for key, value in metadata.items():
+                                if isinstance(value, (str, int, float, bool)):
+                                    safe_meta[key] = value
+                                else:
+                                    safe_meta[key] = str(value)
+                        safe_metadatas.append(safe_meta)
+
             RichPrinter.memory_log(
                 operation="WRITE",
                 source="LTM (ChromaDB)",
-                content={"text_chunk": text_chunk, "metadata": metadata},
+                content={"documents": documents, "metadatas": safe_metadatas},
             )
-            embedding = self.model.encode([text_chunk])[0].tolist()
-            doc_id = str(uuid.uuid4())
 
-            safe_metadata = {}
-            if metadata:
-                for key, value in metadata.items():
-                    safe_metadata[key] = str(value)
-
-            add_params = {
-                'ids': [doc_id],
-                'embeddings': [embedding],
-                'documents': [text_chunk]
-            }
-            if safe_metadata:
-                add_params['metadatas'] = [safe_metadata]
-
-            self.collection.add(**add_params)
+            self.collection.add(
+                ids=ids,
+                embeddings=embeddings,
+                documents=documents,
+                metadatas=safe_metadatas
+            )
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se přidat záznam do ChromaDB: {e}")
             raise
 
-    def search_memory(self, query_text: str, n_results: int = 5) -> dict:
+    def search_memory(self, query_text: str, n_results: int = 5, where: dict = None) -> dict:
         """
         Prohledá dlouhodobou paměť a vrátí N nejrelevantnějších záznamů.
+        Umožňuje filtrování pomocí 'where' klauzule.
         """
         if not self.collection or not self.model:
             RichPrinter.error("LTM není správně inicializována. Nelze prohledat paměť.")
@@ -97,18 +114,22 @@ class LongTermMemory:
             RichPrinter.memory_log(
                 operation="READ",
                 source="LTM (ChromaDB)",
-                content={"query": query_text, "n_results": n_results},
+                content={"query": query_text, "n_results": n_results, "where": where},
             )
             query_embedding = self.model.encode([query_text])[0].tolist()
             count = self.collection.count()
             if count == 0:
                 return {}
 
-            results = self.collection.query(
-                query_embeddings=[query_embedding],
-                n_results=min(n_results, count),
-                include=["metadatas", "documents"]
-            )
+            query_params = {
+                "query_embeddings": [query_embedding],
+                "n_results": min(n_results, count),
+                "include": ["metadatas", "documents"]
+            }
+            if where:
+                query_params["where"] = where
+
+            results = self.collection.query(**query_params)
             RichPrinter.memory_log(
                 operation="READ",
                 source="LTM (ChromaDB) - Result",

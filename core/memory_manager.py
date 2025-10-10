@@ -129,8 +129,13 @@ class MemoryManager:
 
         # Uložení do vektorové paměti
         if self.ltm and summary:
-            metadata = {"session_id": session_id, "task": task_prompt, "timestamp": datetime.now().isoformat()}
-            self.ltm.add_memory(summary, metadata)
+            metadata = {
+                "session_id": session_id,
+                "task": task_prompt,
+                "timestamp": datetime.now().isoformat(),
+                "type": "history" # Přidáno pro odlišení od "learning"
+            }
+            self.ltm.add(documents=[summary], metadatas=[metadata])
 
         return cursor.lastrowid
 

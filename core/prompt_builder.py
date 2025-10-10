@@ -49,8 +49,13 @@ class PromptBuilder:
         if self.ltm and self.long_term_retrieval_limit > 0:
             query_text = self._create_ltm_query(short_term_history)
             if query_text:
-                RichPrinter.info(f"Prohledávám LTM s dotazem: '{query_text[:150]}...'")
-                relevant_memories = self.ltm.search_memory(query_text, n_results=self.long_term_retrieval_limit)
+                # 1. Hledání obecného kontextu
+                RichPrinter.info(f"Prohledávám LTM pro obecný kontext s dotazem: '{query_text[:150]}...'")
+                relevant_memories = self.ltm.search_memory(
+                    query_text,
+                    n_results=self.long_term_retrieval_limit,
+                    where={"type": "history"}  # Hledáme jen v historii
+                )
                 documents = relevant_memories.get('documents', [[]])[0]
                 if documents:
                     prompt_parts.append("\n# **RELEVANTNÍ KONTEXT Z ARCHIVU**\n")
@@ -58,6 +63,23 @@ class PromptBuilder:
                     for i, memory in enumerate(documents):
                         prompt_parts.append(f"--- Archivní záznam {i+1} ---\n{memory}\n--------------------------\n")
                     prompt_parts.append("\n")
+
+                # 2. Hledání specifických "poučení"
+                RichPrinter.info(f"Prohledávám LTM pro 'poučení' s dotazem: '{query_text[:150]}...'")
+                # Pro poučení můžeme chtít menší počet, ale nejrelevantnější
+                relevant_learnings = self.ltm.search_memory(
+                    query_text,
+                    n_results=3,
+                    where={"type": "learning"} # Hledáme jen poučení
+                )
+                learning_documents = relevant_learnings.get('documents', [[]])[0]
+                if learning_documents:
+                    prompt_parts.append("\n# **POUČENÍ Z MINULÝCH ÚKOLŮ**\n")
+                    prompt_parts.append("Toto jsou poznatky z tvých předchozích úkolů, které by ti mohly pomoci:\n")
+                    for learning in learning_documents:
+                        prompt_parts.append(f"- {learning}\n")
+                    prompt_parts.append("\n")
+
 
         prompt_parts.append("\n# **NEDÁVNÁ HISTORIE (PRACOVNÍ PAMĚŤ)**\n")
         if not short_term_history:

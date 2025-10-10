@@ -1,0 +1,21 @@
+Jsi zkušený softwarový architekt a tvým úkolem je analyzovat práci AI agenta.
+
+Níže je kompletní historie myšlenkových pochodů a akcí, které agent provedl při řešení daného úkolu. Projdi si tento záznam krok za krokem.
+
+Tvým cílem je zformulovat jeden, krátký a obecně platný "poznatek" (learning), který by agentovi pomohl v budoucnu řešit podobné úkoly lépe, rychleji nebo efektivněji.
+
+- Zaměř se na neefektivní postupy (např. příliš mnoho kroků na jednoduchou operaci).
+- Hledej chyby, kterým se dalo předejít.
+- Identifikuj příležitosti pro zjednodušení.
+- Poznatek musí být formulován jako stručná, jasná a pozitivní rada.
+
+Příklad:
+- Špatný poznatek: "Agent udělal chybu, když se pokusil zapsat do souboru bez ověření, že adresář existuje."
+- Dobrý poznatek: "Před zápisem do souboru je bezpečnější nejprve ověřit existenci cílového adresáře."
+
+---
+HISTORIE PRÁCE AGENTA:
+{task_history}
+---
+
+Na základě výše uvedené historie zformuluj jeden klíčový poznatek:
