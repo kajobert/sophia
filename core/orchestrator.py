@@ -112,6 +112,18 @@ class WorkerOrchestrator:
                     summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
                     return {"status": "completed", "summary": summary, "history": self.history}
 
+                # >>> HUMAN-IN-THE-LOOP FOR DELEGATION <<<
+                if tool_name == "delegate_task_to_jules":
+                    RichPrinter.info("Worker is proposing to delegate a task to Jules. Pausing for user approval.")
+                    # Save the current history so the manager can continue
+                    self.memory_manager.save_history(session_id, self.history)
+                    return {
+                        "status": "needs_delegation_approval",
+                        "summary": "Worker wants to delegate a task to an external agent.",
+                        "tool_call": tool_call_data,  # Send tool call info to the manager
+                        "history": self.history
+                    }
+
                 result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
                 self.history.append((history_entry_request, result))
                 self.memory_manager.save_history(session_id, self.history)

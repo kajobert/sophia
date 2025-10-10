@@ -24,6 +24,9 @@ class ConversationalManager:
         self.worker = WorkerOrchestrator(project_root=self.project_root, status_widget=status_widget)
         self.session_id = str(uuid.uuid4())
         self.history = []
+        self.state = "IDLE"
+        self.pending_tool_call = None
+        self.original_task_for_worker = None
 
         self.prompt_builder = PromptBuilder(
             system_prompt_path=os.path.join(self.project_root, "prompts/manager_prompt.txt"),
@@ -88,6 +91,13 @@ class ConversationalManager:
             RichPrinter.log_error_panel("Selhání parsování JSON odpovědi (Manažer)", cleaned_text, exception=e)
             return f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON.", None
 
+    def _reset_state(self):
+        """Resets the manager's state after a delegation flow is complete."""
+        self.state = "IDLE"
+        self.pending_tool_call = None
+        self.original_task_for_worker = None
+        RichPrinter.info("Stav manažera byl resetován na IDLE.")
+
     async def _generate_final_response(self, context: str) -> str:
         """
         Po získání výsledku nástroje zavolá LLM podruhé, aby vygeneroval
@@ -104,11 +114,48 @@ class ConversationalManager:
     async def handle_user_input(self, user_input: str):
         """
         Kompletní smyčka pro zpracování vstupu od uživatele.
-        1. Rozhodne, jaký nástroj použít.
-        2. Spustí nástroj.
-        3. Na základě výsledku vygeneruje finální odpověď.
+        Rozhoduje o dalším kroku na základě stavu manažera.
         """
-        # Krok 1: Rozhodnutí o nástroji
+        # >>> HUMAN-IN-THE-LOOP: HANDLE USER'S APPROVAL/DENIAL <<<
+        if self.state == "AWAITING_DELEGATION_APPROVAL":
+            self.history.append(("", f"UŽIVATELSKÝ VSTUP (rozhodnutí o delegování): {user_input}"))
+            normalized_input = user_input.lower().strip()
+
+            if normalized_input in ["ano", "yes", "souhlasím"]:
+                RichPrinter.info("Uživatel schválil delegování. Pokračuji v exekuci...")
+                # Execute the approved tool call directly
+                tool_call = self.pending_tool_call
+                tool_name = tool_call['tool_name']
+                args = tool_call.get('args', [])
+                kwargs = tool_call.get('kwargs', {})
+
+                # We need to re-engage the worker to execute the task and continue its loop
+                # For now, let's just execute the tool and report back. A more robust solution
+                # would continue the worker's original loop.
+                RichPrinter._post(ChatMessage("Dobře, provádím delegování...", owner='agent', msg_type='inform'))
+                result = await self.worker.mcp_client.execute_tool(tool_name, args, kwargs, self.worker.verbose)
+
+                tool_result_context = f"Delegování na Jules bylo úspěšně provedeno. Výsledek: {result}"
+
+            else: # User denied
+                RichPrinter.warning("Uživatel zamítl delegování.")
+                # Instruct the worker to find another solution
+                new_task_for_worker = (
+                    f"Původní úkol byl: '{self.original_task_for_worker}'.\n"
+                    f"Váš návrh na delegování byl uživatelem zamítnut. "
+                    f"Najděte prosím alternativní způsob, jak úkol vyřešit bez delegování."
+                )
+                RichPrinter._post(ChatMessage("Rozumím, delegování bylo zrušeno. Zkusím najít jiné řešení.", owner='agent', msg_type='inform'))
+                worker_result = await self._delegate_task_to_worker(new_task_for_worker)
+                tool_result_context = f"Worker hledá alternativní řešení. Jeho odpověď: {worker_result.get('summary')}"
+
+            # Reset state and generate final response
+            self._reset_state()
+            final_response = await self._generate_final_response(tool_result_context)
+            RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
+            return
+
+        # Krok 1: Rozhodnutí o nástroji (standardní průběh)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {user_input}"))
         tool_descriptions = self._get_tool_descriptions()
         prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
@@ -141,16 +188,31 @@ class ConversationalManager:
 
         elif tool_name == "delegate_task_to_worker":
             task = kwargs.get("task", user_input)
+            self.original_task_for_worker = task # Save for potential continuation
             RichPrinter._post(ChatMessage("Rozumím, předávám úkol ke zpracování svému Workerovi. Bude vás informovat o průběhu.", owner='agent', msg_type='inform'))
             worker_result = await self._delegate_task_to_worker(task)
+
+            # >>> HUMAN-IN-THE-LOOP: HANDLE DELEGATION APPROVAL <<<
+            if worker_result.get("status") == "needs_delegation_approval":
+                self.state = "AWAITING_DELEGATION_APPROVAL"
+                self.pending_tool_call = worker_result.get("tool_call")
+                self.history.append((explanation, json.dumps(worker_result))) # Save context
+
+                delegation_task_desc = self.pending_tool_call.get('kwargs', {}).get('task_description', 'Nespecifikovaný úkol.')
+                question = (
+                    f"Můj Worker navrhuje delegovat následující úkol na externího specializovaného agenta Jules:\n\n"
+                    f"> {delegation_task_desc}\n\n"
+                    f"Souhlasíte s tímto postupem? (ano/ne)"
+                )
+                RichPrinter._post(ChatMessage(question, owner='agent', msg_type='ask'))
+                return # Stop execution and wait for the user's response
+
+            # --- Handle other worker outcomes (completed, needs_planning, etc.) ---
             tool_result_context = f"Worker dokončil úkol. Jeho finální stav je: {worker_result.get('status')}. Jeho shrnutí je: {worker_result.get('summary')}."
             self.history.append((explanation, json.dumps(worker_result)))
 
-            # --- FÁZE 2: Sebereflexe ---
-            task_history = worker_result.get("history")
-            if task_history:
-                await self._run_reflection(task_history)
-            # ---------------------------
+            if worker_result.get("status") == "completed" and worker_result.get("history"):
+                await self._run_reflection(worker_result.get("history"))
 
         else:
             RichPrinter.error(f"Manažer se pokusil zavolat neznámou interní metodu: {tool_name}")

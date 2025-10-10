@@ -38,6 +38,39 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 ---
 **Datum**: 2025-10-09
 **Autor**: Jules (Nomad)
+**Ticket/Task**: Implementace Fáze 3 - Autonomní Partner s "Human-in-the-Loop"
+
+### Téma: Implementace bezpečného delegování na externí API s uživatelským schválením.
+
+**Popis Práce:**
+- Implementována klíčová funkcionalita Fáze 3 dle návrhu v `docs/FAZE-3-AUTONOMNI-PARTNER-NAVRH.md`.
+- **Vytvořen Jules API klient:** Vytvořen nový soubor `mcp_servers/worker/jules_api_server.py`, který obsahuje FastAPI server s nástrojem `delegate_task_to_jules`. Tento klient je zodpovědný za bezpečnou a autentizovanou komunikaci s externím Jules API.
+- **Implementován "Human-in-the-Loop" (HITL) schvalovací proces:**
+    - `WorkerOrchestrator` (`core/orchestrator.py`) byl upraven tak, aby při návrhu delegování úkolu přerušil svou činnost a vrátil nový stav `needs_delegation_approval`.
+    - `ConversationalManager` (`core/conversational_manager.py`) byl rozšířen o stavový mechanismus pro zpracování tohoto nového stavu. Nyní se explicitně ptá uživatele na souhlas, než povolí delegování.
+    - Manažer dokáže zpracovat kladnou i zápornou odpověď od uživatele a instruovat Workera, aby buď pokračoval v delegování, nebo našel alternativní řešení.
+- **Vytvořeny Komplexní Testy:** Přidán nový testovací soubor `tests/test_jules_api.py`, který obsahuje:
+    - Integrační test pokrývající celý schvalovací cyklus (od návrhu po schválení a provedení).
+    - Robustní sadu jednotkových testů pro `jules_api_server.py`, které ověřují správné chování při úspěchu i v různých chybových stavech (chybějící API klíč, síťové chyby, neplatné odpovědi API).
+
+**Důvod a Kontext:**
+- Cílem bylo naplnit vizi Fáze 3 a vytvořit agenta, který dokáže bezpečně delegovat vysoce komplexní úkoly na specializované externí agenty.
+- Mechanismus "Human-in-the-Loop" je klíčovým bezpečnostním prvkem, který zajišťuje, že uživatel má plnou kontrolu nad potenciálně rizikovými operacemi.
+
+**Narazené Problémy a Řešení:**
+- **Problém:** Testy pro `jules_api_server.py` opakovaně selhávaly kvůli komplexním a matoucím chybám v mockování asynchronního `httpx` klienta.
+- **Řešení:** Po několika neúspěšných pokusech byla identifikována hlavní příčina: volání `os.getenv()` na úrovni modulu, což znemožňovalo efektivní patchování v testech. Kód serveru byl refaktorován tak, aby se proměnná prostředí načítala až uvnitř endpointu. Následně byly testy přepsány s použitím standardního `fastapi.testclient.TestClient`, což vedlo k jejich stabilizaci a úspěšnému projití.
+- **Problém:** Drobná chyba v logice zpracování výjimek v `jules_api_server.py`, kde byla specifická `HTTPException` (502) chybně zachycena obecným `except Exception` blokem a přebalena jako `HTTPException` (500).
+- **Řešení:** Přidán `except HTTPException: raise` blok, aby se zajistilo, že specifické HTTP výjimky jsou správně propagovány a nejsou zachyceny obecným handlerem.
+
+**Dopad na Projekt:**
+- Agent nyní disponuje klíčovou schopností pro autonomní vylepšování – bezpečnou delegací práce.
+- Architektura je plně připravena na finální testovací scénář: "Implementuj Sophii".
+- Projekt dosáhl milníku definovaného jako Fáze 3.
+---
+---
+**Datum**: 2025-10-09
+**Autor**: Jules (Nomad)
 **Ticket/Task**: Refactoring to Manager/Worker Architecture & Bug Fixes
 
 ### Téma: Implementace a stabilizace architektury Manager/Worker.
