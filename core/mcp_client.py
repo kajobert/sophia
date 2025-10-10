@@ -43,6 +43,11 @@ class MCPClient:
         env = os.environ.copy()
         env['PYTHONPATH'] = self.project_root + os.pathsep + env.get('PYTHONPATH', '')
 
+        # Ensure the subprocess uses the same virtual environment
+        if 'VIRTUAL_ENV' in env:
+            venv_bin = os.path.join(env['VIRTUAL_ENV'], 'bin')
+            env['PATH'] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
+
         process = await asyncio.create_subprocess_exec(
             sys.executable, script_path,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
