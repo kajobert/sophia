@@ -27,6 +27,7 @@ class ConversationalManager:
         self.state = "IDLE"
         self.pending_tool_call = None
         self.original_task_for_worker = None
+        self.current_budget = None
 
         self.prompt_builder = PromptBuilder(
             system_prompt_path=os.path.join(self.project_root, "prompts/manager_prompt.txt"),
@@ -135,6 +136,7 @@ class ConversationalManager:
         self.state = "IDLE"
         self.pending_tool_call = None
         self.original_task_for_worker = None
+        self.current_budget = None
         RichPrinter.info("Stav manažera byl resetován na IDLE.")
 
     async def _generate_final_response(self, context: str, touched_files: list[str] | None = None) -> str:
@@ -199,7 +201,8 @@ class ConversationalManager:
                     f"Najděte prosím alternativní způsob, jak úkol vyřešit bez delegování."
                 )
                 RichPrinter._post(ChatMessage("Rozumím, delegování bylo zrušeno. Zkusím najít jiné řešení.", owner='agent', msg_type='inform'))
-                worker_result = await self._delegate_task_to_worker(new_task_for_worker)
+                # Použijeme uložený budget
+                worker_result = await self._delegate_task_to_worker(new_task_for_worker, self.current_budget or 8)
                 tool_result_context = f"Worker hledá alternativní řešení. Jeho odpověď: {worker_result.get('summary')}"
 
             # Reset state and generate final response
@@ -213,6 +216,7 @@ class ConversationalManager:
         task_directives = await self._get_task_directives(user_input)
         task_type = task_directives.get("type", "complex")
         budget = task_directives.get("budget", 8)
+        self.current_budget = budget # Uložíme budget pro případné pozdější použití
 
         # Krok 2: Rozhodnutí o nástroji na základě triage
         tool_descriptions = self._get_tool_descriptions()
