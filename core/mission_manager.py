@@ -57,22 +57,28 @@ class MissionManager:
     async def continue_mission(self, user_input: str):
         """
         Pokračuje v plnění aktuální mise s dalším vstupem od uživatele.
+        Rozlišuje mezi přímou odpovědí na schvalovací otázku a běžným pokračováním mise.
         """
         if not self.is_mission_active:
             RichPrinter.warning("Nelze pokračovat, žádná mise není aktivní. Spouštím jako novou misi.")
             await self.start_mission(user_input)
             return
 
-        RichPrinter.info(f"Pokračuji v misi. Vstup od uživatele: '{user_input}'")
+        # Zkontrolujeme, zda ConversationalManager čeká na schválení.
+        if self.conversational_manager.state == "AWAITING_DELEGATION_APPROVAL":
+            # Pokud ano, předáme mu pouze čistý vstup od uživatele ("ano"/"ne").
+            RichPrinter.info("Zpracovávám přímou odpověď na žádost o schválení.")
+            await self.conversational_manager.handle_user_input(user_input)
+        else:
+            # V ostatních případech sestavíme plný kontext pro pokračování mise.
+            RichPrinter.info(f"Pokračuji v misi. Vstup od uživatele: '{user_input}'")
+            contextual_prompt = (
+                f"Pokračujeme v plnění mise. Původní cíl byl: '{self.mission_prompt}'.\n"
+                f"Dosavadní historie interakcí: {self.mission_history}\n\n"
+                f"Aktuální požadavek od uživatele je: '{user_input}'.\n\n"
+                f"Zpracuj tento požadavek v kontextu celé mise."
+            )
+            await self.conversational_manager.handle_user_input(contextual_prompt)
 
-        # Zde je klíčová logika: musíme zkombinovat původní cíl mise,
-        # historii a nový vstup, aby ConversationalManager měl plný kontext.
-        contextual_prompt = (
-            f"Pokračujeme v plnění mise. Původní cíl byl: '{self.mission_prompt}'.\n"
-            f"Dosavadní historie interakcí: {self.mission_history}\n\n"
-            f"Aktuální požadavek od uživatele je: '{user_input}'.\n\n"
-            f"Zpracuj tento požadavek v kontextu celé mise."
-        )
-
-        await self.conversational_manager.handle_user_input(contextual_prompt)
+        # Přidáme vstup do historie mise bez ohledu na cestu.
         self.mission_history.append(("user", user_input))
