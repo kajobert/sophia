@@ -176,6 +176,9 @@ class ConversationalManager:
             self.history.append(("", f"UŽIVATELSKÝ VSTUP (rozhodnutí o delegování): {user_input}"))
             normalized_input = user_input.lower().strip()
 
+            # PŘIDANÝ DEBUGGOVACÍ ŘÁDEK
+            RichPrinter.warning(f"DEBUG: Zpracovávám schválení. Hodnota 'normalized_input' je: '{normalized_input}'")
+
             if normalized_input in ["ano", "yes", "souhlasím"]:
                 RichPrinter.info("Uživatel schválil delegování. Pokračuji v exekuci...")
                 # Execute the approved tool call directly
