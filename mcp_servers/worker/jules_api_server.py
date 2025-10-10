@@ -5,7 +5,6 @@ import yaml
 import json
 import asyncio
 import inspect
-import functools
 from typing import Optional
 
 # Add project root to the Python path
@@ -29,7 +28,7 @@ def load_config():
 
 async def list_jules_sources() -> str:
     """
-    Lists all available sources (e.g., GitHub repositories) that Jules can work with.
+    Lists all available sources (e.g., GitHub repositories) that Jules can work with. This is the first step before delegating a task.
     """
     config = load_config()
     jules_api_config = config.get("jules_api", {})
@@ -60,7 +59,7 @@ async def delegate_task_to_jules(
     automationMode: Optional[str] = None
 ) -> str:
     """
-    Creates a new session in the Jules API to delegate a task. Allows specifying optional parameters like title, requirePlanApproval, and automationMode.
+    Creates a new session in the Jules API to delegate a task. Requires a 'source' obtained from 'list_jules_sources'. Allows specifying optional parameters like title, requirePlanApproval, and automationMode.
     """
     config = load_config()
     jules_api_config = config.get("jules_api", {})
@@ -93,8 +92,33 @@ async def delegate_task_to_jules(
     except Exception as e:
         return json.dumps({"error": f"Failed to delegate task to Jules: {e}"})
 
-# --- MCP Server Boilerplate ---
+# --- Tool Metadata with Examples ---
+TOOLS = {
+    "list_jules_sources": {
+        "func": list_jules_sources,
+        "examples": [
+            {
+                "use_case": "Zjistit, s jakými repozitáři může Jules pracovat, než mu deleguji úkol.",
+                "code": '{"tool_name": "list_jules_sources", "kwargs": {}}'
+            }
+        ]
+    },
+    "delegate_task_to_jules": {
+        "func": delegate_task_to_jules,
+        "examples": [
+            {
+                "use_case": "Delegovat úkol na agenta Jules, aby implementoval novou funkci v konkrétním repozitáři, který jsem zjistil pomocí 'list_jules_sources'.",
+                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Implement a new login page using React", "source": "sources/github/your_org/your_repo", "starting_branch": "main", "title": "Implement Login Page"}}'
+            },
+            {
+                "use_case": "Delegovat komplexní refaktoring a vyžadovat manuální schválení plánu agenta, než začne pracovat.",
+                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Refactor the database schema for performance", "source": "sources/github/your_org/your_repo", "starting_branch": "develop", "requirePlanApproval": true}}'
+            }
+        ]
+    }
+}
 
+# --- MCP Server Boilerplate ---
 def create_response(request_id, result):
     return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
 
@@ -106,11 +130,6 @@ async def main():
     reader = asyncio.StreamReader()
     await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
 
-    tools = {
-        "list_jules_sources": list_jules_sources,
-        "delegate_task_to_jules": delegate_task_to_jules,
-    }
-
     while True:
         line = await reader.readline()
         if not line: break
@@ -119,14 +138,21 @@ async def main():
             request_id = request.get("id")
             method = request.get("method")
             if method == "initialize":
-                tool_definitions = [{"name": name, "description": inspect.getdoc(func) or ""} for name, func in tools.items()]
+                tool_definitions = [
+                    {
+                        "name": name,
+                        "description": inspect.getdoc(meta["func"]) or "",
+                        "examples": meta.get("examples", [])
+                    }
+                    for name, meta in TOOLS.items()
+                ]
                 response = create_response(request_id, {"capabilities": {"tools": tool_definitions}})
             elif method == "mcp/tool/execute":
                 params = request.get("params", {})
                 tool_name = params.get("name")
                 tool_kwargs = params.get("kwargs", {})
-                if tool_name in tools:
-                    tool_func = tools[tool_name]
+                if tool_name in TOOLS:
+                    tool_func = TOOLS[tool_name]["func"]
                     result = await tool_func(**tool_kwargs)
                     response = create_response(request_id, {"result": result})
                 else:

@@ -70,25 +70,11 @@ class MCPClient:
             response_line = None
 
         if not response_line:
-            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek v časovém limitu. Pokouším se přečíst výstup pro diagnostiku...")
-
-            # --- Enhanced Error Logging ---
-            stdout_output = await process.stdout.read()
+            RichPrinter.error(f"Server '{server_name}' neodpověděl na inicializační požadavek v časovém limitu.")
+            # Přečteme a zalogujeme případné chybové hlášky
             stderr_output = await process.stderr.read()
-
-            if stdout_output:
-                RichPrinter.warning(f"Standardní výstup ze selhaného serveru '{server_name}':\n{stdout_output.decode(errors='ignore')}")
-
             if stderr_output:
-                RichPrinter.error(f"Chybový výstup ze selhaného serveru '{server_name}':\n{stderr_output.decode(errors='ignore')}")
-
-            if not stdout_output and not stderr_output:
-                RichPrinter.warning(f"Server '{server_name}' neposkytl žádný standardní ani chybový výstup.")
-
-            # Ensure the process is terminated
-            if process.returncode is None:
-                process.terminate()
-                await process.wait()
+                RichPrinter.error(f"Chybový výstup ze serveru '{server_name}':\n{stderr_output.decode(errors='ignore')}")
             return
 
         response = json.loads(response_line)
@@ -123,14 +109,26 @@ class MCPClient:
             RichPrinter.error(f"Nelze restartovat server '{server_name}', nebyla nalezena cesta ke skriptu.")
 
     async def get_tool_descriptions(self) -> str:
-        """Získá a zformátuje popisy všech registrovaných nástrojů."""
+        """
+        Získá a zformátuje popisy všech registrovaných nástrojů, včetně příkladů.
+        """
         if not self.tool_definitions:
             return "Žádné nástroje nejsou k dispozici."
 
         descriptions = []
         for tool in self.tool_definitions:
             description = tool.get('description', 'No description available.').strip()
-            descriptions.append(f"- `{tool['name']}`: {description}")
+
+            # Formátování příkladů, pokud existují
+            examples_str = ""
+            if examples := tool.get('examples'):
+                examples_str += "\n    Příklady použití:"
+                for example in examples:
+                    use_case = example.get('use_case', '')
+                    code = example.get('code', '')
+                    examples_str += f"\n    - Pro: '{use_case}'\n      Použij: `{code}`"
+
+            descriptions.append(f"- `{tool['name']}`: {description}{examples_str}")
         return "\n".join(descriptions)
 
     async def execute_tool(self, tool_name: str, args: list, kwargs: dict, verbose: bool = False) -> str:
