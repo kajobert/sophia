@@ -1,7 +1,13 @@
 import os
+import sys
 import httpx
 import yaml
 from fastapi import FastAPI, HTTPException
+
+# Add project root to the Python path
+project_root_for_import = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+if project_root_for_import not in sys.path:
+    sys.path.insert(0, project_root_for_import)
 from pydantic import BaseModel
 from typing import Optional
 import logging
