@@ -16,7 +16,7 @@ from rich.syntax import Syntax
 from rich.markdown import Markdown
 from rich.table import Table
 
-from core.conversational_manager import ConversationalManager
+from core.mission_manager import MissionManager
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.widgets.memory_log_widget import MemoryLogWidget
@@ -56,10 +56,9 @@ class SophiaTUI(App):
 
         self.memory_log_widget = MemoryLogWidget(id="memory_log_view")
 
-        # Nahrazení Orchestratoru za ConversationalManager
-        self.manager = ConversationalManager(project_root=self.project_root)
+        # Nahrazení ConversationalManageru za MissionManager
+        self.mission_manager = MissionManager(project_root=self.project_root)
         self.input_widget = TextArea(theme="monokai")
-        self.session_id = None # Session ID se nyní spravuje v manažerovi
 
     def compose(self) -> ComposeResult:
         """Sestaví layout TUI."""
@@ -76,7 +75,7 @@ class SophiaTUI(App):
             with TabPane("Paměť", id="memory_tab"):
                 yield self.memory_log_widget
             with TabPane("Prompt Lab", id="prompt_lab_tab"):
-                yield PromptLabWidget(manager=self.manager)
+                yield PromptLabWidget(manager=self.mission_manager.conversational_manager)
             with TabPane("Chyby", id="error_log_tab"):
                 yield self.error_log_widget
         yield self.input_widget
@@ -85,56 +84,53 @@ class SophiaTUI(App):
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
         RichPrinter.set_message_poster(self.post_message)
-        self.initialize_manager() # Přejmenováno z initialize_orchestrator
+        self.initialize_mission_manager()
         self.input_widget.focus()
+        # Crash recovery bude nyní řešeno přes MissionManager
         await self.check_for_crash_and_start_recovery()
 
     async def check_for_crash_and_start_recovery(self):
-        """Zkontroluje, zda existuje log o pádu, a pokud ano, spustí proces obnovy."""
+        """Zkontroluje, zda existuje log o pádu, a pokud ano, spustí misi na opravu."""
         if not os.path.exists(CRASH_LOG_PATH):
             return
 
         try:
             with open(CRASH_LOG_PATH, "r", encoding="utf-8") as f:
                 crash_content = f.read()
-
             os.remove(CRASH_LOG_PATH)
 
-            RichPrinter.error("Detekován pád aplikace! Zahajuji proces autonomní opravy.")
-
+            RichPrinter.error("Detekován pád aplikace! Zahajuji misi na autonomní opravu.")
             recovery_prompt = textwrap.dedent(f"""
-                **KRITICKÉ UPOZORNĚNÍ: Během předchozího spuštění došlo k pádu aplikace.**
-                Tvým hlavním a jediným úkolem je analyzovat následující chybový protokol, diagnostikovat hlavní příčinu a implementovat opravu.
+                **KRITICKÁ MISE: AUTOMATICKÁ OPRAVA SYSTÉMU**
+                **CÍL:** Během předchozího spuštění došlo k pádu aplikace. Tvým úkolem je analyzovat chybový protokol, opravit chybu a zajistit stabilitu systému.
+                **KONTEXT:**
                 --- ZÁZNAM O SELHÁNÍ ---
                 {crash_content}
                 --- KONEC ZÁZNAMU O SELHÁNÍ ---
-                **POSTUP OPRAVY:**
-                1. Analyzuj chybu a navrhni plán opravy.
-                2. Implementuj opravu.
-                3. Ověř, že oprava funguje.
-                **DŮLEŽITÝ KROK PO OVĚŘENÍ OPRAVY:**
-                Jakmile je oprava ověřena, **musíš** trvale uložit nový funkční stav. Použij k tomu následující nástroje v tomto pořadí:
-                1. `create_git_commit` - Vytvoř commit s popisem provedené opravy.
-                2. `promote_commit_to_last_known_good` - Z výstupu předchozího kroku získej hash nového commitu a použij tento nástroj.
-                Tento druhý krok je klíčový pro evoluci a stabilitu systému. Začni s analýzou.
+                **PLÁN MISE:**
+                1.  **Analýza:** Prostuduj záznam o selhání a identifikuj hlavní příčinu.
+                2.  **Oprava:** Navrhni a implementuj kódovou změnu, která problém řeší.
+                3.  **Ověření:** Spusť relevantní testy nebo proveď manuální kroky k ověření, že oprava funguje a nezavedla nové chyby.
+                4.  **Stabilizace:** Po úspěšném ověření trvale ulož nový funkční stav pomocí nástrojů `create_git_commit` a `promote_commit_to_last_known_good`.
+                Začni s analýzou.
             """).strip()
 
-            recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Oprava", border_style="bold red")
+            recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Opravná Mise", border_style="bold red")
             self.tool_widget.write(recovery_panel)
-            self.run_manager_task(recovery_prompt) # Přejmenováno
+            # Spustíme misi s tímto speciálním promptem
+            self.run_mission_task(recovery_prompt, is_new_mission=True)
         except Exception as e:
             RichPrinter.error(f"Nepodařilo se zpracovat crash log: {e}")
 
     @work(exclusive=True)
-    async def initialize_manager(self): # Přejmenováno
-        """Inicializuje manažer v samostatném workeru."""
-        RichPrinter.info("Inicializace jádra agenta (Manažer)...")
-        await self.manager.initialize()
-        RichPrinter.info("Jádro agenta připraveno.")
-
+    async def initialize_mission_manager(self):
+        """Inicializuje MissionManager v samostatném workeru."""
+        RichPrinter.info("Inicializace Mission Manageru...")
+        await self.mission_manager.initialize()
+        RichPrinter.info("Mission Manager je připraven.")
 
     async def action_submit_prompt(self) -> None:
-        """Zpracuje odeslání vstupu od uživatele."""
+        """Zpracuje odeslání vstupu od uživatele a rozhodne, zda zahájit nebo pokračovat v misi."""
         prompt = self.input_widget.text
         if not prompt:
             return
@@ -146,12 +142,17 @@ class SophiaTUI(App):
         self.current_explanation = ""
         self.explanation_widget.update("")
 
-        self.run_manager_task(prompt)
+        # Rozhodneme, zda jde o novou misi nebo pokračování
+        is_new = not self.mission_manager.is_mission_active
+        self.run_mission_task(prompt, is_new_mission=is_new)
 
     @work(exclusive=True)
-    async def run_manager_task(self, prompt: str): # Přejmenováno
-        """Spustí `manager.handle_user_input` v samostatném workeru, aby neblokoval UI."""
-        await self.manager.handle_user_input(prompt)
+    async def run_mission_task(self, prompt: str, is_new_mission: bool):
+        """Spustí příslušnou metodu MissionManageru v samostatném workeru."""
+        if is_new_mission:
+            await self.mission_manager.start_mission(prompt)
+        else:
+            await self.mission_manager.continue_mission(prompt)
 
     def on_log_message(self, message: LogMessage) -> None:
         """Zpracuje logovací zprávu a zobrazí ji v záložce Systémové logy."""
@@ -221,7 +222,7 @@ class SophiaTUI(App):
     async def action_request_quit(self):
         """Bezpečně ukončí aplikaci."""
         RichPrinter.info("Zahajuji ukončování...")
-        await self.manager.shutdown() # Přejmenováno
+        await self.mission_manager.shutdown()
         self.exit()
 
 

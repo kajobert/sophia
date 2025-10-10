@@ -59,7 +59,20 @@ async def delegate_task_to_jules(
     automationMode: Optional[str] = None
 ) -> str:
     """
-    Creates a new session in the Jules API to delegate a task. Requires a 'source' obtained from 'list_jules_sources'. Allows specifying optional parameters like title, requirePlanApproval, and automationMode.
+    Deleguje komplexní úkol na externího specializovaného agenta Jules.
+
+    Tento nástroj vytvoří novou pracovní session v Jules API. Je klíčové správně specifikovat všechny parametry.
+
+    Args:
+        prompt (str): Detailní popis úkolu pro Jules. Musí být jasný a jednoznačný.
+        source (str): Povinný identifikátor zdrojového repozitáře, kde má Jules pracovat. Získáš ho zavoláním nástroje `list_jules_sources`.
+        starting_branch (str): Povinný název větve v repozitáři, ze které má Jules vycházet.
+        title (Optional[str]): Volitelný krátký název pro úkol (např. "Implementace přihlašovací stránky").
+        requirePlanApproval (Optional[bool]): Volitelný příznak. Pokud je `True`, Jules nejprve vytvoří plán a počká na jeho schválení, než začne s implementací.
+        automationMode (Optional[str]): Volitelný režim automatizace. Možné hodnoty jsou "full" nebo "step-by-step".
+
+    Returns:
+        str: JSON string s odpovědí od Jules API, obsahující ID nově vytvořené session.
     """
     config = load_config()
     jules_api_config = config.get("jules_api", {})
