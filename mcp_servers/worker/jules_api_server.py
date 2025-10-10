@@ -55,7 +55,7 @@ async def delegate_task_to_jules(
     source: str,
     starting_branch: str,
     title: Optional[str] = None,
-    requirePlanApproval: Optional[bool] = None,
+    requirePlanApproval: bool = False,
     automationMode: Optional[str] = None
 ) -> str:
     """
@@ -90,10 +90,10 @@ async def delegate_task_to_jules(
         "sourceContext": {
             "source": source,
             "githubRepoContext": {"startingBranch": starting_branch}
-        }
+        },
+        "requirePlanApproval": requirePlanApproval
     }
     if title: payload["title"] = title
-    if requirePlanApproval is not None: payload["requirePlanApproval"] = requirePlanApproval
     if automationMode: payload["automationMode"] = automationMode
 
     url = f"{base_url}/sessions"
