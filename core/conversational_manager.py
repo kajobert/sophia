@@ -247,6 +247,7 @@ class ConversationalManager:
             RichPrinter.log_communication("Výsledek `_get_worker_status`", status_json, style="bold cyan")
             tool_result_context = f"Výsledek zjištění stavu workera je: {status_json}. Na základě toho informuj uživatele."
             self.history.append((explanation, status_json))
+            final_response = await self._generate_final_response(tool_result_context)
 
         elif tool_name == "delegate_task_to_worker":
             task = kwargs.get("task", user_input)
