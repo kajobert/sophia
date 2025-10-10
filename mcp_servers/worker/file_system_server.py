@@ -88,15 +88,18 @@ async def main():
                 tool_kwargs = params.get("kwargs", {})
 
                 if tool_name in tools:
+                    tool_func = tools[tool_name]
                     try:
-                        # Wrap the tool call with functools.partial to handle both args and kwargs
-                        tool_call = functools.partial(tools[tool_name], *tool_args, **tool_kwargs)
-                        result = await loop.run_in_executor(
-                            None, tool_call
-                        )
+                        # Inteligentní spojení args a kwargs do jednoho volání
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
+
+                        tool_call = functools.partial(tool_func, *bound_args.args, **bound_args.kwargs)
+                        result = await loop.run_in_executor(None, tool_call)
                         response = create_response(request_id, {"result": str(result)})
-                    except Exception as e:
-                        response = create_error_response(request_id, -32000, f"Tool error: {e}")
+                    except (TypeError, Exception) as e:
+                        response = create_error_response(request_id, -32000, f"Tool error for {tool_name}: {e}")
                 else:
                     response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
 

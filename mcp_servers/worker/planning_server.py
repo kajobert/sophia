@@ -178,11 +178,19 @@ async def main():
                 tool_kwargs = params.get("kwargs", {})
                 if tool_name in tools:
                     tool_func = tools[tool_name]
-                    if asyncio.iscoroutinefunction(tool_func):
-                        result = await tool_func(*tool_args, **tool_kwargs)
-                    else:
-                        result = await loop.run_in_executor(None, functools.partial(tool_func, *tool_args, **tool_kwargs))
-                    response = create_response(request_id, {"result": str(result)})
+                    try:
+                        # Inteligentní spojení args a kwargs do jednoho volání
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
+
+                        if asyncio.iscoroutinefunction(tool_func):
+                            result = await tool_func(*bound_args.args, **bound_args.kwargs)
+                        else:
+                            result = await loop.run_in_executor(None, functools.partial(tool_func, *bound_args.args, **bound_args.kwargs))
+                        response = create_response(request_id, {"result": str(result)})
+                    except (TypeError, Exception) as e:
+                        response = create_error_response(request_id, -32000, f"Tool error for {tool_name}: {e}")
                 else:
                     response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
             else:

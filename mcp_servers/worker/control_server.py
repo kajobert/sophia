@@ -61,29 +61,23 @@ async def main():
                 tool_kwargs = params.get("kwargs", {})
 
                 if tool_name in tools:
+                    tool_func = tools[tool_name]
                     try:
-                        if tool_name == "task_complete":
-                            # Make the tool more robust to LLM formatting errors
-                            summary = "Nebylo poskytnuto žádné shrnutí."
-                            if "reason" in tool_kwargs:
-                                summary = tool_kwargs["reason"]
-                            elif tool_args:
-                                summary = tool_args[0]
-                            elif tool_kwargs:
-                                summary = list(tool_kwargs.values())[0]
+                        # Inteligentní spojení args a kwargs do jednoho volání
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
 
-                            result = await loop.run_in_executor(
-                                None, tools[tool_name], reason=summary
-                            )
+                        # Ponecháme speciální logiku pro task_complete, pokud je stále relevantní
+                        if tool_name == "task_complete":
+                             summary = bound_args.arguments.get('reason', "Nebylo poskytnuto žádné shrnutí.")
+                             result = await loop.run_in_executor(None, functools.partial(tool_func, reason=summary))
                         else:
-                            # Default execution for other tools
-                            result = await loop.run_in_executor(
-                                None, tools[tool_name], *tool_args, **tool_kwargs
-                            )
+                             result = await loop.run_in_executor(None, functools.partial(tool_func, *bound_args.args, **bound_args.kwargs))
 
                         response = create_response(request_id, {"result": str(result)})
-                    except Exception as e:
-                        response = create_error_response(request_id, -32000, f"Tool error: {e}")
+                    except (TypeError, Exception) as e:
+                        response = create_error_response(request_id, -32000, f"Tool error for {tool_name}: {e}")
                 else:
                     response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
 

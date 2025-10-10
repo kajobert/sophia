@@ -229,11 +229,21 @@ async def main():
             elif method == "mcp/tool/execute":
                 params = request.get("params", {})
                 tool_name = params.get("name")
-                tool_kwargs = params.get("kwargs", {})
                 if tool_name in TOOLS:
                     tool_func = TOOLS[tool_name]["func"]
-                    result = await tool_func(**tool_kwargs)
-                    response = create_response(request_id, {"result": result})
+                    tool_args = params.get("args", [])
+                    tool_kwargs = params.get("kwargs", {})
+
+                    try:
+                        # Inteligentní spojení args a kwargs do jednoho volání
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
+
+                        result = await tool_func(*bound_args.args, **bound_args.kwargs)
+                        response = create_response(request_id, {"result": result})
+                    except TypeError as e:
+                        response = create_error_response(request_id, -32602, f"Invalid params for {tool_name}: {e}")
                 else:
                     response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
             else:
