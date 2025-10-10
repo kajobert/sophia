@@ -35,6 +35,7 @@ class WorkerOrchestrator:
         self.verbose = False
         self.last_full_output = None
         self.total_tokens = 0
+        self.touched_files = set()
         # Worker má svůj vlastní MCP klient s profilem "worker"
         self.mcp_client = MCPClient(project_root=self.project_root, profile="worker")
         self.memory_manager = MemoryManager()
@@ -69,11 +70,11 @@ class WorkerOrchestrator:
         self.memory_manager.close()
         RichPrinter.info("WorkerOrchestrator services have been safely shut down.")
 
-    async def run(self, initial_task: str, session_id: str | None = None, budget: int = 5):
-        """Hlavní rozhodovací smyčka agenta s rozpočtem na složitost."""
-        # Nastavení stavu na začátku běhu
+    async def run(self, initial_task: str, session_id: str | None = None, budget: int = 10):
+        """Hlavní rozhodovací smyčka agenta s dynamickým rozpočtem a výběrem promptu."""
         self.status = "working"
         self.current_task = initial_task
+        self.touched_files = set()  # Reset pro každý nový běh
 
         try:
             TERMINAL_TOOLS = ["inform_user", "warn_user", "error_user", "display_code", "display_table", "ask_user"]
@@ -81,11 +82,21 @@ class WorkerOrchestrator:
             if session_id:
                 self.history = self.memory_manager.load_history(session_id) or []
 
+            # Dynamický výběr systémového promptu na základě budgetu
+            if budget <= 3:
+                RichPrinter.info(f"Používám zjednodušený prompt pro jednoduchý úkol (budget: {budget}).")
+                self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/simple_system_prompt.txt")
+            else:
+                RichPrinter.info(f"Používám standardní prompt pro komplexní úkol (budget: {budget}).")
+                self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/system_prompt.txt")
+
+
             RichPrinter.info(f"Úkol pro Workera: {initial_task}")
             RichPrinter.log_communication("Vstup od uživatele pro Workera", initial_task, style="green")
             if not self.history:
                 self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
 
+            # Použijeme for smyčku s dynamickým budgetem
             for i in range(budget):
                 tool_descriptions = await self.mcp_client.get_tool_descriptions()
                 main_goal_raw = await self.mcp_client.execute_tool("get_main_goal", [], {}, self.verbose)
@@ -110,7 +121,12 @@ class WorkerOrchestrator:
 
                 if tool_name == "task_complete":
                     summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
-                    return {"status": "completed", "summary": summary, "history": self.history}
+                    return {
+                        "status": "completed",
+                        "summary": summary,
+                        "history": self.history,
+                        "touched_files": list(self.touched_files)
+                    }
 
                 # >>> HUMAN-IN-THE-LOOP FOR DELEGATION <<<
                 if tool_name == "delegate_task_to_jules":
@@ -124,19 +140,53 @@ class WorkerOrchestrator:
                         "history": self.history
                     }
 
+                # Sledování upravených souborů
+                FILE_MODIFYING_TOOLS = {
+                    "create_file_with_block": 0,  # filepath je první argument
+                    "overwrite_file_with_block": 0,
+                    "replace_with_git_merge_diff": 0,
+                    "delete_file": 0,
+                    "rename_file": 1 # new_filepath je druhý argument
+                }
+                if tool_name in FILE_MODIFYING_TOOLS:
+                    try:
+                        arg_index = FILE_MODIFYING_TOOLS[tool_name]
+                        filepath = args[arg_index] if args and len(args) > arg_index else kwargs.get('filepath') or kwargs.get('new_filepath')
+                        if filepath:
+                            self.touched_files.add(filepath)
+                            RichPrinter.info(f"Soubor '{filepath}' byl označen jako upravený.")
+                    except (IndexError, KeyError) as e:
+                        RichPrinter.warning(f"Nepodařilo se extrahovat cestu k souboru pro nástroj '{tool_name}': {e}")
+
+
                 result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
                 self.history.append((history_entry_request, result))
                 self.memory_manager.save_history(session_id, self.history)
 
                 if tool_name in TERMINAL_TOOLS:
-                    return {"status": "completed", "summary": f"Task finished by terminal tool: {tool_name}", "history": self.history}
+                    return {
+                        "status": "completed",
+                        "summary": f"Task finished by terminal tool: {tool_name}",
+                        "history": self.history,
+                        "touched_files": list(self.touched_files)
+                    }
 
             summary = "Úkol je složitější a vyžaduje formální plán. Vyčerpal jsem rozpočet."
-            return {"status": "needs_planning", "summary": summary, "history": self.history}
+            return {
+                "status": "needs_planning",
+                "summary": summary,
+                "history": self.history,
+                "touched_files": list(self.touched_files)
+            }
 
         except Exception as e:
             RichPrinter.log_error_panel("Chyba v běhu Workera", str(e), exception=e)
-            return {"status": "error", "message": str(e), "history": self.history}
+            return {
+                "status": "error",
+                "message": str(e),
+                "history": self.history,
+                "touched_files": list(self.touched_files)
+            }
 
         finally:
             # Resetování stavu na konci běhu

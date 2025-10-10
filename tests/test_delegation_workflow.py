@@ -9,6 +9,10 @@ from core.conversational_manager import ConversationalManager
 from mcp_servers.worker import jules_api_server
 
 # --- Mocks for Integration Test ---
+MANAGER_LLM_RESPONSE_TRIAGE = json.dumps({
+    "type": "complex",
+    "budget": 10
+})
 MANAGER_LLM_RESPONSE_DELEGATE_TO_WORKER = json.dumps({
     "explanation": "This is a complex task that requires tools. I will delegate to the Worker.",
     "tool_call": {
@@ -47,9 +51,10 @@ MANAGER_LLM_RESPONSE_FINAL = json.dumps({
 @patch('core.mcp_client.MCPClient.execute_tool')
 async def test_end_to_end_delegation_with_optional_params(mock_execute_tool, mock_llm_generate, mock_init_client):
     mock_llm_generate.side_effect = [
+        (MANAGER_LLM_RESPONSE_TRIAGE, {}), # New triage step
         (MANAGER_LLM_RESPONSE_DELEGATE_TO_WORKER, {}),
         (WORKER_LLM_RESPONSE_LIST_SOURCES, {}),
-        (WORKER_LLM_RESPONSE_DELEGATE_TO_JULES_FULL, {}), # Use the new mock with optional params
+        (WORKER_LLM_RESPONSE_DELEGATE_TO_JULES_FULL, {}),
         (MANAGER_LLM_RESPONSE_FINAL, {}),
     ]
     async def tool_executor(tool_name, args, kwargs, verbose):

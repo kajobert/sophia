@@ -60,13 +60,52 @@ class ConversationalManager:
         }
         return json.dumps(status_info, ensure_ascii=False, indent=2)
 
-    async def _delegate_task_to_worker(self, task: str) -> dict:
+    async def _delegate_task_to_worker(self, task: str, budget: int) -> dict:
         """
         Deleguje úkol na WorkerOrchestrator a čeká na výsledek.
         """
-        RichPrinter.info(f"Manažer deleguje úkol na Workera: '{task}'")
-        result = await self.worker.run(initial_task=task, session_id=self.session_id)
+        RichPrinter.info(f"Manažer deleguje úkol na Workera: '{task}' (Budget: {budget})")
+        result = await self.worker.run(initial_task=task, session_id=self.session_id, budget=budget)
         return result
+
+    async def _get_task_directives(self, task: str) -> dict:
+        """
+        Analyzuje úkol pomocí specializovaného promptu a vrací jeho typ a navržený budget.
+        """
+        RichPrinter.info("Získávám direktivy pro úkol (triage & budget)...")
+        try:
+            with open(os.path.join(self.project_root, "prompts/triage_and_budget_prompt.txt"), "r", encoding="utf-8") as f:
+                prompt_template = f.read()
+        except FileNotFoundError:
+            RichPrinter.error("Prompt pro triage a budget nebyl nalezen. Používám výchozí hodnoty.")
+            return {"type": "complex", "budget": 8} # Fallback
+
+        prompt = prompt_template.format(task=task)
+        model = self.llm_manager.get_llm("default") # Použijeme rychlý model pro tento úkol
+
+        response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
+
+        try:
+            # Očištění a parsování JSONu
+            match = re.search(r"```(json)?\s*\n(.*?)\n```", response_text, re.DOTALL)
+            if match:
+                json_str = match.group(2).strip()
+            else:
+                json_str = response_text.strip()
+
+            directives = json.loads(json_str)
+
+            # Validace
+            if "type" in directives and "budget" in directives:
+                RichPrinter.log_communication("Direktivy pro úkol", directives, style="bold blue")
+                return directives
+            else:
+                RichPrinter.warning("Chybějící klíče v direktivách. Používám fallback.")
+                return {"type": "complex", "budget": 8}
+
+        except json.JSONDecodeError:
+            RichPrinter.log_error_panel("Selhání parsování JSON z triage promptu", response_text)
+            return {"type": "complex", "budget": 8} # Fallback
 
     # --- Pomocné metody ---
 
@@ -98,13 +137,27 @@ class ConversationalManager:
         self.original_task_for_worker = None
         RichPrinter.info("Stav manažera byl resetován na IDLE.")
 
-    async def _generate_final_response(self, context: str) -> str:
+    async def _generate_final_response(self, context: str, touched_files: list[str] | None = None) -> str:
         """
         Po získání výsledku nástroje zavolá LLM podruhé, aby vygeneroval
-        srozumitelnou odpověď pro uživatele.
+        srozumitelnou a informativní odpověď pro uživatele.
         """
         RichPrinter.info("Manažer formuluje finální odpověď pro uživatele...")
-        prompt = f"Na základě následujícího kontextu napiš krátkou a přátelskou odpověď pro uživatele v češtině. Kontext: {context}"
+
+        prompt_parts = [
+            "Na základě následujícího kontextu napiš krátkou, přátelskou a informativní odpověď pro uživatele v češtině.",
+            f"Kontext: {context}"
+        ]
+
+        if touched_files:
+            files_str = "\n".join(f"- `{f}`" for f in touched_files)
+            prompt_parts.append(
+                "\nBěhem operace byly upraveny nebo vytvořeny následující soubory. "
+                "Explicitně je zmiň v odpovědi jako seznam, aby uživatel věděl, co se změnilo:\n"
+                f"{files_str}"
+            )
+
+        prompt = "\n\n".join(prompt_parts)
         model = self.llm_manager.get_llm("default")
         final_response, _ = await model.generate_content_async(prompt)
         return final_response
@@ -155,8 +208,13 @@ class ConversationalManager:
             RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
             return
 
-        # Krok 1: Rozhodnutí o nástroji (standardní průběh)
+        # Krok 1: Triage a Budgeting (standardní průběh)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {user_input}"))
+        task_directives = await self._get_task_directives(user_input)
+        task_type = task_directives.get("type", "complex")
+        budget = task_directives.get("budget", 8)
+
+        # Krok 2: Rozhodnutí o nástroji na základě triage
         tool_descriptions = self._get_tool_descriptions()
         prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
         model = self.llm_manager.get_llm("default")
@@ -190,7 +248,8 @@ class ConversationalManager:
             task = kwargs.get("task", user_input)
             self.original_task_for_worker = task # Save for potential continuation
             RichPrinter._post(ChatMessage("Rozumím, předávám úkol ke zpracování svému Workerovi. Bude vás informovat o průběhu.", owner='agent', msg_type='inform'))
-            worker_result = await self._delegate_task_to_worker(task)
+            # Použijeme dynamicky získaný budget
+            worker_result = await self._delegate_task_to_worker(task, budget)
 
             # >>> HUMAN-IN-THE-LOOP: HANDLE DELEGATION APPROVAL <<<
             if worker_result.get("status") == "needs_delegation_approval":
@@ -208,19 +267,23 @@ class ConversationalManager:
                 return # Stop execution and wait for the user's response
 
             # --- Handle other worker outcomes (completed, needs_planning, etc.) ---
+            touched_files = worker_result.get("touched_files", [])
             tool_result_context = f"Worker dokončil úkol. Jeho finální stav je: {worker_result.get('status')}. Jeho shrnutí je: {worker_result.get('summary')}."
             self.history.append((explanation, json.dumps(worker_result)))
 
             if worker_result.get("status") == "completed" and worker_result.get("history"):
                 await self._run_reflection(worker_result.get("history"))
 
+            # Krok 3: Generování finální odpovědi s informací o souborech
+            final_response = await self._generate_final_response(tool_result_context, touched_files)
+
         else:
             RichPrinter.error(f"Manažer se pokusil zavolat neznámou interní metodu: {tool_name}")
             tool_result_context = f"Došlo k interní chybě, nepodařilo se najít nástroj '{tool_name}'."
             self.history.append((explanation, tool_result_context))
+            final_response = await self._generate_final_response(tool_result_context)
 
-        # Krok 3: Generování finální odpovědi
-        final_response = await self._generate_final_response(tool_result_context)
+
         RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
         RichPrinter.info("Manažer dokončil plný cyklus zpracování úkolu.")
 
