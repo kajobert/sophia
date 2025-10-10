@@ -50,17 +50,6 @@ class ConversationalManager:
 
     # --- Interní nástroje Manažera ---
 
-    def _get_worker_status(self) -> str:
-        """
-        Získá aktuální stav WorkerOrchestratoru.
-        Vrací JSON string s informacemi o tom, na čem worker právě pracuje.
-        """
-        status_info = {
-            "status": self.worker.status,
-            "current_task": self.worker.current_task,
-        }
-        return json.dumps(status_info, ensure_ascii=False, indent=2)
-
     async def _delegate_task_to_worker(self, task: str, budget: int) -> dict:
         """
         Deleguje úkol na WorkerOrchestrator a čeká na výsledek.
@@ -113,8 +102,7 @@ class ConversationalManager:
     def _get_tool_descriptions(self) -> str:
         """Generuje popisy interních nástrojů pro vložení do promptu."""
         descriptions = [
-            f"- `get_worker_status()`: Zjistí, co právě dělá Worker a jaký je stav jeho úkolu. Použij, pokud se uživatel ptá na stav.",
-            f"- `delegate_task_to_worker(task: str)`: Deleguje komplexní úkol na Workera. Použij pro vše ostatní."
+            f"- `delegate_task_to_worker(task: str)`: Deleguje jakýkoliv úkol na Workera. Toto je tvůj jediný nástroj."
         ]
         return "\n".join(descriptions)
 
