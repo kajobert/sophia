@@ -69,8 +69,7 @@ def main():
         # Použijeme Popen pro lepší kontrolu a správné předání TTY.
         # Důležité je, že nepředáváme stdin, stdout, stderr, aby si je proces vzal sám.
         process = subprocess.Popen([sys.executable, TUI_APP_PATH])
-        
-        # Čekáme, dokud proces neskončí.
+
         process.wait()
 
         if process.returncode == 0:
@@ -79,8 +78,7 @@ def main():
 
         consecutive_failures += 1
         logging.error(f"Application crashed with non-zero exit code {process.returncode}. This is failure #{consecutive_failures}.")
-        
-        # Vylepšené logování o crash logu pro lepší diagnostiku
+
         if os.path.exists(CRASH_LOG_PATH):
              logging.warning(f"A crash log has been found. See details in: {CRASH_LOG_PATH}")
         else:
