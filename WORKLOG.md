@@ -38,23 +38,33 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 ---
 **Datum**: 2025-10-10
 **Autor**: Jules (Nomad)
-**Ticket/Task**: Implementace 'Prompt Lab'
+**Ticket/Task**: Implementace 'Prompt Lab' a vylepšení TUI
 
-### Téma: Přidání nové záložky 'Prompt Lab' do TUI.
+### Téma: Přidání záložky 'Prompt Lab' a implementace víceřádkového vstupu v TUI.
 
 **Popis Práce:**
-- Vytvořen nový widget `tui/widgets/prompt_lab_widget.py` pro porovnávání výstupů dvou systémových promptů.
-- Integrován nový widget do `tui/app.py` jako nová záložka.
-- Implementována logika pro porovnání dvou systémových promptů pomocí `ConversationalManager`.
+- **Implementace 'Prompt Lab':**
+  - Vytvořen nový widget `tui/widgets/prompt_lab_widget.py` pro porovnávání výstupů dvou systémových promptů na základě zadaného uživatelského promptu.
+  - Integrován nový widget do `tui/app.py` jako nová záložka "Prompt Lab".
+  - Implementována logika pro asynchronní porovnání dvou systémových promptů pomocí `ConversationalManager`.
+- **Vylepšení TUI:**
+  - V `tui/app.py` byl widget `Input` nahrazen za `TextArea` z `textual.widgets` pro podporu víceřádkového zadávání promptů.
+  - Byla přidána klávesová zkratka `Enter` pro odeslání promptu, přičemž `Ctrl+Enter` slouží pro vložení nového řádku.
+- **Oprava závislostí:**
+  - Opravena chyba `ModuleNotFoundError` odstraněním nepotřebné a nesprávné závislosti `textual-inputs` a jejím nahrazením standardním widgetem z `textual`.
 
 **Důvod a Kontext:**
-- Cílem bylo vytvořit nástroj pro rychlé a efektivní porovnávání různých systémových promptů, což usnadní jejich ladění a optimalizaci.
+- Cílem bylo vytvořit nástroj pro ladění a optimalizaci systémových promptů a zároveň vylepšit uživatelskou přívětivost hlavního vstupního pole TUI.
 
 **Narazené Problémy a Řešení:**
-- Žádné.
+- **Problém:** Původní implementace `Prompt Lab` způsobila pád aplikace kvůli použití nesprávné externí knihovny (`textual-inputs`) místo vestavěného widgetu.
+- **Řešení:** Závislost byla odstraněna a kód byl opraven tak, aby používal `TextArea` z `textual.widgets`, což odstranilo chybu a zjednodušilo kód.
+- **Problém:** Po odinstalování chybné závislosti došlo k deaktivaci virtuálního prostředí v shellu, což vedlo k selhání testů.
+- **Řešení:** Prostředí bylo obnoveno přeinstalováním všech závislostí pomocí `uv pip install -r requirements.in`.
 
 **Dopad na Projekt:**
-- TUI nyní obsahuje nástroj pro experimentování s prompty, což může vést k vylepšení kvality odpovědí agenta.
+- TUI nyní obsahuje výkonný nástroj pro experimentování s prompty a nabízí vylepšené uživatelské rozhraní pro zadávání komplexních, víceřádkových úkolů.
+- Kódová báze je stabilní a byla očištěna od nesprávných závislostí.
 ---
 ---
 **Datum**: 2025-10-10

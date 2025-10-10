@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll
-from textual.widgets import Header, Footer, Input, TabbedContent, TabPane, RichLog, Static
+from textual.widgets import Header, Footer, TabbedContent, TabPane, RichLog, Static, TextArea
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.markdown import Markdown
@@ -34,6 +34,7 @@ class SophiaTUI(App):
     BINDINGS = [
         ("ctrl+d", "toggle_dark", "Přepnout tmavý režim"),
         ("ctrl+q", "request_quit", "Ukončit"),
+        ("enter", "submit_prompt", "Odeslat prompt"),
     ]
 
     def __init__(self):
@@ -57,7 +58,7 @@ class SophiaTUI(App):
 
         # Nahrazení Orchestratoru za ConversationalManager
         self.manager = ConversationalManager(project_root=self.project_root)
-        self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
+        self.input_widget = TextArea(placeholder="Zadejte svůj úkol nebo zprávu...", theme="monokai")
         self.session_id = None # Session ID se nyní spravuje v manažerovi
 
     def compose(self) -> ComposeResult:
@@ -132,9 +133,9 @@ class SophiaTUI(App):
         RichPrinter.info("Jádro agenta připraveno.")
 
 
-    async def on_input_submitted(self, message: Input.Submitted) -> None:
+    async def action_submit_prompt(self) -> None:
         """Zpracuje odeslání vstupu od uživatele."""
-        prompt = message.value
+        prompt = self.input_widget.text
         if not prompt:
             return
 
@@ -145,7 +146,7 @@ class SophiaTUI(App):
         self.current_explanation = ""
         self.explanation_widget.update("")
 
-        self.run_manager_task(prompt) # Přejmenováno
+        self.run_manager_task(prompt)
 
     @work(exclusive=True)
     async def run_manager_task(self, prompt: str): # Přejmenováno

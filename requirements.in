@@ -39,7 +39,6 @@ PyJWT
 # TUI / Rich CLI
 textual==0.60.0
 rich
-textual-inputs
 
 # Testing
 pytest

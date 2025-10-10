@@ -3,7 +3,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.widgets import Button, Static, RichLog
 from textual.widget import Widget
-from textual_inputs import TextArea
+from textual.widgets import TextArea
 
 class PromptLabWidget(Widget):
     """Widget for comparing two system prompts."""
