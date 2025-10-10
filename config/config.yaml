@@ -64,3 +64,9 @@ vector_database:
 guardian:
   cpu_threshold: 90.0
   ram_threshold: 90.0
+
+# Konfigurace pro Jules API Client
+jules_api:
+  base_url: "https://jules.googleapis.com/v1alpha"
+  list_sources_timeout: 30.0
+  delegate_task_timeout: 45.0

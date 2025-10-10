@@ -1,45 +1,60 @@
 import os
 import httpx
+import yaml
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import logging
 
-# Configure logging
+# --- Configuration Loading Function ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
+def load_config():
+    """Loads the application configuration from the YAML file."""
+    config_path = os.path.join("config/config.yaml")
+    if not os.path.exists(config_path):
+        config_path = os.path.join(os.path.dirname(__file__), '../../config/config.yaml')
+
+    try:
+        with open(config_path, "r") as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        logger.error(f"Configuration file not found at {config_path}, using defaults.")
+        return {}
+
+# --- FastAPI App Initialization ---
 app = FastAPI()
 
-# Pydantic model for the request body
-class DelegationRequest(BaseModel):
-    task_description: str
-
-# Jules API configuration from documentation
-JULES_API_URL_V1_ALPHA = "https://jules.googleapis.com/v1alpha"
-
+# --- Pydantic Models ---
 class DelegationRequest(BaseModel):
     prompt: str
     source: str
     starting_branch: str
     title: str
 
+# --- API Endpoints ---
 @app.get("/list_jules_sources")
 async def list_jules_sources():
     """
     Lists all available sources (e.g., GitHub repositories) that Jules can work with.
     """
+    # Load config inside the endpoint for testability
+    config = load_config()
+    jules_api_config = config.get("jules_api", {})
+    base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
+    timeout = jules_api_config.get("list_sources_timeout", 30.0)
+
     logger.info("Received request to list Jules sources.")
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
         raise HTTPException(status_code=500, detail="JULES_API_KEY is not configured.")
 
     headers = {"X-Goog-Api-Key": jules_api_key}
-    url = f"{JULES_API_URL_V1_ALPHA}/sources"
+    url = f"{base_url}/sources"
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, timeout=30.0)
+            response = await client.get(url, headers=headers, timeout=timeout)
             response.raise_for_status()
             return response.json()
     except httpx.HTTPStatusError as e:
@@ -54,6 +69,12 @@ async def delegate_task_to_jules(request: DelegationRequest):
     """
     Creates a new session in the Jules API to delegate a task.
     """
+    # Load config inside the endpoint for testability
+    config = load_config()
+    jules_api_config = config.get("jules_api", {})
+    base_url = jules_api_config.get("base_url", "https://jules.googleapis.com/v1alpha")
+    timeout = jules_api_config.get("delegate_task_timeout", 45.0)
+
     logger.info(f"Received request to create Jules session: '{request.title}'")
 
     jules_api_key = os.getenv("JULES_API_KEY")
@@ -66,24 +87,21 @@ async def delegate_task_to_jules(request: DelegationRequest):
         "Content-Type": "application/json",
     }
 
-    # Construct the payload according to the API documentation
     payload = {
         "prompt": request.prompt,
         "sourceContext": {
             "source": request.source,
-            "githubRepoContext": {
-                "startingBranch": request.starting_branch
-            }
+            "githubRepoContext": {"startingBranch": request.starting_branch}
         },
         "title": request.title
     }
 
-    url = f"{JULES_API_URL_V1_ALPHA}/sessions"
+    url = f"{base_url}/sessions"
     logger.info(f"Sending request to Jules API at {url}")
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=payload, headers=headers, timeout=45.0)
+            response = await client.post(url, json=payload, headers=headers, timeout=timeout)
             response.raise_for_status()
 
             response_data = response.json()
@@ -99,9 +117,7 @@ async def delegate_task_to_jules(request: DelegationRequest):
                 "message": "Jules session created successfully.",
                 "session_name": session_name
             }
-
     except HTTPException:
-        # Re-raise HTTPException to prevent it from being caught by the generic Exception handler
         raise
     except httpx.RequestError as e:
         logger.error(f"Could not connect to Jules API: {e}")
