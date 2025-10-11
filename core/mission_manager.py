@@ -191,6 +191,7 @@ class MissionManager:
 
         RichPrinter._post(ChatMessage("I've encountered a problem. Performing self-reflection to find a solution...", owner='agent', msg_type='inform'))
 
+        # The sub-task reflection uses the low-level worker history
         worker_history = worker_result.get("history", [])
         reflection = await self.reflection_server.reflect_on_recent_steps(worker_history, self.mission_prompt)
 
@@ -214,13 +215,10 @@ class MissionManager:
         to generate a "learning" and save it to long-term memory.
         """
         RichPrinter.info("Running post-mission reflection...")
-        # We now pass the mission prompt directly to the reflection server
-        # The method is `reflect_on_recent_steps`, not `reflect_on_project`.
-        # It expects `history` as a list of dicts and `last_user_input` as a string.
-        # We will adapt the call to match the correct signature.
-        learning = await self.reflection_server.reflect_on_recent_steps(
-            history=self.project_history, # Pass the raw history list
-            last_user_input=self.mission_prompt # The mission prompt is the initial input
+        # Use the new, correct tool for high-level mission summaries.
+        learning = await self.reflection_server.summarize_mission_learnings(
+            history="\n".join(self.project_history),
+            mission_goal=self.mission_prompt
         )
 
         if not learning or len(learning) < 10:

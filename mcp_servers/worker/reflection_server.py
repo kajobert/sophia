@@ -28,43 +28,74 @@ class ReflectionServer:
 
     async def reflect_on_recent_steps(self, history: List[Dict[str, Any]], last_user_input: str) -> str:
         """
-        Analyzuje nedávné kroky, identifikuje klíčové poznatky a navrhne ponaučení pro budoucnost.
+        Analyzes a sequence of low-level steps to identify key insights and suggest future learnings.
 
         Args:
-            history: Historie konverzace a akcí agenta.
-            last_user_input: Poslední vstup od uživatele, který vedl k dané sekvenci akcí.
+            history: The conversation and action history of the agent, as a list of (request, response) tuples.
+            last_user_input: The last user input that led to this sequence of actions.
 
         Returns:
-            Stručné ponaučení nebo klíčový poznatek.
+            A concise learning or key insight.
         """
         try:
             with open(self.reflection_prompt_path, "r", encoding="utf-8") as f:
                 system_prompt = f.read()
         except FileNotFoundError:
-            return "Chyba: Soubor s promptem pro reflexi nebyl nalezen."
+            return "Error: Reflection prompt file not found."
 
-        # Formátování historie pro lepší čitelnost v promptu
         formatted_history = ""
         for i, (request, response) in enumerate(history):
-            formatted_history += f"KROK {i+1}:\n"
-            formatted_history += f"  MYŠLENKA/AKCE:\n{request}\n"
-            formatted_history += f"  VÝSLEDEK:\n{response}\n\n"
+            formatted_history += f"STEP {i+1}:\n"
+            formatted_history += f"  THOUGHT/ACTION:\n{request}\n"
+            formatted_history += f"  RESULT:\n{response}\n\n"
 
         prompt = system_prompt.format(
             last_user_input=last_user_input,
             history=formatted_history
         )
-
         model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
 
         try:
-            RichPrinter.info("Zahajuji sebereflexi...")
+            RichPrinter.info("Performing self-reflection on sub-task...")
             reflection, _ = await model.generate_content_async(prompt)
-            RichPrinter.log_communication("Výsledek sebereflexe", reflection, style="magenta")
+            RichPrinter.log_communication("Sub-task Reflection Result", reflection, style="magenta")
             return reflection.strip()
         except Exception as e:
-            RichPrinter.log_error_panel("Chyba při generování reflexe", str(e), exception=e)
-            return f"Chyba při komunikaci s LLM během reflexe: {e}"
+            RichPrinter.log_error_panel("Error during reflection generation", str(e), exception=e)
+            return f"Error during LLM communication in reflection: {e}"
+
+    async def summarize_mission_learnings(self, history: str, mission_goal: str) -> str:
+        """
+        Analyzes the high-level history of an entire mission to generate a strategic learning.
+
+        Args:
+            history: A string representing the chronological summary of the mission's main events.
+            mission_goal: The original high-level goal of the mission.
+
+        Returns:
+            A single, concise, and strategic learning from the mission.
+        """
+        mission_reflection_prompt_path = os.path.join(self.project_root, "prompts", "mission_reflection_prompt.txt")
+        try:
+            with open(mission_reflection_prompt_path, "r", encoding="utf-8") as f:
+                system_prompt = f.read()
+        except FileNotFoundError:
+            return "Error: Mission reflection prompt file not found."
+
+        prompt = system_prompt.format(
+            mission_goal=mission_goal,
+            history=history
+        )
+        model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
+
+        try:
+            RichPrinter.info("Performing final mission reflection...")
+            learning, _ = await model.generate_content_async(prompt)
+            RichPrinter.log_communication("Final Mission Learning", learning, style="bold green")
+            return learning.strip()
+        except Exception as e:
+            RichPrinter.log_error_panel("Error during final learning generation", str(e), exception=e)
+            return f"Error during LLM communication in final reflection: {e}"
 
 def create_response(request_id, result):
     return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
