@@ -103,7 +103,7 @@ async def delegate_task_to_jules(
     url = f"{base_url}/sessions"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(url, json={"session": session_payload}, headers=headers, timeout=timeout)
+            response = await client.post(url, json=session_payload, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
     except httpx.HTTPStatusError as e:
