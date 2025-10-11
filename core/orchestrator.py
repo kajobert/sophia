@@ -163,8 +163,20 @@ class WorkerOrchestrator:
                         RichPrinter.warning(f"Nepodařilo se extrahovat cestu k souboru pro nástroj '{tool_name}': {e}")
 
 
-                result = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
-                self.history.append((history_entry_request, result))
+                result_str = await self.mcp_client.execute_tool(tool_name, args, kwargs, self.verbose)
+
+                # Zpracování a logování případné chyby nástroje
+                try:
+                    result_data = json.loads(result_str)
+                    if isinstance(result_data, dict) and "tool_error" in result_data:
+                        error_message = f"Nástroj '{tool_name}' selhal s chybou: {result_data['tool_error']}"
+                        RichPrinter.error(error_message)
+                        self.history.append((history_entry_request, error_message))
+                    else:
+                        self.history.append((history_entry_request, result_str))
+                except json.JSONDecodeError:
+                    self.history.append((history_entry_request, result_str))
+
                 self.memory_manager.save_history(session_id, self.history)
 
                 if tool_name in TERMINAL_TOOLS:

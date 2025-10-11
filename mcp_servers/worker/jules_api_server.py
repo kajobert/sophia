@@ -37,7 +37,7 @@ async def list_jules_sources() -> str:
 
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
-        return json.dumps({"error": "JULES_API_KEY is not configured."})
+        return json.dumps({"tool_error": "JULES_API_KEY is not configured."})
 
     headers = {"X-Goog-Api-Key": jules_api_key}
     url = f"{base_url}/sources"
@@ -47,8 +47,10 @@ async def list_jules_sources() -> str:
             response = await client.get(url, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
+    except httpx.HTTPStatusError as e:
+        return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
-        return json.dumps({"error": f"Failed to list Jules sources: {e}"})
+        return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
 
 async def delegate_task_to_jules(
     prompt: str,
@@ -65,10 +67,10 @@ async def delegate_task_to_jules(
 
     Args:
         prompt (str): Detailní popis úkolu pro Jules. Musí být jasný a jednoznačný.
-        source (str): Povinný identifikátor zdrojového repozitáře, kde má Jules pracovat. Získáš ho zavoláním nástroje `list_jules_sources`.
+        source (str): Povinný identifikátor zdrojového repozitáře, kde má Jules pracovat.
         starting_branch (str): Povinný název větve v repozitáři, ze které má Jules vycházet.
-        title (Optional[str]): Volitelný krátký název pro úkol (např. "Implementace přihlašovací stránky").
-        requirePlanApproval (Optional[bool]): Volitelný příznak. Pokud je `True`, Jules nejprve vytvoří plán a počká na jeho schválení, než začne s implementací.
+        title (str): Povinný krátký název pro úkol (např. "Implementace přihlašovací stránky").
+        requirePlanApproval (bool): Volitelný příznak. Pokud je `True`, Jules nejprve vytvoří plán a počká na jeho schválení. Výchozí je `False`.
         automationMode (Optional[str]): Volitelný režim automatizace. Možné hodnoty jsou "full" nebo "step-by-step".
 
     Returns:
@@ -81,20 +83,22 @@ async def delegate_task_to_jules(
 
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
-        return json.dumps({"error": "JULES_API_KEY is not configured."})
+        return json.dumps({"tool_error": "JULES_API_KEY is not configured."})
 
     headers = {"X-Goog-Api-Key": jules_api_key, "Content-Type": "application/json"}
 
+    # Sestavení payloadu PŘESNĚ podle dokumentace
     payload = {
-        "prompt": prompt,
         "title": title,
+        "prompt": prompt,
         "source": source,
         "sourceContext": {
             "githubRepoContext": {"startingBranch": starting_branch}
         },
         "requirePlanApproval": requirePlanApproval
     }
-    if automationMode: payload["automationMode"] = automationMode
+    if automationMode:
+        payload["automationMode"] = automationMode
 
     url = f"{base_url}/sessions"
     try:
@@ -103,9 +107,10 @@ async def delegate_task_to_jules(
             response.raise_for_status()
             return json.dumps(response.json())
     except httpx.HTTPStatusError as e:
-        return json.dumps({"error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
+        # Vracíme strukturovanou chybu s tělem odpovědi
+        return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
-        return json.dumps({"error": f"An unexpected error occurred: {e}"})
+        return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
 
 async def get_jules_task_status(task_id: str) -> str:
     """
@@ -118,7 +123,7 @@ async def get_jules_task_status(task_id: str) -> str:
 
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
-        return json.dumps({"error": "JULES_API_KEY is not configured."})
+        return json.dumps({"tool_error": "JULES_API_KEY is not configured."})
 
     headers = {"X-Goog-Api-Key": jules_api_key}
     url = f"{base_url}/sessions/{task_id}"
@@ -128,8 +133,10 @@ async def get_jules_task_status(task_id: str) -> str:
             response = await client.get(url, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
+    except httpx.HTTPStatusError as e:
+        return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
-        return json.dumps({"error": f"Failed to get Jules task status: {e}"})
+        return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
 
 async def get_jules_task_result(task_id: str) -> str:
     """
@@ -142,7 +149,7 @@ async def get_jules_task_result(task_id: str) -> str:
 
     jules_api_key = os.getenv("JULES_API_KEY")
     if not jules_api_key:
-        return json.dumps({"error": "JULES_API_KEY is not configured."})
+        return json.dumps({"tool_error": "JULES_API_KEY is not configured."})
 
     headers = {"X-Goog-Api-Key": jules_api_key}
     url = f"{base_url}/sessions/{task_id}/result"
@@ -152,8 +159,10 @@ async def get_jules_task_result(task_id: str) -> str:
             response = await client.get(url, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
+    except httpx.HTTPStatusError as e:
+        return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
-        return json.dumps({"error": f"Failed to get Jules task result: {e}"})
+        return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
 
 # --- Tool Metadata with Examples ---
 TOOLS = {
@@ -175,7 +184,7 @@ TOOLS = {
             },
             {
                 "use_case": "Delegovat komplexní refaktoring a vyžadovat manuální schválení plánu agenta, než začne pracovat.",
-                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Refactor the database schema for performance", "source": "sources/github/your_org/your_repo", "starting_branch": "develop", "requirePlanApproval": true}}'
+                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Refactor the database schema for performance", "source": "sources/github/your_org/your_repo", "starting_branch": "develop", "title": "Refactor Database", "requirePlanApproval": true}}'
             }
         ]
     },
