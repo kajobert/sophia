@@ -58,7 +58,7 @@ async def delegate_task_to_jules(
     starting_branch: str,
     title: str,
     requirePlanApproval: bool = False,
-    automationMode: str = "full"
+    automationMode: str = "AUTO_CREATE_PR"
 ) -> str:
     """
     Deleguje komplexní úkol na externího specializovaného agenta Jules.
@@ -69,7 +69,7 @@ async def delegate_task_to_jules(
         starting_branch (str): Povinný název větve, ze které má Jules vycházet.
         title (str): Povinný krátký název pro úkol.
         requirePlanApproval (bool): Pokud je `True`, Jules počká na schválení plánu. Výchozí je `False`.
-        automationMode (str): Režim automatizace. Možné hodnoty jsou "full" nebo "step-by-step". Výchozí je "full".
+        automationMode (str): Režim automatizace. Validní hodnoty: "AUTO_CREATE_PR", "AUTOMATION_MODE_UNSPECIFIED". Výchozí je "AUTO_CREATE_PR".
 
     Returns:
         str: JSON string s odpovědí od Jules API.
@@ -85,12 +85,16 @@ async def delegate_task_to_jules(
 
     headers = {"X-Goog-Api-Key": jules_api_key, "Content-Type": "application/json"}
 
-    payload = {
+    # Sestavení payloadu PŘESNĚ podle dokumentace
+    # 'session' objekt je to, co posíláme v těle požadavku
+    session_payload = {
         "title": title,
         "prompt": prompt,
-        "source": source,
         "sourceContext": {
-            "githubRepoContext": {"startingBranch": starting_branch}
+            "source": source,
+            "githubRepoContext": {
+                "startingBranch": starting_branch
+            }
         },
         "requirePlanApproval": requirePlanApproval,
         "automationMode": automationMode
@@ -99,10 +103,11 @@ async def delegate_task_to_jules(
     url = f"{base_url}/sessions"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=payload, headers=headers, timeout=timeout)
+            response = await client.post(url, json={"session": session_payload}, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
     except httpx.HTTPStatusError as e:
+        # Vracíme strukturovanou chybu s tělem odpovědi
         return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
         return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
