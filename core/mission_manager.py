@@ -215,9 +215,12 @@ class MissionManager:
         """
         RichPrinter.info("Running post-mission reflection...")
         # We now pass the mission prompt directly to the reflection server
-        learning = await self.reflection_server.reflect_on_project(
-            history="\n".join(self.project_history),
-            mission_goal=self.mission_prompt
+        # The method is `reflect_on_recent_steps`, not `reflect_on_project`.
+        # It expects `history` as a list of dicts and `last_user_input` as a string.
+        # We will adapt the call to match the correct signature.
+        learning = await self.reflection_server.reflect_on_recent_steps(
+            history=self.project_history, # Pass the raw history list
+            last_user_input=self.mission_prompt # The mission prompt is the initial input
         )
 
         if not learning or len(learning) < 10:
