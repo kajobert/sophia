@@ -40,14 +40,21 @@ Následující diagram znázorňuje tok informací mezi hlavními komponentami s
     - Spouští `ConversationalManager` v asynchronním "workeru", aby se neblokovalo UI.
     - Zpracovává zprávy od `RichPrinter` a zobrazuje je v příslušných widgetech.
 
-### 2. ConversationalManager
+### 2. ConversationalManager (Agile Project Manager)
 - **Soubor:** `core/conversational_manager.py`
-- **Popis:** Je to nový nejvyšší řídící prvek agenta, který funguje jako "osvícený manažer". Jeho zodpovědnosti jsou:
-    - Vedení konverzace s uživatelem.
-    - Použití LLM k primárnímu rozhodnutí na základě vstupu: má se jednat o dotaz na stav, nebo o komplexní úkol?
-    - Volání svých interních metod (např. `_get_worker_status`) pro jednoduché dotazy.
-    - Delegování komplexních úkolů na `WorkerOrchestrator`.
-    - Formulování finální, srozumitelné odpovědi pro uživatele na základě výsledků.
+- **Popis:** Povýšen na roli "Agilního Projektového Manažera". Již nedeleguje pouze velké úkoly, ale aktivně řídí celý životní cyklus projektu.
+    - **Triage:** Nejprve analyzuje požadavek uživatele, aby určil, zda jde o jednoduchý, přímo řešitelný úkol, nebo o komplexní projekt.
+    - **Projektové Řízení:** U komplexních úkolů:
+        1. Vytvoří hlavní cíl v `PlanningServeru`.
+        2. Rozdělí práci na počáteční dílčí úkol (např. "naplánuj kroky").
+        3. Vstupuje do smyčky, kde postupně bere další proveditelný úkol z plánu.
+        4. Každý dílčí úkol deleguje na `WorkerOrchestrator`.
+        5. Aktualizuje stav úkolu (dokončeno, selhalo) v `PlanningServeru`.
+    - **Resilientní Zpracování Chyb:** Pokud Worker selže, `ConversationalManager` se nevzdá.
+        1. Zavolá `ReflectionServer`, aby analyzoval historii neúspěšného úkolu.
+        2. Prezentuje uživateli shrnutí chyby a výsledek reflexe.
+        3. Požádá o další instrukce, čímž efektivně zapojuje uživatele do řešení problémů.
+    - **Učení se z Projektů:** Po úspěšném dokončení celého projektu spustí finální sebereflexi nad celou historií projektu, aby se poučil pro příště.
 
 ### 3. WorkerOrchestrator
 - **Soubor:** `core/orchestrator.py`

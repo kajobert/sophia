@@ -10,6 +10,8 @@ from core.memory_manager import MemoryManager
 from core.llm_manager import LLMManager
 from core.orchestrator import WorkerOrchestrator
 from tui.messages import ChatMessage
+from mcp_servers.worker.planning_server import PlanningServer
+from mcp_servers.worker.reflection_server import ReflectionServer
 
 class ConversationalManager:
     """
@@ -23,6 +25,8 @@ class ConversationalManager:
         self.llm_manager = LLMManager(project_root=self.project_root)
         self.memory_manager = MemoryManager()
         self.worker = WorkerOrchestrator(project_root=self.project_root, status_widget=status_widget)
+        self.planning_server = PlanningServer(project_root=self.project_root)
+        self.reflection_server = ReflectionServer(project_root=self.project_root)
         self.session_id = str(uuid.uuid4())
         self.history = []
         self.state = "IDLE"
@@ -157,150 +161,107 @@ class ConversationalManager:
 
     async def handle_user_input(self, user_input: str):
         """
-        Kompletní smyčka pro zpracování vstupu od uživatele.
-        Rozhoduje o dalším kroku na základě stavu manažera.
+        Handles user input by adopting an agile project management workflow.
+        It breaks down complex tasks, delegates them as sub-tasks to the worker,
+        and manages the overall project plan.
         """
-        # >>> HUMAN-IN-THE-LOOP: HANDLE USER'S APPROVAL/DENIAL <<<
-        if self.state == "AWAITING_DELEGATION_APPROVAL":
-            self.history.append(("", f"UŽIVATELSKÝ VSTUP (rozhodnutí o delegování): {user_input}"))
-            normalized_input = user_input.lower().strip()
-
-            if normalized_input in ["ano", "yes", "souhlasím"]:
-                RichPrinter.info("Uživatel schválil delegování. Pokračuji v exekuci...")
-
-                tool_call = self.pending_tool_call
-                tool_name = tool_call.get("tool_name")
-                args = tool_call.get("args", [])
-                kwargs = tool_call.get("kwargs", {})
-
-                RichPrinter._post(ChatMessage("Dobře, provádím schválené delegování...", owner='agent', msg_type='inform'))
-
-                result = await self.worker.mcp_client.execute_tool(tool_name, args, kwargs)
-
-                try:
-                    result_data = json.loads(result)
-                    if "error" in result_data:
-                        RichPrinter.error(f"Při delegování došlo k chybě: {result_data['error']}")
-                        tool_result_context = f"Pokus o delegování selhal s chybou: {result_data['error']}"
-                    else:
-                        tool_result_context = f"Delegování na Jules bylo úspěšně provedeno. Výsledek: {result}"
-                except json.JSONDecodeError:
-                    tool_result_context = f"Delegování na Jules bylo provedeno, ale odpověď nebyla ve formátu JSON: {result}"
-            else: # User denied
-                RichPrinter.warning("Uživatel zamítl delegování.")
-                # Instruct the worker to find another solution
-                new_task_for_worker = (
-                    f"Původní úkol byl: '{self.original_task_for_worker}'.\n"
-                    f"Váš návrh na delegování byl uživatelem zamítnut. "
-                    f"Najděte prosím alternativní způsob, jak úkol vyřešit bez delegování."
-                )
-                RichPrinter._post(ChatMessage("Rozumím, delegování bylo zrušeno. Zkusím najít jiné řešení.", owner='agent', msg_type='inform'))
-                # Použijeme uložený budget
-                worker_result = await self._delegate_task_to_worker(new_task_for_worker, self.current_budget or 8)
-                tool_result_context = f"Worker hledá alternativní řešení. Jeho odpověď: {worker_result.get('summary')}"
-
-            # Reset state and generate final response
-            self._reset_state()
-            final_response = await self._generate_final_response(tool_result_context)
-            RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
-            return
-
-        # Krok 1: Triage a Budgeting (standardní průběh)
         self.history.append(("", f"UŽIVATELSKÝ VSTUP: {user_input}"))
         task_directives = await self._get_task_directives(user_input)
         task_type = task_directives.get("type", "complex")
         budget = task_directives.get("budget", 8)
-        self.current_budget = budget # Uložíme budget pro případné pozdější použití
 
-        # Krok 2: Rozhodnutí o nástroji na základě triage
-        tool_descriptions = self._get_tool_descriptions()
-        prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history)
-        model = self.llm_manager.get_llm("default")
-
-        RichPrinter.info(f"Manažer přemýšlí... (model: {model.model_name})")
-        response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
-
-        explanation, tool_call_data = self._parse_llm_response(response_text)
-        if explanation:
-            RichPrinter.log_communication("Myšlenkový pochod Manažera", explanation, style="bold magenta")
-
-        if not tool_call_data or "tool_name" not in tool_call_data:
-            RichPrinter.warning("Manažer se rozhodl nepoužít nástroj.")
-            final_response = await self._generate_final_response("Řekni uživateli, že na jeho požadavek nemůžeš reagovat, protože se zdá, že nevyžaduje žádnou akci.")
+        if task_type == "simple":
+            RichPrinter._post(ChatMessage("Tento úkol se zdá být jednoduchý, řeším ho přímo...", owner='agent', msg_type='inform'))
+            # Simple tasks are delegated directly as before
+            worker_result = await self._delegate_task_to_worker(user_input, budget)
+            final_response = await self._generate_final_response(
+                f"Jednoduchý úkol byl dokončen se shrnutím: {worker_result.get('summary')}",
+                worker_result.get("touched_files", [])
+            )
             RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
             return
 
-        # Krok 2: Spuštění nástroje
-        tool_name = tool_call_data["tool_name"]
-        kwargs = tool_call_data.get("kwargs", {})
-        RichPrinter.log_communication("Manažer volá interní metodu", tool_call_data, style="bold yellow")
+        # --- Agile Project Management Loop for Complex Tasks ---
+        RichPrinter._post(ChatMessage("Rozumím, tento úkol je komplexní. Vytvářím projektový plán...", owner='agent', msg_type='inform'))
 
-        tool_result_context = ""
-        if tool_name == "get_worker_status":
-            status_json = self._get_worker_status()
-            RichPrinter.log_communication("Výsledek `_get_worker_status`", status_json, style="bold cyan")
-            tool_result_context = f"Výsledek zjištění stavu workera je: {status_json}. Na základě toho informuj uživatele."
-            self.history.append((explanation, status_json))
-            final_response = await self._generate_final_response(tool_result_context)
+        # 1. Create the main task
+        self.planning_server.update_task_description(user_input)
+        self.planning_server.add_subtask(description=f"Pochopit a naplánovat kroky pro: '{user_input}'", priority=1)
 
-        elif tool_name == "delegate_task_to_worker":
-            task = kwargs.get("task", user_input)
-            self.original_task_for_worker = task # Save for potential continuation
-            RichPrinter._post(ChatMessage("Rozumím, předávám úkol ke zpracování svému Workerovi. Bude vás informovat o průběhu.", owner='agent', msg_type='inform'))
-            # Použijeme dynamicky získaný budget
-            worker_result = await self._delegate_task_to_worker(task, budget)
+        total_touched_files = set()
+        project_history = []
 
-            # >>> HUMAN-IN-THE-LOOP: HANDLE DELEGATION APPROVAL <<<
-            if worker_result.get("status") == "needs_delegation_approval":
-                self.state = "AWAITING_DELEGATION_APPROVAL"
-                self.pending_tool_call = worker_result.get("tool_call")
-                self.history.append((explanation, json.dumps(worker_result)))
+        # 2. Execution Loop
+        while True:
+            next_task = self.planning_server.get_next_executable_task()
+            if not next_task:
+                RichPrinter.info("Všechny dílčí úkoly byly dokončeny. Projekt je hotov.")
+                break
 
-                # Získáme popis úkolu z argumentů volání
-                tool_args = self.pending_tool_call.get('args', [])
-                tool_kwargs = self.pending_tool_call.get('kwargs', {})
-                # 'prompt' je první argument funkce delegate_task_to_jules
-                delegation_task_desc = tool_kwargs.get('prompt') or (tool_args[0] if tool_args else 'Nespecifikovaný úkol.')
+            task_id = next_task['id']
+            task_desc = next_task['description']
+            project_history.append(f"ZAHÁJEN DÍLČÍ ÚKOL: {task_desc}")
+            RichPrinter._post(ChatMessage(f"Pracuji na dalším kroku: {task_desc}", owner='agent', msg_type='inform'))
 
-                question = (
-                    f"Můj Worker navrhuje delegovat následující úkol na externího specializovaného agenta Jules:\n\n"
-                    f"> {delegation_task_desc}\n\n"
-                    f"Souhlasíte s tímto postupem? (ano/ne)"
-                )
-                RichPrinter._post(ChatMessage(question, owner='agent', msg_type='ask'))
-                return
+            # 3. Delegate sub-task to Worker
+            worker_result = await self._delegate_task_to_worker(task_desc, budget)
+            project_history.append(f"VÝSLEDEK WORKERA: {worker_result.get('summary', 'Bez shrnutí.')}")
 
-            # --- Handle other worker outcomes (completed, needs_planning, etc.) ---
-            touched_files = worker_result.get("touched_files", [])
-            tool_result_context = f"Worker dokončil úkol. Jeho finální stav je: {worker_result.get('status')}. Jeho shrnutí je: {worker_result.get('summary')}."
-            self.history.append((explanation, json.dumps(worker_result)))
-
+            # 4. Process Worker's result
             if worker_result.get("status") == "completed":
-                if self.mission_manager:
-                    self.mission_manager.completed_missions_count += 1
-                if worker_result.get("history"):
-                    await self._run_reflection(worker_result.get("history"))
+                RichPrinter.info(f"Dílčí úkol '{task_desc}' dokončen úspěšně.")
+                self.planning_server.mark_task_as_completed(task_id)
+                touched_files = worker_result.get("touched_files", [])
+                if touched_files:
+                    total_touched_files.update(touched_files)
+                    RichPrinter._post(ChatMessage(f"Soubory ovlivněné tímto krokem: {', '.join(touched_files)}", owner='agent', msg_type='info'))
 
-            # Krok 3: Generování finální odpovědi s informací o souborech
-            final_response = await self._generate_final_response(tool_result_context, touched_files)
+            elif worker_result.get("status") == "error" or worker_result.get("status") == "budget_exceeded":
+                error_summary = worker_result.get('summary', 'Neznámá chyba.')
+                RichPrinter.error(f"Chyba při provádění dílčího úkolu '{task_desc}': {error_summary}")
+                project_history.append(f"CHYBA: {error_summary}")
 
-        else:
-            RichPrinter.error(f"Manažer se pokusil zavolat neznámou interní metodu: {tool_name}")
-            tool_result_context = f"Došlo k interní chybě, nepodařilo se najít nástroj '{tool_name}'."
-            self.history.append((explanation, tool_result_context))
-            final_response = await self._generate_final_response(tool_result_context)
+                # 5. Error Handling & Reflection
+                RichPrinter._post(ChatMessage("Narazil jsem na problém. Provádím sebereflexi, abych našel řešení...", owner='agent', msg_type='inform'))
 
+                # Use the worker's history for reflection
+                worker_history_for_reflection = worker_result.get("history", [])
+                reflection = await self.reflection_server.reflect_on_recent_steps(worker_history_for_reflection, task_desc)
 
+                RichPrinter._post(ChatMessage(f"**Výsledek sebereflexe:**\n{reflection}", owner='agent', msg_type='warning'))
+                project_history.append(f"REFLEXE: {reflection}")
+
+                # For now, we stop and report to the user.
+                final_response = await self._generate_final_response(
+                    f"Při práci na úkolu '{task_desc}' došlo k chybě: {error_summary}. "
+                    f"Po analýze jsem dospěl k tomuto závěru: {reflection}. "
+                    "Prosím, poskytněte mi další instrukce, jak mám pokračovat.",
+                    list(total_touched_files)
+                )
+                RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='ask'))
+                return # Stop the loop and wait for user feedback
+
+            # Optional: Add a small delay to make the process observable
+            await asyncio.sleep(1)
+
+        # 6. Final summary after loop completion
+        final_summary = (
+            "Všechny kroky projektu byly úspěšně dokončeny. "
+            f"Celkový cíl '{self.planning_server.get_main_goal()}' byl splněn."
+        )
+        final_response = await self._generate_final_response(final_summary, list(total_touched_files))
         RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='inform'))
-        RichPrinter.info("Manažer dokončil plný cyklus zpracování úkolu.")
+
+        # Run final reflection on the whole project
+        await self._run_reflection(project_history)
 
 
-    async def _run_reflection(self, task_history: list):
+    async def _run_reflection(self, project_history: list):
         """
-        Spustí proces sebereflexe. Vezme historii úkolu, vygeneruje "poučení"
-        a uloží ho do dlouhodobé paměti.
+        Spustí proces sebereflexe na základě historie projektu.
+        Vygeneruje "poučení" a uloží ho do dlouhodobé paměti.
         """
-        RichPrinter.info("Spouštím sebereflexi na základě dokončeného úkolu...")
+        RichPrinter.info("Spouštím sebereflexi na základě dokončeného projektu...")
 
         # 1. Připrav prompt
         try:
@@ -310,7 +271,7 @@ class ConversationalManager:
             RichPrinter.error("Prompt pro sebereflexi nebyl nalezen. Přeskakuji.")
             return
 
-        history_str = "\n".join([f"Krok {i+1}:\nMyšlenka: {thought}\nAkce/Výsledek: {action}" for i, (thought, action) in enumerate(task_history)])
+        history_str = "\n".join(project_history)
         prompt = reflection_prompt_template.format(task_history=history_str)
 
         # 2. Zavolej LLM
@@ -323,10 +284,9 @@ class ConversationalManager:
             return
 
         # 3. Ulož poznatek do LTM
-        # Použijeme samotný poznatek jako obsah pro embedding
         self.worker.ltm.add(
             documents=[learning],
-            metadatas=[{"type": "learning"}],
+            metadatas=[{"type": "learning", "source": "project_reflection"}],
             ids=[str(uuid.uuid4())]
         )
-        RichPrinter.log_communication("Nový poznatek uložen do LTM", learning, style="bold green")
+        RichPrinter.log_communication("Nový poznatek z projektu uložen do LTM", learning, style="bold green")
