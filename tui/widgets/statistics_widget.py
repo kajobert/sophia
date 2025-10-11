@@ -17,7 +17,7 @@ class StatisticsWidget(Static):
     def update_display(self):
         """Update the displayed statistics."""
         text = Text(f"Celkové náklady: ${self.total_cost:.6f}\n", justify="left")
-        text.append(f"Dokončené úkoly: {self.completed_tasks}", justify="left")
+        text.append(f"Dokončené úkoly: {self.completed_tasks}")
         self.update(Panel(text, title="Statistiky", border_style="green"))
 
     def set_statistics(self, total_cost: float, completed_tasks: int):
