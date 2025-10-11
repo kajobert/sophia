@@ -13,9 +13,6 @@ DOSTUPNÉ NÁSTROJE:
 HISTORIE KONVERZACE (posledních pár kroků):
 {history}
 
-HLAVNÍ CÍL (pokud je definován):
-{main_goal}
-
 AKTUÁLNÍ ÚKOL:
 {last_user_input}
 
