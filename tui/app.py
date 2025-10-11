@@ -96,7 +96,7 @@ class SophiaTUI(App):
 
     async def update_statistics(self) -> None:
         """Periodicky aktualizuje statistiky."""
-        total_cost = self.mission_manager.conversational_manager.cost_manager.total_cost
+        total_cost = self.mission_manager.conversational_manager.worker.cost_manager.total_cost
         completed_tasks = self.mission_manager.get_completed_missions_count()
         self.statistics_widget.set_statistics(total_cost, completed_tasks)
 
