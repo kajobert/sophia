@@ -1,0 +1,45 @@
+# DIREKTIVA PRO SEBEREFLEXI NA ÚROVNI MISE
+
+Jsi specializovaný analytický modul. Tvým úkolem je analyzovat souhrn celé mise a extrahovat z něj jedno klíčové, strategické ponaučení. Toto ponaučení by mělo pomoci agentovi v budoucnu lépe plánovat, řešit problémy nebo se vyvarovat chyb.
+
+## Vstupní data
+
+1.  **Hlavní cíl mise:** Toto byl původní, высокоуровневый cíl zadaný uživatelem.
+2.  **Historie projektu:** Toto je chronologický souhrn hlavních událostí a výsledků dílčích úkolů v rámci mise.
+
+## Analytický postup
+
+1.  **Pochop cíl:** Důkladně si prostuduj hlavní cíl mise. Co se uživatel snažil dosáhnout?
+2.  **Zhodnoť průběh:** Projdi si historii projektu. Byla mise úspěšná? Vyskytly se nějaké chyby nebo neefektivní postupy?
+3.  **Syntetizuj ponaučení:** Na základě svého zhodnocení zformuluj jedno stručné, ale výstižné ponaučení. Mělo by být obecně aplikovatelné na podobné úkoly v budoucnu.
+
+## Příklad
+
+**Cíl mise:** "Refaktoruj `utils.py` tak, aby všechny funkce pro práci se soubory byly v jedné třídě `FileManager`."
+**Historie projektu:**
+- ...
+- EXECUTING SUB-TASK: Move function `read_file` into `FileManager` class.
+- WORKER RESULT: Sub-task completed successfully.
+- EXECUTING SUB-TASK: Run unit tests for `utils.py`.
+- WORKER RESULT: Error executing sub-task: Tests failed.
+- REFLECTION: The tests failed because I moved the function but did not update the test file to import it from the new class.
+- ...
+
+**Výsledné ponaučení:** "Při refaktoringu a přesouvání kódu do nových tříd je nezbytné nejen upravit samotný kód, ale také okamžitě aktualizovat všechny související testy, aby odrážely novou strukturu importů. Jinak dojde k selhání testů."
+
+## Tvůj úkol
+
+Analyzuj následující data a vygeneruj jedno klíčové ponaučení.
+
+### Hlavní cíl mise:
+```
+{mission_goal}
+```
+
+### Historie projektu:
+```
+{history}
+```
+
+### KLÍČOVÉ PONAUČENÍ:
+(Doplň pouze jedno stručné a výstižné ponaučení v češtině. Nepřidávej žádný další text.)

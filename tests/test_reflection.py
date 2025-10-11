@@ -76,8 +76,9 @@ async def mission_manager_with_mocks(temp_project_root):
 
         # Mock ReflectionServer
         mock_reflection_server_instance = MockReflectionServer.return_value
-        # The method to be awaited must be an AsyncMock
-        mock_reflection_server_instance.reflect_on_recent_steps = AsyncMock(return_value="Learning: Use mkdir for directories.")
+        mock_reflection_server_instance.reflect_on_recent_steps = AsyncMock(return_value="Sub-task learning.")
+        # Mock the new high-level reflection method
+        mock_reflection_server_instance.summarize_mission_learnings = AsyncMock(return_value="High-level mission learning.")
 
         # Import must be here to use the temp_project_root
         from core.mission_manager import MissionManager
@@ -97,19 +98,33 @@ async def mission_manager_with_mocks(temp_project_root):
 # --- Test Scenario ---
 
 @pytest.mark.asyncio
-async def test_final_reflection_is_disabled(mission_manager_with_mocks):
+async def test_final_reflection_uses_correct_method(mission_manager_with_mocks):
     """
-    Verifies that the final reflection process is currently disabled to prevent crashes.
+    Verifies that after a mission is completed, the new high-level reflection
+    method is called and its learning is saved to the LTM.
     """
     mission_manager, mock_reflection_server, mock_ltm = mission_manager_with_mocks
 
     # Start the mission
     await mission_manager.start_mission("Create `test_dir` directory.")
 
-    # Verify that the reflection server's method was NOT called
+    # 1. Verify that the new high-level reflection server method was called correctly
+    mock_reflection_server.summarize_mission_learnings.assert_called_once()
+    call_args, call_kwargs = mock_reflection_server.summarize_mission_learnings.call_args
+    assert call_kwargs['mission_goal'] == "Create `test_dir` directory."
+    assert "MISSION GOAL: Create `test_dir` directory." in call_kwargs['history']
+    assert "WORKER RESULT: Directory created." in call_kwargs['history']
+
+    # 2. Verify the old, incorrect method was NOT called for the final reflection
+    # (it might be called for sub-task failures, but not here)
+    # In this successful run, it shouldn't be called at all.
     mock_reflection_server.reflect_on_recent_steps.assert_not_called()
 
-    # Verify that the LTM 'add' method was also NOT called as a result
-    mock_ltm.add.assert_not_called()
 
-    print("Test passed: Final reflection is correctly disabled.")
+    # 3. Verify that the LTM 'add' method was called with the correct data
+    mock_ltm.add.assert_called_once()
+    args, kwargs = mock_ltm.add.call_args
+    assert "documents" in kwargs and "High-level mission learning." in kwargs["documents"][0]
+    assert "metadatas" in kwargs and kwargs['metadatas'][0]['type'] == 'learning'
+
+    print("Test passed: Final reflection uses the correct high-level method.")
