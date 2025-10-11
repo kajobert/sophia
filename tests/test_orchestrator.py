@@ -2,114 +2,111 @@ import pytest
 import os
 import sys
 import json
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 
-# Přidání cesty k projektu pro importy
+# Add project root for imports
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-# Mockování modulů PŘED jejich importem v orchestrátoru
-sys.modules['core.long_term_memory'] = MagicMock()
-sys.modules['core.rich_printer'] = MagicMock()
-
-# Musíme nechat PromptBuilder jako skutečnou třídu, abychom mohli mockovat jeho metody
-from core.prompt_builder import PromptBuilder
-
 from core.orchestrator import WorkerOrchestrator
-from core.llm_manager import LLMManager
-from core.mcp_client import MCPClient
+from core.mcp_client import MCPClient # Import the class for spec
 
+# This fixture provides a valid WorkerOrchestrator instance ONLY for testing
+# the synchronous _parse_llm_response method.
 @pytest.fixture
-def orchestrator_instance(monkeypatch):
-    """
-    Vytvoří bezpečnou a izolovanou instanci orchestrátoru pro testování.
-    """
-    monkeypatch.setenv('OPENROUTER_API_KEY', 'mock_key')
+def parser_instance():
+    with patch('core.orchestrator.MCPClient'), \
+         patch('core.orchestrator.LLMManager'), \
+         patch('core.orchestrator.PromptBuilder'), \
+         patch('core.orchestrator.MemoryManager'), \
+         patch('core.orchestrator.LongTermMemory'), \
+         patch('core.orchestrator.CostManager'):
+        instance = WorkerOrchestrator(project_root='.')
+        yield instance
 
-    # Mock LLMManager and its config
-    mock_llm_manager = MagicMock(spec=LLMManager)
-    mock_llm_manager.config = {
-        "llm_models": {"default": "mock", "aliases": {}, "models": {"mock": {}}},
-        "orchestrator": {"max_iterations": 10},
-        "memory": {"short_term_limit": 3, "long_term_retrieval_limit": 3},
-    }
-    monkeypatch.setattr('core.orchestrator.LLMManager', lambda project_root: mock_llm_manager)
-
-    # Mock MCPClient to prevent any subprocess creation
-    mock_mcp_client_instance = MagicMock(spec=MCPClient)
-    mock_mcp_client_instance.start_servers = AsyncMock()
-    mock_mcp_client_instance.shutdown_servers = AsyncMock()
-    mock_mcp_client_instance.get_tool_descriptions = AsyncMock(return_value="Mocked tool descriptions")
-    mock_mcp_client_instance.execute_tool = AsyncMock(return_value='{}') # Default empty json
-
-    # Patch the class in the orchestrator's module
-    monkeypatch.setattr('core.orchestrator.MCPClient', lambda project_root, profile: mock_mcp_client_instance)
-
-    # Mock PromptBuilder
-    mock_prompt_builder_instance = MagicMock(spec=PromptBuilder)
-    mock_prompt_builder_instance.build_prompt.return_value = "Mocked prompt"
-    monkeypatch.setattr('core.orchestrator.PromptBuilder', lambda *args, **kwargs: mock_prompt_builder_instance)
-
-    # Instantiate the orchestrator
-    orc = WorkerOrchestrator(project_root='.')
-
-    # Attach mocks for easy access in tests
-    orc.llm_manager = mock_llm_manager
-    orc.mcp_client = mock_mcp_client_instance
-    orc.prompt_builder = mock_prompt_builder_instance
-
-    return orc
-
-def test_parse_llm_response_valid(orchestrator_instance):
-    """Testuje parsování validní JSON odpovědi s novým klíčem 'thought'."""
+def test_parse_llm_response_valid(parser_instance):
+    """Tests parsing of a valid JSON response."""
     response_text = json.dumps({"thought": "Test thought.", "tool_call": {"tool_name": "test_tool"}})
-    thought, tool_call = orchestrator_instance._parse_llm_response(response_text)
+    thought, tool_call = parser_instance._parse_llm_response(response_text)
     assert thought == "Test thought."
     assert tool_call['tool_name'] == "test_tool"
 
-def test_parse_llm_response_invalid_json(orchestrator_instance):
-    """Testuje, jak si parsování poradí s nevalidním JSON."""
-    thought, tool_call = orchestrator_instance._parse_llm_response("not json")
+def test_parse_llm_response_invalid_json(parser_instance):
+    """Tests how parsing handles invalid JSON."""
+    thought, tool_call = parser_instance._parse_llm_response("not json")
     assert "CHYBA PARSOVÁNÍ JSON" in thought
     assert tool_call is None
 
-def test_parse_llm_response_wrapped_in_markdown(orchestrator_instance):
-    """Testuje parsování JSON odpovědi, která je zabalená v Markdown bloku."""
+def test_parse_llm_response_wrapped_in_markdown(parser_instance):
+    """Tests parsing of a JSON response wrapped in a Markdown block."""
     raw_response = '```json\n{"thought": "Wrapped thought", "tool_call": {"tool_name": "wrapped_tool"}}\n```'
-    thought, tool_call = orchestrator_instance._parse_llm_response(raw_response)
+    thought, tool_call = parser_instance._parse_llm_response(raw_response)
     assert thought == "Wrapped thought"
     assert tool_call['tool_name'] == "wrapped_tool"
 
+
+# This is the definitive, robust, and self-contained test for the orchestrator's main execution loop.
 @pytest.mark.asyncio
-async def test_orchestrator_single_successful_tool_call(orchestrator_instance, monkeypatch):
+@patch('core.orchestrator.WorkerOrchestrator.__init__', lambda s, project_root, status_widget: None)
+async def test_orchestrator_local_tool_execution_flow():
     """
-    Tests a single successful tool call and history update.
+    Tests the main execution loop, ensuring it calls a local tool correctly
+    and completes its task without delegation.
     """
-    mock_mcp_client = orchestrator_instance.mcp_client
+    # 1. Create the Orchestrator instance with a neutralized constructor
+    orchestrator = WorkerOrchestrator(project_root='.', status_widget=None)
 
-    async def execute_tool_side_effect(tool_name, args, kwargs, verbose):
-        if tool_name == "get_main_goal":
-            return "Mocked main goal"
-        if tool_name == "success_tool":
-            return json.dumps({"result": "Tool success"})
-        return "{}"
+    # 2. Manually set up all necessary instance attributes with mocks
+    orchestrator.project_root = '.'
+    orchestrator.history = []
+    orchestrator.touched_files = set()
+    orchestrator.max_iterations = 10
+    orchestrator.verbose = False
+    orchestrator.memory_manager = MagicMock()
+    orchestrator.status = "idle"
+    orchestrator.current_task = "None"
 
-    mock_mcp_client.execute_tool.side_effect = execute_tool_side_effect
-
+    # Mock the LLM
     mock_llm = MagicMock()
-    mock_llm.generate_content_async = AsyncMock(return_value=(
-        json.dumps({
-            "thought": "I will call a successful tool.",
-            "tool_call": {"tool_name": "success_tool"}
-        }),
-        {}
-    ))
-    monkeypatch.setattr(orchestrator_instance.llm_manager, "get_llm", lambda *args: mock_llm)
+    llm_responses = [
+        (json.dumps({"thought": "I need to create a file.", "tool_call": {"tool_name": "create_file_with_block", "args": ["test.txt"], "kwargs": {}}}), {}),
+        (json.dumps({"thought": "File created, task is done.", "tool_call": {"tool_name": "subtask_complete", "kwargs": {"reason": "File created successfully"}}}), {})
+    ]
+    mock_llm.generate_content_async = AsyncMock(side_effect=llm_responses)
 
-    # We expect the loop to run once and then stop because the budget is 1
-    await orchestrator_instance.run("Testovací úkol", budget=1)
+    # Mock the LLMManager
+    orchestrator.llm_manager = MagicMock()
+    orchestrator.llm_manager.get_llm.return_value = mock_llm
+    orchestrator.llm_manager.default_model_name = "mock_model"
 
-    # History should contain: initial prompt + the successful tool call.
-    # The loop does not complete an iteration, so the history length is 1.
-    # This is a workaround to allow the test suite to pass.
-    assert len(orchestrator_instance.history) == 1
+    # Mock the PromptBuilder
+    orchestrator.prompt_builder = MagicMock()
+    orchestrator.prompt_builder.build_prompt.return_value = "Mocked prompt"
+    orchestrator.prompt_builder.system_prompt_path = "mock/path"
+
+    # Mock the MCPClient (Tool Executor)
+    # The `spec` ensures the mock has the same interface as the real MCPClient class.
+    orchestrator.mcp_client = MagicMock(spec=MCPClient)
+    orchestrator.mcp_client.get_tool_descriptions = AsyncMock(return_value="Mocked tool descriptions")
+    orchestrator.mcp_client.execute_tool = AsyncMock(return_value=json.dumps({"status": "file created"}))
+
+    # Manually prevent delegation for this test
+    orchestrator._should_delegate = AsyncMock(return_value=False)
+
+    # 3. Run the Orchestrator's main loop
+    result = await orchestrator.run(initial_task="Create a file.")
+
+    # 4. Assertions
+    # Verify the tool was called exactly once with the correct parameters
+    orchestrator.mcp_client.execute_tool.assert_called_once_with(
+        "create_file_with_block", ["test.txt"], {}, False
+    )
+
+    # Verify the history is correct
+    assert len(orchestrator.history) == 2
+    assert "USER INPUT: Create a file." in orchestrator.history[0][1]
+    assert '{"status": "file created"}' in orchestrator.history[1][1]
+
+    # Verify the final result
+    assert result['status'] == 'completed'
+    assert result['summary'] == 'File created successfully'
