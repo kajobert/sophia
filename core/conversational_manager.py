@@ -16,9 +16,10 @@ class ConversationalManager:
     Řídí konverzaci s uživatelem, rozhoduje o dalším kroku (informovat o stavu, nebo delegovat)
     a zajišťuje, aby uživatel dostal srozumitelnou odpověď.
     """
-    def __init__(self, project_root: str = ".", status_widget=None):
+    def __init__(self, project_root: str = ".", status_widget=None, mission_manager=None):
         self.project_root = os.path.abspath(project_root)
         self.status_widget = status_widget
+        self.mission_manager = mission_manager
         self.llm_manager = LLMManager(project_root=self.project_root)
         self.memory_manager = MemoryManager()
         self.worker = WorkerOrchestrator(project_root=self.project_root, status_widget=status_widget)
@@ -274,8 +275,11 @@ class ConversationalManager:
             tool_result_context = f"Worker dokončil úkol. Jeho finální stav je: {worker_result.get('status')}. Jeho shrnutí je: {worker_result.get('summary')}."
             self.history.append((explanation, json.dumps(worker_result)))
 
-            if worker_result.get("status") == "completed" and worker_result.get("history"):
-                await self._run_reflection(worker_result.get("history"))
+            if worker_result.get("status") == "completed":
+                if self.mission_manager:
+                    self.mission_manager.completed_missions_count += 1
+                if worker_result.get("history"):
+                    await self._run_reflection(worker_result.get("history"))
 
             # Krok 3: Generování finální odpovědi s informací o souborech
             final_response = await self._generate_final_response(tool_result_context, touched_files)

@@ -13,10 +13,11 @@ class MissionManager:
     """
     def __init__(self, project_root: str = "."):
         self.project_root = os.path.abspath(project_root)
-        self.conversational_manager = ConversationalManager(project_root=self.project_root)
+        self.conversational_manager = ConversationalManager(project_root=self.project_root, mission_manager=self)
         self.mission_prompt: Optional[str] = None
         self.mission_history: list[tuple[str, str]] = []
         self.is_mission_active = False
+        self.completed_missions_count = 0
         self.default_jules_source = None
         self._load_config()
 
@@ -110,3 +111,7 @@ class MissionManager:
 
         # Přidáme vstup do historie mise bez ohledu na cestu.
         self.mission_history.append(("user", user_input))
+
+    def get_completed_missions_count(self) -> int:
+        """Vrací počet úspěšně dokončených misí."""
+        return self.completed_missions_count

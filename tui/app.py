@@ -21,6 +21,7 @@ from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.widgets.memory_log_widget import MemoryLogWidget
 from tui.widgets.prompt_lab_widget import PromptLabWidget
+from tui.widgets.statistics_widget import StatisticsWidget
 from tui.messages import LogMessage, ChatMessage
 
 CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
@@ -55,6 +56,7 @@ class SophiaTUI(App):
         self.error_log_widget.border_title = "Záznam Chyb"
 
         self.memory_log_widget = MemoryLogWidget(id="memory_log_view")
+        self.statistics_widget = StatisticsWidget(id="statistics_view")
 
         # Nahrazení ConversationalManageru za MissionManager
         self.mission_manager = MissionManager(project_root=self.project_root)
@@ -78,6 +80,8 @@ class SophiaTUI(App):
                 yield PromptLabWidget(manager=self.mission_manager.conversational_manager)
             with TabPane("Chyby", id="error_log_tab"):
                 yield self.error_log_widget
+            with TabPane("Statistiky", id="statistics_tab"):
+                yield self.statistics_widget
         yield self.input_widget
         yield Footer()
 
@@ -88,6 +92,13 @@ class SophiaTUI(App):
         self.input_widget.focus()
         # Crash recovery bude nyní řešeno přes MissionManager
         await self.check_for_crash_and_start_recovery()
+        self.set_interval(5, self.update_statistics)
+
+    async def update_statistics(self) -> None:
+        """Periodicky aktualizuje statistiky."""
+        total_cost = self.mission_manager.conversational_manager.cost_manager.total_cost
+        completed_tasks = self.mission_manager.get_completed_missions_count()
+        self.statistics_widget.set_statistics(total_cost, completed_tasks)
 
     async def check_for_crash_and_start_recovery(self):
         """Zkontroluje, zda existuje log o pádu, a pokud ano, spustí misi na opravu."""

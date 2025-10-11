@@ -57,7 +57,7 @@ async def test_end_to_end_delegation_with_optional_params(mock_execute_tool, moc
         (WORKER_LLM_RESPONSE_DELEGATE_TO_JULES_FULL, {}),
         (MANAGER_LLM_RESPONSE_FINAL, {}),
     ]
-    async def tool_executor(tool_name, args, kwargs, verbose):
+    async def tool_executor(tool_name, args, kwargs, verbose=False):
         if tool_name == "list_jules_sources":
             return json.dumps({"sources": [{"name": "sources/github/bobalover/boba"}]})
         if tool_name == "delegate_task_to_jules":
