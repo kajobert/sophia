@@ -94,16 +94,27 @@ class WorkerOrchestrator:
         response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
 
         try:
-            # Attempt to parse the expected JSON response: {"should_delegate": true/false}
+            # Clean the response: remove markdown and strip whitespace
             match = re.search(r"```(json)?\s*\n(.*?)\n```", response_text, re.DOTALL)
             json_str = match.group(2).strip() if match else response_text.strip()
+
+            # The LLM sometimes returns keys with extra whitespace. To make this robust,
+            # we can load the JSON and then access the key flexibly.
             decision = json.loads(json_str)
 
-            should_delegate = decision.get("should_delegate", False)
+            # Find the key 'should_delegate' regardless of surrounding whitespace
+            key = next((k for k in decision if k.strip() == "should_delegate"), None)
+
+            if key is None:
+                RichPrinter.warning("Delegation check response did not contain the 'should_delegate' key. Defaulting to False.")
+                return False
+
+            should_delegate = decision.get(key, False)
             RichPrinter.log_communication("Delegation Check Result", f"Should Delegate: {should_delegate}", style="bold blue")
             return should_delegate
-        except (json.JSONDecodeError, KeyError) as e:
-            RichPrinter.log_error_panel("Failed to parse delegation check response. Defaulting to no delegation.", response_text, exception=e)
+
+        except json.JSONDecodeError as e:
+            RichPrinter.log_error_panel("Failed to parse JSON from delegation check response. Defaulting to False.", response_text, exception=e)
             return False
 
     async def run(self, initial_task: str, session_id: str | None = None, mission_prompt: str | None = None):

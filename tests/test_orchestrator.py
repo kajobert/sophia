@@ -110,3 +110,36 @@ async def test_orchestrator_local_tool_execution_flow():
     # Verify the final result
     assert result['status'] == 'completed'
     assert result['summary'] == 'File created successfully'
+
+@pytest.mark.asyncio
+@patch('core.orchestrator.WorkerOrchestrator.__init__', lambda s, project_root, status_widget: None)
+@patch('builtins.open', new_callable=MagicMock)
+@pytest.mark.parametrize("malformed_json, expected_decision", [
+    ('```json\n{ "should_delegate" : true }\n```', True),
+    ('{ "should_delegate": false}', False),
+    ('{"should_delegate" :true}', True),
+    ('{\n  "should_delegate": true\n}', True),
+])
+async def test_should_delegate_handles_malformed_json(mock_open, malformed_json, expected_decision):
+    """
+    Tests that the _should_delegate method correctly parses JSON responses.
+    """
+    # 1. Setup Mocks
+    # Mock the file read for the prompt template
+    mock_open.return_value.__enter__.return_value.read.return_value = "{task}\n{tools}"
+
+    orchestrator = WorkerOrchestrator(project_root='.', status_widget=None)
+    orchestrator.project_root = '.'
+
+    mock_llm = MagicMock()
+    mock_llm.generate_content_async = AsyncMock(return_value=(malformed_json, {}))
+
+    orchestrator.llm_manager = MagicMock()
+    orchestrator.llm_manager.get_llm.return_value = mock_llm
+    orchestrator.llm_manager.config = {"llm_models": {"fast_model": "mock"}}
+
+    # 2. Run the method
+    decision = await orchestrator._should_delegate("some task", "some tools")
+
+    # 3. Assert
+    assert decision == expected_decision
