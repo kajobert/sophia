@@ -76,7 +76,8 @@ async def mission_manager_with_mocks(temp_project_root):
 
         # Mock ReflectionServer
         mock_reflection_server_instance = MockReflectionServer.return_value
-        mock_reflection_server_instance.reflect_on_project = AsyncMock(return_value="Learning: Use mkdir for directories.")
+        # The method to be awaited must be an AsyncMock
+        mock_reflection_server_instance.reflect_on_recent_steps = AsyncMock(return_value="Learning: Use mkdir for directories.")
 
         # Import must be here to use the temp_project_root
         from core.mission_manager import MissionManager
@@ -108,11 +109,11 @@ async def test_reflection_is_called_and_saves_learning(mission_manager_with_mock
     await mission_manager.start_mission("Create `test_dir` directory.")
 
     # 1. Verify that the reflection server was called correctly
-    mock_reflection_server.reflect_on_project.assert_called_once()
-    call_args = mock_reflection_server.reflect_on_project.call_args
-    assert "Create `test_dir` directory." in call_args.kwargs['mission_goal']
-    assert "MISSION GOAL" in call_args.kwargs['history']
-    assert "WORKER RESULT" in call_args.kwargs['history']
+    mock_reflection_server.reflect_on_recent_steps.assert_called_once()
+    call_args, call_kwargs = mock_reflection_server.reflect_on_recent_steps.call_args
+    assert call_kwargs['last_user_input'] == "Create `test_dir` directory."
+    assert isinstance(call_kwargs['history'], list)
+    assert "MISSION GOAL: Create `test_dir` directory." in call_kwargs['history']
 
     # 2. Verify that the LTM 'add' method was called with the correct data
     mock_ltm.add.assert_called_once()
