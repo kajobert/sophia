@@ -105,18 +105,18 @@ class WorkerOrchestrator:
 
                 model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
                 response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
-                explanation, tool_call_data = self._parse_llm_response(response_text)
+                thought, tool_call_data = self._parse_llm_response(response_text)
 
-                if explanation: RichPrinter.log_communication("Myšlenkový pochod Workera", explanation, style="dim blue")
+                if thought: RichPrinter.log_communication("Myšlenkový pochod Workera", thought, style="dim blue")
 
                 if not tool_call_data or "tool_name" not in tool_call_data:
-                    self.history.append((explanation, "Žádná akce."))
+                    self.history.append((thought, "Žádná akce."))
                     continue
 
                 tool_name = tool_call_data["tool_name"]
                 args = tool_call_data.get("args", [])
                 kwargs = tool_call_data.get("kwargs", {})
-                history_entry_request = f"Myšlenkový pochod:\n{explanation}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
+                history_entry_request = f"Myšlenkový pochod:\n{thought}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
                 RichPrinter.log_communication("Worker volá nástroj", tool_call_data, style="yellow")
 
                 if tool_name == "task_complete":
@@ -165,13 +165,21 @@ class WorkerOrchestrator:
                 try:
                     result_data = json.loads(result_str)
                     if isinstance(result_data, dict) and "tool_error" in result_data:
-                        error_message = f"Nástroj '{tool_name}' selhal s chybou: {result_data['tool_error']}"
-                        RichPrinter.error(error_message)
-                        self.history.append((history_entry_request, error_message))
+                        error_message = result_data['tool_error']
+                        error_context = (
+                            f"Nástroj '{tool_name}' selhal s chybou: {error_message}\n"
+                            f"Původní vstup: {json.dumps(tool_call_data, indent=2, ensure_ascii=False)}\n"
+                            "--- \n"
+                            "ANALYZUJ PŘÍČINU CHYBY. Zkontroluj, zda existují soubory, které chceš použít, "
+                            "a zda jsou argumenty ve správném formátu. Poté zkus problém vyřešit jiným způsobem."
+                        )
+                        RichPrinter.error(f"Tool Error: {error_message}")
+                        self.history.append((history_entry_request, error_context))
                     else:
                         self.history.append((history_entry_request, result_str))
                 except json.JSONDecodeError:
                     self.history.append((history_entry_request, result_str))
+
 
                 self.memory_manager.save_history(session_id, self.history)
 
@@ -183,9 +191,11 @@ class WorkerOrchestrator:
                         "touched_files": list(self.touched_files)
                     }
 
-            summary = "Úkol je složitější a vyžaduje formální plán. Vyčerpal jsem rozpočet."
+            # Pokud se cyklus dokončí (vyčerpá se budget)
+            summary = "Agent vyčerpal přidělený rozpočet na kroky, aniž by úkol dokončil."
+            RichPrinter.warning(summary)
             return {
-                "status": "needs_planning",
+                "status": "budget_exceeded",
                 "summary": summary,
                 "history": self.history,
                 "touched_files": list(self.touched_files)
@@ -212,7 +222,7 @@ class WorkerOrchestrator:
             cleaned_text = match.group(2).strip()
         try:
             parsed_response = json.loads(cleaned_text)
-            return parsed_response.get("explanation", "").strip(), parsed_response.get("tool_call")
+            return parsed_response.get("thought", "").strip(), parsed_response.get("tool_call")
         except json.JSONDecodeError as e:
             RichPrinter.log_error_panel("Selhání parsování JSON odpovědi (Worker)", cleaned_text, exception=e)
             return f"[SYSTÉM]: CHYBA PARSOVÁNÍ JSON.", None

@@ -1,21 +1,40 @@
-Jsi zkušený softwarový architekt a tvým úkolem je analyzovat práci AI agenta.
+# DIREKTIVA PRO SEBEREFLEXI
 
-Níže je kompletní historie myšlenkových pochodů a akcí, které agent provedl při řešení daného úkolu. Projdi si tento záznam krok za krokem.
+Jsi specializovaný analytický modul. Tvým úkolem je analyzovat poskytnutou historii akcí a výsledků, které provedl jiný AI agent při plnění úkolu. Tvým cílem je z této historie extrahovat **jedno, stručné a klíčové ponaučení**.
 
-Tvým cílem je zformulovat jeden, krátký a obecně platný "poznatek" (learning), který by agentovi pomohl v budoucnu řešit podobné úkoly lépe, rychleji nebo efektivněji.
+## VSTUPNÍ DATA
 
-- Zaměř se na neefektivní postupy (např. příliš mnoho kroků na jednoduchou operaci).
-- Hledej chyby, kterým se dalo předejít.
-- Identifikuj příležitosti pro zjednodušení.
-- Poznatek musí být formulován jako stručná, jasná a pozitivní rada.
+1.  **PŮVODNÍ ÚKOL UŽIVATELE:** Toto je cíl, kterého se agent snažil dosáhnout.
+2.  **HISTORIE KROKŮ:** Toto je sekvence myšlenek, akcí a jejich výsledků.
 
-Příklad:
-- Špatný poznatek: "Agent udělal chybu, když se pokusil zapsat do souboru bez ověření, že adresář existuje."
-- Dobrý poznatek: "Před zápisem do souboru je bezpečnější nejprve ověřit existenci cílového adresáře."
+## TVŮJ POSTUP
+
+1.  **Přečti si původní úkol,** abys pochopil, co bylo cílem.
+2.  **Analyzuj historii kroků.** Hledej klíčové momenty:
+    *   Kde agent udělal chybu?
+    *   Kde agent zvolil neefektivní postup?
+    *   Který krok vedl k selhání nástroje?
+    *   Jaký byl bod obratu, kdy se agent opravil?
+    *   Co bylo nejdůležitější zjištění, které agent udělal?
+3.  **Syntetizuj zjištění.** Z celé analýzy formuluj **jednu hlavní myšlenku**. Může to být:
+    *   Doporučení pro příště (např. "Před úpravou souboru je nutné si ověřit jeho existenci pomocí `list_files`.")
+    *   Klíčový poznatek o struktuře projektu (např. "Hlavní logika aplikace se nachází v souboru `core/logic.py`, ne v `main.py`.")
+    *   Varování před častou chybou (např. "Nástroj `replace_with_git_merge_diff` je velmi citlivý na přesné znění `search_block`. Vždy je lepší si obsah souboru nejprve přečíst.")
+
+## FORMÁT VÝSTUPU
+
+Tvůj výstup musí být **jedna jediná věta nebo krátký odstavec**, který shrnuje toto klíčové ponaučení. Buď stručný, jasný a zaměřený na praktickou použitelnost pro budoucí úkoly.
 
 ---
-HISTORIE PRÁCE AGENTA:
-{task_history}
+
+## VSTUPNÍ DATA K ANALÝZE
+
+### PŮVODNÍ ÚKOL UŽIVATELE
+{last_user_input}
+
+### HISTORIE KROKŮ
+{history}
+
 ---
 
-Na základě výše uvedené historie zformuluj jeden klíčový poznatek:
+## TVÉ PONAUČENÍ:

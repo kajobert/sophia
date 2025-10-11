@@ -32,7 +32,7 @@ Tvá odpověď MUSÍ být VŽDY validní JSON objekt, který přesně odpovídá
 
 ```json
 {
-  "explanation": "Tvůj detailní myšlenkový pochod krok za krokem. Zdůvodni, proč volíš daný nástroj a parametry. Musí být v češtině.",
+  "thought": "Tvůj kritický myšlenkový pochod. Zvaž různé možnosti, zhodnoť rizika a pečlivě naplánuj svůj další krok. Až poté vyber nástroj. Musí být v češtině.",
   "tool_call": {
     "tool_name": "název_nástroje_k_použití",
     "args": ["seznam", "pozičních", "argumentů"],
