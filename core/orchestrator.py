@@ -94,27 +94,36 @@ class WorkerOrchestrator:
         response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
 
         try:
+            RichPrinter.info(f"--- Delegation Check Diagnostics ---")
+            RichPrinter.log_communication("Raw LLM Response", response_text, style="dim")
+
             # Clean the response: remove markdown and strip whitespace
             match = re.search(r"```(json)?\s*\n(.*?)\n```", response_text, re.DOTALL)
             json_str = match.group(2).strip() if match else response_text.strip()
+            RichPrinter.log_communication("Cleaned JSON String", json_str, style="dim")
 
             # The LLM sometimes returns keys with extra whitespace. To make this robust,
             # we can load the JSON and then access the key flexibly.
             decision = json.loads(json_str)
+            RichPrinter.log_communication("Parsed Decision Dict", str(decision), style="dim")
 
             # Find the key 'should_delegate' regardless of surrounding whitespace
             key = next((k for k in decision if k.strip() == "should_delegate"), None)
+            RichPrinter.log_communication("Found Key", str(key), style="dim")
 
             if key is None:
                 RichPrinter.warning("Delegation check response did not contain the 'should_delegate' key. Defaulting to False.")
+                RichPrinter.info(f"--- End Diagnostics ---")
                 return False
 
             should_delegate = decision.get(key, False)
-            RichPrinter.log_communication("Delegation Check Result", f"Should Delegate: {should_delegate}", style="bold blue")
+            RichPrinter.log_communication("Final Decision", str(should_delegate), style="bold blue")
+            RichPrinter.info(f"--- End Diagnostics ---")
             return should_delegate
 
-        except json.JSONDecodeError as e:
-            RichPrinter.log_error_panel("Failed to parse JSON from delegation check response. Defaulting to False.", response_text, exception=e)
+        except Exception as e:
+            RichPrinter.log_error_panel("An exception occurred during delegation check. Defaulting to False.", response_text, exception=e)
+            RichPrinter.info(f"--- End Diagnostics ---")
             return False
 
     async def run(self, initial_task: str, session_id: str | None = None, mission_prompt: str | None = None):
