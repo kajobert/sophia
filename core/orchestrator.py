@@ -70,41 +70,83 @@ class WorkerOrchestrator:
         self.memory_manager.close()
         RichPrinter.info("WorkerOrchestrator services have been safely shut down.")
 
-    async def run(self, initial_task: str, session_id: str | None = None, budget: int = 10, mission_prompt: str | None = None):
-        """The main decision-making loop of the agent, with a dynamic budget and prompt selection."""
-        self.status = "working"
-        self.current_task = initial_task
-        self.touched_files = set()  # Reset for each new run
-        self.history = [] # Reset history for each sub-task run
+    async def _should_delegate(self, task: str, tool_descriptions: str) -> bool:
+        """
+        Analyzes the task to decide if it should be delegated or handled locally.
+        This is a "Tool Check" to enforce the "local tools first" rule.
+        """
+        RichPrinter.info("Performing 'Tool Check' to decide on delegation...")
+
+        # Find the path to the delegation check prompt
+        delegation_prompt_path = os.path.join(self.project_root, "prompts/delegation_check_prompt.txt")
+        try:
+            with open(delegation_prompt_path, "r", encoding="utf-8") as f:
+                prompt_template = f.read()
+        except FileNotFoundError:
+            RichPrinter.error(f"Delegation check prompt not found at: {delegation_prompt_path}. Defaulting to no delegation.")
+            return False
+
+        prompt = prompt_template.format(task=task, tools=tool_descriptions)
+        # Use a fast and cheap model for this simple classification task
+        fast_model_name = self.llm_manager.config.get("llm_models", {}).get("fast_model", "default")
+        model = self.llm_manager.get_llm(fast_model_name)
+
+        response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
 
         try:
-            # The 'task_complete' tool is now only for the MissionManager. The worker's goal is to finish its sub-task.
+            # Attempt to parse the expected JSON response: {"should_delegate": true/false}
+            match = re.search(r"```(json)?\s*\n(.*?)\n```", response_text, re.DOTALL)
+            json_str = match.group(2).strip() if match else response_text.strip()
+            decision = json.loads(json_str)
+
+            should_delegate = decision.get("should_delegate", False)
+            RichPrinter.log_communication("Delegation Check Result", f"Should Delegate: {should_delegate}", style="bold blue")
+            return should_delegate
+        except (json.JSONDecodeError, KeyError) as e:
+            RichPrinter.log_error_panel("Failed to parse delegation check response. Defaulting to no delegation.", response_text, exception=e)
+            return False
+
+    async def run(self, initial_task: str, session_id: str | None = None, mission_prompt: str | None = None):
+        """The main decision-making loop of the agent. It now decides whether to delegate upfront."""
+        self.status = "working"
+        self.current_task = initial_task
+        self.touched_files = set()
+        self.history = []
+
+        try:
+            # Always use the standard system prompt, budget-based selection is removed.
+            self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/system_prompt.txt")
+            tool_descriptions = await self.mcp_client.get_tool_descriptions()
+
+            # Step 1: Perform the "Tool Check"
+            if await self._should_delegate(initial_task, tool_descriptions):
+                RichPrinter.info("Task requires delegation based on Tool Check.")
+                # Construct the delegation tool call
+                tool_call_data = {
+                    "tool_name": "delegate_task_to_jules",
+                    "kwargs": {
+                        "prompt": initial_task,
+                        "title": f"Handle complex task: {initial_task[:40]}...",
+                        # 'source' and 'starting_branch' must be provided by a higher-level manager
+                        # This worker does not have that context.
+                    }
+                }
+                return {
+                    "status": "needs_delegation_approval",
+                    "summary": "Worker has determined the task requires capabilities beyond its local tools.",
+                    "tool_call": tool_call_data,
+                    "history": self.history
+                }
+
+            # Step 2: If not delegating, proceed with the local execution loop
+            RichPrinter.info("Proceeding with local execution.")
             TERMINAL_TOOLS = ["inform_user", "warn_user", "error_user", "display_code", "display_table", "ask_user", "subtask_complete"]
 
-            # Session history is managed by the ConversationalManager, but we can load it if needed.
-            # For now, we start fresh for each sub-task to keep context clean.
-            # if session_id:
-            #     self.history = self.memory_manager.load_history(session_id) or []
-
-            # Dynamic selection of the system prompt based on budget
-            if budget <= 3:
-                RichPrinter.info(f"Using simplified prompt for a simple task (budget: {budget}).")
-                self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/simple_system_prompt.txt")
-            else:
-                RichPrinter.info(f"Using standard prompt for a complex task (budget: {budget}).")
-                self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/system_prompt.txt")
-
-
-            RichPrinter.info(f"Task for Worker: {initial_task}")
             RichPrinter.log_communication("User Input for Worker", initial_task, style="green")
             self.history.append(("", f"USER INPUT: {initial_task}"))
 
-            # Use a for loop with a dynamic budget
-            for i in range(budget):
-                tool_descriptions = await self.mcp_client.get_tool_descriptions()
-                # The overall mission goal is now passed in directly
+            for i in range(self.max_iterations): # Use internal max_iterations as budget
                 prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=mission_prompt)
-
                 model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
                 response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
                 thought, tool_call_data = self._parse_llm_response(response_text)
@@ -121,8 +163,6 @@ class WorkerOrchestrator:
                 history_entry_request = f"Thought Process:\n{thought}\n\nTool Call:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
                 RichPrinter.log_communication("Worker is calling tool", tool_call_data, style="yellow")
 
-                # The worker should not decide the whole mission is complete.
-                # It now uses 'subtask_complete'.
                 if tool_name == "subtask_complete":
                     summary = kwargs.get("reason", "No summary provided.")
                     return {
@@ -132,16 +172,15 @@ class WorkerOrchestrator:
                         "touched_files": list(self.touched_files)
                     }
 
-                # >>> HUMAN-IN-THE-LOOP FOR DELEGATION <<<
+                # This logic should now be caught by the initial `_should_delegate` check.
+                # If the LLM still tries to delegate, we treat it as a logic error and stop.
                 if tool_name == "delegate_task_to_jules":
-                    RichPrinter.info("Worker is proposing to delegate a task to Jules. Pausing for user approval.")
-                    # Save the current history so the manager can continue
-                    self.memory_manager.save_history(session_id, self.history)
+                    RichPrinter.warning("LLM attempted to delegate mid-task, which should not happen. Stopping execution.")
                     return {
-                        "status": "needs_delegation_approval",
-                        "summary": "Worker wants to delegate a task to an external agent.",
-                        "tool_call": tool_call_data,  # Send tool call info to the manager
-                        "history": self.history
+                        "status": "error",
+                        "summary": "Agent attempted to delegate after deciding to use local tools.",
+                        "history": self.history,
+                        "touched_files": list(self.touched_files)
                     }
 
                 # Sledování upravených souborů

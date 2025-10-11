@@ -37,55 +37,19 @@ class ConversationalManager:
     async def handle_task(self, task: str, mission_prompt: Optional[str] = None) -> dict:
         """
         Handles a single, specific task delegated by the MissionManager.
-        This method is now the primary entry point, replacing handle_user_input.
+        This method now acts as a simple dispatcher, passing the task directly
+        to the WorkerOrchestrator.
         """
         RichPrinter.info(f"Manager received task: '{task}'")
-        # The triage and budget logic could be simplified or moved,
-        # but for now, we'll keep it to guide the worker.
-        task_directives = await self._get_task_directives(task)
-        budget = task_directives.get("budget", 8)
 
-        # The context of the overall mission is passed to the worker
+        # Directly delegate the task to the worker. The worker is now responsible
+        # for its own budget and execution flow.
         result = await self.worker.run(
             initial_task=task,
             session_id=self.session_id,
-            budget=budget,
             mission_prompt=mission_prompt
         )
         return result
-
-    async def _get_task_directives(self, task: str) -> dict:
-        """
-        Analyzes a task using a specialized prompt to determine its type and a suggested budget.
-        """
-        RichPrinter.info("Getting directives for task (triage & budget)...")
-        try:
-            with open(os.path.join(self.project_root, "prompts/triage_and_budget_prompt.txt"), "r", encoding="utf-8") as f:
-                prompt_template = f.read()
-        except FileNotFoundError:
-            RichPrinter.error("Triage and budget prompt not found. Using default values.")
-            return {"type": "complex", "budget": 8}
-
-        prompt = prompt_template.format(task=task)
-        # Use a fast model for this classification task
-        model = self.llm_manager.get_llm(self.llm_manager.config.get("llm_models", {}).get("fast_model", "default"))
-
-        response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
-
-        try:
-            match = re.search(r"```(json)?\s*\n(.*?)\n```", response_text, re.DOTALL)
-            json_str = match.group(2).strip() if match else response_text.strip()
-            directives = json.loads(json_str)
-
-            if "type" in directives and "budget" in directives:
-                RichPrinter.log_communication("Task Directives", directives, style="bold blue")
-                return directives
-            else:
-                RichPrinter.warning("Missing keys in directives. Using fallback.")
-                return {"type": "complex", "budget": 8}
-        except json.JSONDecodeError:
-            RichPrinter.log_error_panel("Failed to parse JSON from triage prompt", response_text)
-            return {"type": "complex", "budget": 8}
 
     async def generate_final_response(self, context: str, touched_files: list[str] | None = None) -> str:
         """
