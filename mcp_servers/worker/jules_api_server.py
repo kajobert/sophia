@@ -58,23 +58,21 @@ async def delegate_task_to_jules(
     starting_branch: str,
     title: str,
     requirePlanApproval: bool = False,
-    automationMode: Optional[str] = None
+    automationMode: str = "full"
 ) -> str:
     """
     Deleguje komplexní úkol na externího specializovaného agenta Jules.
 
-    Tento nástroj vytvoří novou pracovní session v Jules API. Je klíčové správně specifikovat všechny parametry.
-
     Args:
         prompt (str): Detailní popis úkolu pro Jules. Musí být jasný a jednoznačný.
-        source (str): Povinný identifikátor zdrojového repozitáře, kde má Jules pracovat.
-        starting_branch (str): Povinný název větve v repozitáři, ze které má Jules vycházet.
-        title (str): Povinný krátký název pro úkol (např. "Implementace přihlašovací stránky").
-        requirePlanApproval (bool): Volitelný příznak. Pokud je `True`, Jules nejprve vytvoří plán a počká na jeho schválení. Výchozí je `False`.
-        automationMode (Optional[str]): Volitelný režim automatizace. Možné hodnoty jsou "full" nebo "step-by-step".
+        source (str): Povinný identifikátor zdrojového repozitáře (např. 'sources/github/org/repo').
+        starting_branch (str): Povinný název větve, ze které má Jules vycházet.
+        title (str): Povinný krátký název pro úkol.
+        requirePlanApproval (bool): Pokud je `True`, Jules počká na schválení plánu. Výchozí je `False`.
+        automationMode (str): Režim automatizace. Možné hodnoty jsou "full" nebo "step-by-step". Výchozí je "full".
 
     Returns:
-        str: JSON string s odpovědí od Jules API, obsahující ID nově vytvořené session.
+        str: JSON string s odpovědí od Jules API.
     """
     config = load_config()
     jules_api_config = config.get("jules_api", {})
@@ -87,7 +85,6 @@ async def delegate_task_to_jules(
 
     headers = {"X-Goog-Api-Key": jules_api_key, "Content-Type": "application/json"}
 
-    # Sestavení payloadu PŘESNĚ podle dokumentace
     payload = {
         "title": title,
         "prompt": prompt,
@@ -95,10 +92,9 @@ async def delegate_task_to_jules(
         "sourceContext": {
             "githubRepoContext": {"startingBranch": starting_branch}
         },
-        "requirePlanApproval": requirePlanApproval
+        "requirePlanApproval": requirePlanApproval,
+        "automationMode": automationMode
     }
-    if automationMode:
-        payload["automationMode"] = automationMode
 
     url = f"{base_url}/sessions"
     try:
@@ -107,7 +103,6 @@ async def delegate_task_to_jules(
             response.raise_for_status()
             return json.dumps(response.json())
     except httpx.HTTPStatusError as e:
-        # Vracíme strukturovanou chybu s tělem odpovědi
         return json.dumps({"tool_error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
         return json.dumps({"tool_error": f"An unexpected error occurred: {e}"})
@@ -168,43 +163,19 @@ async def get_jules_task_result(task_id: str) -> str:
 TOOLS = {
     "list_jules_sources": {
         "func": list_jules_sources,
-        "examples": [
-            {
-                "use_case": "Zjistit, s jakými repozitáři může Jules pracovat, než mu deleguji úkol.",
-                "code": '{"tool_name": "list_jules_sources", "kwargs": {}}'
-            }
-        ]
+        "examples": []
     },
     "delegate_task_to_jules": {
         "func": delegate_task_to_jules,
-        "examples": [
-            {
-                "use_case": "Delegovat úkol na agenta Jules, aby implementoval novou funkci v konkrétním repozitáři, který jsem zjistil pomocí 'list_jules_sources'.",
-                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Implement a new login page using React", "source": "sources/github/your_org/your_repo", "starting_branch": "main", "title": "Implement Login Page"}}'
-            },
-            {
-                "use_case": "Delegovat komplexní refaktoring a vyžadovat manuální schválení plánu agenta, než začne pracovat.",
-                "code": '{"tool_name": "delegate_task_to_jules", "kwargs": {"prompt": "Refactor the database schema for performance", "source": "sources/github/your_org/your_repo", "starting_branch": "develop", "title": "Refactor Database", "requirePlanApproval": true}}'
-            }
-        ]
+        "examples": []
     },
     "get_jules_task_status": {
         "func": get_jules_task_status,
-        "examples": [
-            {
-                "use_case": "Zkontrolovat stav úkolu, který byl dříve delegován na Jules.",
-                "code": '{"tool_name": "get_jules_task_status", "kwargs": {"task_id": "session-id-12345"}}'
-            }
-        ]
+        "examples": []
     },
     "get_jules_task_result": {
         "func": get_jules_task_result,
-        "examples": [
-            {
-                "use_case": "Stáhnout výsledek dokončeného úkolu od Jules.",
-                "code": '{"tool_name": "get_jules_task_result", "kwargs": {"task_id": "session-id-12345"}}'
-            }
-        ]
+        "examples": []
     }
 }
 
@@ -246,7 +217,6 @@ async def main():
                     tool_kwargs = params.get("kwargs", {})
 
                     try:
-                        # Inteligentní spojení args a kwargs do jednoho volání
                         sig = inspect.signature(tool_func)
                         bound_args = sig.bind(*tool_args, **tool_kwargs)
                         bound_args.apply_defaults()

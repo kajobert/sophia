@@ -99,13 +99,9 @@ class WorkerOrchestrator:
             # Použijeme for smyčku s dynamickým budgetem
             for i in range(budget):
                 tool_descriptions = await self.mcp_client.get_tool_descriptions()
-
-                # Pojistka proti "otrávení" kontextu
-                safe_initial_task = initial_task
-                if isinstance(initial_task, str) and initial_task.strip().startswith("Error:"):
-                    safe_initial_task = "Hlavní cíl mise je neplatný nebo obsahuje chybu. Řiď se pokyny z historie a posledním vstupem od uživatele."
-
-                prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=safe_initial_task)
+                main_goal_raw = await self.mcp_client.execute_tool("get_main_goal", [], {}, self.verbose)
+                main_goal = None if "Není definován žádný hlavní cíl" in main_goal_raw else main_goal_raw
+                prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=main_goal)
 
                 model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
                 response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
