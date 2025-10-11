@@ -35,7 +35,7 @@ Odpověz POUZE ve formátu JSON s jediným klíčem `should_delegate`, jehož ho
 
 Příklad:
 ```json
-{
+{{
   "should_delegate": false
-}
+}}
 ```
