@@ -41,93 +41,92 @@ vector_database:
 
 
 @pytest.fixture
-async def manager_with_mocks(temp_project_root):
+async def mission_manager_with_mocks(temp_project_root):
     """
-    Fixture, která poskytuje instanci ConversationalManager s mockovanými
-    závislostmi pro testování reflexního cyklu.
+    Provides a MissionManager instance with mocked dependencies to test the
+    reflection cycle in the new architecture.
     """
-    # Klíčový fix: Patchujeme tam, kde se objekty POUŽÍVAJÍ (v orchestratoru).
-    # To zajistí, že i PromptBuilder dostane správný mock.
-    with patch('core.llm_manager.LLMManager') as MockLLMManager, \
-         patch('core.orchestrator.LongTermMemory') as MockLTM, \
-         patch('core.conversational_manager.WorkerOrchestrator') as MockWorkerOrchestrator:
+    with patch('core.mission_manager.ConversationalManager') as MockConvManager, \
+         patch('core.mission_manager.PlanningServer') as MockPlanningServer, \
+         patch('core.mission_manager.ReflectionServer') as MockReflectionServer, \
+         patch('core.orchestrator.LongTermMemory') as MockLTM:
 
-        # Mockování LLM
-        mock_llm_instance = AsyncMock()
-        mock_llm_instance.generate_content_async.side_effect = [
-            # 1. Odpověď Manažera -> delegovat na Workera
-            ('{"explanation": "Delegating to worker.", "tool_call": {"tool_name": "delegate_task_to_worker", "kwargs": {"task": "Create a directory"}}}', {}),
-            # 2. Odpověď LLM pro Reflexi -> vygeneruje poučení
-            ("Poučení: Pro vytvoření adresáře je přímý příkaz `mkdir` efektivnější.", {}),
-            # 3. Finální odpověď Manažera pro uživatele
-            ("Worker has finished the task.", {}),
-        ]
-        mock_llm_manager_instance = MockLLMManager.return_value
-        mock_llm_manager_instance.get_llm.return_value = mock_llm_instance
-
-        # Mockování LTM
+        # Mock ConversationalManager
+        mock_conv_manager_instance = MockConvManager.return_value
+        mock_conv_manager_instance.handle_task = AsyncMock(side_effect=[
+            # 1. Result for the planning task
+            {"status": "completed", "summary": "Plan created."},
+            # 2. Result for the actual sub-task
+            {"status": "completed", "summary": "Directory created.", "history": ["Step 1", "Step 2"], "touched_files": ["a.txt"]}
+        ])
+        mock_conv_manager_instance.generate_final_response = AsyncMock(return_value="Mission complete.")
+        # Mock the worker's LTM instance which is accessed via the conv manager
         mock_ltm_instance = MockLTM.return_value
         mock_ltm_instance.add = MagicMock()
+        # Create a mock worker and attach the mock LTM to it
+        mock_worker = MagicMock()
+        mock_worker.ltm = mock_ltm_instance
+        mock_conv_manager_instance.worker = mock_worker
 
-        # Mockování Workera
-        # Nemusíme testovat vnitřní logiku workera, jen to, že vrátí historii.
-        mock_worker_instance = MockWorkerOrchestrator.return_value
-        mock_worker_instance.run = AsyncMock(return_value={
-            "status": "completed",
-            "summary": "Directory created.",
-            "history": [
-                ("Myšlenka: Zkontrolovat adresář", "Výsledek: Neexistuje"),
-                ("Myšlenka: Vytvořit adresář", "Výsledek: Vytvořen"),
-            ]
-        })
-        # Důležité: Musíme také mockovat LTM instanci na workerovi pro `_run_reflection`
-        mock_worker_instance.ltm = mock_ltm_instance
-        # Musíme také mockovat asynchronní metody, které manažer volá
-        mock_worker_instance.initialize = AsyncMock()
-        mock_worker_instance.shutdown = AsyncMock()
 
-        manager = ConversationalManager(project_root=temp_project_root)
-        # Přepsání skutečných instancí mocky
-        manager.llm_manager = mock_llm_manager_instance
-        manager.worker = mock_worker_instance # Nahradíme celého workera mockem
+        # Mock PlanningServer
+        mock_planning_server_instance = MockPlanningServer.return_value
+        mock_planning_server_instance.get_next_executable_task.return_value = {"id": 1, "description": "Create a plan"}
+        mock_planning_server_instance.get_all_tasks.return_value = [{"id": 2, "description": "Create a directory", "completed": False}]
 
+        # Mock ReflectionServer
+        mock_reflection_server_instance = MockReflectionServer.return_value
+        mock_reflection_server_instance.reflect_on_project = AsyncMock(return_value="Learning: Use mkdir for directories.")
+
+        # Import must be here to use the temp_project_root
+        from core.mission_manager import MissionManager
+        manager = MissionManager(project_root=temp_project_root)
+        manager.conversational_manager = mock_conv_manager_instance
+        manager.planning_server = mock_planning_server_instance
+        manager.reflection_server = mock_reflection_server_instance
+
+        # We don't need a full async init/shutdown as dependencies are mocked
+        manager.initialize = AsyncMock()
+        manager.shutdown = AsyncMock()
         await manager.initialize()
-        yield manager, mock_llm_instance, mock_ltm_instance
+
+        yield manager, mock_reflection_server_instance, mock_ltm_instance
         await manager.shutdown()
 
-# --- Testovací Scénář ---
+# --- Test Scenario ---
 
 @pytest.mark.asyncio
-async def test_reflection_is_called_and_saves_learning(manager_with_mocks):
+async def test_reflection_is_called_and_saves_learning(mission_manager_with_mocks):
     """
-    Ověří, že po dokončení úkolu:
-    1. Je spuštěna sebereflexe.
-    2. Do LTM je uložen správně zformátovaný poznatek.
+    Verifies that after a mission is completed:
+    1. The reflection process is triggered.
+    2. A correctly formatted learning is saved to the LTM.
     """
-    manager, mock_llm, mock_ltm = manager_with_mocks
+    mission_manager, mock_reflection_server, mock_ltm = mission_manager_with_mocks
 
-    # Spustit hlavní handle funkci
-    await manager.handle_user_input("Vytvoř adresář `test_dir`.")
+    # Start the mission
+    await mission_manager.start_mission("Create `test_dir` directory.")
 
-    # 1. Ověření, že se volal LLM pro reflexi
-    # První volání je pro rozhodnutí manažera, druhé pro reflexi.
-    reflection_llm_call = mock_llm.generate_content_async.call_args_list[1]
-    reflection_prompt = reflection_llm_call.args[0]
-    assert "Analyze history" in reflection_prompt
-    assert "Myšlenka: Zkontrolovat adresář" in reflection_prompt
+    # 1. Verify that the reflection server was called correctly
+    mock_reflection_server.reflect_on_project.assert_called_once()
+    call_args = mock_reflection_server.reflect_on_project.call_args
+    assert "Create `test_dir` directory." in call_args.kwargs['mission_goal']
+    assert "MISSION GOAL" in call_args.kwargs['history']
+    assert "WORKER RESULT" in call_args.kwargs['history']
 
-    # 2. Ověření, že se zavolala metoda pro uložení do LTM se správnými daty
+    # 2. Verify that the LTM 'add' method was called with the correct data
     mock_ltm.add.assert_called_once()
     args, kwargs = mock_ltm.add.call_args
 
-    # Ověření dokumentu (learning)
+    # Verify the document (the learning)
     assert "documents" in kwargs
     assert len(kwargs["documents"]) == 1
-    assert "Poučení: Pro vytvoření adresáře je přímý příkaz `mkdir` efektivnější." in kwargs['documents'][0]
+    assert "Learning: Use mkdir for directories." in kwargs['documents'][0]
 
-    # Ověření metadat
+    # Verify the metadata
     assert "metadatas" in kwargs
     assert len(kwargs["metadatas"]) == 1
     assert kwargs['metadatas'][0]['type'] == 'learning'
+    assert kwargs['metadatas'][0]['source'] == 'mission_reflection'
 
     print("Test reflection mechanism passed successfully.")

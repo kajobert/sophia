@@ -79,21 +79,18 @@ async def test_delegation_workflow(MockWorkerOrchestrator, MockLLMManager):
     manager.shutdown = AsyncMock()
     await manager.initialize()
 
-    # 1. User initiates the task
-    await manager.handle_user_input("Use Jules to create a boba app.")
+    # 1. The "MissionManager" would call handle_task
+    # We simulate this by calling it directly.
+    result = await manager.handle_task("Use Jules to create a boba app.")
 
     # Assert that the manager delegated to the worker
     mock_worker_instance.run.assert_called_once()
-    assert manager.state == "AWAITING_DELEGATION_APPROVAL"
-    assert manager.pending_tool_call is not None
 
-    # 2. User approves the delegation
-    await manager.handle_user_input("yes")
+    # The result should be passed back up to the MissionManager
+    assert result["status"] == "needs_delegation_approval"
+    assert result["tool_call"]["tool_name"] == "delegate_task_to_jules"
 
-    # Assert that the manager called the final tool
-    # Check that the final LLM call for the manager happened
-    assert mock_manager_llm.generate_content_async.call_count == 3
-
-    # Assert state is reset
-    assert manager.state == "IDLE"
+    # In the new architecture, the ConversationalManager is stateless,
+    # so we don't check its internal state. We just check that it
+    # correctly passed the worker's result.
     await manager.shutdown()

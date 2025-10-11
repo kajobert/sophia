@@ -1,87 +1,72 @@
-# Architektura: Nomad Core (Manager/Worker)
+# Architecture: Stateful Mission-Driven Core
 
-Tento dokument popisuje aktuální technickou architekturu projektu, která vznikla po rozsáhlém refaktoringu. Nové jádro, postavené na architektuře **Manager/Worker**, je navrženo pro robustnost, modularitu a oddělení zodpovědností.
+This document describes the current technical architecture of the project, which is based on a stateful, mission-driven model. This design enhances the agent's ability to handle complex, multi-step tasks by maintaining a clear state and context throughout the mission lifecycle.
 
-## Klíčové principy
+## Key Principles
 
-Architektura je postavena na několika klíčových principech:
-1.  **Oddělení zodpovědností:** Konverzační logika (Manager) je striktně oddělena od logiky pro provádění úkolů (Worker).
-2.  **Asynchronní zpracování:** Všechny operace jsou navrženy jako asynchronní, aby se zabránilo blokování a zajistila se plynulost uživatelského rozhraní.
-3.  **Modularita nástrojů:** Nástroje, které Worker používá, jsou izolovány v samostatných serverových procesech, což umožňuje jejich snadnou správu a rozšiřování.
+1.  **Stateful Mission Management:** A central `MissionManager` maintains the entire state of the user's high-level goal (the "mission"), including the overall plan and progress.
+2.  **Clear Separation of Roles:** The architecture is divided into three distinct layers of responsibility:
+    *   **Project Manager (`MissionManager`):** Understands the "why." Owns the overall goal, creates the plan, and tracks its execution.
+    *   **Task Dispatcher (`ConversationalManager`):** Understands the "what." Manages the execution of a single task from the plan. It is stateless regarding the overall mission.
+    *   **Focused Specialist (`WorkerOrchestrator`):** Understands the "how." Executes the specific, low-level actions required to complete one task, using tools and reasoning.
+3.  **Asynchronous and Modular:** The system remains fully asynchronous, and tools are modularized in MCP servers.
 
-## Hlavní komponenty
+## Core Components
 
-Následující diagram znázorňuje tok informací mezi hlavními komponentami systému:
+The following diagram illustrates the information flow between the core components:
 
 ```
-+------------------+      (1) Uživ. vstup      +---------------------------+      (3) Delegování úkolu      +-----------------------+
-|                  | ------------------------> |                           | -------------------------> |                       |
-|  TUI (app.py)    |                           |  ConversationalManager    |                            |  WorkerOrchestrator   |
-|                  |      (2) Zobrazení        |  (core/conversational...) |                            | (core/orchestrator)   |
-|                  | <------------------------ |                           | <------------------------- |                       |
-+------------------+      (zprávy)             +-------------+-------------+      (4) Výsledek úkolu      +-----------+-----------+
-                                                            |                                            |
-                                                            | (LLM pro rozhodnutí)                       | (LLM pro kroky)
-                                                            |                                            |
-                                                            v                                            v
-                                                    +----------------------+                 +---------------------+
-                                                    |                      |                 |                     |
-                                                    |   Gemini API / LLM   |                 |     MCP Servery     |
-                                                    |                      | <---------------> | (mcp_servers/worker)|
-                                                    +----------------------+                 +---------------------+
++--------------+   (1) User Prompt   +--------------------+   (2) Create Plan &   +-------------------------+   (4) Execute Task   +--------------------+
+|              | ----------------> |                    | ----------------->  |                         | -------------------> |                    |
+| TUI (app.py) |                   |  MissionManager    | (using PlanningServer)| ConversationalManager   |                      | WorkerOrchestrator |
+|              | <---------------- |  (Project Manager) | <-----------------  | (Task Dispatcher)       | <------------------- | (Focused Specialist)|
++--------------+   (6) Final Rsp   +--------------------+   (3) Dispatch Task   +-------------------------+   (5) Task Result    +--------------------+
+                                           |                                                                        |
+                                           | (Manages overall mission state)                                        | (Executes steps using tools)
+                                           |                                                                        |
+                                           v                                                                        v
+                                 +---------------------+                                                  +---------------------+
+                                 |                     |                                                  |                     |
+                                 | Planning &          |                                                  |   All Other MCP     |
+                                 | Reflection Servers  |                                                  |   Servers (Tools)   |
+                                 +---------------------+                                                  +---------------------+
 ```
 
 ### 1. Textual User Interface (TUI)
-- **Soubor:** `tui/app.py`
-- **Technologie:** [Textual](https://textual.textualize.io/)
-- **Popis:** TUI je hlavním vstupním bodem aplikace.
-    - Vytváří a spravuje grafické rozhraní v terminálu.
-    - Přijímá vstupy od uživatele a předává je `ConversationalManageru`.
-    - Spouští `ConversationalManager` v asynchronním "workeru", aby se neblokovalo UI.
-    - Zpracovává zprávy od `RichPrinter` a zobrazuje je v příslušných widgetech.
+- **File:** `tui/app.py`
+- **Description:** The primary user interface. It captures the initial user prompt and passes it to the `MissionManager` to start a new mission. It displays progress and final results.
 
-### 2. ConversationalManager (Agile Project Manager)
-- **Soubor:** `core/conversational_manager.py`
-- **Popis:** Povýšen na roli "Agilního Projektového Manažera". Již nedeleguje pouze velké úkoly, ale aktivně řídí celý životní cyklus projektu.
-    - **Triage:** Nejprve analyzuje požadavek uživatele, aby určil, zda jde o jednoduchý, přímo řešitelný úkol, nebo o komplexní projekt.
-    - **Projektové Řízení:** U komplexních úkolů:
-        1. Vytvoří hlavní cíl v `PlanningServeru`.
-        2. Rozdělí práci na počáteční dílčí úkol (např. "naplánuj kroky").
-        3. Vstupuje do smyčky, kde postupně bere další proveditelný úkol z plánu.
-        4. Každý dílčí úkol deleguje na `WorkerOrchestrator`.
-        5. Aktualizuje stav úkolu (dokončeno, selhalo) v `PlanningServeru`.
-    - **Resilientní Zpracování Chyb:** Pokud Worker selže, `ConversationalManager` se nevzdá.
-        1. Zavolá `ReflectionServer`, aby analyzoval historii neúspěšného úkolu.
-        2. Prezentuje uživateli shrnutí chyby a výsledek reflexe.
-        3. Požádá o další instrukce, čímž efektivně zapojuje uživatele do řešení problémů.
-    - **Učení se z Projektů:** Po úspěšném dokončení celého projektu spustí finální sebereflexi nad celou historií projektu, aby se poučil pro příště.
+### 2. MissionManager (The Project Manager)
+- **File:** `core/mission_manager.py`
+- **Description:** The new heart of the agent's "brain." It is the **single source of truth for the mission state.**
+    - **Initiation:** Receives the high-level prompt from the TUI.
+    - **Planning:** Uses the `PlanningServer` to break down the high-level prompt into a concrete, step-by-step plan (a list of sub-tasks).
+    - **State Management:** Holds the `mission_prompt`, the list of `sub_tasks`, and the `current_task_index`.
+    - **Execution Loop:** Iterates through the plan, dispatching one sub-task at a time to the `ConversationalManager`.
+    - **Lifecycle Management:** Determines when the entire mission is complete or has failed. It is the only component that can mark the overall mission as `completed`.
+    - **Reflection:** After a mission is complete or has failed, it orchestrates a reflection process to generate learnings for the LTM.
 
-### 3. WorkerOrchestrator
-- **Soubor:** `core/orchestrator.py`
-- **Popis:** Je to "pracant" systému, který vykonává delegované úkoly.
-    - Pracuje v rámci "rozpočtu na složitost" (definovaný počet kroků), aby se zabránilo zacyklení u jednoduchých úkolů.
-    - Udržuje si vlastní kontext a historii pro řešení daného úkolu.
-    - Komunikuje s LLM pro sekvenční provádění jednotlivých kroků vedoucích ke splnění úkolu.
-    - Volá nástroje z profilu `worker` prostřednictvím `MCPClient`.
-    - Vrací finální výsledek (např. `completed`, `needs_planning`) zpět `ConversationalManageru`.
+### 3. ConversationalManager (The Task Dispatcher)
+- **File:** `core/conversational_manager.py`
+- **Description:** Its role has been greatly simplified. It is now a **stateless dispatcher** that focuses on a single task.
+    - Receives a specific sub-task description (e.g., "Refactor the `database.py` file to use the new connection pool") and the overall mission goal for context from the `MissionManager`.
+    - Determines the appropriate budget for the task.
+    - Delegates the execution of this single task to the `WorkerOrchestrator`.
+    - Returns the result (e.g., `completed`, `failed`) of that one task back to the `MissionManager`.
+    - **It has no knowledge of the overall plan or other sub-tasks.**
 
-### 4. MCP (Modular Component Protocol) Servery
-- **Složka:** `mcp_servers/worker/`
-- **Popis:** Každý soubor `*_server.py` v této složce představuje samostatný, na pozadí běžící proces, který poskytuje sadu souvisejících nástrojů.
-- **Komunikace:** `WorkerOrchestrator` s nimi komunikuje přes `MCPClient` pomocí jednoduchého JSON-RPC protokolu.
-- **Profily:** Architektura podporuje profily (`worker`, `manager`). V současné implementaci jsou všechny nástroje pro provádění práce v profilu `worker`.
+### 4. WorkerOrchestrator (The Focused Specialist)
+- **File:** `core/orchestrator.py`
+- **Description:** The "hands" of the system, focused on execution.
+    - Receives a single, well-defined task and the overall mission context from the `ConversationalManager`.
+    - Uses its LLM and tools (`MCPClient`) to execute the steps required to complete its given task.
+    - **Crucially, it does NOT have a `task_complete` tool.** It can only signal that its own, specific sub-task is complete (using `subtask_complete`), at which point control returns to the `MissionManager`.
+    - Its goal is to successfully complete its current sub-task or report a failure if it cannot.
 
-### 5. RichPrinter
-- **Soubor:** `core/rich_printer.py`
-- **Popis:** Funguje jako prostředník mezi logikou aplikace a jejím zobrazením. Místo přímého tisku do konzole emituje strukturované zprávy (`LogMessage`, `ChatMessage`), které TUI zachytává a zobrazuje.
-
-### 6. MemoryManager
-- **Soubor:** `core/memory_manager.py`
-- **Technologie:** SQLite
-- **Popis:** Zajišťuje perzistenci dat. Ukládá kompletní historii konverzace pro každé sezení, což umožňuje navázat na přerušenou práci.
+### 5. MCP (Modular Component Protocol) Servers
+- **Folder:** `mcp_servers/`
+- **Description:** The collection of tools available to the `WorkerOrchestrator`. The `PlanningServer` and `ReflectionServer` are now primarily used by the `MissionManager` to manage the mission lifecycle.
 
 ---
 
-## Archivovaná architektura
-
-Původní kód staré architektury (založené na FastAPI, kognitivních vrstvách a agentech) byl přesunut do složky `integrace/`. Slouží jako archiv a zdroj inspirace pro budoucí integraci pokročilých funkcí do jádra Nomad.
+This stateful, hierarchical architecture resolves the "mission amnesia" problem by ensuring the agent always has access to the high-level context while working on low-level tasks, creating a more robust and truly autonomous system.

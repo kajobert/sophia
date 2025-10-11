@@ -70,57 +70,61 @@ class WorkerOrchestrator:
         self.memory_manager.close()
         RichPrinter.info("WorkerOrchestrator services have been safely shut down.")
 
-    async def run(self, initial_task: str, session_id: str | None = None, budget: int = 10):
-        """Hlavní rozhodovací smyčka agenta s dynamickým rozpočtem a výběrem promptu."""
+    async def run(self, initial_task: str, session_id: str | None = None, budget: int = 10, mission_prompt: str | None = None):
+        """The main decision-making loop of the agent, with a dynamic budget and prompt selection."""
         self.status = "working"
         self.current_task = initial_task
-        self.touched_files = set()  # Reset pro každý nový běh
+        self.touched_files = set()  # Reset for each new run
+        self.history = [] # Reset history for each sub-task run
 
         try:
-            TERMINAL_TOOLS = ["inform_user", "warn_user", "error_user", "display_code", "display_table", "ask_user"]
+            # The 'task_complete' tool is now only for the MissionManager. The worker's goal is to finish its sub-task.
+            TERMINAL_TOOLS = ["inform_user", "warn_user", "error_user", "display_code", "display_table", "ask_user", "subtask_complete"]
 
-            if session_id:
-                self.history = self.memory_manager.load_history(session_id) or []
+            # Session history is managed by the ConversationalManager, but we can load it if needed.
+            # For now, we start fresh for each sub-task to keep context clean.
+            # if session_id:
+            #     self.history = self.memory_manager.load_history(session_id) or []
 
-            # Dynamický výběr systémového promptu na základě budgetu
+            # Dynamic selection of the system prompt based on budget
             if budget <= 3:
-                RichPrinter.info(f"Používám zjednodušený prompt pro jednoduchý úkol (budget: {budget}).")
+                RichPrinter.info(f"Using simplified prompt for a simple task (budget: {budget}).")
                 self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/simple_system_prompt.txt")
             else:
-                RichPrinter.info(f"Používám standardní prompt pro komplexní úkol (budget: {budget}).")
+                RichPrinter.info(f"Using standard prompt for a complex task (budget: {budget}).")
                 self.prompt_builder.system_prompt_path = os.path.join(self.project_root, "prompts/system_prompt.txt")
 
 
-            RichPrinter.info(f"Úkol pro Workera: {initial_task}")
-            RichPrinter.log_communication("Vstup od uživatele pro Workera", initial_task, style="green")
-            if not self.history:
-                self.history.append(("", f"UŽIVATELSKÝ VSTUP: {initial_task}"))
+            RichPrinter.info(f"Task for Worker: {initial_task}")
+            RichPrinter.log_communication("User Input for Worker", initial_task, style="green")
+            self.history.append(("", f"USER INPUT: {initial_task}"))
 
-            # Použijeme for smyčku s dynamickým budgetem
+            # Use a for loop with a dynamic budget
             for i in range(budget):
                 tool_descriptions = await self.mcp_client.get_tool_descriptions()
-                main_goal_raw = await self.mcp_client.execute_tool("get_main_goal", [], {}, self.verbose)
-                main_goal = None if "Není definován žádný hlavní cíl" in main_goal_raw else main_goal_raw
-                prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=main_goal)
+                # The overall mission goal is now passed in directly
+                prompt = self.prompt_builder.build_prompt(tool_descriptions, self.history, main_goal=mission_prompt)
 
                 model = self.llm_manager.get_llm(self.llm_manager.default_model_name)
                 response_text, _ = await model.generate_content_async(prompt, response_format={"type": "json_object"})
                 thought, tool_call_data = self._parse_llm_response(response_text)
 
-                if thought: RichPrinter.log_communication("Myšlenkový pochod Workera", thought, style="dim blue")
+                if thought: RichPrinter.log_communication("Worker's Thought Process", thought, style="dim blue")
 
                 if not tool_call_data or "tool_name" not in tool_call_data:
-                    self.history.append((thought, "Žádná akce."))
+                    self.history.append((thought, "No action."))
                     continue
 
                 tool_name = tool_call_data["tool_name"]
                 args = tool_call_data.get("args", [])
                 kwargs = tool_call_data.get("kwargs", {})
-                history_entry_request = f"Myšlenkový pochod:\n{thought}\n\nVolání nástroje:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
-                RichPrinter.log_communication("Worker volá nástroj", tool_call_data, style="yellow")
+                history_entry_request = f"Thought Process:\n{thought}\n\nTool Call:\n{json.dumps(tool_call_data, indent=2, ensure_ascii=False)}"
+                RichPrinter.log_communication("Worker is calling tool", tool_call_data, style="yellow")
 
-                if tool_name == "task_complete":
-                    summary = kwargs.get("reason", "Nebylo poskytnuto žádné shrnutí.")
+                # The worker should not decide the whole mission is complete.
+                # It now uses 'subtask_complete'.
+                if tool_name == "subtask_complete":
+                    summary = kwargs.get("reason", "No summary provided.")
                     return {
                         "status": "completed",
                         "summary": summary,

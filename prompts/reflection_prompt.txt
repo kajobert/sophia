@@ -29,10 +29,10 @@ Tvůj výstup musí být **jedna jediná věta nebo krátký odstavec**, který 
 
 ## VSTUPNÍ DATA K ANALÝZE
 
-### PŮVODNÍ ÚKOL UŽIVATELE
-{last_user_input}
+### PŮVODNÍ CÍL MISE
+{mission_goal}
 
-### HISTORIE KROKŮ
+### HISTORIE KROKŮ / PROJEKTU
 {history}
 
 ---
