@@ -54,7 +54,7 @@ async def delegate_task_to_jules(
     prompt: str,
     source: str,
     starting_branch: str,
-    title: Optional[str] = None,
+    title: str,
     requirePlanApproval: bool = False,
     automationMode: Optional[str] = None
 ) -> str:
@@ -87,13 +87,13 @@ async def delegate_task_to_jules(
 
     payload = {
         "prompt": prompt,
+        "title": title,
+        "source": source,
         "sourceContext": {
-            "source": source,
             "githubRepoContext": {"startingBranch": starting_branch}
         },
         "requirePlanApproval": requirePlanApproval
     }
-    if title: payload["title"] = title
     if automationMode: payload["automationMode"] = automationMode
 
     url = f"{base_url}/sessions"
@@ -102,8 +102,10 @@ async def delegate_task_to_jules(
             response = await client.post(url, json=payload, headers=headers, timeout=timeout)
             response.raise_for_status()
             return json.dumps(response.json())
+    except httpx.HTTPStatusError as e:
+        return json.dumps({"error": f"HTTP Error: {e.response.status_code} - {e.response.text}"})
     except Exception as e:
-        return json.dumps({"error": f"Failed to delegate task to Jules: {e}"})
+        return json.dumps({"error": f"An unexpected error occurred: {e}"})
 
 async def get_jules_task_status(task_id: str) -> str:
     """
