@@ -181,7 +181,12 @@ class MissionManager:
         RichPrinter._post(ChatMessage(final_response, owner='agent', msg_type='success'))
 
         # Run final reflection on the whole project
-        await self._run_final_reflection()
+        # DISABLED: This feature is causing a crash due to a data mismatch.
+        # The project_history (list of strings) is not compatible with the
+        # reflection_server.reflect_on_recent_steps which expects a list of tuples.
+        # Disabling this call to ensure mission stability.
+        # await self._run_final_reflection()
+        pass
 
     async def _handle_task_failure(self, task_desc: str, worker_result: dict):
         """Handles a failed sub-task, performs reflection, and reports to the user."""
