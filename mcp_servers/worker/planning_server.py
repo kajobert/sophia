@@ -1,6 +1,15 @@
+import sys
 import os
 import json
+import asyncio
+import inspect
+import functools
 from typing import List, Dict, Any
+
+# Dynamické přidání kořenového adresáře projektu do sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 class PlanningServer:
     """
@@ -17,13 +26,13 @@ class PlanningServer:
         """Zajistí, že soubor s úkoly existuje a má správnou strukturu."""
         if not os.path.exists(self.tasks_file):
             os.makedirs(os.path.dirname(self.tasks_file), exist_ok=True)
-            with open(self.tasks_file, "w") as f:
+            with open(self.tasks_file, "w", encoding="utf-8") as f:
                 json.dump({"main_goal": "", "tasks": []}, f, indent=2)
 
     def _read_tasks(self) -> Dict[str, Any]:
         """Načte úkoly ze souboru."""
         try:
-            with open(self.tasks_file, "r") as f:
+            with open(self.tasks_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             self._initialize_tasks_file()
@@ -31,7 +40,7 @@ class PlanningServer:
 
     def _write_tasks(self, tasks_data: Dict[str, Any]):
         """Zapíše úkoly do souboru."""
-        with open(self.tasks_file, "w") as f:
+        with open(self.tasks_file, "w", encoding="utf-8") as f:
             json.dump(tasks_data, f, indent=2, ensure_ascii=False)
 
     def get_main_goal(self) -> str:
@@ -110,7 +119,6 @@ class PlanningServer:
         if not incomplete_tasks:
             return None
 
-        # Seřadí úkoly podle priority (vzestupně)
         incomplete_tasks.sort(key=lambda x: x["priority"])
         return incomplete_tasks[0]
 
@@ -137,18 +145,82 @@ class PlanningServer:
         self._write_tasks(tasks_data)
         return f"Priorita úkolu {task_id} byla změněna na {new_priority}."
 
-if __name__ == '__main__':
-    # Příklad použití pro manuální testování
-    server = PlanningServer(project_root=".")
-    print(server.update_task_description("Implementovat kompletní autentizační systém."))
-    print(server.add_subtask("Vytvořit model uživatele v databázi.", priority=1))
-    print(server.add_subtask("Implementovat registraci a přihlašování.", priority=2))
-    print(server.add_subtask("Přidat middleware pro ověření tokenu.", priority=3))
-    print("Všechny úkoly:", server.get_all_tasks())
-    next_task = server.get_next_executable_task()
-    print("Další úkol k provedení:", next_task)
-    if next_task:
-        print(server.mark_task_as_completed(next_task['id']))
-    print("Další úkol k provedení:", server.get_next_executable_task())
-    print(server.reprioritize_task(2, 0))
-    print("Další úkol k provedení:", server.get_next_executable_task())
+def create_response(request_id, result):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
+
+def create_error_response(request_id, code, message):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}})
+
+async def main():
+    loop = asyncio.get_running_loop()
+    reader = asyncio.StreamReader()
+    await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
+
+    server_instance = PlanningServer(project_root=".")
+    tools = {name: func for name, func in inspect.getmembers(server_instance, predicate=inspect.ismethod) if not name.startswith('_')}
+
+    while True:
+        line = await reader.readline()
+        if not line:
+            break
+
+        try:
+            request = json.loads(line)
+            request_id = request.get("id")
+            method = request.get("method")
+            response = None
+
+            if method == "initialize":
+                tool_definitions = [{"name": name, "description": inspect.getdoc(func) or "No description."} for name, func in tools.items()]
+                response = create_response(request_id, {"capabilities": {"tools": tool_definitions}})
+
+            elif method == "mcp/tool/execute":
+                params = request.get("params", {})
+                tool_name = params.get("name")
+                tool_args = params.get("args", [])
+                tool_kwargs = params.get("kwargs", {})
+
+                if tool_name in tools:
+                    tool_func = tools[tool_name]
+                    try:
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
+
+                        result = await loop.run_in_executor(None, functools.partial(tool_func, *bound_args.args, **bound_args.kwargs))
+                        response = create_response(request_id, {"result": result})
+                    except Exception as e:
+                        response = create_error_response(request_id, -32000, f"Tool error for {tool_name}: {e}")
+                else:
+                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
+            else:
+                response = create_error_response(request_id, -32601, "Method not found")
+
+        except Exception as e:
+            response = create_error_response(None, -32603, f"Internal error: {e}")
+
+        if response:
+            print(response)
+            sys.stdout.flush()
+
+if __name__ == "__main__":
+    if os.getenv("RUN_MANUAL_TESTS"):
+        # Příklad použití pro manuální testování
+        server = PlanningServer(project_root=".")
+        print(server.update_task_description("Implementovat kompletní autentizační systém."))
+        print(server.add_subtask("Vytvořit model uživatele v databázi.", priority=1))
+        print(server.add_subtask("Implementovat registraci a přihlašování.", priority=2))
+        print(server.add_subtask("Přidat middleware pro ověření tokenu.", priority=3))
+        print("Všechny úkoly:", server.get_all_tasks())
+        next_task = server.get_next_executable_task()
+        print("Další úkol k provedení:", next_task)
+        if next_task:
+            print(server.mark_task_as_completed(next_task['id']))
+        print("Další úkol k provedení:", server.get_next_executable_task())
+        print(server.reprioritize_task(2, 0))
+        print("Další úkol k provedení:", server.get_next_executable_task())
+    else:
+        try:
+            asyncio.run(main())
+        except KeyboardInterrupt:
+            pass

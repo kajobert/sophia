@@ -1,5 +1,9 @@
 import os
 import sys
+import json
+import asyncio
+import inspect
+import functools
 from typing import List, Dict, Any
 
 # Přidání cesty k projektu pro importy
@@ -62,34 +66,97 @@ class ReflectionServer:
             RichPrinter.log_error_panel("Chyba při generování reflexe", str(e), exception=e)
             return f"Chyba při komunikaci s LLM během reflexe: {e}"
 
-if __name__ == '__main__':
+def create_response(request_id, result):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "result": result})
+
+def create_error_response(request_id, code, message):
+    return json.dumps({"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}})
+
+async def main_server_loop():
+    loop = asyncio.get_running_loop()
+    reader = asyncio.StreamReader()
+    await loop.connect_read_pipe(lambda: asyncio.StreamReaderProtocol(reader), sys.stdin)
+
+    server_instance = ReflectionServer(project_root=".")
+    tools = {name: func for name, func in inspect.getmembers(server_instance, predicate=inspect.iscoroutinefunction) if not name.startswith('_')}
+
+    while True:
+        line = await reader.readline()
+        if not line:
+            break
+
+        try:
+            request = json.loads(line)
+            request_id = request.get("id")
+            method = request.get("method")
+            response = None
+
+            if method == "initialize":
+                tool_definitions = [{"name": name, "description": inspect.getdoc(func) or "No description."} for name, func in tools.items()]
+                response = create_response(request_id, {"capabilities": {"tools": tool_definitions}})
+
+            elif method == "mcp/tool/execute":
+                params = request.get("params", {})
+                tool_name = params.get("name")
+                tool_args = params.get("args", [])
+                tool_kwargs = params.get("kwargs", {})
+
+                if tool_name in tools:
+                    tool_func = tools[tool_name]
+                    try:
+                        sig = inspect.signature(tool_func)
+                        bound_args = sig.bind(*tool_args, **tool_kwargs)
+                        bound_args.apply_defaults()
+
+                        result = await tool_func(*bound_args.args, **bound_args.kwargs)
+                        response = create_response(request_id, {"result": result})
+                    except Exception as e:
+                        response = create_error_response(request_id, -32000, f"Tool error for {tool_name}: {e}")
+                else:
+                    response = create_error_response(request_id, -32601, f"Method not found: {tool_name}")
+            else:
+                response = create_error_response(request_id, -32601, "Method not found")
+
+        except Exception as e:
+            response = create_error_response(None, -32603, f"Internal error: {e}")
+
+        if response:
+            print(response)
+            sys.stdout.flush()
+
+async def main_test():
     # Příklad použití pro manuální testování
-    async def main():
-        # Příklad historie
-        example_history = [
-            (
-                '{\n  "thought": "Nejprve musím zjistit, jaké soubory jsou v kořenovém adresáři, abych se zorientoval.",\n  "tool_call": {\n    "tool_name": "list_files",\n    "args": [],\n    "kwargs": {}\n  }\n}',
-                '["main.py", "requirements.txt", "tests/"]'
-            ),
-            (
-                '{\n  "thought": "Dobře, vidím `main.py`. Chci se podívat na jeho obsah, abych pochopil, co program dělá.",\n  "tool_call": {\n    "tool_name": "read_file",\n    "args": ["main.py"],\n    "kwargs": {}\n  }\n}',
-                'def hello():\n    print("Hello, world!")\n\nhello()'
-            ),
-            (
-                '{\n  "thought": "Program je velmi jednoduchý. Úkolem je přidat funkci pro sčítání. Vytvořím novou funkci `add` a upravím volání.",\n  "tool_call": {\n    "tool_name": "replace_with_git_merge_diff",\n    "args": ["main.py"],\n    "kwargs": {\n      "search_block": "def hello():\\n    print(\\"Hello, world!\\")\\n\\nhello()",\n      "replace_block": "def add(a, b):\\n    return a + b\\n\\ndef hello():\\n    print(\\"Hello, world!\\")\\n\\nprint(f\\"2+3={add(2,3)}\\")"\n    }\n  }\n}',
-                'File `main.py` updated successfully.'
-            ),
-            (
-                '{\n  "thought": "Udělal jsem chybu. Měl jsem zavolat `hello()` a ne jen `add`. A navíc jsem nevolal `hello`. Musím to opravit.",\n  "tool_call": {\n    "tool_name": "replace_with_git_merge_diff",\n    "args": ["main.py"],\n    "kwargs": {\n      "search_block": "print(f\\\\"2+3={add(2,3)}\\\\")",\n      "replace_block": "hello()\\nprint(f\\\\"2+3={add(2,3)}\\\\")"\n    }\n  }\n}',
-                'Tool execution failed: Search block not found in file.'
-            )
-        ]
-        last_user_input = "Přidej do `main.py` funkci, která sečte dvě čísla a zavolej ji."
+    # Příklad historie
+    example_history = [
+        (
+            '{\n  "thought": "Nejprve musím zjistit, jaké soubory jsou v kořenovém adresáři, abych se zorientoval.",\n  "tool_call": {\n    "tool_name": "list_files",\n    "args": [],\n    "kwargs": {}\n  }\n}',
+            '["main.py", "requirements.txt", "tests/"]'
+        ),
+        (
+            '{\n  "thought": "Dobře, vidím `main.py`. Chci se podívat na jeho obsah, abych pochopil, co program dělá.",\n  "tool_call": {\n    "tool_name": "read_file",\n    "args": ["main.py"],\n    "kwargs": {}\n  }\n}',
+            'def hello():\n    print("Hello, world!")\n\nhello()'
+        ),
+        (
+            '{\n  "thought": "Program je velmi jednoduchý. Úkolem je přidat funkci pro sčítání. Vytvořím novou funkci `add` a upravím volání.",\n  "tool_call": {\n    "tool_name": "replace_with_git_merge_diff",\n    "args": ["main.py"],\n    "kwargs": {\n      "search_block": "def hello():\\n    print(\\"Hello, world!\\")\\n\\nhello()",\n      "replace_block": "def add(a, b):\\n    return a + b\\n\\ndef hello():\\n    print(\\"Hello, world!\\")\\n\\nprint(f\\"2+3={add(2,3)}\\")"\n    }\n  }\n}',
+            'File `main.py` updated successfully.'
+        ),
+        (
+            '{\n  "thought": "Udělal jsem chybu. Měl jsem zavolat `hello()` a ne jen `add`. A navíc jsem nevolal `hello`. Musím to opravit.",\n  "tool_call": {\n    "tool_name": "replace_with_git_merge_diff",\n    "args": ["main.py"],\n    "kwargs": {\n      "search_block": "print(f\\\\"2+3={add(2,3)}\\\\")",\n      "replace_block": "hello()\\nprint(f\\\\"2+3={add(2,3)}\\\\")"\n    }\n  }\n}',
+            'Tool execution failed: Search block not found in file.'
+        )
+    ]
+    last_user_input = "Přidej do `main.py` funkci, která sečte dvě čísla a zavolej ji."
 
-        server = ReflectionServer(project_root=".")
-        reflection = await server.reflect_on_recent_steps(example_history, last_user_input)
-        print("\n--- VÝSLEDNÉ PONAUČENÍ ---")
-        print(reflection)
+    server = ReflectionServer(project_root=".")
+    reflection = await server.reflect_on_recent_steps(example_history, last_user_input)
+    print("\n--- VÝSLEDNÉ PONAUČENÍ ---")
+    print(reflection)
 
-    import asyncio
-    asyncio.run(main())
+if __name__ == "__main__":
+    if os.getenv("RUN_MANUAL_TESTS"):
+        asyncio.run(main_test())
+    else:
+        try:
+            asyncio.run(main_server_loop())
+        except KeyboardInterrupt:
+            pass
