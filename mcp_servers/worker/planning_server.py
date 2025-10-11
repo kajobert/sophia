@@ -24,10 +24,16 @@ class PlanningServer:
 
     def _initialize_tasks_file(self):
         """Zajistí, že soubor s úkoly existuje a má správnou strukturu."""
-        if not os.path.exists(self.tasks_file):
-            os.makedirs(os.path.dirname(self.tasks_file), exist_ok=True)
-            with open(self.tasks_file, "w", encoding="utf-8") as f:
-                json.dump({"main_goal": "", "tasks": []}, f, indent=2)
+        os.makedirs(os.path.dirname(self.tasks_file), exist_ok=True)
+        with open(self.tasks_file, "w", encoding="utf-8") as f:
+            json.dump({"main_goal": "", "tasks": []}, f, indent=2)
+
+    def reset_plan(self) -> str:
+        """
+        Resets the entire plan by clearing the main goal and all sub-tasks.
+        """
+        self._initialize_tasks_file()
+        return "The project plan has been reset."
 
     def _read_tasks(self) -> Dict[str, Any]:
         """Načte úkoly ze souboru."""
