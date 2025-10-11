@@ -37,7 +37,7 @@ class TestJulesApiServer(unittest.TestCase):
         async def run_test():
             result = await get_jules_task_status(task_id="123")
             result_json = json.loads(result)
-            self.assertEqual(result_json, {"error": "JULES_API_KEY is not configured."})
+            self.assertEqual(result_json, {"tool_error": "JULES_API_KEY is not configured."})
 
         asyncio.run(run_test())
 
@@ -72,7 +72,7 @@ class TestJulesApiServer(unittest.TestCase):
         async def run_test():
             result = await get_jules_task_result(task_id="123")
             result_json = json.loads(result)
-            self.assertEqual(result_json, {"error": "JULES_API_KEY is not configured."})
+            self.assertEqual(result_json, {"tool_error": "JULES_API_KEY is not configured."})
 
         asyncio.run(run_test())
 
