@@ -149,6 +149,15 @@ class BudgetTracker:
     ) -> Optional[BudgetWarning]:
         """Generuje varování podle stavu rozpočtu."""
         
+        # CRITICAL: Nedostatek pro estimated tokens (má prioritu)
+        if tokens_remaining < estimated_tokens:
+            return BudgetWarning(
+                level="critical",
+                message=f"❌ NEDOSTATEK TOKENŮ: Potřeba {estimated_tokens}, zbývá {tokens_remaining}",
+                tokens_remaining=tokens_remaining,
+                time_remaining=time_remaining
+            )
+        
         # CRITICAL: Překročen critical threshold
         if tokens_used_percent >= self.critical_threshold:
             return BudgetWarning(
@@ -179,15 +188,6 @@ class BudgetTracker:
             return BudgetWarning(
                 level="warning",
                 message=f"⚠️  MÁLO ČASU: {time_remaining:.0f}s zbývá ({time_used_percent*100:.1f}% spotřebováno)",
-                tokens_remaining=tokens_remaining,
-                time_remaining=time_remaining
-            )
-        
-        # CRITICAL: Nedostatek pro estimated tokens
-        if tokens_remaining < estimated_tokens:
-            return BudgetWarning(
-                level="critical",
-                message=f"❌ NEDOSTATEK TOKENŮ: Potřeba {estimated_tokens}, zbývá {tokens_remaining}",
                 tokens_remaining=tokens_remaining,
                 time_remaining=time_remaining
             )
