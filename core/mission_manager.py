@@ -2,6 +2,7 @@ import os
 import yaml
 import asyncio
 import uuid
+import re
 from typing import Optional, List, Dict, Any
 
 from core.conversational_manager import ConversationalManager
@@ -99,44 +100,45 @@ class MissionManager:
 
     async def _create_initial_plan(self) -> bool:
         """
-        Uses the planning server to create a hierarchical plan for the mission.
+        Creates a plan for the mission by calling the LLM directly.
+        The MissionManager is now responsible for planning.
         """
+        import json
         RichPrinter._post(ChatMessage("This task is complex. Creating a project plan...", owner='agent', msg_type='inform'))
-        self.planning_server.update_task_description(self.mission_prompt)
-        # The first sub-task is to create the actual plan
-        self.planning_server.add_subtask(description=f"Based on the goal '{self.mission_prompt}', create a detailed, step-by-step plan.", priority=1)
 
-        # The first task is always the planning task.
-        planning_task = self.planning_server.get_next_executable_task()
-        if not planning_task:
-            RichPrinter.error("Could not get the initial planning task.")
+        try:
+            prompt_path = os.path.join(self.project_root, "prompts/mission_planning_prompt.txt")
+            with open(prompt_path, "r", encoding="utf-8") as f:
+                prompt_template = f.read()
+        except FileNotFoundError:
+            RichPrinter.error("Mission planning prompt not found.")
             return False
 
-        RichPrinter._post(ChatMessage("Delegating planning task to the specialist...", owner='agent', msg_type='info'))
-        # Delegate the creation of the plan to the worker
-        worker_result = await self.conversational_manager.handle_task(planning_task['description'])
+        prompt = prompt_template.format(mission_goal=self.mission_prompt)
+        llm = self.conversational_manager.llm_manager.get_llm("default")
 
-        if worker_result.get("status") != "completed":
-            RichPrinter.error(f"The planning sub-task failed: {worker_result.get('summary')}")
+        response_text, _ = await llm.generate_content_async(prompt, response_format={"type": "json_object"})
+
+        try:
+            # Extract JSON array from the response
+            match = re.search(r"```(json)?\s*\n(.*)\n```", response_text, re.DOTALL)
+            json_str = match.group(2).strip() if match else response_text.strip()
+            plan = json.loads(json_str)
+
+            if not isinstance(plan, list) or not all(isinstance(item, str) for item in plan):
+                raise ValueError("Plan is not a list of strings.")
+
+            # Populate the planning server with the new sub-tasks
+            for i, task_description in enumerate(plan):
+                self.planning_server.add_subtask(description=task_description, priority=i + 1)
+
+            self.sub_tasks = self.planning_server.get_all_tasks()
+            RichPrinter._post(ChatMessage(f"Plan created successfully. The mission consists of {len(self.sub_tasks)} steps.", owner='agent', msg_type='success'))
+            return True
+
+        except (json.JSONDecodeError, ValueError) as e:
+            RichPrinter.log_error_panel("Failed to parse the mission plan from LLM response.", response_text, e)
             return False
-
-        # The result of the planning task should be the plan itself, which we now load.
-        # We assume the worker used the planning_server tools to populate the plan.
-        self.planning_server.mark_task_as_completed(planning_task['id'])
-        self.sub_tasks = self.planning_server.get_all_tasks()
-
-        # Filter out the main goal and the initial planning task
-        self.sub_tasks = [task for task in self.sub_tasks if task['id'] > 1 and not task['completed']]
-
-        if not self.sub_tasks:
-             RichPrinter.warning("The initial planning did not produce any sub-tasks.")
-             # This might not be an error; the task might be simple enough to be done in one step.
-             # We can treat the original prompt as the only task.
-             self.planning_server.add_subtask(description=self.mission_prompt, priority=1)
-             self.sub_tasks = [task for task in self.planning_server.get_all_tasks() if task['id'] > 1 and not task['completed']]
-
-        RichPrinter._post(ChatMessage(f"Plan created successfully. The mission consists of {len(self.sub_tasks)} steps.", owner='agent', msg_type='success'))
-        return True
 
 
     async def _run_mission_loop(self):

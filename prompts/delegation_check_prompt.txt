@@ -28,7 +28,6 @@ Zde je seznam nástrojů, které má interní worker k dispozici:
 2.  **Chybějící nástroje:** Pokud splnění úkolu vyžaduje schopnost, kterou zjevně žádný z lokálních nástrojů nepokrývá (např. "prohledej web a najdi mi nejlepší knihovnu pro...", "napiš mi testy pro tuto funkci"), **MUSÍŠ** delegovat.
 3.  **Jednoduché operace se soubory:** Pokud úkol vyžaduje pouze základní operace jako **vytvoření souboru** (`create_file_with_block`), **přečtení souboru** (`read_file`), **smazání souboru** (`delete_file`), **výpis souborů** (`list_files`), nebo **spuštění příkazu v terminálu** (`run_in_bash_session`), **NESMÍŠ** delegovat. Worker to zvládne sám.
 4.  **Viacestupňové, ale jednoduché úkoly:** Pokud úkol sestává z více kroků, které ale všechny lze provést pomocí lokálních nástrojů (např. "vytvoř soubor, zapiš do něj text, přečti ho a pak ho smaž"), **NESMÍŠ** delegovat.
-5.  **Plánování:** Pokud úkol explicitně žádá o **vytvoření plánu**, **vytvoření dílčích úkolů**, nebo je jinak spojen s plánováním, **NESMÍŠ** delegovat. Worker má pro plánování specializované nástroje.
 
 ## Formát odpovědi
 
