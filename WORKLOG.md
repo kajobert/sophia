@@ -122,3 +122,131 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 - Prokázal schopnost nejen plnit komplexní úkoly, ale také se autonomně učit a rozšiřovat své schopnosti vytvářením nových nástrojů.
 - Projekt je připraven k odevzdání jako stabilní základ pro budoucí, plně autonomní operace.
 ---
+---
+**Datum**: 2025-10-12
+**Autor**: Jules (Nomad) + Uživatel
+**Ticket/Task**: Implementace NomadOrchestratorV2 - Den 8-10
+
+### Téma: Dokončení stavově řízeného orchestrátoru s multi-response mock infrastrukturou.
+
+**Popis Práce:**
+- **Den 8:** Implementace BudgetTracker s 26 komplexními testy
+  - Tracking tokenů, času, nákladů per model
+  - Budget enforcement s checkpointy
+  - Warning systém při nízkém rozpočtu
+  - Session-based persistence
+  - Všechny testy prošly na první pokus ✅
+
+- **Den 9:** Implementace NomadOrchestratorV2 - Core State Machine
+  - State machine s 8 stavy (IDLE → PLANNING → EXECUTING → ... → COMPLETED)
+  - Integrace všech komponent (StateManager, PlanManager, RecoveryManager, ReflectionEngine, BudgetTracker)
+  - Validované přechody mezi stavy
+  - 25 základních testů orchestrátoru
+
+- **Den 10:** Multi-Response Mock Infrastructure a E2E Testy
+  - Implementace `MultiResponseMockLLM` pro simulaci konverzačních toků
+  - 4 E2E scénáře:
+    * Jednoduchá mise (list_files → read_file → create_file) ✅
+    * Chyba s retry (tool fail → reflection → retry → success) ✅
+    * Chyba s replanning (persistent fail → replanning → new plan → success) ✅
+    * Budget exceeded (varování → pokračování → hard limit → ukončení) ✅
+  - **Všech 157 testů prošlo na první pokus!** 🎉
+
+**Změněné/Vytvořené Soubory:**
+- `core/budget_tracker.py` - Token & cost tracking (NEW)
+- `core/nomad_orchestrator_v2.py` - Main orchestrator (NEW)
+- `tests/test_budget_tracker.py` - 26 testů (NEW)
+- `tests/test_nomad_orchestrator_v2.py` - 50 testů včetně 4 E2E (NEW)
+- `tests/conftest.py` - Multi-response mock fixtures (UPDATED)
+
+**Důvod a Kontext:**
+- Původní JulesOrchestrator byl reaktivní loop bez explicitního stavu
+- NomadV2 přináší:
+  * Crash resilience (automatické recovery po pádu)
+  * Proaktivní plánování (místo slepého loopu)
+  * Učení z chyb (ReflectionEngine)
+  * Budget management (BudgetTracker)
+  * Validované přechody stavů (StateManager)
+
+**Narazené Problémy a Řešení:**
+- **Problém:** E2E testy vyžadovaly simulaci realistických LLM konverzací
+  - **Řešení:** MultiResponseMockLLM s pre-scripted odpověďmi pro celé scénáře
+  
+- **Problém:** Jak testovat replanning bez skutečného LLM
+  - **Řešení:** Mock sequence: plan → error → reflection → new_plan → execute
+  
+- **Problém:** Validace budget tracking v async kontextu
+  - **Řešení:** Synchronní testy s explicit token counting
+
+**Dopad na Projekt:**
+- **157/157 testů prochází** (100% pass rate) 🎉
+- Projekt připraven pro Den 11-12 (Real LLM integration & Production deployment)
+- Architektura je robustní, testovatelná a ready for real-world použití
+- Kompletní coverage všech core komponent:
+  * StateManager: 23 tests ✅
+  * RecoveryManager: 18 tests ✅
+  * PlanManager: 19 tests ✅
+  * ReflectionEngine: 21 tests ✅
+  * BudgetTracker: 26 tests ✅
+  * NomadOrchestratorV2: 50 tests (včetně 4 E2E) ✅
+
+**Příští Kroky:**
+- Den 11: Real LLM E2E testing s Gemini API
+- Den 12: Performance optimization & production deployment
+---
+---
+**Datum**: 2025-10-12
+**Autor**: Jules (Nomad)
+**Ticket/Task**: Project Cleanup & Documentation Update
+
+### Téma: Organizace projektu a příprava dokumentace pro budoucí AI agenty.
+
+**Popis Práce:**
+- **Vytvoření Archive Struktury:**
+  - Vytvořen `archive/` adresář s podadresáři: `old_plans/`, `old_docs/`, `deprecated_code/`
+  - Vytvořen `archive/README.md` s archivační politikou
+
+- **Přesun Zastaralých Souborů:**
+  - `docs/REFACTORING_PLAN.md` → `archive/old_plans/` (dokončeno září 2024)
+  - `JULES_VM.md`, `JULES_LIMITATIONS.md`, `JULES.md` → `archive/old_docs/` (nahrazeno NomadV2)
+  - `integrace/` → `archive/deprecated_code/` (starý JulesOrchestrator)
+  - `IMPLEMENTATION_PLAN.md` → `archive/old_plans/` (Den 1-10 dokončeny)
+  - `REFACTORING_ROADMAP_V2.md` → `archive/old_plans/` (roadmapa dokončena)
+
+- **Aktualizace Dokumentace:**
+  - `README.md` - Kompletní přepis s NomadV2 kontextem, stavovým diagramem, test stats
+  - `AGENTS.md` - Aktualizace na verzi 2.0 s NomadOrchestratorV2 architekturou
+  - `WORKLOG.md` - Přidán záznam o Den 8-10 a tento cleanup
+
+- **Zachované Aktivní Komponenty:**
+  - `guardian/` - Aktivní monitoring agent
+  - `sanctuary/` - Nomad identity backup (genesis archive)
+  - Všechny core komponenty a testy
+
+**Důvod a Kontext:**
+- Po dokončení Den 8-10 (NomadV2 implementace) bylo třeba projekt vyčistit
+- Cíl: Připravit projekt pro budoucí AI agenty, aby mohli snadno navázat
+- Odstranění zastaralé dokumentace, která by mohla způsobit zmatek
+- Zachování historie pomocí `git mv` (preserves file history)
+
+**Narazené Problémy a Řešení:**
+- **Problém:** Identifikace které soubory jsou zastaralé vs. referenční
+  - **Řešení:** Systematická analýza data vytvoření a relevance k NomadV2
+  
+- **Problém:** README.md potřeboval kompletní přepis (ne jen patch)
+  - **Řešení:** Backup + complete rewrite s NomadV2 focus
+
+**Dopad na Projekt:**
+- Projekt je nyní čistý, organizovaný a ready for handoff
+- Budoucí AI agenti mají jasný entry point (README.md + AGENTS.md)
+- Historická dokumentace zachována v archive/ pro referenci
+- Git history zachována pomocí `git mv` operací
+- Všechna dokumentace reflektuje current state (157 tests, NomadV2 architecture)
+
+**Příští Kroky:**
+- Git commit všech změn
+- Final verification (spustit všechny testy)
+- Ready for Den 11-12 (Real LLM integration)
+---
+````
+---
