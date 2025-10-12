@@ -128,8 +128,14 @@ def check_api_key():
 
 @pytest.fixture
 async def llm_manager(check_api_key):
-    """Fixture providing real LLMManager."""
+    """
+    Fixture providing real LLMManager.
+    
+    Uses gemini-1.5-flash (higher free tier: 1500 RPM vs 50 RPM for 2.0-flash-exp)
+    """
     manager = LLMManager()
+    # Override to use cheaper model with higher rate limits
+    manager.aliases["powerful"] = "gemini-1.5-flash"
     yield manager
     # Cleanup if needed
 
