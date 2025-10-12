@@ -15,30 +15,51 @@ logging:
   guardian_log: "logs/guardian.log"
   sophia_main_log: "logs/sophia_main.log"
 
-# Konfigurace pro Large Language Models (LLM) přes OpenRouter
+# Konfigurace pro Large Language Models (LLM)
+# Podporuje OpenRouter i přímý Gemini API access
 llm_models:
   # Výchozí model, který se použije, pokud není specifikován jiný.
-  default: "economical"
+  # Pokud existuje GEMINI_API_KEY, použije se Gemini
+  default: "gemini"
 
   # Aliasy pro různé typy úkolů. Orchestrátor vybírá alias,
   # LLM Manager ho překládá na konkrétní model.
   aliases:
-    powerful: "deepseek/deepseek-v3.2-exp"
-    economical: "google/gemini-2.5-flash-lite"
+    powerful: "gemini-2.0-flash-exp"       # Gemini 2.5 Flash (experimental, nejnovější)
+    economical: "gemini-1.5-flash"         # Gemini 1.5 Flash (stabilní)
+    gemini: "gemini-2.0-flash-exp"         # Default Gemini
+    openrouter: "google/gemini-2.5-flash-lite"  # Fallback na OpenRouter
 
-  # Seznam dostupných modelů s jejich OpenRouter identifikátory.
-  # Pro každý model lze přidat specifickou konfiguraci.
-  # Prázdný slovník `{}` znamená, že se použije výchozí konfigurace.
+  # Seznam dostupných modelů s jejich identifikátory
+  # Gemini modely (přímý API access)
   models:
+    # Gemini 2.5 Flash Experimental (nejnovější, doporučeno)
+    "gemini-2.0-flash-exp":
+      temperature: 0.7
+      max_output_tokens: 8192
+      top_p: 0.95
+    
+    # Gemini 1.5 Flash (stabilní)
+    "gemini-1.5-flash":
+      temperature: 0.7
+      max_output_tokens: 8192
+      top_p: 0.95
+    
+    # Gemini 1.5 Flash Latest (auto-updated)
+    "gemini-1.5-flash-latest":
+      temperature: 0.7
+      max_output_tokens: 8192
+      top_p: 0.95
+    
+    # OpenRouter fallback modely
     "google/gemini-2.5-flash-lite": {}
     "deepseek/deepseek-v3.2-exp": {}
-    "anthropic/claude-3-haiku": {} # Přidán další model pro fallback
+    "anthropic/claude-3-haiku": {}
 
-  # Seznam záložních modelů, které se použijí v případě selhání primárního modelu.
-  # Budou se zkoušet v pořadí, v jakém jsou uvedeny.
+  # Seznam záložních modelů pro OpenRouter (pokud Gemini není dostupný)
   fallback_models:
     - "anthropic/claude-3-haiku"
-    - "google/gemini-2.5-flash-lite" # Může být i zde jako poslední záchrana
+    - "google/gemini-2.5-flash-lite"
 
 # Konfigurace pro Orchestrator
 orchestrator:

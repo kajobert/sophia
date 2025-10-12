@@ -62,15 +62,38 @@ async def llm_manager(check_api_key):
 
 @pytest.fixture
 async def orchestrator(tmp_path, check_api_key):
-    """Fixture providing NomadOrchestratorV2 with real LLM."""
+    """
+    Fixture providing NomadOrchestratorV2 with real LLM.
+    
+    Creates temporary config structure for testing.
+    """
+    import shutil
+    
+    # Create config directory in tmp_path
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    
+    # Create sandbox directory
+    sandbox_dir = tmp_path / "sandbox"
+    sandbox_dir.mkdir()
+    
+    # Copy config.yaml to tmp directory
+    source_config = "/workspaces/sophia/config/config.yaml"
+    dest_config = config_dir / "config.yaml"
+    shutil.copy(source_config, dest_config)
+    
+    # Copy .env if exists
+    source_env = "/workspaces/sophia/.env"
+    if os.path.exists(source_env):
+        dest_env = tmp_path / ".env"
+        shutil.copy(source_env, dest_env)
+    
+    # Initialize orchestrator with tmp_path
     orch = NomadOrchestratorV2(project_root=str(tmp_path))
     await orch.initialize()
     yield orch
-    await orch.shutdown()
     
-    # Cleanup test files
-    if orch.state_manager.session_file and os.path.exists(orch.state_manager.session_file):
-        orch.state_manager.delete_session()
+    # Simple cleanup - no shutdown() or delete_session() methods exist
 
 
 # ============================================================================
@@ -236,15 +259,12 @@ async def test_simple_real_mission(orchestrator, tmp_path):
     Mission: Vytvoř soubor hello.txt
     Expected: Plánování → Exekuce → Dokončení
     """
-    # Create sandbox dir in tmp_path
-    sandbox = tmp_path / "sandbox"
-    sandbox.mkdir(exist_ok=True)
+    # File path relative to sandbox/
+    test_file = tmp_path / "sandbox" / "hello.txt"
     
-    test_file = sandbox / "hello.txt"
-    
-    # Start mission
+    # Start mission with simple instruction
     await orchestrator.start_mission(
-        mission_goal=f"Create a file at {test_file} with content 'Hello from Nomad!'",
+        mission_goal="Create a file 'hello.txt' in sandbox/ with content 'Hello from Nomad!'",
         recover_if_crashed=False
     )
     
@@ -254,7 +274,7 @@ async def test_simple_real_mission(orchestrator, tmp_path):
         f"Mission not completed. State: {final_state.value}"
     
     # Check file was created
-    assert test_file.exists(), "File was not created"
+    assert test_file.exists(), f"File was not created at {test_file}"
     
     content = test_file.read_text()
     assert "Hello" in content, f"Unexpected content: {content}"
