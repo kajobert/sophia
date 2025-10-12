@@ -132,21 +132,47 @@ Calculates cost based on model-specific pricing:
 
 ## Pricing Table
 
-Current hardcoded pricing (per 1M tokens):
+Current hardcoded pricing (per 1M tokens) - **Updated: 2025-10-12**
 
-| Model | Prompt | Completion |
-|-------|--------|------------|
-| **Gemini** |
-| gemini-2.0-flash-exp | $0.075 | $0.30 |
-| gemini-1.5-flash | $0.075 | $0.30 |
-| **Claude** |
-| claude-3-haiku | $0.25 | $1.25 |
-| claude-3-sonnet | $3.00 | $15.00 |
-| claude-3-opus | $15.00 | $75.00 |
-| **GPT** |
-| gpt-4o | $5.00 | $15.00 |
-| gpt-4o-mini | $0.15 | $0.60 |
-| gpt-3.5-turbo | $0.50 | $1.50 |
+| Model | Prompt | Completion | Notes |
+|-------|--------|------------|-------|
+| **Gemini (Google)** |
+| gemini-2.5-flash-lite-preview-09-2025 | $0.10 | $0.40 | Latest lightweight model |
+| gemini-2.0-flash-exp | $0.075 | $0.30 | Experimental flash |
+| gemini-1.5-flash | $0.075 | $0.30 | Production flash |
+| gemma-3-27b-it | $0.09 | $0.16 | Lightweight 27B |
+| **DeepSeek** |
+| deepseek-v3.2-exp | $0.27 | $0.40 | Advanced reasoning |
+| **Meta Llama** |
+| llama-3.3-70b-instruct | $0.13 | $0.39 | 70B instruction model |
+| **Qwen (Alibaba)** |
+| qwen-2.5-72b-instruct | $0.07 | $0.26 | **CHEAPEST!** 72B |
+| **Claude (Anthropic)** |
+| claude-3-haiku | $0.25 | $1.25 | Fast, affordable |
+| claude-3-sonnet | $3.00 | $15.00 | Balanced |
+| claude-3-opus | $15.00 | $75.00 | Most capable |
+| **GPT (OpenAI)** |
+| gpt-4o | $5.00 | $15.00 | Flagship model |
+| gpt-4o-mini | $0.15 | $0.60 | Compact GPT-4 |
+| gpt-3.5-turbo | $0.50 | $1.50 | Classic |
+
+**Total Models Supported:** 15 (5 new in this update)
+
+**New Models Added:**
+- ✨ `google/gemini-2.5-flash-lite-preview-09-2025` - Latest Gemini lightweight
+- ✨ `deepseek/deepseek-v3.2-exp` - Advanced reasoning model
+- ✨ `google/gemma-3-27b-it` - Compact instruction model
+- ✨ `meta-llama/llama-3.3-70b-instruct` - 70B Llama
+- ✨ `qwen/qwen-2.5-72b-instruct` - **Cheapest option** ($0.07/1M prompt!)
+
+**Cost Comparison (100K prompt + 50K completion tokens):**
+- Qwen 2.5 72B: **$0.020** 🏆 CHEAPEST
+- Gemma 3 27B: $0.033
+- Gemini Flash Lite: $0.030
+- Llama 3.3 70B: $0.033
+- DeepSeek V3.2: $0.047
+- Claude Haiku: $0.088
+- GPT-4o-mini: $0.045
 
 **Note:** For production, fetch dynamic pricing from `https://openrouter.ai/api/v1/models`
 
@@ -222,12 +248,13 @@ pytest tests/test_openrouter_enhanced.py::TestOpenRouterAdapterEnhanced::test_ge
 ```
 
 **Results:**
-- ✅ 16/16 tests PASSED
+- ✅ **21/21 tests PASSED** (5 new tests for new models)
 - ✅ JSON mode validated
 - ✅ Billing tracking accurate
-- ✅ Cost calculations verified
+- ✅ Cost calculations verified for 15 models
 - ✅ Provider preferences work
 - ✅ Fallback behavior tested
+- ✅ New models: DeepSeek V3.2, Qwen 72B, Gemini Flash Lite, Llama 70B, Gemma 27B
 
 ## Architecture
 

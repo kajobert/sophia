@@ -188,6 +188,67 @@ class TestOpenRouterAdapterEnhanced:
         
         assert cost == 0.0
     
+    def test_cost_calculation_deepseek_v3(self, adapter):
+        """Test cost calculation for DeepSeek V3.2."""
+        cost = adapter._calculate_cost(
+            model="deepseek/deepseek-v3.2-exp",
+            prompt_tokens=10_000,
+            completion_tokens=5_000
+        )
+        
+        # $0.27/1M prompt + $0.40/1M completion
+        expected = (10_000 * 0.27 / 1_000_000) + (5_000 * 0.40 / 1_000_000)
+        assert cost == pytest.approx(expected, rel=0.01)
+    
+    def test_cost_calculation_qwen_72b(self, adapter):
+        """Test cost calculation for Qwen 2.5 72B (cheapest model)."""
+        cost = adapter._calculate_cost(
+            model="qwen/qwen-2.5-72b-instruct",
+            prompt_tokens=100_000,
+            completion_tokens=50_000
+        )
+        
+        # $0.07/1M prompt + $0.26/1M completion (CHEAPEST!)
+        expected = (100_000 * 0.07 / 1_000_000) + (50_000 * 0.26 / 1_000_000)
+        assert cost == pytest.approx(expected, rel=0.01)
+        assert cost <= 0.02  # Very cheap! (0.02 = $0.02 for 150K tokens)
+    
+    def test_cost_calculation_gemini_flash_lite(self, adapter):
+        """Test cost calculation for Gemini 2.5 Flash Lite."""
+        cost = adapter._calculate_cost(
+            model="google/gemini-2.5-flash-lite-preview-09-2025",
+            prompt_tokens=50_000,
+            completion_tokens=25_000
+        )
+        
+        # $0.10/1M prompt + $0.40/1M completion
+        expected = (50_000 * 0.10 / 1_000_000) + (25_000 * 0.40 / 1_000_000)
+        assert cost == pytest.approx(expected, rel=0.01)
+    
+    def test_cost_calculation_llama_70b(self, adapter):
+        """Test cost calculation for Llama 3.3 70B."""
+        cost = adapter._calculate_cost(
+            model="meta-llama/llama-3.3-70b-instruct",
+            prompt_tokens=20_000,
+            completion_tokens=10_000
+        )
+        
+        # $0.13/1M prompt + $0.39/1M completion
+        expected = (20_000 * 0.13 / 1_000_000) + (10_000 * 0.39 / 1_000_000)
+        assert cost == pytest.approx(expected, rel=0.01)
+    
+    def test_cost_calculation_gemma_27b(self, adapter):
+        """Test cost calculation for Gemma 3 27B."""
+        cost = adapter._calculate_cost(
+            model="google/gemma-3-27b-it",
+            prompt_tokens=30_000,
+            completion_tokens=15_000
+        )
+        
+        # $0.09/1M prompt + $0.16/1M completion
+        expected = (30_000 * 0.09 / 1_000_000) + (15_000 * 0.16 / 1_000_000)
+        assert cost == pytest.approx(expected, rel=0.01)
+    
     def test_billing_group_by_model(self, adapter):
         """Test grouping billing by model."""
         # Simulate 3 calls to different models

@@ -351,8 +351,13 @@ class OpenRouterAdapter(BaseLLMAdapter):
         """
         # Hardcoded pricing (per 1M tokens) - FALLBACK ONLY
         # TODO: Fetch dynamically from OpenRouter API
+        # Prices updated: 2025-10-12
         PRICING = {
-            # Gemini models
+            # Gemini models (Google)
+            "google/gemini-2.5-flash-lite-preview-09-2025": {
+                "prompt": 0.10 / 1_000_000,      # $0.10/1M tokens
+                "completion": 0.40 / 1_000_000   # $0.40/1M tokens
+            },
             "google/gemini-2.0-flash-exp": {
                 "prompt": 0.075 / 1_000_000,
                 "completion": 0.30 / 1_000_000
@@ -360,6 +365,28 @@ class OpenRouterAdapter(BaseLLMAdapter):
             "google/gemini-1.5-flash": {
                 "prompt": 0.075 / 1_000_000,
                 "completion": 0.30 / 1_000_000
+            },
+            "google/gemma-3-27b-it": {
+                "prompt": 0.09 / 1_000_000,      # $0.09/1M tokens
+                "completion": 0.16 / 1_000_000   # $0.16/1M tokens
+            },
+            
+            # DeepSeek models
+            "deepseek/deepseek-v3.2-exp": {
+                "prompt": 0.27 / 1_000_000,      # $0.27/1M tokens
+                "completion": 0.40 / 1_000_000   # $0.40/1M tokens
+            },
+            
+            # Meta Llama models
+            "meta-llama/llama-3.3-70b-instruct": {
+                "prompt": 0.13 / 1_000_000,      # $0.13/1M tokens
+                "completion": 0.39 / 1_000_000   # $0.39/1M tokens
+            },
+            
+            # Qwen models (Alibaba)
+            "qwen/qwen-2.5-72b-instruct": {
+                "prompt": 0.07 / 1_000_000,      # $0.07/1M tokens (cheapest!)
+                "completion": 0.26 / 1_000_000   # $0.26/1M tokens
             },
             
             # Anthropic models
