@@ -1,17 +1,78 @@
+# Nomad AI Agent Orchestrator - Docker Compose
+# Production-ready multi-container setup
+
+version: '3.8'
+
 services:
-  app:
-    # Sestaví image z Dockerfile v aktuálním adresáři
-    build: .
-    # Název kontejneru pro snadnější identifikaci
-    container_name: sophia_dev_container
-    # Připojí aktuální adresář do /app v kontejneru
-    # To umožňuje "live-reloading", kdy se změny v kódu okamžitě projeví
+  # Backend API Server
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nomad-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NOMAD_ENV=production
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - NOMAD_PORT=8080
+      - NOMAD_HOST=0.0.0.0
+      - NOMAD_LOG_LEVEL=${NOMAD_LOG_LEVEL:-info}
+      - PYTHONUNBUFFERED=1
     volumes:
-      - .:/app
-    # Načte proměnné prostředí ze souboru .env v kořenovém adresáři
-    env_file:
-      - .env
-    # Pro interaktivní TUI aplikaci nepotřebujeme mapovat porty.
-    # Klíčové je ponechat standardní vstup otevřený a přidělit TTY.
+      # Persistent data
+      - ./logs:/app/logs
+      - ./memory:/app/memory
+      - ./sandbox:/app/sandbox
+      # Config (read-only)
+      - ./config:/app/config:ro
+      - ./prompts:/app/prompts:ro
+    networks:
+      - nomad-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # TUI Client (optional, for interactive use)
+  tui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nomad-tui
+    restart: "no"  # Don't auto-restart TUI
+    environment:
+      - NOMAD_API_URL=http://backend:8080
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - nomad-network
     stdin_open: true
     tty: true
+    command: ["python", "tui/client.py", "--api-url", "http://backend:8080"]
+    profiles:
+      - interactive  # Only start with: docker-compose --profile interactive up
+
+networks:
+  nomad-network:
+    driver: bridge
+
+# Usage:
+# ======
+# Backend only:       docker-compose up -d
+# Backend + TUI:      docker-compose --profile interactive up
+# Stop:               docker-compose down
+# Rebuild:            docker-compose up -d --build
+# Logs:               docker-compose logs -f backend
+# Health:             docker-compose ps

@@ -1,408 +1,616 @@
-# 🚀 Production Deployment Guide - Nomad v0.8.9
+# 🚀 Nomad AI Agent - Deployment Guide
 
-**Last Updated:** 2025-10-12  
-**Version:** 0.8.9  
-**Architecture:** NomadOrchestratorV2
+**Version:** 0.9.0  
+**Last Updated:** October 2025  
+**Architecture:** FastAPI Backend + Textual TUI + NomadOrchestratorV2
 
 ---
 
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
-2. [Environment Setup](#environment-setup)
-3. [Configuration](#configuration)
-4. [Deployment Options](#deployment-options)
-5. [Monitoring & Logging](#monitoring--logging)
-6. [Security](#security)
-7. [Troubleshooting](#troubleshooting)
+2. [Deployment Options](#deployment-options)
+3. [Docker Deployment](#docker-deployment)
+4. [Systemd Service Deployment](#systemd-service-deployment)
+5. [Configuration](#configuration)
+6. [Monitoring & Maintenance](#monitoring--maintenance)
+7. [Security Considerations](#security-considerations)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
-## 1. Prerequisites
+## Prerequisites
 
 ### System Requirements
 
-- **Python:** >= 3.10
-- **RAM:** Minimum 2GB, Recommended 4GB+
-- **Disk:** 500MB free space
-- **Network:** Outbound HTTPS access to AI APIs
+**Minimum:**
+- CPU: 2 cores
+- RAM: 2GB
+- Disk: 10GB free space
+- OS: Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+)
 
-### Required Services
+**Recommended:**
+- CPU: 4+ cores
+- RAM: 4GB+
+- Disk: 20GB+ SSD
+- OS: Ubuntu 22.04 LTS / Debian 12
 
-- **Gemini API Access** (for LLM operations)
-- **Optional:** Redis (for advanced memory features)
-- **Optional:** Docker (for containerized deployment)
+### Software Dependencies
+
+**Required:**
+- Python 3.12 or higher
+- pip / uv (package manager)
+
+**Optional:**
+- Docker 24.0+ (for containerized deployment)
+- Docker Compose 2.0+
+- systemd (for service management)
+- nginx/traefik (for reverse proxy)
+- prometheus/grafana (for monitoring)
+
+### API Keys
+
+You'll need at least one of:
+- **Gemini API Key** (recommended for development)
+- **OpenRouter API Key** (recommended for production with 15 models)
+
+Get keys:
+- Gemini: https://makersuite.google.com/app/apikey
+- OpenRouter: https://openrouter.ai/keys
 
 ---
 
-## 2. Environment Setup
+## Deployment Options
 
-### Step 1: Clone & Install
+### Option 1: Docker Compose (Recommended for Production)
 
+**Pros:**
+- Isolated environment
+- Easy upgrades
+- Consistent across systems
+- Resource limits enforced
+- Multi-service orchestration
+
+**Cons:**
+- Requires Docker knowledge
+- Slightly higher resource usage
+
+**Quick Start:**
 ```bash
-# Clone repository
-git clone https://github.com/ShotyCZ/sophia.git
+# 1. Clone repository
+git clone https://github.com/your-org/sophia.git
 cd sophia
 
-# Checkout production branch
-git checkout nomad/0.8.9
+# 2. Configure environment
+cp .env.production.example .env
+nano .env  # Add API keys
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate  # Windows
+# 3. Start backend service
+docker-compose up -d
 
-# Install dependencies
-pip install -r requirements.txt
+# 4. Start TUI (optional interactive mode)
+docker-compose --profile interactive run --rm tui
+
+# 5. Check status
+docker-compose ps
+curl http://localhost:8080/api/v1/health/ping
 ```
 
-### Step 2: Environment Variables
+### Option 2: Systemd Service (Production Linux)
 
+**Pros:**
+- Native Linux integration
+- Lower resource overhead
+- Direct system access
+- Auto-restart on failure
+
+**Cons:**
+- Manual dependency management
+- OS-specific configuration
+
+**Quick Start:**
 ```bash
-# Copy template
-cp .env.example .env
+# Automated installation
+sudo ./scripts/install-production.sh
 
-# Edit .env with your values
-nano .env
+# Manual service management
+systemctl status nomad-backend
+systemctl start nomad-backend
+systemctl stop nomad-backend
+journalctl -u nomad-backend -f
 ```
 
-**Required Variables:**
+### Option 3: Development Mode
 
+**Quick Start:**
 ```bash
-# API Keys
-GEMINI_API_KEY="your_gemini_api_key_here"
+# Setup development environment
+./scripts/setup.sh
 
-# Optional: Advanced Features
-# OPENROUTER_API_KEY="your_openrouter_key"  # For multiple LLM providers
-# DEEPSEEK_API_KEY="your_deepseek_key"      # For DeepSeek models
-```
+# Start backend
+./scripts/start_backend.sh
 
-### Step 3: Verify Setup
+# Start TUI (in separate terminal)
+./scripts/start_tui.sh
 
-```bash
-# Test environment
-python -c "
-from dotenv import load_dotenv
-import os
-load_dotenv()
-assert os.getenv('GEMINI_API_KEY'), 'API key missing!'
-print('✅ Environment configured')
-"
-
-# Run health check
-python -c "
-import asyncio
-from core.llm_manager import LLMManager
-
-async def test():
-    llm = LLMManager()
-    model = llm.get_llm('powerful')
-    resp, _ = await model.generate_content_async('Say OK')
-    assert resp, 'LLM not responding'
-    print('✅ LLM connectivity OK')
-
-asyncio.run(test())
-"
+# Or both together
+./scripts/start_nomad.sh
 ```
 
 ---
 
-## 3. Configuration
+## Docker Deployment
 
-### config/config.yaml
+See [Deployment Options](#deployment-options) above for Docker Compose quick start.
 
-Production configuration template:
-
-```yaml
-# Production Configuration for Nomad v0.8.9
-
-environment: production
-
-llm:
-  default_model: "gemini-pro"
-  fallback_models:
-    - "gemini-pro-1.5"
-  
-  # Budget limits (production defaults)
-  max_tokens_per_mission: 100000
-  max_time_per_mission_seconds: 3600
-  
-  # Rate limiting
-  max_requests_per_minute: 50
-
-orchestrator:
-  # State machine config
-  max_step_retries: 3
-  enable_crash_recovery: true
-  
-  # Session management
-  session_timeout_hours: 24
-  auto_cleanup_old_sessions: true
-  
-logging:
-  level: INFO
-  format: "json"  # For production log aggregation
-  
-  destinations:
-    - type: file
-      path: "logs/nomad.log"
-      max_size_mb: 100
-      backup_count: 5
-    
-    - type: console
-      level: WARNING  # Only warnings+ to console
-  
-  # Structured logging
-  include_timestamp: true
-  include_session_id: true
-  include_state: true
-
-monitoring:
-  # Metrics collection
-  enable_metrics: true
-  metrics_port: 9090
-  
-  # Health checks
-  health_check_interval_seconds: 60
-  
-  # Alerting
-  alert_on_errors: true
-  alert_threshold: 5  # Alert after 5 consecutive errors
-
-memory:
-  # Session persistence
-  memory_dir: "memory/"
-  
-  # Cleanup policy
-  cleanup_completed_after_days: 7
-  cleanup_failed_after_days: 30
-  
-  # Advanced (optional)
-  use_redis: false
-  # redis_url: "redis://localhost:6379/0"
-
-security:
-  # API key rotation
-  require_key_rotation: true
-  key_rotation_days: 90
-  
-  # Sandboxing
-  sandbox_mode: strict
-  allowed_directories:
-    - "sandbox/"
-    - "memory/"
-  
-  # Rate limiting per IP (if exposed via API)
-  enable_rate_limiting: true
-  rate_limit_per_hour: 100
-```
-
-### Custom Configuration
-
-```python
-# custom_config.py
-
-from core.config import Config
-
-class ProductionConfig(Config):
-    """Production-specific overrides."""
-    
-    def __init__(self):
-        super().__init__()
-        
-        # Override defaults
-        self.LOG_LEVEL = "INFO"
-        self.ENABLE_PROFILING = False
-        self.DEBUG_MODE = False
-        
-        # Production tuning
-        self.MAX_CONCURRENT_MISSIONS = 5
-        self.ENABLE_CACHING = True
-```
-
----
-
-## 4. Deployment Options
-
-### Option A: Standalone Script
-
-Simple deployment for single missions:
-
-```bash
-# Run single mission
-python main.py --mission "Your task here"
-
-# Or interactive mode
-python interactive_session.py
-```
-
-### Option B: Long-Running Service
-
-For continuous operation:
-
-```bash
-# Start as background service
-nohup python service.py > logs/service.log 2>&1 &
-
-# Or using systemd (Linux)
-sudo cp deploy/nomad.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable nomad
-sudo systemctl start nomad
-```
-
-**deploy/nomad.service:**
-
-```ini
-[Unit]
-Description=Nomad AI Orchestrator v0.8.9
-After=network.target
-
-[Service]
-Type=simple
-User=nomad
-WorkingDirectory=/opt/sophia
-Environment="PATH=/opt/sophia/venv/bin"
-ExecStart=/opt/sophia/venv/bin/python service.py
-Restart=on-failure
-RestartSec=10
-
-# Resource limits
-MemoryMax=4G
-CPUQuota=200%
-
-# Security
-NoNewPrivileges=true
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Option C: Docker Container
-
-Containerized deployment:
-
-```dockerfile
-# Dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application
-COPY . .
-
-# Create non-root user
-RUN useradd -m -u 1000 nomad && \
-    chown -R nomad:nomad /app
-USER nomad
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD python -c "import sys; sys.exit(0)"
-
-# Run
-CMD ["python", "service.py"]
-```
-
-```bash
-# Build
-docker build -t nomad:0.8.9 .
-
-# Run
-docker run -d \
-  --name nomad \
-  -e GEMINI_API_KEY="${GEMINI_API_KEY}" \
-  -v $(pwd)/memory:/app/memory \
-  -v $(pwd)/logs:/app/logs \
-  --restart unless-stopped \
-  nomad:0.8.9
-```
-
-### Option D: Docker Compose (Recommended)
-
-Full stack with monitoring:
+### docker-compose.yml Structure
 
 ```yaml
-# docker-compose.yml
 version: '3.8'
 
 services:
-  nomad:
+  backend:
     build: .
-    container_name: nomad
+    ports:
+      - "8080:8080"
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - ENVIRONMENT=production
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     volumes:
-      - ./memory:/app/memory
       - ./logs:/app/logs
-      - ./config:/app/config
-    restart: unless-stopped
-    networks:
-      - nomad-net
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+      - ./memory:/app/memory
+      - ./sandbox:/app/sandbox
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
   
-  # Optional: Redis for advanced memory
-  redis:
-    image: redis:7-alpine
-    container_name: nomad-redis
-    volumes:
-      - redis-data:/data
-    networks:
-      - nomad-net
-    restart: unless-stopped
-
-volumes:
-  redis-data:
-
-networks:
-  nomad-net:
-    driver: bridge
+  tui:
+    profiles: ["interactive"]
+    build: .
+    command: python -m tui.app
+    environment:
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
 ```
 
-```bash
-# Deploy
-docker-compose up -d
+### Resource Limits
 
-# View logs
-docker-compose logs -f nomad
-
-# Stop
-docker-compose down
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 2G
+    reservations:
+      cpus: '1.0'
+      memory: 1G
 ```
 
 ---
 
-## 5. Monitoring & Logging
+## Systemd Service Deployment
 
-### Structured Logging
+### Automated Installation
 
-Nomad outputs JSON logs for easy parsing:
+```bash
+sudo ./scripts/install-production.sh
+```
 
-```json
+Installs to `/opt/nomad/` with:
+- System user `nomad`
+- Virtual environment
+- Systemd services
+- Auto-start on boot
+
+### Service Management
+
+```bash
+# Status
+systemctl status nomad-backend
+
+# Start/Stop/Restart
+systemctl start nomad-backend
+systemctl stop nomad-backend
+systemctl restart nomad-backend
+
+# Logs
+journalctl -u nomad-backend -f
+journalctl -u nomad-backend -n 100
+
+# Enable/Disable auto-start
+systemctl enable nomad-backend
+systemctl disable nomad-backend
+```
+
+### TUI Client (Per-User)
+
+```bash
+# Start TUI for current user
+systemctl --user start nomad-tui@$USER
+
+# Stop
+systemctl --user stop nomad-tui@$USER
+
+# Logs
+journalctl --user -u nomad-tui@$USER -f
+```
+
+### Uninstallation
+
+```bash
+sudo ./scripts/uninstall-production.sh
+```
+
+---
+
+## Configuration
+
+### Environment Variables (.env)
+
+```bash
+# API Keys (REQUIRED)
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
+
+# Server
+NOMAD_PORT=8080
+NOMAD_HOST=0.0.0.0
+NOMAD_ENV=production
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FORMAT=json
+
+# LLM
+DEFAULT_LLM_PROVIDER=openrouter
+DEFAULT_MODEL=google/gemini-2.0-flash-exp
+FALLBACK_MODEL=qwen/qwen-2.5-72b-instruct
+TEMPERATURE=0.7
+
+# Limits
+MAX_CONCURRENT_MISSIONS=5
+BUDGET_LIMIT_USD=10.0
+MAX_TOKENS_PER_REQUEST=100000
+
+# Health
+HEALTH_CHECK_INTERVAL=30
+CPU_THRESHOLD=80.0
+MEMORY_THRESHOLD=85.0
+```
+
+### Production YAML (config/production.yaml)
+
+See [.env.production.example](../.env.production.example) and [config/production.yaml](../config/production.yaml) for complete configuration options including:
+- Logging (handlers, formatters, rotation)
+- LLM providers (fallback chains)
+- Orchestrator (recovery, reflection)
+- Security (CORS, rate limiting)
+- Monitoring (metrics, health checks)
+
+### Supported Models (15 Total)
+
+| Model | Cost (per 1M tokens) | Best For |
+|-------|---------------------|----------|
+| **qwen/qwen-2.5-72b-instruct** | $0.07/$0.26 | **Cheapest** complex tasks |
+| google/gemma-3-27b-it | $0.09/$0.16 | Open source, fast |
+| google/gemini-2.5-flash-lite | $0.10/$0.40 | Lightweight tasks |
+| google/gemini-2.0-flash-exp | $0.075/$0.30 | **Recommended** default |
+| meta-llama/llama-3.3-70b-instruct | $0.13/$0.39 | Strong reasoning |
+| deepseek/deepseek-v3.2-exp | $0.27/$0.40 | Coding specialist |
+| anthropic/claude-3-haiku | $0.25/$1.25 | Fast, efficient |
+| openai/gpt-4o-mini | $0.15/$0.60 | GPT quality |
+
+Configure in `.env`:
+```bash
+DEFAULT_MODEL=google/gemini-2.0-flash-exp
+FALLBACK_MODEL=qwen/qwen-2.5-72b-instruct
+```
+
+---
+
+## Monitoring & Maintenance
+
+### Health Checks
+
+```bash
+# Ping endpoint
+curl http://localhost:8080/api/v1/health/ping
+
+# Detailed health status
+curl http://localhost:8080/api/v1/health/status
+
+# Expected response:
 {
-  "timestamp": "2025-10-12T14:30:45.123Z",
-  "level": "INFO",
-  "session_id": "20251012_143045",
-  "state": "EXECUTING_STEP",
-  "message": "Tool execution completed",
-  "metadata": {
-    "step_id": 3,
-    "tool_name": "create_file",
-    "tokens_used": 245
-  }
+  "status": "healthy",
+  "version": "0.9.0",
+  "uptime": 3600,
+  "cpu_percent": 15.3,
+  "memory_percent": 45.2,
+  "active_missions": 2
 }
 ```
+
+### Logs
+
+**Docker:**
+```bash
+# Real-time logs
+docker-compose logs -f backend
+
+# Last 100 lines
+docker-compose logs --tail=100 backend
+
+# Since specific time
+docker-compose logs --since="2024-01-01T10:00:00" backend
+```
+
+**Systemd:**
+```bash
+# Real-time
+journalctl -u nomad-backend -f
+
+# Last hour
+journalctl -u nomad-backend --since="1 hour ago"
+
+# Errors only
+journalctl -u nomad-backend -p err
+
+# Export to file
+journalctl -u nomad-backend > nomad.log
+```
+
+**File Logs:**
+```bash
+# Application logs (/opt/nomad/logs/ or ./logs/)
+tail -f logs/nomad.log
+tail -f logs/error.log
+
+# Log rotation: 10MB max, 5 backups (automatic)
+```
+
+### Backups
+
+**Manual Backup:**
+```bash
+# Backup critical data
+tar -czf nomad-backup-$(date +%Y%m%d).tar.gz \
+  memory/ config/ .env logs/
+
+# Restore
+tar -xzf nomad-backup-20250112.tar.gz
+```
+
+**Docker Volumes:**
+```bash
+# Backup volumes
+docker run --rm \
+  -v sophia_memory:/memory \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/memory-backup.tar.gz /memory
+
+# Restore
+docker run --rm \
+  -v sophia_memory:/memory \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/memory-backup.tar.gz -C /
+```
+
+### Upgrades
+
+**Docker:**
+```bash
+git pull origin main
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+docker-compose logs -f backend
+```
+
+**Systemd:**
+```bash
+sudo systemctl stop nomad-backend
+cd /opt/nomad
+sudo -u nomad git pull origin main
+sudo -u nomad ./venv/bin/pip install -r requirements.txt
+sudo systemctl start nomad-backend
+systemctl status nomad-backend
+```
+
+---
+
+## Security Considerations
+
+### API Key Security
+
+```bash
+# NEVER commit .env
+git check-ignore .env  # Should return .env
+
+# Restrict permissions
+chmod 600 .env
+chown nomad:nomad .env  # If using systemd
+
+# Rotate keys every 90 days (recommended)
+```
+
+### Network Security
+
+**Firewall (ufw):**
+```bash
+# Allow only localhost
+sudo ufw deny 8080
+sudo ufw allow from 127.0.0.1 to any port 8080
+
+# Or specific network
+sudo ufw allow from 192.168.1.0/24 to any port 8080
+```
+
+**Reverse Proxy (nginx):**
+```nginx
+server {
+    listen 80;
+    server_name nomad.yourdomain.com;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Resource Limits
+
+**Docker Compose:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 2G
+```
+
+**Systemd:**
+```ini
+[Service]
+MemoryMax=2G
+CPUQuota=200%
+LimitNOFILE=65536
+```
+
+---
+
+## Troubleshooting
+
+### Service Won't Start
+
+**Check logs:**
+```bash
+# Docker
+docker-compose logs backend
+
+# Systemd
+journalctl -u nomad-backend -n 50
+```
+
+**Common issues:**
+
+1. **Port in use:**
+```bash
+sudo lsof -i :8080
+# Change NOMAD_PORT in .env or kill process
+```
+
+2. **Missing API keys:**
+```bash
+grep "API_KEY" .env
+# Should show non-empty values
+```
+
+3. **Permission errors:**
+```bash
+sudo chown -R nomad:nomad /opt/nomad
+sudo chmod 755 /opt/nomad
+sudo chmod 600 /opt/nomad/.env
+```
+
+### High CPU/Memory
+
+```bash
+# Check active missions
+curl http://localhost:8080/api/v1/missions/active
+
+# Monitor resources
+docker stats nomad-backend  # Docker
+top -p $(pgrep -f nomad)     # Systemd
+
+# Solutions:
+# - Reduce MAX_CONCURRENT_MISSIONS
+# - Lower MAX_TOKENS_PER_REQUEST
+# - Enable budget limits
+# - Restart service
+```
+
+### Connection Refused
+
+```bash
+# Verify service running
+docker-compose ps            # Docker
+systemctl status nomad-backend  # Systemd
+
+# Check port listening
+sudo netstat -tulpn | grep 8080
+
+# Test connectivity
+curl http://localhost:8080/api/v1/health/ping
+```
+
+### LLM API Errors
+
+**Test API keys:**
+```bash
+# Gemini
+curl -H "x-goog-api-key: $GEMINI_API_KEY" \
+  https://generativelanguage.googleapis.com/v1/models
+
+# OpenRouter
+curl -H "Authorization: Bearer $OPENROUTER_API_KEY" \
+  https://openrouter.ai/api/v1/models
+```
+
+**Common errors:**
+- Invalid key → Regenerate and update .env
+- Rate limit → Enable budget tracking, use cheaper models
+- Model unavailable → Check model name in docs
+
+---
+
+## Production Checklist
+
+Before deployment:
+
+```
+✅ Environment variables configured (.env)
+✅ API keys tested and working
+✅ Tests passing (pytest tests/ -v)
+✅ Logging configured
+✅ Health checks responding
+✅ Backups strategy defined
+✅ Monitoring set up (optional)
+✅ Security review (firewall, permissions)
+✅ Documentation reviewed
+✅ Team trained on operations
+```
+
+---
+
+## Support & Resources
+
+### Documentation
+
+- [README.md](../README.md) - Project overview
+- [QUICKSTART.md](QUICKSTART.md) - Getting started
+- [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - Development
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System design
+- [AGENTS.md](../AGENTS.md) - AI agent manual
+
+### Getting Help
+
+- **Issues:** GitHub Issues
+- **Tests:** `pytest tests/ -v`
+- **Logs:** See "Monitoring & Maintenance" section
+
+---
+
+**Status:** ✅ Production Ready (v0.9.0)  
+**Last Updated:** October 2025  
+**Maintainer:** Nomad Development Team
 
 ### Log Aggregation
 

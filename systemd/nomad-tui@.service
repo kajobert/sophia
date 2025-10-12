@@ -1,0 +1,36 @@
+[Unit]
+Description=Nomad AI Agent Orchestrator - TUI Client
+Documentation=https://github.com/ShotyCZ/sophia
+After=nomad-backend.service
+Requires=nomad-backend.service
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+WorkingDirectory=/opt/nomad
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="NOMAD_API_URL=http://localhost:8080"
+EnvironmentFile=-/opt/nomad/.env
+
+# Start command
+ExecStart=/opt/nomad/venv/bin/python tui/client.py --api-url http://localhost:8080
+
+# No auto-restart for interactive TUI
+Restart=no
+
+# TTY allocation for terminal UI
+StandardInput=tty
+TTYPath=/dev/tty%i
+TTYReset=yes
+TTYVHangup=yes
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nomad-tui
+
+[Install]
+WantedBy=multi-user.target
