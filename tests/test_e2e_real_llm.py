@@ -162,31 +162,35 @@ async def orchestrator(tmp_path, check_api_key):
 @pytest.mark.asyncio
 async def test_gemini_basic_connectivity(llm_manager):
     """
-    Test: Základní konektivita s Gemini API.
+    Test: Gemini API je dostupné a odpovídá.
     
     Ověřuje:
-    - API klíč funguje
-    - Model odpovídá
+    - API key funguje
+    - Model odpovídá na jednoduchý prompt
     - Usage tracking funguje
     """
-    model = llm_manager.get_llm("powerful")
+    await wait_for_rate_limit()
     
-    response, usage = await model.generate_content_async("Say exactly 'Hello'")
+    async def test_call():
+        model = llm_manager.get_llm("powerful")
+        response, usage = await model.generate_content_async("Say exactly 'Hello'")
+        
+        # Assertions
+        assert response is not None, "No response from Gemini"
+        assert len(response) > 0, "Empty response"
+        assert "hello" in response.lower(), f"Unexpected response: {response}"
+        
+        # Check usage tracking
+        assert usage is not None, "No usage data"
+        assert "usage" in usage, "Missing usage field"
+        assert "total_tokens" in usage["usage"], "Missing total_tokens"
+        assert usage["usage"]["total_tokens"] > 0, "Zero tokens reported"
+        
+        print(f"✅ Gemini connectivity OK")
+        print(f"   Response: {response[:100]}")
+        print(f"   Tokens: {usage['usage']['total_tokens']}")
     
-    # Assertions
-    assert response is not None, "No response from Gemini"
-    assert len(response) > 0, "Empty response"
-    assert "hello" in response.lower(), f"Unexpected response: {response}"
-    
-    # Check usage tracking
-    assert usage is not None, "No usage data"
-    assert "usage" in usage, "Missing usage field"
-    assert "total_tokens" in usage["usage"], "Missing total_tokens"
-    assert usage["usage"]["total_tokens"] > 0, "Zero tokens reported"
-    
-    print(f"✅ Gemini connectivity OK")
-    print(f"   Response: {response[:100]}")
-    print(f"   Tokens: {usage['usage']['total_tokens']}")
+    await retry_on_rate_limit(test_call, max_retries=3, base_delay=25.0)
 
 
 @pytest.mark.real_llm
@@ -197,9 +201,12 @@ async def test_gemini_json_output(llm_manager):
     
     Důležité pro plánování a reflection.
     """
-    model = llm_manager.get_llm("powerful")
+    await wait_for_rate_limit()
     
-    prompt = """Return a JSON object with this exact structure:
+    async def test_call():
+        model = llm_manager.get_llm("powerful")
+        
+        prompt = """Return a JSON object with this exact structure:
 ```json
 {
   "status": "ok",
@@ -208,24 +215,28 @@ async def test_gemini_json_output(llm_manager):
 ```
 
 Return ONLY the JSON, nothing else."""
+        
+        response, _ = await model.generate_content_async(prompt)
+        
+        # Parse JSON
+        import json, re
+        json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            # Try parsing whole response
+            json_str = response
+        
+        data = json.loads(json_str.strip())
+        
+        # Assertions
+        assert data["status"] == "ok", f"Wrong status: {data}"
+        assert data["value"] == 42, f"Wrong value: {data}"
+        
+        print(f"✅ JSON parsing OK")
+        print(f"   Data: {data}")
     
-    response, _ = await model.generate_content_async(prompt)
-    
-    # Parse JSON
-    import json, re
-    json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
-    if json_match:
-        json_str = json_match.group(1)
-    else:
-        # Try parsing whole response
-        json_str = response.strip()
-    
-    data = json.loads(json_str)
-    
-    assert data["status"] == "ok"
-    assert data["value"] == 42
-    
-    print(f"✅ JSON parsing OK")
+    await retry_on_rate_limit(test_call, max_retries=3, base_delay=25.0)
 
 
 # ============================================================================
@@ -238,32 +249,37 @@ async def test_real_plan_generation(llm_manager, tmp_path):
     """
     Test: PlanManager vytvoří plán pomocí reálného LLM.
     """
-    pm = PlanManager(llm_manager, project_root=str(tmp_path))
+    await wait_for_rate_limit()
     
-    # Simple task
-    plan = await pm.create_plan(
-        mission_goal="List all files in the sandbox/ directory",
-        max_steps=5
-    )
+    async def test_call():
+        pm = PlanManager(llm_manager, project_root=str(tmp_path))
+        
+        # Simple task
+        plan = await pm.create_plan(
+            mission_goal="List all files in the sandbox/ directory",
+            max_steps=5
+        )
+        
+        # Assertions
+        assert len(plan) > 0, "Empty plan generated"
+        assert len(plan) <= 5, f"Too many steps: {len(plan)}"
+        
+        # Check plan structure
+        for step in plan:
+            assert step.id > 0, f"Invalid step ID: {step.id}"
+            assert len(step.description) > 10, f"Too short description: {step.description}"
+            assert step.status == "pending"
+            assert step.estimated_tokens > 0
+        
+        # Check for logical flow
+        step_ids = [s.id for s in plan]
+        assert step_ids == sorted(step_ids), "Steps not in order"
+        
+        print(f"✅ Plan generated: {len(plan)} steps")
+        for step in plan:
+            print(f"   {step.id}. {step.description[:60]}")
     
-    # Assertions
-    assert len(plan) > 0, "Empty plan generated"
-    assert len(plan) <= 5, f"Too many steps: {len(plan)}"
-    
-    # Check plan structure
-    for step in plan:
-        assert step.id > 0, f"Invalid step ID: {step.id}"
-        assert len(step.description) > 10, f"Too short description: {step.description}"
-        assert step.status == "pending"
-        assert step.estimated_tokens > 0
-    
-    # Check for logical flow
-    step_ids = [s.id for s in plan]
-    assert step_ids == sorted(step_ids), "Steps not in order"
-    
-    print(f"✅ Plan generated: {len(plan)} steps")
-    for step in plan:
-        print(f"   {step.id}. {step.description[:60]}")
+    await retry_on_rate_limit(test_call, max_retries=3, base_delay=25.0)
 
 
 @pytest.mark.real_llm
@@ -272,35 +288,40 @@ async def test_real_reflection_on_failure(llm_manager):
     """
     Test: ReflectionEngine analyzuje chybu pomocí reálného LLM.
     """
-    re = ReflectionEngine(llm_manager)
+    await wait_for_rate_limit()
     
-    # Simulate a failed step
-    failed_step = {
-        "id": 1,
-        "description": "Create file test.txt",
-        "status": "failed"
-    }
+    async def test_call():
+        re = ReflectionEngine(llm_manager)
+        
+        # Simulate a failed step
+        failed_step = {
+            "id": 1,
+            "description": "Create file test.txt",
+            "status": "failed"
+        }
+        
+        error_msg = "FileNotFoundError: Directory 'nonexistent/' does not exist"
+        
+        result = await re.reflect_on_failure(
+            failed_step=failed_step,
+            error_message=error_msg,
+            attempt_count=1
+        )
+        
+        # Assertions
+        assert result is not None
+        assert result.analysis, "No analysis generated"
+        assert result.root_cause, "No root cause identified"
+        assert result.suggested_action in [
+            "retry", "retry_modified", "replanning", "ask_user", "skip_step"
+        ], f"Invalid action: {result.suggested_action}"
+        assert 0 <= result.confidence <= 1, f"Invalid confidence: {result.confidence}"
+        
+        print(f"✅ Reflection completed")
+        print(f"   Analysis: {result.analysis[:100]}")
+        print(f"   Action: {result.suggested_action} (confidence: {result.confidence:.0%})")
     
-    error_msg = "FileNotFoundError: Directory 'nonexistent/' does not exist"
-    
-    result = await re.reflect_on_failure(
-        failed_step=failed_step,
-        error_message=error_msg,
-        attempt_count=1
-    )
-    
-    # Assertions
-    assert result is not None
-    assert result.analysis, "No analysis generated"
-    assert result.root_cause, "No root cause identified"
-    assert result.suggested_action in [
-        "retry", "retry_modified", "replanning", "ask_user", "skip_step"
-    ], f"Invalid action: {result.suggested_action}"
-    assert 0 <= result.confidence <= 1, f"Invalid confidence: {result.confidence}"
-    
-    print(f"✅ Reflection completed")
-    print(f"   Analysis: {result.analysis[:100]}")
-    print(f"   Action: {result.suggested_action} (confidence: {result.confidence:.0%})")
+    await retry_on_rate_limit(test_call, max_retries=3, base_delay=25.0)
 
 
 # ============================================================================
