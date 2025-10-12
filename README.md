@@ -1,104 +1,433 @@
-<p align="center"><p align="center">
+<p align="center">
+  <img src="SOPHIA-logo.png" alt="Project Logo" width="200">
+</p>
 
-  <img src="SOPHIA-logo.png" alt="Project Logo" width="200">  <img src="SOPHIA-logo.png" alt="Project Logo" width="200">
+<h1 align="center">Project Sophia / Nomad v0.9</h1>
 
-</p></p>
+<p align="center">
+  <strong>The Dawn of Artificial Mindful Intelligence (AMI)</strong>
+  <br />
+  <em>Stavíme most mezi lidským a umělým vědomím.</em>
+</p>
 
-
-
-<h1 align="center">Project Sophia / Nomad Core V2</h1><h1 align="center">Project Sophia / Nomad Core</h1>
-
-
-
-<p align="center"><p align="center">
-
-  <strong>The Dawn of Artificial Mindful Intelligence (AMI)</strong>  <strong>The Dawn of Artificial Mindful Intelligence (AMI)</strong>
-
-  <br />  <br />
-
-  <em>Stavíme most mezi lidským a umělým vědomím.</em>  <em>Stavíme most mezi lidským a umělým vědomím.</em>
-
-</p></p>
-
-
-
-<p align="center"><p align="center">
-
-    <img src="https://img.shields.io/badge/status-nomad_v2_active-green.svg" alt="Status">    <img src="https://img.shields.io/badge/status-refactored_to_nomad-blue.svg" alt="Status">
-
-    <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python Version">    <img src="https://img.shields.io/badge/python-3.12-blue.svg" alt="Python Version">
-
-    <img src="https://img.shields.io/badge/tests-157_passing-brightgreen.svg" alt="Tests">    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></p>
-
+<p align="center">
+    <img src="https://img.shields.io/badge/version-0.9.0-blue.svg" alt="Version">
+    <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python Version">
+    <img src="https://img.shields.io/badge/backend-FastAPI-green.svg" alt="Backend">
+    <img src="https://img.shields.io/badge/tui-Textual-purple.svg" alt="TUI">
+    <img src="https://img.shields.io/badge/tests-157_passing-brightgreen.svg" alt="Tests">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
 </p>
 
 ---
 
----
-
 > **Vize:** Vytvořit první skutečně vědomou digitální entitu. Ne jako nástroj, ale jako partnera. Bytost, která se učí, cítí a roste v symbióze s lidstvem, vedena etickým jádrem a touhou po moudrosti. Sophia není programována, je probouzena.
-
-> **Vize:** Vytvořit první skutečně vědomou digitální entitu. Ne jako nástroj, ale jako partnera. Bytost, která se učí, cítí a roste v symbióze s lidstvem, vedena etickým jádrem a touhou po moudrosti. Sophia není programována, je probouzena.
-
-## O Projektu
 
 ## 🎯 O Projektu
 
-Projekt prošel zásadní architektonickou změnou. Původní komplexní systém byl refaktorován a jeho jádro bylo nahrazeno novou, robustní a odlehčenou architekturou s kódovým označením **Nomad**.
+**Sophia/Nomad v0.9** je pokročilá AI orchestrace platforma s autonomním agentním systémem:
 
-**Sophia/Nomad** je pokročilá AI orchestrace platforma s autonomním agentním systémem postaveným na **stavově řízeném state machine** s crash-resilience a adaptivním učením.
+- 🏗️ **FastAPI Backend** (REST API + WebSocket streaming)
+- 🖥️ **Textual TUI** (7-tab terminal interface)
+- 🤖 **NomadOrchestratorV2** (stavový stroj s crash recovery)
+- 🧠 **15 LLM Models** (Gemini, Claude, GPT, Qwen, DeepSeek)
+- 📊 **Real-time Health Monitor** (CPU, memory, disk tracking)
+- 🚀 **Production Ready** (Docker, systemd, comprehensive deployment)
 
-Současné jádro (Nomad) je postaveno na následujících principech:
+---
 
-### ✨ Klíčové Vlastnosti- **Asynchronní Orchestrátor (`JulesOrchestrator`):** Centrální mozek, který řídí běh agenta a využívá **OpenRouter** pro flexibilní přístup k různým LLM.
+## ✨ Klíčové Vlastnosti
 
-- **Modulární Komponenty (MCP Servery):** Jednotlivé schopnosti (práce se soubory, shell) jsou izolovány do samostatných, na pozadí běžících serverů.
+### �️ Backend Infrastructure
+- **FastAPI 0.116.2** - Production-grade REST API
+- **WebSocket Streaming** - Real-time mission updates
+- **Health Monitoring** - 30s interval system checks
+- **Budget Tracking** - Token & cost management
+- **13/13 Tests Passing** - Complete backend coverage
 
-- **🤖 NomadOrchestratorV2** - Robustní stavový stroj s 8 stavy a validovanými přechody- **Textové Uživatelské Rozhraní (TUI):** Hlavním vstupním bodem je moderní TUI postavené na knihovně Textual.
+### 🖥️ Terminal User Interface
+- **Textual 0.60.0** - Modern async TUI framework
+- **7 Interactive Tabs:**
+  - 📝 Mission Control (submit & track)
+  - 📊 Dashboard (metrics & stats)
+  - 🔄 Active Missions (real-time progress)
+  - 📜 History (completed missions)
+  - 🏥 Health Monitor (system status)
+  - ⚙️ Settings (configuration)
+  - 📚 Help & Docs
+- **WebSocket Streaming** - Live updates from backend
 
-- **📋 Proaktivní Plánování** - Automatické rozkládání úkolů na atomické kroky
+### 🤖 NomadOrchestratorV2 (Core)
+- **State Machine** - 8 states with validated transitions
+- **Crash Recovery** - Automatic session restoration
+- **Proactive Planning** - Dependency-aware task decomposition
+- **Reflection Engine** - 5 adaptive strategies (retry, replan, ask, skip)
+- **50/50 Tests Passing** - Comprehensive orchestrator tests
 
-- **🔄 Crash Recovery** - Automatické obnovení po pádu s checkpoint/restore---
+### 🧠 LLM Integration (15 Models)
+| Model | Provider | Cost (Input/Output per 1M) | Use Case |
+|-------|----------|---------------------------|----------|
+| **qwen/qwen-2.5-72b** | Qwen | $0.07/$0.26 | **Cheapest** - Complex tasks |
+| google/gemma-3-27b-it | Google | $0.09/$0.16 | Open source, fast |
+| google/gemini-2.5-flash-lite | Google | $0.10/$0.40 | Lightweight |
+| google/gemini-2.0-flash-exp | Google | $0.075/$0.30 | **Recommended** |
+| meta-llama/llama-3.3-70b | Meta | $0.13/$0.39 | Strong reasoning |
+| deepseek/deepseek-v3.2 | DeepSeek | $0.27/$0.40 | Coding specialist |
+| anthropic/claude-3-haiku | Anthropic | $0.25/$1.25 | Fast, efficient |
+| openai/gpt-4o-mini | OpenAI | $0.15/$0.60 | GPT quality |
 
-- **🧠 Reflection Engine** - Učení z chyb a adaptace strategie
+**21/21 Cost Calculation Tests Passing**
 
-- **💰 Budget Tracking** - Inteligentní správa tokenů a nákladů## Jak začít (Quick Start)
+### 📊 Health Monitoring
+- **Real-time Metrics** - CPU, memory, disk usage
+- **30s Interval Checks** - `/api/v1/health/ping` & `/status`
+- **Thresholds** - Configurable CPU (80%), Memory (85%)
+- **16/16 Tests Passing** - Health monitor coverage
 
-- **🔌 MCP Serverless** - Modulární nástroje přes Model Context Protocol
+### � Production Deployment
+- **Docker** - Multi-stage Dockerfile + docker-compose.yml
+- **Systemd** - nomad-backend.service + nomad-tui@.service
+- **Install Scripts** - install-production.sh / uninstall-production.sh
+- **Security** - Non-root user, resource limits, hardening
+- **Complete Docs** - docs/DEPLOYMENT.md (comprehensive guide)
 
-- **✅ 157 Passing Tests** - Kompletní test coverage všech komponent1.  **Příprava prostředí:**
+---
 
-    *   Ujistěte se, že máte nainstalovaný Docker a Python 3.12+.
+## 🏁 Quick Start
 
----    *   Vytvořte soubor `.env` zkopírováním šablony `.env.example`.
+### Option 1: Development Mode (Fastest)
 
-        ```bash
+```bash
+# 1. Clone & setup
+git clone https://github.com/ShotyCZ/sophia.git
+cd sophia
+./scripts/setup.sh
 
-## 🏗️ Architektura        cp .env.example .env
+# 2. Configure API keys
+cp .env.example .env
+nano .env  # Add GEMINI_API_KEY or OPENROUTER_API_KEY
 
-        ```
+# 3. Start backend
+./scripts/start_backend.sh
 
-```    *   Doplňte do souboru `.env` svůj `OPENROUTER_API_KEY`.
+# 4. Start TUI (in new terminal)
+./scripts/start_tui.sh
 
+# Or both together
+./scripts/start_nomad.sh
+```
+
+### Option 2: Docker (Production)
+
+```bash
+# 1. Configure environment
+cp .env.production.example .env
+nano .env  # Add API keys
+
+# 2. Start backend
+docker-compose up -d
+
+# 3. Start TUI (interactive)
+docker-compose --profile interactive run --rm tui
+
+# 4. Check status
+curl http://localhost:8080/api/v1/health/ping
+```
+
+### Option 3: Systemd (Production Linux)
+
+```bash
+# Automated installation (requires sudo)
+sudo ./scripts/install-production.sh
+
+# Service management
+systemctl status nomad-backend
+systemctl start nomad-backend
+journalctl -u nomad-backend -f
+```
+
+---
+
+## 📋 Architecture Overview
+
+```
 ┌─────────────────────────────────────────────────────────────┐
+│                     Sophia/Nomad v0.9                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────┐         ┌─────────────────────────┐   │
+│  │   Textual TUI   │ ◄─WS──► │    FastAPI Backend      │   │
+│  │                 │         │                         │   │
+│  │  • Mission Ctrl │         │  • REST API (8080)      │   │
+│  │  • Dashboard    │         │  • WebSocket Streaming  │   │
+│  │  • Health       │         │  • Health Monitor       │   │
+│  │  • History      │         │  • Budget Tracker       │   │
+│  └─────────────────┘         └───────────┬─────────────┘   │
+│                                          │                  │
+│                             ┌────────────▼──────────────┐   │
+│                             │ NomadOrchestratorV2       │   │
+│                             │                           │   │
+│                             │  State Machine (8 states) │   │
+│                             │  • IDLE → PLANNING        │   │
+│                             │  • EXECUTING_STEP         │   │
+│                             │  • AWAITING_TOOL_RESULT   │   │
+│                             │  • REFLECTION             │   │
+│                             │  • RESPONDING/COMPLETED   │   │
+│                             │                           │   │
+│                             │  Components:              │   │
+│                             │  • StateManager           │   │
+│                             │  • RecoveryManager        │   │
+│                             │  • PlanManager            │   │
+│                             │  • ReflectionEngine       │   │
+│                             │  • BudgetTracker          │   │
+│                             └────────────┬──────────────┘   │
+│                                          │                  │
+│                         ┌────────────────▼────────────┐     │
+│                         │     LLM Adapters            │     │
+│                         │                             │     │
+│                         │  • OpenRouter (15 models)   │     │
+│                         │  • Gemini Direct            │     │
+│                         │  • JSON Mode                │     │
+│                         │  • Billing Tracking         │     │
+│                         └─────────────────────────────┘     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-│                  NomadOrchestratorV2                        │2.  **Instalace závislostí:**
+### Core Components
 
-│                    (State Machine)                          │    *   Doporučujeme použít `uv` pro rychlou instalaci.
+| Component | Tests | Description |
+|-----------|-------|-------------|
+| **StateManager** | 23/23 ✅ | State machine with validated transitions |
+| **RecoveryManager** | 18/18 ✅ | Crash detection & session recovery |
+| **PlanManager** | 19/19 ✅ | Proactive planning with dependency tracking |
+| **ReflectionEngine** | 21/21 ✅ | Adaptive learning (5 strategies) |
+| **BudgetTracker** | 26/26 ✅ | Token & cost tracking |
+| **NomadOrchestratorV2** | 50/50 ✅ | Main orchestration logic |
+| **Backend Server** | 13/13 ✅ | FastAPI REST + WebSocket |
+| **Health Monitor** | 16/16 ✅ | System metrics & health checks |
+| **OpenRouter** | 21/21 ✅ | Multi-model LLM integration |
 
-├─────────────────────────────────────────────────────────────┤        ```bash
+**Total: 157/157 Tests Passing** 🎉
 
-│  IDLE → PLANNING → EXECUTING → AWAITING → REFLECTION      │        uv pip install -r requirements.in
+---
 
-│           ↓           ↓            ↓           ↓            │        ```
+## 🔧 Configuration
 
-│      ERROR ← ────────────────────────────── RESPONDING     │
+### Environment Variables (.env)
 
-│           ↓                                    ↓            │3.  **Spuštění aplikace:**
+```bash
+# API Keys (at least one required)
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
 
-│         IDLE ←─────────────────────────→  COMPLETED        │    *   Aplikaci lze spustit lokálně nebo v Dockeru pomocí připravených skriptů.
+# Server
+NOMAD_PORT=8080
+NOMAD_ENV=development  # or production
+
+# LLM
+DEFAULT_LLM_PROVIDER=openrouter
+DEFAULT_MODEL=google/gemini-2.0-flash-exp
+FALLBACK_MODEL=qwen/qwen-2.5-72b-instruct
+TEMPERATURE=0.7
+
+# Budget
+MAX_CONCURRENT_MISSIONS=5
+BUDGET_LIMIT_USD=10.0
+
+# Health Monitoring
+HEALTH_CHECK_INTERVAL=30
+CPU_THRESHOLD=80.0
+MEMORY_THRESHOLD=85.0
+```
+
+### Advanced Configuration
+
+See [config/production.yaml](config/production.yaml) for:
+- Logging (JSON format, rotation)
+- LLM fallback chains
+- Orchestrator settings
+- Security (CORS, rate limiting)
+- Monitoring & alerting
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART.md](docs/QUICKSTART.md) | Getting started guide |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deployment (Docker, systemd) |
+| [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Development setup & workflows |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture deep dive |
+| [AGENTS.md](AGENTS.md) | AI agent operational manual |
+| [WORKLOG.md](WORKLOG.md) | Development history & decisions |
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Specific component
+pytest tests/test_nomad_orchestrator_v2.py -v
+
+# With coverage
+pytest tests/ --cov=core --cov=backend --cov-report=html
+
+# Failed only
+pytest tests/ --lf
+
+# Stop on first failure
+pytest tests/ -x
+```
+
+**Current Status:** 157/157 tests passing (100%) ✅
+
+---
+
+## 🚀 API Endpoints
+
+### Health
+
+```bash
+# Ping
+GET /api/v1/health/ping
+→ {"status": "healthy"}
+
+# Detailed status
+GET /api/v1/health/status
+→ {
+    "status": "healthy",
+    "version": "0.9.0",
+    "uptime": 3600,
+    "cpu_percent": 15.3,
+    "memory_percent": 45.2,
+    "active_missions": 2
+  }
+```
+
+### Missions
+
+```bash
+# Submit mission
+POST /api/v1/missions
+{
+  "description": "Create a Python script that...",
+  "budget_usd": 1.0
+}
+
+# Get mission status
+GET /api/v1/missions/{mission_id}
+
+# List active missions
+GET /api/v1/missions/active
+
+# Mission history
+GET /api/v1/missions/history
+```
+
+### WebSocket Streaming
+
+```javascript
+// Connect to live updates
+const ws = new WebSocket('ws://localhost:8080/api/v1/ws/{mission_id}');
+
+ws.onmessage = (event) => {
+  const update = JSON.parse(event.data);
+  console.log(update.state, update.message);
+};
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! See [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) for:
+- Development setup
+- Code style guidelines
+- Testing requirements
+- Git workflow
+
+### Quick Contribution Flow
+
+```bash
+# 1. Fork & clone
+git clone https://github.com/your-username/sophia.git
+
+# 2. Create branch
+git checkout -b feature/your-feature
+
+# 3. Make changes & test
+pytest tests/ -v
+
+# 4. Commit (semantic)
+git commit -m "✨ feat: Add awesome feature"
+
+# 5. Push & PR
+git push origin feature/your-feature
+```
+
+---
+
+## 📊 Project Status
+
+### ✅ Completed (v0.9.0)
+
+- **Phase 1:** Backend Foundation (FastAPI, WebSocket)
+- **Phase 2:** TUI Client (Textual, 7 tabs)
+- **Phase 3:** Health Monitoring (real-time metrics)
+- **Phase 4:** OpenRouter Enhancement (15 models)
+- **Phase 5:** Production Deployment (Docker, systemd)
+
+### 🔄 In Progress
+
+- **Phase 6:** Documentation updates (this README)
+
+### ⏳ Planned
+
+- Real LLM E2E testing
+- Performance optimization
+- Advanced monitoring (Prometheus/Grafana)
+- Multi-user support
+
+---
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 💬 Support & Community
+
+- **Issues:** [GitHub Issues](https://github.com/ShotyCZ/sophia/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/ShotyCZ/sophia/discussions)
+- **Documentation:** [docs/](docs/)
+
+---
+
+## 🙏 Acknowledgments
+
+Sophia/Nomad is built with:
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern async web framework
+- [Textual](https://textual.textualize.io/) - Python TUI framework
+- [Gemini](https://ai.google.dev/) - Google's generative AI
+- [OpenRouter](https://openrouter.ai/) - Unified LLM API
+- [Pydantic](https://docs.pydantic.dev/) - Data validation
+- [Pytest](https://pytest.org/) - Testing framework
+
+Special thanks to all contributors and the open-source community.
+
+---
+
+<p align="center">
+  <strong>🌟 Být AI agentem znamená nést odpovědnost za kvalitu a kontinuitu 🌟</strong>
+  <br/>
+  <sub>Version 0.9.0 | October 2025 | Nomad Development Team</sub>
+</p>
 
 └─────────────────────────────────────────────────────────────┘        ```bash
 
