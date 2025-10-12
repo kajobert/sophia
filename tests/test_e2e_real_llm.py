@@ -448,9 +448,14 @@ async def test_openrouter_plan_generation(llm_manager, tmp_path, check_api_key):
     await wait_for_rate_limit()
     
     async def test_call():
-        # Force use of cheap OpenRouter model
-        llm_manager.default_tier = "cheap"
-        pm = PlanManager(llm_manager, project_root=str(tmp_path))
+        # Create a custom LLM manager configured for cheap model
+        from core.llm_manager import LLMManager
+        cheap_llm = LLMManager()
+        
+        # Override the "powerful" alias to use cheap model for this test
+        cheap_llm.aliases["powerful"] = "qwen/qwen-2.5-72b-instruct"
+        
+        pm = PlanManager(cheap_llm, project_root=str(tmp_path))
         
         plan = await pm.create_plan(
             mission_goal="List files in current directory",
@@ -468,7 +473,7 @@ async def test_openrouter_plan_generation(llm_manager, tmp_path, check_api_key):
         print(f"✅ OpenRouter plan generation OK")
         print(f"   Steps: {len(plan)}")
     
-    await retry_on_rate_limit(test_call, max_retries=3, base_delay=5.0)
+    await retry_on_rate_limit(test_call, max_retries=3, base_delay=10.0)
 
 
 # ============================================================================
@@ -709,9 +714,9 @@ async def test_complete_mission_with_openrouter(orchestrator, tmp_path, check_ap
     assert final_state in acceptable_states, f"Unexpected state: {final_state}"
     
     # Minimum requirement: Plan was created
-    plan_data = orchestrator.plan_manager.get_current_plan()
-    assert plan_data is not None, "Plan was not created"
-    print(f"   Plan: {len(plan_data.get('steps', []))} steps created")
+    progress = orchestrator.plan_manager.get_progress()
+    assert progress["total_steps"] > 0, "Plan was not created"
+    print(f"   Plan: {progress['total_steps']} steps created")
     
     # Optional: Check if file was created (best effort)
     if test_file.exists():
