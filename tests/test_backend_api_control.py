@@ -49,6 +49,38 @@ def mock_orchestrator():
     orchestrator.pause_mission = AsyncMock(return_value=True)
     orchestrator.resume_mission = AsyncMock(return_value=True)
     orchestrator.cancel_mission = AsyncMock(return_value=True)
+    
+    # Mock get_models
+    orchestrator.get_models = Mock(return_value={
+        "models": [
+            {
+                "id": "gemini-2.0-flash-exp",
+                "provider": "gemini",
+                "name": "Gemini 2.0 Flash",
+                "max_tokens": 8192
+            },
+            {
+                "id": "qwen/qwen-2.5-72b-instruct",
+                "provider": "openrouter",
+                "name": "Qwen 2.5 72B",
+                "max_tokens": 8000,
+                "pricing": {"prompt": 0.07, "completion": 0.26}
+            }
+        ],
+        "total": 2
+    })
+    
+    # Mock get_stats
+    orchestrator.get_stats = Mock(return_value={
+        "total_missions": 0,
+        "completed_missions": 0,
+        "failed_missions": 0,
+        "success_rate": 0.0,
+        "total_cost_usd": 0.0,
+        "total_tokens": 0,
+        "average_mission_duration": 0.0,
+        "current_mission": None
+    })
     orchestrator.get_mission_status = Mock(return_value={
         "mission_id": "test-123",
         "status": "executing",
