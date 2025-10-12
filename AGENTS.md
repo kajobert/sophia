@@ -1,54 +1,83 @@
-# 🤖 Manuál pro AI Agenta: Jules (Nomad) V2# 🤖 Manuál pro AI Agenta: Jules (Nomad)
+# 🤖 Manuál pro AI Agenta: Jules (Nomad)
 
-
-
-**Verze:** 2.0  **Verze:** 1.1
-
-**Datum:** 2025-10-12  **Datum:** 2025-09-29
-
-**Aktualizace:** Přidána dokumentace NomadOrchestratorV2 architektury
-
-Tento dokument slouží jako technická a provozní příručka pro AI agenta "Jules". Popisuje jeho dostupné nástroje, pracovní postupy a základní principy, které řídí jeho operace v rámci projektu Sophia.
+**Verze:** 2.1 (v0.9.0)  
+**Datum:** 2025-10-12  
+**Aktualizace:** Backend + TUI + Production Deployment complete
 
 Tento dokument slouží jako **ZÁVAZNÁ** technická a provozní příručka pro AI agenty pracující na projektu Sophia/Nomad. Popisuje dostupné nástroje, pracovní postupy, architekturu a základní principy.
 
 ---
 
----
+## 🆕 Co je nového ve v0.9.0
 
-## 1. Přehled Nástrojů (Tool Reference)
+### Dokončené Phase (1-5)
+
+**✅ Phase 1: Backend Foundation (Oct 2025)**
+- FastAPI 0.116.2 server (REST API + WebSocket streaming)
+- 13/13 tests passing
+- Commits: c2be234, dcad5e4
+
+**✅ Phase 2: TUI Client (Oct 2025)**
+- Textual 0.60.0 TUI s 7 taby (Mission Control, Dashboard, Active, History, Health, Settings, Help)
+- WebSocket real-time updates
+- Commit: c6bd62a
+
+**✅ Phase 3: Health Monitor (Oct 2025)**
+- Real-time system metrics (CPU, memory, disk)
+- 16/16 tests passing
+- Guardian archived
+- Commit: c6bd62a
+
+**✅ Phase 4: OpenRouter Enhancement (Oct 2025)**
+- 15 LLM models (Gemini, Claude, GPT, Qwen, DeepSeek, Llama, Gemma)
+- JSON mode support
+- Billing tracking
+- 21/21 cost calculation tests
+- Commits: b0152cc, 0481fdd
+
+**✅ Phase 5: Production Deployment (Oct 2025)**
+- Docker (multi-stage Dockerfile, docker-compose.yml)
+- Systemd services (nomad-backend.service, nomad-tui@.service)
+- Install/uninstall scripts
+- Production configs (.env.production.example, production.yaml)
+- Complete DEPLOYMENT.md documentation
+- Commit: 5fb2bf7
+
+### Aktuální Stav (Říjen 2025)
+
+**Statistiky:**
+- **157/157 tests passing** (100% pass rate)
+- **15 LLM models** supported ($0.07-$1.25 per 1M tokens)
+- **3 deployment options** (dev, Docker, systemd)
+- **1575 lines** production deployment infrastructure
+
+**Next Phase:** Documentation finalization (README ✅, AGENTS ⏳)
+
+---
 
 ## 📋 Table of Contents
 
-Jules má k dispozici dvě kategorie nástrojů: **Standardní Nástroje** s Python syntaxí a **Speciální Nástroje** s vlastní DSL syntaxí.
-
 1. [Přehled Projektu](#1-přehled-projektu)
-
-2. [Architektura NomadOrchestratorV2](#2-architektura-nomadorchestratorv2)### 1.1. Standardní Nástroje
-
+2. [Architektura NomadOrchestratorV2](#2-architektura-nomadorchestratorv2)
 3. [Přehled Nástrojů](#3-přehled-nástrojů)
-
-4. [Pracovní Postup](#4-pracovní-postup)Tyto nástroje se volají pomocí standardní syntaxe funkce v Pythonu.
-
+4. [Pracovní Postup](#4-pracovní-postup)
 5. [Testování](#5-testování)
+6. [Základní Principy](#6-základní-principy)
+7. [Git Workflow](#7-git-workflow)
+8. [v0.9.0 Backend & Deployment](#8-v090-backend--deployment)
 
-6. [Základní Principy](#6-základní-principy)- **`list_files(path: str = ".") -> list[str]`**
+---
 
-7. [Git Workflow](#7-git-workflow)  - **Popis:** Vypíše soubory a adresáře v zadané cestě. Adresáře jsou označeny lomítkem (`/`).
+## 1. Přehled Projektu
 
-  - **Parametry:**
+### 1.1 Co je Sophia/Nomad?
 
----    - `path` (str, volitelný): Cesta k adresáři. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
-
-
-
-## 1. Přehled Projektu- **`read_file(filepath: str) -> str`**
-
-  - **Popis:** Přečte a vrátí obsah zadaného souboru.
-
-### 1.1 Co je Sophia/Nomad?  - **Parametry:**
-
-    - `filepath` (str): Cesta k souboru. Výchozí je `sandbox/`. Pro přístup ke kořenovému adresáři projektu použij prefix `PROJECT_ROOT/`.
+**Sophia/Nomad v0.9.0** je pokročilá AI orchestrace platforma s:
+- **FastAPI Backend** - Production-grade REST API + WebSocket
+- **Textual TUI** - 7-tab terminal interface
+- **NomadOrchestratorV2** - Stavově řízený orchestrátor s crash-resilience
+- **15 LLM Models** - OpenRouter + Gemini Direct
+- **Production Ready** - Docker, systemd, comprehensive deployment
 
 **Sophia/Nomad** je pokročilá AI orchestrace platforma s autonomním agentním systémem. Klíčové vlastnosti:
 
@@ -726,8 +755,251 @@ Pro zachování kontinuity mezi sessions:
 
 ---
 
+## 11. v0.9.0 Backend & Deployment
+
+### 11.1 Backend Architecture (Phase 1)
+
+**FastAPI Server** (`backend/server.py`):
+```python
+# Main application
+app = FastAPI(title="Nomad AI Agent API", version="0.9.0")
+
+# CORS middleware
+app.add_middleware(CORSMiddleware, allow_origins=["*"])
+
+# Routes
+@app.get("/api/v1/health/ping")
+async def health_ping():
+    return {"status": "healthy"}
+
+@app.post("/api/v1/missions")
+async def create_mission(mission: MissionRequest):
+    # Create and orchestrate mission
+    pass
+```
+
+**WebSocket Streaming** (`backend/websocket.py`):
+```python
+@app.websocket("/api/v1/ws/{mission_id}")
+async def mission_stream(websocket: WebSocket, mission_id: str):
+    await websocket.accept()
+    # Stream real-time updates
+    for update in orchestrator.stream_updates(mission_id):
+        await websocket.send_json(update)
+```
+
+**Key Endpoints:**
+- `GET /api/v1/health/ping` - Health check
+- `GET /api/v1/health/status` - Detailed status
+- `POST /api/v1/missions` - Submit mission
+- `GET /api/v1/missions/{id}` - Mission status
+- `WS /api/v1/ws/{id}` - Live updates
+
+**Testing:**
+```bash
+# Run backend tests
+pytest tests/test_backend_server.py -v
+
+# Start dev server
+./scripts/start_backend.sh
+
+# Test health
+curl http://localhost:8080/api/v1/health/ping
+```
+
+### 11.2 TUI Client (Phase 2)
+
+**Textual App** (`tui/app.py`):
+```python
+class NomadApp(App):
+    """Main TUI application with 7 tabs."""
+    
+    TABS = [
+        "mission_control",  # Submit missions
+        "dashboard",        # Metrics
+        "active",           # Live missions
+        "history",          # Completed
+        "health",           # System status
+        "settings",         # Configuration
+        "help"              # Documentation
+    ]
+```
+
+**WebSocket Client** (`tui/api_client.py`):
+```python
+class BackendClient:
+    """Async API client for backend communication."""
+    
+    async def submit_mission(self, description: str):
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(f"{backend}/missions", ...)
+    
+    async def stream_mission(self, mission_id: str):
+        async with websockets.connect(f"ws://{backend}/ws/{mission_id}") as ws:
+            async for message in ws:
+                yield json.loads(message)
+```
+
+**Running TUI:**
+```bash
+# Start TUI (requires backend running)
+./scripts/start_tui.sh
+
+# Or both together
+./scripts/start_nomad.sh
+```
+
+### 11.3 OpenRouter Models (Phase 4)
+
+**15 Supported Models:**
+```python
+# core/llm_adapters.py
+PRICING = {
+    # Cheapest options
+    "qwen/qwen-2.5-72b-instruct": {"prompt": 0.07, "completion": 0.26},
+    "google/gemma-3-27b-it": {"prompt": 0.09, "completion": 0.16},
+    
+    # Recommended
+    "google/gemini-2.0-flash-exp": {"prompt": 0.075, "completion": 0.30},
+    
+    # Premium options
+    "anthropic/claude-3-haiku": {"prompt": 0.25, "completion": 1.25},
+    "openai/gpt-4o-mini": {"prompt": 0.15, "completion": 0.60},
+    
+    # ... and 10 more
+}
+```
+
+**Cost Calculation:**
+```python
+# Automatic cost tracking
+cost = adapter.calculate_cost(
+    model="qwen/qwen-2.5-72b-instruct",
+    prompt_tokens=100_000,
+    completion_tokens=50_000
+)
+# Result: $0.020 (cheapest for complex tasks)
+```
+
+### 11.4 Production Deployment (Phase 5)
+
+**Docker Deployment:**
+```bash
+# 1. Configure
+cp .env.production.example .env
+nano .env  # Add API keys
+
+# 2. Start backend
+docker-compose up -d
+
+# 3. Check status
+docker-compose ps
+curl http://localhost:8080/api/v1/health/ping
+
+# 4. View logs
+docker-compose logs -f backend
+
+# 5. TUI interactive mode
+docker-compose --profile interactive run --rm tui
+```
+
+**Systemd Deployment:**
+```bash
+# Automated install
+sudo ./scripts/install-production.sh
+
+# Service management
+systemctl status nomad-backend
+systemctl start nomad-backend
+systemctl restart nomad-backend
+journalctl -u nomad-backend -f
+
+# TUI per-user
+systemctl --user start nomad-tui@$USER
+```
+
+**Production Files:**
+- `Dockerfile` - Multi-stage build, non-root user
+- `docker-compose.yml` - Multi-service orchestration
+- `systemd/nomad-backend.service` - Backend systemd unit
+- `systemd/nomad-tui@.service` - TUI template service
+- `.env.production.example` - Production env template
+- `config/production.yaml` - Advanced configuration
+- `scripts/install-production.sh` - Automated installer
+- `scripts/uninstall-production.sh` - Removal script
+
+**Security Best Practices:**
+```bash
+# 1. API key permissions
+chmod 600 .env
+
+# 2. Firewall (systemd deployment)
+sudo ufw deny 8080
+sudo ufw allow from 127.0.0.1 to any port 8080
+
+# 3. Resource limits (in systemd service)
+MemoryMax=2G
+CPUQuota=200%
+
+# 4. Non-root container
+USER nomad  # in Dockerfile
+```
+
+### 11.5 Quick Reference v0.9.0
+
+**Development:**
+```bash
+./scripts/setup.sh              # Setup dev environment
+./scripts/start_backend.sh      # Start backend only
+./scripts/start_tui.sh          # Start TUI only
+./scripts/start_nomad.sh        # Start both
+./scripts/stop_nomad.sh         # Stop all
+pytest tests/ -v                # Run all tests
+```
+
+**Production (Docker):**
+```bash
+docker-compose up -d            # Start backend
+docker-compose logs -f backend  # View logs
+docker-compose down             # Stop all
+docker-compose build --no-cache # Rebuild
+```
+
+**Production (Systemd):**
+```bash
+sudo ./scripts/install-production.sh  # Install
+systemctl status nomad-backend        # Check status
+journalctl -u nomad-backend -f        # View logs
+sudo ./scripts/uninstall-production.sh # Uninstall
+```
+
+**Testing:**
+```bash
+pytest tests/ -v                           # All tests (157)
+pytest tests/test_backend_server.py -v     # Backend (13)
+pytest tests/test_health_monitor.py -v     # Health (16)
+pytest tests/test_openrouter_enhanced.py -v # OpenRouter (21)
+pytest tests/test_nomad_orchestrator_v2.py -v # Orchestrator (50)
+```
+
+**API Examples:**
+```bash
+# Health check
+curl http://localhost:8080/api/v1/health/ping
+
+# Submit mission
+curl -X POST http://localhost:8080/api/v1/missions \
+  -H "Content-Type: application/json" \
+  -d '{"description": "Create a Python script", "budget_usd": 1.0}'
+
+# Get mission status
+curl http://localhost:8080/api/v1/missions/{mission_id}
+```
+
+---
+
 <p align="center">
   <strong>🌟 Být AI agentem znamená nést odpovědnost za kvalitu a kontinuitu 🌟</strong>
   <br/>
-  <sub>Verze 2.0 | Aktualizováno: 2025-10-12 | Jules (Nomad)</sub>
+  <sub>Verze 2.1 (v0.9.0) | Aktualizováno: 2025-10-12 | Jules (Nomad)</sub>
 </p>
