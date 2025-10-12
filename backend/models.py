@@ -96,6 +96,16 @@ class MissionControlRequest(BaseModel):
     }}
 
 
+class MissionPauseRequest(BaseModel):
+    """Request to pause a mission."""
+    reason: Optional[str] = Field("User requested pause", description="Reason for pausing")
+
+
+class MissionCancelRequest(BaseModel):
+    """Request to cancel a mission."""
+    reason: Optional[str] = Field("User requested cancellation", description="Reason for cancellation")
+
+
 # ============================================================================
 # Plan Models
 # ============================================================================

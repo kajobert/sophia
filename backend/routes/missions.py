@@ -12,6 +12,8 @@ from backend.models import (
     MissionResponse,
     MissionListResponse,
     MissionControlRequest,
+    MissionPauseRequest,
+    MissionCancelRequest,
     ErrorResponse,
 )
 from backend.orchestrator_manager import orchestrator_manager
@@ -145,13 +147,13 @@ async def list_missions():
 # ============================================================================
 
 @router.post("/{mission_id}/pause", response_model=dict)
-async def pause_mission(mission_id: str, reason: str = "User requested pause"):
+async def pause_mission(mission_id: str, request: MissionPauseRequest = MissionPauseRequest()):
     """
     Pause a running mission.
     
     Args:
         mission_id: Mission ID to pause
-        reason: Optional reason for pausing
+        request: Optional request body with reason
     
     Returns:
         Success message with mission status
@@ -174,7 +176,7 @@ async def pause_mission(mission_id: str, reason: str = "User requested pause"):
         )
     
     # Pause mission
-    success = await orchestrator_manager.pause_mission(reason)
+    success = await orchestrator_manager.pause_mission(request.reason)
     
     if not success:
         raise HTTPException(
@@ -186,7 +188,7 @@ async def pause_mission(mission_id: str, reason: str = "User requested pause"):
         "status": "success",
         "mission_id": mission_id,
         "message": f"Mission {mission_id} paused successfully",
-        "reason": reason
+        "reason": request.reason
     }
 
 
@@ -235,13 +237,13 @@ async def resume_mission(mission_id: str):
 
 
 @router.post("/{mission_id}/cancel", response_model=dict)
-async def cancel_mission(mission_id: str, reason: str = "User requested cancellation"):
+async def cancel_mission(mission_id: str, request: MissionCancelRequest = MissionCancelRequest()):
     """
     Cancel a running or paused mission.
     
     Args:
         mission_id: Mission ID to cancel
-        reason: Optional reason for cancellation
+        request: Optional request body with reason
     
     Returns:
         Success message with mission status
@@ -264,7 +266,7 @@ async def cancel_mission(mission_id: str, reason: str = "User requested cancella
         )
     
     # Cancel mission
-    success = await orchestrator_manager.cancel_mission(reason)
+    success = await orchestrator_manager.cancel_mission(request.reason)
     
     if not success:
         raise HTTPException(
@@ -276,5 +278,5 @@ async def cancel_mission(mission_id: str, reason: str = "User requested cancella
         "status": "success",
         "mission_id": mission_id,
         "message": f"Mission {mission_id} cancellation requested",
-        "reason": reason
+        "reason": request.reason
     }
