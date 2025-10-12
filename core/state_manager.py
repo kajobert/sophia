@@ -68,7 +68,7 @@ class StateManager:
     VALID_TRANSITIONS: Dict[State, List[State]] = {
         State.IDLE: [State.PLANNING],
         State.PLANNING: [State.EXECUTING_STEP, State.RESPONDING, State.ERROR],
-        State.EXECUTING_STEP: [State.AWAITING_TOOL_RESULT, State.RESPONDING, State.ERROR],
+        State.EXECUTING_STEP: [State.AWAITING_TOOL_RESULT, State.REFLECTION, State.RESPONDING, State.ERROR],
         State.AWAITING_TOOL_RESULT: [State.REFLECTION, State.EXECUTING_STEP, State.ERROR],
         State.REFLECTION: [State.PLANNING, State.EXECUTING_STEP, State.RESPONDING, State.ERROR],
         State.RESPONDING: [State.COMPLETED, State.EXECUTING_STEP, State.PLANNING],
