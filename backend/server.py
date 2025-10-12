@@ -27,7 +27,7 @@ from fastapi.responses import JSONResponse
 
 from backend.orchestrator_manager import orchestrator_manager
 from backend.websocket import websocket_endpoint
-from backend.routes import missions, state, plan, budget, logs, health
+from backend.routes import missions, state, plan, budget, logs, health, stats, models
 
 # Configure logging
 logging.basicConfig(
@@ -114,6 +114,8 @@ async def api_info():
             "budget": "/api/v1/budget",
             "logs": "/api/v1/logs",
             "health": "/api/v1/health",
+            "stats": "/api/v1/stats",
+            "models": "/api/v1/models",
         },
         "websocket": "/ws",
     }
@@ -149,6 +151,8 @@ app.include_router(plan.router)
 app.include_router(budget.router)
 app.include_router(logs.router)
 app.include_router(health.router)
+app.include_router(stats.router)
+app.include_router(models.router)
 
 
 # ============================================================================

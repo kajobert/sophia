@@ -89,6 +89,7 @@ class MissionListResponse(BaseModel):
 class MissionControlRequest(BaseModel):
     """Request to control mission execution."""
     action: str = Field(..., description="Action: pause, resume, cancel")
+    reason: Optional[str] = Field(None, description="Optional reason (for cancel)")
     
     model_config = {"json_schema_extra": {
         "example": {"action": "pause"}

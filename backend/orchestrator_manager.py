@@ -69,6 +69,11 @@ class OrchestratorManager:
         self._mission_completed_at: Optional[datetime] = None
         self._mission_task: Optional[asyncio.Task] = None
         
+        # Mission control flags
+        self._is_paused: bool = False
+        self._is_cancelled: bool = False
+        self._cancel_reason: Optional[str] = None
+        
         # Event callbacks for WebSocket streaming
         self._event_callbacks: List[Callable] = []
         
@@ -279,6 +284,155 @@ class OrchestratorManager:
             error=state_data.get("error") if state == State.ERROR else None,
         )
     
+    async def pause_mission(self) -> Dict[str, Any]:
+        """
+        Pause current mission execution.
+        
+        Returns:
+            Success message with status
+        
+        Raises:
+            RuntimeError: If no active mission or mission cannot be paused
+        """
+        if self._orchestrator is None or self._current_mission_id is None:
+            raise RuntimeError("No active mission to pause")
+        
+        state = self._orchestrator.state_manager.get_state()
+        
+        # Validate state - can only pause during execution
+        if state not in [State.EXECUTING_STEP, State.AWAITING_TOOL_RESULT, State.PLANNING]:
+            raise RuntimeError(
+                f"Cannot pause mission in state: {state.value}. "
+                f"Only missions in EXECUTING_STEP, AWAITING_TOOL_RESULT, or PLANNING can be paused."
+            )
+        
+        if self._is_paused:
+            raise RuntimeError("Mission is already paused")
+        
+        self._is_paused = True
+        
+        self._add_log(
+            LogLevelEnum.INFO,
+            "orchestrator_manager",
+            f"Mission {self._current_mission_id} paused",
+            {"state": state.value}
+        )
+        
+        await self._emit_event("mission_paused", {
+            "mission_id": self._current_mission_id,
+            "paused_state": state.value,
+        })
+        
+        return {
+            "success": True,
+            "message": "Mission paused successfully",
+            "mission_id": self._current_mission_id,
+            "paused_at_state": state.value,
+        }
+    
+    async def resume_mission(self) -> Dict[str, Any]:
+        """
+        Resume paused mission execution.
+        
+        Returns:
+            Success message with status
+        
+        Raises:
+            RuntimeError: If no active mission or mission is not paused
+        """
+        if self._orchestrator is None or self._current_mission_id is None:
+            raise RuntimeError("No active mission to resume")
+        
+        if not self._is_paused:
+            raise RuntimeError("Mission is not paused")
+        
+        if self._is_cancelled:
+            raise RuntimeError("Cannot resume cancelled mission")
+        
+        state = self._orchestrator.state_manager.get_state()
+        
+        self._is_paused = False
+        
+        self._add_log(
+            LogLevelEnum.INFO,
+            "orchestrator_manager",
+            f"Mission {self._current_mission_id} resumed",
+            {"state": state.value}
+        )
+        
+        await self._emit_event("mission_resumed", {
+            "mission_id": self._current_mission_id,
+            "resumed_from_state": state.value,
+        })
+        
+        return {
+            "success": True,
+            "message": "Mission resumed successfully",
+            "mission_id": self._current_mission_id,
+            "current_state": state.value,
+        }
+    
+    async def cancel_mission(self, reason: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Cancel current mission execution.
+        
+        Args:
+            reason: Optional cancellation reason
+        
+        Returns:
+            Success message with status
+        
+        Raises:
+            RuntimeError: If no active mission
+        """
+        if self._orchestrator is None or self._current_mission_id is None:
+            raise RuntimeError("No active mission to cancel")
+        
+        if self._is_cancelled:
+            raise RuntimeError("Mission is already cancelled")
+        
+        state = self._orchestrator.state_manager.get_state()
+        
+        self._is_cancelled = True
+        self._cancel_reason = reason or "User requested cancellation"
+        
+        # If mission is running, cancel the task
+        if self._mission_task and not self._mission_task.done():
+            self._mission_task.cancel()
+            logger.info(f"Cancelled mission task: {self._current_mission_id}")
+        
+        self._add_log(
+            LogLevelEnum.WARNING,
+            "orchestrator_manager",
+            f"Mission {self._current_mission_id} cancelled: {self._cancel_reason}",
+            {"state": state.value}
+        )
+        
+        await self._emit_event("mission_cancelled", {
+            "mission_id": self._current_mission_id,
+            "cancelled_at_state": state.value,
+            "reason": self._cancel_reason,
+        })
+        
+        # Mark mission as completed with cancellation
+        self._mission_completed_at = datetime.now()
+        
+        return {
+            "success": True,
+            "message": "Mission cancelled successfully",
+            "mission_id": self._current_mission_id,
+            "cancelled_at_state": state.value,
+            "reason": self._cancel_reason,
+        }
+    
+    def is_paused(self) -> bool:
+        """Check if mission is paused."""
+        return self._is_paused
+    
+    def is_cancelled(self) -> bool:
+        """Check if mission is cancelled."""
+        return self._is_cancelled
+    
     def get_state(self) -> Any:
         """Get current state details."""
         from backend.models import StateResponse
@@ -483,6 +637,135 @@ class OrchestratorManager:
             await self._orchestrator.mcp_client.shutdown_servers()
         
         logger.info("OrchestratorManager shutdown complete")
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Get aggregated statistics.
+        
+        Returns:
+            Statistics including total missions, success rate, cost, etc.
+        """
+        if self._orchestrator is None:
+            return {
+                "total_missions": 0,
+                "completed_missions": 0,
+                "failed_missions": 0,
+                "success_rate": 0.0,
+                "total_cost_usd": 0.0,
+                "total_tokens": 0,
+                "average_mission_duration": 0.0,
+                "current_mission": None,
+            }
+        
+        # Get budget info
+        budget = self.get_budget()
+        
+        # Calculate mission stats (simplified - in real implementation, track history)
+        has_mission = self._current_mission_id is not None
+        is_completed = False
+        is_failed = False
+        
+        if has_mission:
+            state = self._orchestrator.state_manager.get_state()
+            is_completed = state == State.COMPLETED
+            is_failed = state == State.ERROR
+        
+        total_missions = 1 if has_mission else 0
+        completed = 1 if is_completed else 0
+        failed = 1 if is_failed else 0
+        
+        success_rate = (completed / total_missions * 100) if total_missions > 0 else 0.0
+        
+        # Calculate average duration
+        avg_duration = 0.0
+        if self._mission_started_at and is_completed and self._mission_completed_at:
+            duration = (self._mission_completed_at - self._mission_started_at).total_seconds()
+            avg_duration = duration
+        
+        return {
+            "total_missions": total_missions,
+            "completed_missions": completed,
+            "failed_missions": failed,
+            "success_rate": round(success_rate, 2),
+            "total_cost_usd": budget.total_spent,
+            "total_tokens": budget.total_tokens,
+            "total_llm_calls": budget.total_calls,
+            "average_mission_duration": round(avg_duration, 2),
+            "current_mission": {
+                "mission_id": self._current_mission_id,
+                "description": self._current_mission_description,
+                "state": self._map_state(self._orchestrator.state_manager.get_state()).value,
+                "is_paused": self._is_paused,
+                "is_cancelled": self._is_cancelled,
+            } if has_mission else None,
+            "uptime_seconds": (datetime.now() - self._mission_created_at).total_seconds() if self._mission_created_at else 0,
+        }
+    
+    def get_models(self) -> Dict[str, Any]:
+        """
+        Get available LLM models with metadata.
+        
+        Returns:
+            Dictionary of available models with pricing and capabilities
+        """
+        if self._orchestrator is None:
+            return {
+                "models": [],
+                "total": 0,
+                "current_model": None,
+            }
+        
+        # Get models from LLM manager
+        llm_manager = self._orchestrator.llm_manager
+        
+        models = []
+        
+        # Add configured models from config
+        for model_name, config in llm_manager.models_config.items():
+            # Determine provider
+            provider = "gemini" if "gemini" in model_name.lower() else "openrouter"
+            
+            # Get pricing from llm_adapters if available
+            pricing = None
+            if provider == "openrouter":
+                try:
+                    from core.llm_adapters import PRICING
+                    if model_name in PRICING:
+                        pricing = PRICING[model_name]
+                except ImportError:
+                    pass
+            
+            model_info = {
+                "name": model_name,
+                "provider": provider,
+                "config": config,
+                "pricing": pricing,
+                "available": True,  # Assume available unless we check
+            }
+            models.append(model_info)
+        
+        # Get current model
+        current_model = llm_manager.default_model_name
+        
+        return {
+            "models": models,
+            "total": len(models),
+            "current_model": current_model,
+            "aliases": llm_manager.aliases,
+        }
+    
+    def get_available_models(self) -> list:
+        """
+        Get available LLM models (simple list format).
+        
+        Alias for get_models() that returns just the models list.
+        Used by some API endpoints and tests.
+        
+        Returns:
+            List of model dictionaries
+        """
+        full_data = self.get_models()
+        return full_data.get("models", [])
 
 
 # Singleton instance
