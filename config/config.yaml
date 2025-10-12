@@ -25,14 +25,20 @@ llm_models:
   # Aliasy pro různé typy úkolů. Orchestrátor vybírá alias,
   # LLM Manager ho překládá na konkrétní model.
   aliases:
+    # Gemini models (direct API)
     powerful: "gemini-2.0-flash-exp"       # Gemini 2.5 Flash (experimental, nejnovější)
     economical: "gemini-1.5-flash"         # Gemini 1.5 Flash (stabilní)
     gemini: "gemini-2.0-flash-exp"         # Default Gemini
+    
+    # OpenRouter models (multi-provider)
+    cheap: "qwen/qwen-2.5-72b-instruct"    # Cheapest: $0.07/1M tokens
+    balanced: "google/gemma-3-27b-it"      # Balanced: $0.09/1M tokens  
     openrouter: "google/gemini-2.5-flash-lite"  # Fallback na OpenRouter
 
   # Seznam dostupných modelů s jejich identifikátory
   # Gemini modely (přímý API access)
   models:
+    # === Gemini Models (Direct API) ===
     # Gemini 2.5 Flash Experimental (nejnovější, doporučeno)
     "gemini-2.0-flash-exp":
       temperature: 0.7
@@ -51,9 +57,22 @@ llm_models:
       max_output_tokens: 8192
       top_p: 0.95
     
+    # === OpenRouter Models ===
+    # Cheapest options (< $0.10/1M tokens)
+    "qwen/qwen-2.5-72b-instruct":
+      temperature: 0.7
+      max_tokens: 8000
+    
+    "google/gemma-3-27b-it":
+      temperature: 0.7
+      max_tokens: 8000
+    
+    "deepseek/deepseek-v3.2-exp":
+      temperature: 0.7
+      max_tokens: 8000
+    
     # OpenRouter fallback modely
     "google/gemini-2.5-flash-lite": {}
-    "deepseek/deepseek-v3.2-exp": {}
     "anthropic/claude-3-haiku": {}
 
   # Seznam záložních modelů pro OpenRouter (pokud Gemini není dostupný)
