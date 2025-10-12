@@ -38,6 +38,124 @@ Každý záznam musí dodržovat následující Markdown strukturu pro zajiště
 ---
 **Datum**: 2025-10-12
 **Autor**: GitHub Copilot (AI Agent)
+**Ticket/Task**: TUI Redesign, Guardian Refactoring, OpenRouter Enhancement
+
+### Téma: Komprehenzivní Plány pro Modernizaci Projektu
+
+**Popis Práce:**
+- Vytvořil `docs/TUI_REDESIGN_PLAN.md` (30+ stránek) - Kompletní redesign TUI s client-server architekturou
+- Vytvořil `docs/TUI_MOCKUP.md` - ASCII art vizualizace nového TUI designu
+- Vytvořil `docs/GUARDIAN_OPENROUTER_PLAN.md` (25+ stránek) - Guardian refactoring + OpenRouter enhancement
+- Částečně upravil `tui/app.py` - Migrace na NomadOrchestratorV2 (nedokončeno, čeká na full redesign)
+
+**Důvod a Kontext:**
+**Požadavky uživatele:**
+1. Současné TUI je omezené a nefunkční
+2. Guardian "maže postup" (git reset --hard)
+3. docker-compose up nefunguje správně
+4. Potřeba maximální transparentnosti a debugovatelnosti
+5. Potřeba full OpenRouter integration (JSON mode, billing)
+
+**Návrhovaná Řešení:**
+
+**1. TUI Redesign (Client-Server Architecture):**
+- **Backend**: FastAPI server běžící nezávisle (port 8080)
+  * REST API (mission management, state, budget)
+  * WebSocket (real-time updates)
+  * Health checks
+- **TUI Client**: Textual app připojující se k backendu
+  * 6 tabs: Plan, Execution, Logs, State, Budget, History
+  * Real-time streaming (LLM thinking, tool execution)
+  * Professional layout s gauges, graphs, alerts
+- **Výhody**:
+  * Backend crash ≠ TUI crash (nezávislost)
+  * Multiple clients současně
+  * Snadné debugování
+  * Docker Compose fully supported
+
+**2. Guardian Refactoring:**
+- **Problém**: `guardian/runner.py` dělá `git reset --hard` při 3 crashech
+  * ☠️ MAŽE VEŠKERÝ POSTUP!
+  * Redundantní s NomadV2 RecoveryManager
+- **Řešení**: Health Monitor (replacement)
+  * Pouze monitoring (CPU, RAM, Disk, FD)
+  * Žádné git operace (NEVER!)
+  * Žádné destructive actions
+  * Integrace přes Backend API
+  * TUI Health tab (7th tab)
+  * RecoveryManager v NomadV2 je dostačující
+
+**3. OpenRouter Enhancement:**
+- **Co chybí**:
+  * JSON mode (structured output)
+  * Parameter reading (temperature, top_p, max_tokens)
+  * Billing tracking (cost per call)
+  * Model discovery
+  * Provider preferences
+- **Řešení**: Full-featured OpenRouterAdapter
+  * JSON mode s strict schemas
+  * All generation parameters
+  * Detailed cost tracking
+  * Model metadata API
+  * Enhanced BudgetTracker
+
+**Narazené Problémy a Řešení:**
+1. **TUI Design Complexity**: Potřeba vybalancovat features vs přehlednost
+   - Řešení: 6-tab layout, každý tab jednu oblast (separation of concerns)
+2. **Guardian Destruktivnost**: Git reset je no-go
+   - Řešení: Complete removal, Health Monitor jako replacement
+3. **OpenRouter Features**: Neúplná implementace
+   - Řešení: Kompletní rewrite adaptéru s full API support
+
+**Dopad na Projekt:**
+**TUI Redesign:**
+- ✅ Production-ready deployment
+- ✅ Robustní architektura
+- ✅ Snadná instalace (5 minut)
+- ✅ Multiple deployment modes (dev, docker, systemd, standalone)
+- ✅ Complete transparency pro debugging
+
+**Guardian → Health Monitor:**
+- ✅ **ŽÁDNÁ ZTRÁTA DAT!** (no git reset)
+- ✅ Crash recovery pouze přes NomadV2 RecoveryManager
+- ✅ Health monitoring jako service
+- ✅ Integration s TUI
+
+**OpenRouter:**
+- ✅ JSON mode pro structured output
+- ✅ Accurate billing tracking
+- ✅ Flexible model selection
+- ✅ Kompatibilita s Gemini adapter
+
+**Implementation Timeline:**
+- **TUI Redesign**: 6-10 dní
+  * Phase 1: Backend Foundation (2-3 dní)
+  * Phase 2: TUI Client (2-3 dní)
+  * Phase 3: Deployment (1-2 dní)
+  * Phase 4: Testing & Polish (1-2 dní)
+- **Guardian + OpenRouter**: 5 dní
+  * Phase 1: Guardian Removal (1 den)
+  * Phase 2: Health Monitor (1 den)
+  * Phase 3: OpenRouter Enhancement (2 dny)
+  * Phase 4: Testing & Docs (1 den)
+- **TOTAL**: 11-15 dní
+
+**Dokumenty:**
+1. `docs/TUI_REDESIGN_PLAN.md` - Kompletní TUI architektura
+2. `docs/TUI_MOCKUP.md` - Vizuální mockups
+3. `docs/GUARDIAN_OPENROUTER_PLAN.md` - Guardian & OpenRouter
+
+**Status**: ČEKÁ NA FINÁLNÍ SCHVÁLENÍ před implementací
+
+**Návazné Kroky:**
+1. Odpovědi na Open Questions (WebUI? Auth? Multi-user?)
+2. Finální schválení všech 3 plánů
+3. Start implementace podle roadmap
+4. Daily progress updates do WORKLOG
+
+---
+**Datum**: 2025-10-12
+**Autor**: GitHub Copilot (AI Agent)
 **Ticket/Task**: Gemini 2.5 Flash Integration
 
 ### Téma: Integrace Google Gemini 2.5 Flash API
