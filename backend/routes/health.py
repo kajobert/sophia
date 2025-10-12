@@ -2,13 +2,14 @@
 Health API routes.
 
 Endpoints for system health monitoring.
+Uses HealthMonitor for detailed resource tracking.
 """
 
 from fastapi import APIRouter
 from datetime import datetime
 
 from backend.models import HealthStatus
-from backend.orchestrator_manager import orchestrator_manager
+from backend.health_monitor import get_health_monitor
 
 router = APIRouter(prefix="/api/v1/health", tags=["health"])
 
@@ -16,49 +17,46 @@ router = APIRouter(prefix="/api/v1/health", tags=["health"])
 @router.get("", response_model=HealthStatus)
 async def get_health():
     """
-    Get system health status.
+    Get comprehensive system health status.
+    
+    Uses HealthMonitor for detailed resource tracking:
+    - CPU, memory, disk usage
+    - File descriptor count
+    - High-resource processes
+    - Configurable thresholds
     
     Returns:
         HealthStatus with health metrics and checks
     """
-    metrics = orchestrator_manager.get_health_metrics()
+    monitor = get_health_monitor()
+    report = monitor.check_health()
     
-    # Perform health checks
+    # Build health checks
     checks = {
-        "cpu_ok": metrics.cpu_percent < 80.0,
-        "memory_ok": metrics.memory_percent < 90.0,
-        "disk_ok": metrics.disk_percent < 90.0,
-        "fd_ok": metrics.open_file_descriptors < 1000,
+        "cpu_ok": report.cpu_percent < monitor.thresholds.cpu_warning_percent,
+        "memory_ok": report.memory.percent_used < monitor.thresholds.memory_warning_percent,
+        "disk_ok": report.disk.percent_used < monitor.thresholds.disk_warning_percent,
+        "fd_ok": report.total_fds < monitor.thresholds.fd_warning_count,
     }
     
-    # Determine overall status
-    all_ok = all(checks.values())
-    some_ok = any(checks.values())
-    
-    if all_ok:
-        status_val = "healthy"
-    elif some_ok:
-        status_val = "degraded"
-    else:
-        status_val = "unhealthy"
-    
-    # Collect issues
-    issues = []
-    if not checks["cpu_ok"]:
-        issues.append(f"High CPU usage: {metrics.cpu_percent:.1f}%")
-    if not checks["memory_ok"]:
-        issues.append(f"High memory usage: {metrics.memory_percent:.1f}%")
-    if not checks["disk_ok"]:
-        issues.append(f"High disk usage: {metrics.disk_percent:.1f}%")
-    if not checks["fd_ok"]:
-        issues.append(f"Many open file descriptors: {metrics.open_file_descriptors}")
+    # Build metrics (compatible with existing HealthMetrics model)
+    from backend.models import HealthMetrics
+    metrics = HealthMetrics(
+        cpu_percent=report.cpu_percent,
+        memory_percent=report.memory.percent_used,
+        memory_available_mb=report.memory.available_mb,
+        disk_percent=report.disk.percent_used,
+        disk_available_gb=report.disk.free_gb,
+        open_file_descriptors=report.total_fds,
+        uptime_seconds=report.uptime_seconds,
+    )
     
     return HealthStatus(
-        status=status_val,
+        status=report.status.value,
         checks=checks,
         metrics=metrics,
-        issues=issues,
-        timestamp=datetime.now(),
+        issues=report.issues,
+        timestamp=report.timestamp,
     )
 
 
