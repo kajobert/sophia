@@ -7,6 +7,7 @@ instance and exposes it to the FastAPI backend in a thread-safe way.
 
 import asyncio
 import uuid
+import time
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Callable
 from threading import Lock
@@ -272,8 +273,8 @@ class OrchestratorManager:
             completed_at=self._mission_completed_at,
             max_steps=50,  # TODO: Get from orchestrator
             current_step=state_data.get("current_step", 0),
-            budget_limit=self._orchestrator.budget_tracker.max_cost,
-            budget_used=self._orchestrator.budget_tracker.total_cost,
+            budget_limit=float(self._orchestrator.budget_tracker.max_tokens),
+            budget_used=float(self._orchestrator.budget_tracker.tokens_used),
             success=state == State.COMPLETED,
             error=state_data.get("error") if state == State.ERROR else None,
         )
@@ -369,56 +370,45 @@ class OrchestratorManager:
         
         tracker = self._orchestrator.budget_tracker
         
-        # Convert call history to API models
+        # BudgetTracker uses tokens, not USD cost
+        # Convert step_costs to API format
         calls = []
-        for call in tracker.call_history:
+        total_tokens = tracker.tokens_used
+        
+        for step_id, step_data in tracker.step_costs.items():
+            # Create LLMCallCost from step data
             calls.append(LLMCallCost(
-                timestamp=call.get("timestamp", datetime.now()),
-                model=call.get("model", "unknown"),
-                provider=call.get("provider", "unknown"),
+                timestamp=datetime.fromtimestamp(step_data.get("timestamp", time.time())),
+                model="unknown",  # BudgetTracker doesn't store model
+                provider="unknown",  # BudgetTracker doesn't store provider
                 usage=TokenUsage(
-                    prompt_tokens=call.get("prompt_tokens", 0),
-                    completion_tokens=call.get("completion_tokens", 0),
-                    total_tokens=call.get("total_tokens", 0),
+                    prompt_tokens=0,  # Not tracked separately
+                    completion_tokens=0,  # Not tracked separately
+                    total_tokens=step_data.get("tokens", 0),
                 ),
-                cost_usd=call.get("cost", 0.0),
-                purpose=call.get("purpose"),
+                cost_usd=0.0,  # BudgetTracker doesn't track USD cost
+                purpose=step_data.get("description", f"Step {step_id}"),
             ))
         
-        # Calculate breakdowns
-        breakdown_provider: Dict[str, float] = {}
-        breakdown_model: Dict[str, float] = {}
-        breakdown_purpose: Dict[str, float] = {}
-        
-        for call in tracker.call_history:
-            provider = call.get("provider", "unknown")
-            model = call.get("model", "unknown")
-            purpose = call.get("purpose", "unknown")
-            cost = call.get("cost", 0.0)
-            
-            breakdown_provider[provider] = breakdown_provider.get(provider, 0.0) + cost
-            breakdown_model[model] = breakdown_model.get(model, 0.0) + cost
-            breakdown_purpose[purpose] = breakdown_purpose.get(purpose, 0.0) + cost
-        
-        # Calculate remaining budget
+        # Calculate budget remaining
         budget_remaining = None
         budget_percent = None
-        if tracker.max_cost:
-            budget_remaining = tracker.max_cost - tracker.total_cost
-            budget_percent = (tracker.total_cost / tracker.max_cost) * 100
+        if tracker.max_tokens:
+            budget_remaining = float(tracker.max_tokens - tracker.tokens_used)
+            budget_percent = (tracker.tokens_used / tracker.max_tokens) * 100
         
         return BudgetResponse(
             mission_id=self._current_mission_id,
-            total_spent=tracker.total_cost,
-            budget_limit=tracker.max_cost,
+            total_spent=0.0,  # BudgetTracker doesn't track USD
+            budget_limit=float(tracker.max_tokens) if tracker.max_tokens else None,
             budget_remaining=budget_remaining,
             budget_used_percent=budget_percent,
-            total_tokens=tracker.total_tokens,
-            total_calls=len(tracker.call_history),
+            total_tokens=total_tokens,
+            total_calls=len(tracker.step_costs),
             calls=calls,
-            breakdown_by_provider=breakdown_provider,
-            breakdown_by_model=breakdown_model,
-            breakdown_by_purpose=breakdown_purpose,
+            breakdown_by_provider={},  # Not tracked
+            breakdown_by_model={},  # Not tracked
+            breakdown_by_purpose={},  # Not tracked
         )
     
     def get_logs(

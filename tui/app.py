@@ -15,7 +15,8 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.markdown import Markdown
 
-from core.orchestrator import JulesOrchestrator
+from core.nomad_orchestrator_v2 import NomadOrchestratorV2
+from core.state_manager import State
 from core.rich_printer import RichPrinter
 from tui.widgets.status_widget import StatusWidget
 from tui.messages import LogMessage, ChatMessage
@@ -23,10 +24,10 @@ from tui.messages import LogMessage, ChatMessage
 CRASH_LOG_PATH = os.path.join(os.path.dirname(__file__), "..", "logs", "crash.log")
 
 class SophiaTUI(App):
-    """Moderní TUI pro interakci s agentem Jules s podporou záložek."""
+    """Moderní TUI pro interakci s NomadOrchestratorV2."""
 
-    TITLE = "Jules - AI Software Engineer"
-    SUB_TITLE = "Powered by Sophia Protocol"
+    TITLE = "Nomad - AI Software Engineer"
+    SUB_TITLE = "Powered by Sophia/Nomad V2 Protocol"
 
     BINDINGS = [
         ("ctrl+d", "toggle_dark", "Přepnout tmavý režim"),
@@ -42,9 +43,9 @@ class SophiaTUI(App):
         self.tool_widget.border_title = "Výstup nástrojů"
         self.log_widget = StatusWidget(id="log_view")
         self.log_widget.border_title = "Systémové logy"
-        self.orchestrator = JulesOrchestrator(project_root=self.project_root)
+        self.orchestrator = NomadOrchestratorV2(project_root=self.project_root)
         self.input_widget = Input(placeholder="Zadejte svůj úkol nebo zprávu...")
-        self.session_id = None
+        self.mission_running = False
 
     def compose(self) -> ComposeResult:
         """Sestaví layout TUI."""
@@ -61,62 +62,21 @@ class SophiaTUI(App):
 
     async def on_mount(self) -> None:
         """Spustí se po připojení widgetů a zkontroluje pád aplikace."""
-        
-
-
         RichPrinter.set_message_poster(self.post_message)
-        self.initialize_orchestrator()
+        await self.initialize_orchestrator()
         self.input_widget.focus()
-        await self.check_for_crash_and_start_recovery()
+        # Note: Crash recovery je nyní handled v NomadOrchestratorV2 RecoveryManager
 
-    async def check_for_crash_and_start_recovery(self):
-        """Zkontroluje, zda existuje log o pádu, a pokud ano, spustí proces obnovy."""
-        if not os.path.exists(CRASH_LOG_PATH):
-            return
-
-        try:
-            with open(CRASH_LOG_PATH, "r", encoding="utf-8") as f:
-                crash_content = f.read()
-
-            os.remove(CRASH_LOG_PATH)
-
-            RichPrinter.error("Detekován pád aplikace! Zahajuji proces autonomní opravy.")
-
-            recovery_prompt = textwrap.dedent(f"""
-                **KRITICKÉ UPOZORNĚNÍ: Během předchozího spuštění došlo k pádu aplikace.**
-                Tvým hlavním a jediným úkolem je analyzovat následující chybový protokol, diagnostikovat hlavní příčinu a implementovat opravu.
-                --- ZÁZNAM O SELHÁNÍ ---
-                {crash_content}
-                --- KONEC ZÁZNAMU O SELHÁNÍ ---
-                **POSTUP OPRAVY:**
-                1. Analyzuj chybu a navrhni plán opravy.
-                2. Implementuj opravu.
-                3. Ověř, že oprava funguje.
-                **DŮLEŽITÝ KROK PO OVĚŘENÍ OPRAVY:**
-                Jakmile je oprava ověřena, **musíš** trvale uložit nový funkční stav. Použij k tomu následující nástroje v tomto pořadí:
-                1. `create_git_commit` - Vytvoř commit s popisem provedené opravy.
-                2. `promote_commit_to_last_known_good` - Z výstupu předchozího kroku získej hash nového commitu a použij tento nástroj.
-                Tento druhý krok je klíčový pro evoluci a stabilitu systému. Začni s analýzou.
-            """).strip()
-
-            recovery_panel = Panel(Markdown(recovery_prompt), title="Automatická Oprava", border_style="bold red")
-            self.tool_widget.write(recovery_panel)
-            self.run_orchestrator_task(recovery_prompt)
-        except Exception as e:
-            RichPrinter.error(f"Nepodařilo se zpracovat crash log: {e}")
-
-    @work(exclusive=True)
     async def initialize_orchestrator(self):
-        """Inicializuje orchestrátor v samostatném workeru."""
-        RichPrinter.info("Inicializace jádra agenta...")
-        await self.orchestrator.initialize()
+        """Inicializuje orchestrátor asynchronně."""
+        RichPrinter.info("Inicializace NomadOrchestratorV2...")
         try:
-            if self.orchestrator.llm_manager.get_llm():
-                RichPrinter.info("Jádro agenta připraveno.")
-            else:
-                RichPrinter.error("LLM manažer nevrátil model, ale nevyvolal výjimku. Agent je v offline režimu.")
+            await self.orchestrator.initialize()
+            RichPrinter.info("✅ Nomad připraven k použití!")
+            RichPrinter.info(f"📊 Model: {self.orchestrator.llm_manager._gemini_adapter.model_name if self.orchestrator.llm_manager._gemini_adapter else 'OpenRouter'}")
         except Exception as e:
-            RichPrinter.error(f"Nepodařilo se inicializovat LLM: {e}. Agent je v offline režimu.")
+            RichPrinter.error(f"❌ Chyba při inicializaci: {e}")
+            traceback.print_exc()
     
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Zpracuje odeslání vstupu od uživatele."""
