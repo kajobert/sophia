@@ -11,7 +11,7 @@ class MCPClient:
     Zapouzdřuje logiku pro spouštění, ukončování a komunikaci
     se subprocesy MCP serverů.
     """
-    def __init__(self, project_root: str, profile: str):
+    def __init__(self, project_root: str, *, profile: str):
         self.project_root = project_root
         self.profile = profile
         self.servers = {}

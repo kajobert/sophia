@@ -24,7 +24,7 @@ class NomadOrchestrator:
         """
         self.project_root = project_root
         self.state_manager = StateManager(project_root, session_id)
-        self.mcp_client = MCPClient(profile="worker")
+        self.mcp_client = MCPClient(project_root=self.project_root, profile="worker")
 
         # Attempt to restore a previous session
         if session_id and self.state_manager.restore():
