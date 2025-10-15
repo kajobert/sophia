@@ -1,0 +1,210 @@
+# ==============================================================================
+# Nomad AI Agent - Production Configuration
+#
+# Advanced production settings for Nomad orchestrator
+# Override with environment variables when needed
+# ==============================================================================
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 4
+  reload: false
+  log_level: "info"
+  timeout_keep_alive: 60
+  
+logging:
+  version: 1
+  disable_existing_loggers: false
+  
+  formatters:
+    json:
+      class: pythonjsonlogger.jsonlogger.JsonFormatter
+      format: "%(asctime)s %(name)s %(levelname)s %(message)s"
+    
+    standard:
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: json
+      stream: ext://sys.stdout
+    
+    file:
+      class: logging.handlers.RotatingFileHandler
+      level: INFO
+      formatter: json
+      filename: /opt/nomad/logs/nomad.log
+      maxBytes: 10485760  # 10MB
+      backupCount: 5
+    
+    error_file:
+      class: logging.handlers.RotatingFileHandler
+      level: ERROR
+      formatter: json
+      filename: /opt/nomad/logs/error.log
+      maxBytes: 10485760
+      backupCount: 5
+  
+  loggers:
+    nomad:
+      level: INFO
+      handlers: [console, file, error_file]
+      propagate: false
+    
+    uvicorn:
+      level: INFO
+      handlers: [console]
+      propagate: false
+    
+    backend:
+      level: INFO
+      handlers: [console, file]
+      propagate: false
+  
+  root:
+    level: INFO
+    handlers: [console, file]
+
+llm:
+  providers:
+    openrouter:
+      api_key: ${OPENROUTER_API_KEY}
+      base_url: "https://openrouter.ai/api/v1"
+      default_model: "google/gemini-2.0-flash-exp"
+      timeout: 60
+      max_retries: 3
+      retry_delay: 2
+    
+    gemini:
+      api_key: ${GEMINI_API_KEY}
+      default_model: "gemini-1.5-flash"
+      timeout: 60
+      max_retries: 3
+  
+  defaults:
+    temperature: 0.7
+    max_tokens: 100000
+    top_p: 0.95
+    top_k: 40
+    
+  fallback_chain:
+    - provider: openrouter
+      model: google/gemini-2.0-flash-exp
+    - provider: openrouter
+      model: qwen/qwen-2.5-72b-instruct  # Cheapest fallback
+    - provider: gemini
+      model: gemini-1.5-flash
+
+orchestrator:
+  max_concurrent_missions: 5
+  mission_timeout: 3600  # 1 hour
+  step_timeout: 300      # 5 minutes
+  
+  recovery:
+    enabled: true
+    max_recovery_attempts: 3
+    checkpoint_interval: 60
+  
+  reflection:
+    enabled: true
+    min_error_count: 2
+    strategies: [retry, retry_modified, replanning, ask_user, skip_step]
+  
+  planning:
+    enabled: true
+    max_steps: 50
+    dependency_tracking: true
+
+health:
+  check_interval: 30
+  check_timeout: 10
+  
+  thresholds:
+    cpu_percent: 80.0
+    memory_percent: 85.0
+    disk_percent: 90.0
+  
+  alerts:
+    enabled: true
+    webhook_url: ${ALERT_WEBHOOK_URL:-}
+
+budget:
+  enabled: true
+  limits:
+    daily_usd: 10.0
+    monthly_usd: 100.0
+    per_mission_usd: 1.0
+  
+  tracking:
+    tokens: true
+    cost: true
+    time: true
+
+security:
+  cors:
+    enabled: true
+    origins:
+      - "https://your-domain.com"
+      - "https://*.your-domain.com"
+    allow_credentials: true
+    allow_methods: ["GET", "POST", "PUT", "DELETE"]
+    allow_headers: ["*"]
+  
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    burst_size: 20
+  
+  api_keys:
+    rotation_days: 90
+    min_length: 32
+
+storage:
+  memory:
+    path: /opt/nomad/memory
+    max_size_mb: 100
+    retention_days: 30
+  
+  logs:
+    path: /opt/nomad/logs
+    max_size_mb: 500
+    retention_days: 7
+  
+  sandbox:
+    path: /opt/nomad/sandbox
+    max_size_mb: 1000
+    auto_cleanup: true
+
+monitoring:
+  metrics:
+    enabled: true
+    port: 9090
+    path: /metrics
+  
+  tracing:
+    enabled: false
+    # jaeger_endpoint: http://localhost:14268/api/traces
+  
+  profiling:
+    enabled: false
+    # pyinstrument: true
+
+backup:
+  enabled: true
+  directory: /opt/nomad/backups
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  
+  include:
+    - memory/
+    - config/
+    - .env
+  
+  exclude:
+    - logs/
+    - sandbox/
+    - __pycache__/

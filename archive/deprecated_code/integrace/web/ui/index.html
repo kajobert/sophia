@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sophia Task Interface</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .container { max-width: 600px; margin: auto; }
+        input[type="text"] { width: 70%; padding: 8px; }
+        button { padding: 8px 12px; }
+        #results { margin-top: 1em; padding: 1em; border: 1px solid #ccc; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Creator's Interface</h1>
+        <p>Submit a new task for Sophia to process.</p>
+        <input type="text" id="taskInput" placeholder="Enter task description...">
+        <button onclick="submitTask()">Submit Task</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function submitTask() {
+            const taskInput = document.getElementById('taskInput');
+            const resultsDiv = document.getElementById('results');
+            const taskDescription = taskInput.value;
+
+            if (!taskDescription) {
+                resultsDiv.innerHTML = 'Error: Task description cannot be empty.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/start_task', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ task_description: taskDescription })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultsDiv.innerHTML = `Success: ${result.message} (ID: ${result.task_id})`;
+                    taskInput.value = ''; // Clear input field
+                } else {
+                    resultsDiv.innerHTML = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `Network Error: Could not connect to the API. ${error}`;
+            }
+        }
+    </script>
+</body>
+</html>

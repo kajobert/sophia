@@ -1,0 +1,48 @@
+[Unit]
+Description=Nomad AI Agent Orchestrator - Backend API
+Documentation=https://github.com/ShotyCZ/sophia
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nomad
+Group=nomad
+WorkingDirectory=/opt/nomad
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+Environment="NOMAD_ENV=production"
+EnvironmentFile=/opt/nomad/.env
+
+# Start command
+ExecStart=/opt/nomad/venv/bin/python -m uvicorn backend.server:app \
+    --host 0.0.0.0 \
+    --port 8080 \
+    --log-level info
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# Resource limits
+LimitNOFILE=65536
+MemoryLimit=2G
+CPUQuota=200%
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/nomad/logs /opt/nomad/memory /opt/nomad/sandbox
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nomad-backend
+
+[Install]
+WantedBy=multi-user.target
