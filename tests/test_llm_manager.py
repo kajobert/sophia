@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, ANY
 import os
 import sys
 
@@ -32,8 +32,11 @@ llm_models:
         self.mock_open_func.start()
 
         # Mockování `os.getenv` pro API klíč
-        self.getenv_patcher = patch('os.getenv', return_value="fake_openrouter_key")
+        self.getenv_patcher = patch('os.getenv')
         self.mock_getenv = self.getenv_patcher.start()
+        # Default behavior: only OpenRouter key is found
+        self.mock_getenv.side_effect = lambda key, default=None: "fake_openrouter_key" if key == 'OPENROUTER_API_KEY' else None
+
 
         # Mockování `load_dotenv`, aby se předešlo prohledávání souborového systému
         self.load_dotenv_patcher = patch('core.llm_manager.load_dotenv', return_value=True)
@@ -96,14 +99,11 @@ llm_models:
     def test_api_key_error_handling(self):
         """Testuje, zda je vyhozena výjimka ValueError, když není nalezen API klíč."""
         # Zastavíme a znovu patchneme os.getenv, aby vracel None
-        self.getenv_patcher.stop()
-        getenv_patcher_no_key = patch('os.getenv', return_value=None)
-        getenv_patcher_no_key.start()
+        self.mock_getenv.side_effect = None
+        self.mock_getenv.return_value = None
 
-        with self.assertRaisesRegex(ValueError, "API klíč 'OPENROUTER_API_KEY' nebyl nalezen"):
+        with self.assertRaisesRegex(ValueError, "Žádný LLM provider není dostupný"):
             LLMManager()
-
-        getenv_patcher_no_key.stop()
 
 if __name__ == '__main__':
     unittest.main()
