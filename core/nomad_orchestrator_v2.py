@@ -263,7 +263,7 @@ class NomadOrchestratorV2:
         if is_error_state:
             instruction = "The previous step failed. Analyze the error in the last tool response and decide the best next step to fix the problem and continue the mission. What is the next tool call?"
         else:
-            instruction = "Analyze the mission goal and the history. What is the single best next step (as a tool call) to achieve the goal?"
+            instruction = "Analyze the mission goal and the history. What is the single best next step (as a tool call) to achieve the goal? You must complete all parts of the mission goal, especially cleanup steps, before calling `mission_complete`."
 
         return f"""
 You are Nomad, an autonomous AI software engineer. Your goal is to solve the user's request by calling tools.

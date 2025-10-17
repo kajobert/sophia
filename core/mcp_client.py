@@ -136,12 +136,34 @@ class MCPClient:
             return f"Error from {server_name}: {response['error']['message']}"
         return str(response.get("result", {}).get("result", "No result returned."))
 
-    async def shutdown_servers(self):
-        """Bezpečně ukončí všechny spuštěné MCP servery."""
+    async def shutdown(self):
+        """
+        Gracefully shuts down all running MCP servers.
+
+        This method first sends a SIGTERM signal to all server processes
+        and then waits for them to terminate concurrently. This is more
+        robust than terminating them sequentially.
+        """
         from .rich_printer import RichPrinter
-        RichPrinter.info("Ukončuji MCP servery...")
+        RichPrinter.info("Shutting down all MCP servers...")
+
+        # 1. Signal all processes to terminate
         for server_name, process in self.servers.items():
             if process.returncode is None:
-                process.terminate()
-                await process.wait()
-                print(f"INFO: MCPClient ukončil server '{server_name}'.")
+                try:
+                    process.terminate()
+                    RichPrinter.info(f"Sent SIGTERM to '{server_name}' (PID: {process.pid}).")
+                except ProcessLookupError:
+                    RichPrinter.warning(f"Process for '{server_name}' (PID: {process.pid}) not found. Already terminated?")
+
+        # 2. Wait for all processes to terminate concurrently
+        tasks = []
+        for server_name, process in self.servers.items():
+            if process.returncode is None:
+                tasks.append(process.wait())
+
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+            RichPrinter.info("All MCP server processes have terminated.")
+        else:
+            RichPrinter.info("No active MCP servers to shut down.")
