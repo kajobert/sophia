@@ -1,4 +1,5 @@
 from mcp_servers.base_mcp_server import BaseMCPServer
+from tools.http_client import HttpClientTools
 
 # This server is designed to be modified by the agent itself.
 # The `create_new_tool` function will add new tools here.
@@ -6,9 +7,12 @@ from mcp_servers.base_mcp_server import BaseMCPServer
 class CustomToolsServer(BaseMCPServer):
     def __init__(self):
         super().__init__()
-        # New tools will be added here dynamically
-        # For example:
-        # self.add_tool("new_tool_name", self.new_tool_function, "description")
+        http_client_tools = HttpClientTools()
+        self.add_tool(
+            "send_http_request",
+            http_client_tools.send_http_request,
+            "Sends an HTTP request (GET, POST, etc.) to a URL and returns the status code and JSON response."
+        )
 
     def get_capabilities(self):
         return {"tools": self.tools}

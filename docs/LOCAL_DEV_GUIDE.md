@@ -73,3 +73,30 @@ To run the test suite, you can execute `pytest` from the root of the project. It
     ```bash
     PYTHONPATH=. .venv/bin/python -m pytest
     ```
+
+## Running the End-to-End (E2E) Test
+
+The E2E test provides the highest level of confidence that the agent is working correctly. It spins up the entire application stack using Docker, submits a real mission via the API, and verifies the outcome by checking the agent's logs and output files.
+
+**Prerequisites:**
+*   Docker must be running.
+*   The test requires an OpenRouter API key.
+
+**Execution:**
+
+1.  **Run the E2E test script:**
+    From the root of the project, execute the following command:
+    ```bash
+    python scripts/run_e2e_test.py
+    ```
+
+2.  **Observe the Output:**
+    The script will print its progress, including:
+    *   Setting up the Docker environment.
+    *   Waiting for the backend API to become healthy.
+    *   Submitting the test mission.
+    *   Monitoring logs for success or failure markers.
+    *   Verifying the final output file in the `sandbox` directory.
+    *   Cleaning up the Docker environment.
+
+    The script will exit with code `0` on success and `1` on failure.
