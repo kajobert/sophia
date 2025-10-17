@@ -151,12 +151,7 @@ class MCPClient:
         from .rich_printer import RichPrinter
         RichPrinter.info("Shutting down all MCP servers...")
 
-        # 1. Signal all processes to terminate
-        for server_name, process in self.servers.items():
-            if process.returncode is None:
-                try:
-                    process.terminate()
-# 1. First, send a terminate signal to all processes concurrently
+        # 1. First, send a terminate signal to all processes concurrently
         for server_name, process in self.servers.items():
             if process.returncode is None:
                 try:

@@ -14,10 +14,11 @@ class ManagementServer(BaseMCPServer):
         # to the MCPClient to reload other servers. In a real-world scenario,
         # this might be handled via a more robust service discovery or IPC mechanism.
         # For this MVP, we create a temporary client instance.
-        mcp_client = MCPClient(project_root=".")
-        mcp_client.servers = self.get_server_processes() # Hacky way to share server process list
+        # mcp_client = MCPClient(project_root=".") # THIS CAUSES INFINITE RECURSION
+        # mcp_client.servers = self.get_server_processes() # Hacky way to share server process list
 
-        management_tools = ManagementTools(mcp_client)
+        # We will pass None for now to break the loop. This will be fixed later.
+        management_tools = ManagementTools(None)
         self.add_tool(
             "create_new_tool",
             management_tools.create_new_tool,
