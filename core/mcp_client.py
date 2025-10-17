@@ -36,10 +36,14 @@ class MCPClient:
     async def _start_and_init_server(self, server_name: str, script_path: str):
         """Pomocná metoda pro spuštění a inicializaci jednoho serveru."""
         from .rich_printer import RichPrinter
+        # Nastavíme prostředí pro subproces, abychom zajistili správný PYTHONPATH
+        env = os.environ.copy()
+        env['PYTHONPATH'] = self.project_root
         process = await asyncio.create_subprocess_exec(
             sys.executable, script_path,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            cwd=self.project_root
+            cwd=self.project_root,
+            env=env
         )
         self.servers[server_name] = process
         RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
@@ -152,18 +156,34 @@ class MCPClient:
             if process.returncode is None:
                 try:
                     process.terminate()
+# 1. First, send a terminate signal to all processes concurrently
+        for server_name, process in self.servers.items():
+            if process.returncode is None:
+                try:
+                    process.terminate()
                     RichPrinter.info(f"Sent SIGTERM to '{server_name}' (PID: {process.pid}).")
                 except ProcessLookupError:
                     RichPrinter.warning(f"Process for '{server_name}' (PID: {process.pid}) not found. Already terminated?")
 
-        # 2. Wait for all processes to terminate concurrently
+        # 2. Now, wait for all of them to terminate, with a timeout for each
         tasks = []
         for server_name, process in self.servers.items():
             if process.returncode is None:
-                tasks.append(process.wait())
+                async def wait_with_timeout(proc, name):
+                    try:
+                        await asyncio.wait_for(proc.wait(), timeout=5.0)
+                        RichPrinter.info(f"MCPClient gracefully shut down server '{name}'.")
+                    except asyncio.TimeoutError:
+                        RichPrinter.warning(f"Server '{name}' (PID: {proc.pid}) did not respond to terminate, sending kill signal.")
+                        proc.kill()
+                        await proc.wait() # Wait for the process to die after kill
+                    except ProcessLookupError:
+                        RichPrinter.warning(f"Process for server '{name}' vanished before it could be waited on.")
+                
+                tasks.append(wait_with_timeout(process, server_name))
 
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-            RichPrinter.info("All MCP server processes have terminated.")
+            await asyncio.gather(*tasks)
+            RichPrinter.info("All MCP server processes have been shut down.")
         else:
             RichPrinter.info("No active MCP servers to shut down.")

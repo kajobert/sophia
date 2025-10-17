@@ -135,7 +135,7 @@ class NomadOrchestratorV2:
         3. Transition to EXECUTING_TOOL or MISSION_COMPLETE.
         """
         prompt = self._build_prompt()
-        RichPrinter.info("🤔 Thinking...")
+        RichPrinter.info("[THINKING] Building prompt and querying LLM for next action...")
 
         try:
             model = self.llm_manager.get_llm("powerful")
@@ -144,23 +144,39 @@ class NomadOrchestratorV2:
             self.budget_tracker.record_step_cost(f"thinking-{len(self.history)}", usage.get("usage", {}).get("total_tokens", 0), 0)
 
             parsed_response = self._parse_llm_response(response)
-
-            if parsed_response.get("tool_name") == "mission_complete":
-                RichPrinter.info("✅ LLM decided the mission is complete.")
-                self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
-                self.current_state = MissionState.MISSION_COMPLETE
-            elif "tool_name" in parsed_response:
-                self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
-                self.current_state = MissionState.EXECUTING_TOOL
-            else:
-                # The LLM responded without a valid tool call. Treat as an error.
-                RichPrinter.warning("⚠️ LLM response did not contain a valid tool call or mission_complete.")
-                self.history.append({"role": "system", "content": f"Error: The LLM's response was not a valid tool call. Response: {response}"})
-                self.current_state = MissionState.HANDLING_ERROR
-
         except Exception as e:
-            RichPrinter.error(f"💥 Error during thinking phase: {e}")
-            self.history.append({"role": "system", "content": f"Critical error in THINKING state: {e}"})
+            if "429" in str(e): # Check for rate limit error
+                RichPrinter.warning("⚠️ Primary model failed with 429 error. Switching to fallback model.")
+                try:
+                    model = self.llm_manager.get_llm("fallback")
+                    response, usage = await model.generate_content_async(prompt)
+                    self.budget_tracker.record_step_cost(f"thinking-fallback-{len(self.history)}", usage.get("usage", {}).get("total_tokens", 0), 0)
+                    parsed_response = self._parse_llm_response(response)
+                except Exception as fallback_e:
+                    RichPrinter.error(f"💥 Fallback model also failed: {fallback_e}")
+                    self.history.append({"role": "system", "content": f"Critical error in THINKING state (fallback): {fallback_e}"})
+                    self.current_state = MissionState.HANDLING_ERROR
+                    return
+            else:
+                RichPrinter.error(f"💥 Error during thinking phase: {e}")
+                self.history.append({"role": "system", "content": f"Critical error in THINKING state: {e}"})
+                self.current_state = MissionState.HANDLING_ERROR
+                return
+
+        RichPrinter.info("[ACTION PROPOSED] LLM proposed the following action:")
+        RichPrinter.agent_tool_code(json.dumps(parsed_response, indent=2))
+
+        if parsed_response.get("tool_name") == "mission_complete":
+            RichPrinter.info("✅ LLM decided the mission is complete.")
+            self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
+            self.current_state = MissionState.MISSION_COMPLETE
+        elif "tool_name" in parsed_response:
+            self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
+            self.current_state = MissionState.EXECUTING_TOOL
+        else:
+            # The LLM responded without a valid tool call. Treat as an error.
+            RichPrinter.warning("⚠️ LLM response did not contain a valid tool call or mission_complete.")
+            self.history.append({"role": "system", "content": f"Error: The LLM's response was not a valid tool call. Response: {response}"})
             self.current_state = MissionState.HANDLING_ERROR
 
     async def _state_executing_tool(self) -> None:
@@ -177,22 +193,24 @@ class NomadOrchestratorV2:
         tool_call = json.loads(tool_call_entry)
         tool_name = tool_call.get("tool_name")
         
-        RichPrinter.info(f"🛠️  Executing tool: {tool_name}")
+        RichPrinter.info(f"[EXECUTING TOOL] Running '{tool_name}'")
 
         try:
             result = await self.mcp_client.execute_tool(
                 tool_name,
                 tool_call.get("args", []),
                 tool_call.get("kwargs", {}),
-                verbose=True
+                verbose=False # Set to False to avoid duplicate logging from MCP
             )
             
-            RichPrinter.info(f"✅ Tool '{tool_name}' executed successfully.")
+            RichPrinter.info(f"[TOOL RESULT] Tool '{tool_name}' executed successfully.")
+            RichPrinter.agent_tool_output(str(result))
             self.history.append({"role": "tool", "content": str(result)})
             self.current_state = MissionState.THINKING
 
         except Exception as e:
-            RichPrinter.error(f"❌ Tool '{tool_name}' failed: {e}")
+            RichPrinter.error(f"[TOOL RESULT] Tool '{tool_name}' failed.")
+            RichPrinter.agent_tool_output(str(e))
             error_message = f"Error executing tool {tool_name}: {e}"
             self.history.append({"role": "tool", "content": error_message})
             self.current_state = MissionState.HANDLING_ERROR
@@ -214,24 +232,36 @@ class NomadOrchestratorV2:
             response, usage = await model.generate_content_async(prompt)
 
             self.budget_tracker.record_step_cost(f"error-handling-{len(self.history)}", usage.get("usage", {}).get("total_tokens", 0), 0)
-
             parsed_response = self._parse_llm_response(response)
-
-            if "tool_name" in parsed_response:
-                RichPrinter.info(f"💡 Received corrective action: {parsed_response['tool_name']}")
-                self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
-                self.current_state = MissionState.EXECUTING_TOOL
-            else:
-                # The LLM failed to provide a corrective tool call. This is a deeper problem.
-                # We'll stay in the error state and add more context for the next attempt.
-                RichPrinter.error("❌ LLM failed to provide a corrective action. Retrying.")
-                self.history.append({"role": "system", "content": f"Critical Error: The LLM did not provide a corrective tool call after an error. LLM Response: {response}"})
-                # The loop will bring us back here, but with more context in the history.
-
         except Exception as e:
-            RichPrinter.error(f"💥 Critical error during error handling: {e}")
-            self.history.append({"role": "system", "content": f"Critical error in HANDLING_ERROR state: {e}"})
-            # Stay in the error state for the next iteration.
+            if "429" in str(e):
+                RichPrinter.warning("⚠️ Primary model failed with 429 error during error handling. Switching to fallback model.")
+                try:
+                    model = self.llm_manager.get_llm("fallback")
+                    response, usage = await model.generate_content_async(prompt)
+                    self.budget_tracker.record_step_cost(f"error-handling-fallback-{len(self.history)}", usage.get("usage", {}).get("total_tokens", 0), 0)
+                    parsed_response = self._parse_llm_response(response)
+                except Exception as fallback_e:
+                    RichPrinter.error(f"💥 Fallback model also failed during error handling: {fallback_e}")
+                    self.history.append({"role": "system", "content": f"Critical error in HANDLING_ERROR state (fallback): {fallback_e}"})
+                    # Stay in error state
+                    return
+            else:
+                 RichPrinter.error(f"💥 Critical error during error handling: {e}")
+                 self.history.append({"role": "system", "content": f"Critical error in HANDLING_ERROR state: {e}"})
+                 # Stay in error state
+                 return
+
+        if "tool_name" in parsed_response:
+            RichPrinter.info(f"💡 Received corrective action: {parsed_response['tool_name']}")
+            self.history.append({"role": "assistant", "content": json.dumps(parsed_response, indent=2)})
+            self.current_state = MissionState.EXECUTING_TOOL
+        else:
+            # The LLM failed to provide a corrective tool call. This is a deeper problem.
+            # We'll stay in the error state and add more context for the next attempt.
+            RichPrinter.error("❌ LLM failed to provide a corrective action. Retrying.")
+            self.history.append({"role": "system", "content": f"Critical Error: The LLM did not provide a corrective tool call after an error. LLM Response: {response}"})
+            # The loop will bring us back here, but with more context in the history.
 
     # ==================== HELPER METHODS ====================
     
