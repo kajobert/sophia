@@ -3,55 +3,61 @@ import os
 SANDBOX_DIR = "sandbox"
 PROJECT_ROOT_PREFIX = "PROJECT_ROOT/"
 
-def _resolve_path(user_path: str) -> str:
+def _resolve_path(user_path: str, project_root: str = None) -> str:
     """
-    Safely resolves a user-provided path.
-    - If the path starts with 'PROJECT_ROOT/', it resolves from the project root.
-    - Otherwise, it defaults to the 'sandbox/' directory.
-    - Prevents any path traversal attacks ('..').
+    Safely resolves a user-provided path against a project root.
+
+    - If `project_root` is not provided, it defaults to the current working directory.
+    - Paths starting with `PROJECT_ROOT/` are resolved from the `project_root`.
+    - All other paths are resolved relative to the `sandbox/` directory within the `project_root`.
+    - It actively prevents path traversal ('..') and absolute paths.
     """
-    # Normalize to prevent basic traversal
+    if project_root is None:
+        project_root = os.getcwd()
+
+    # Normalize user_path to prevent basic traversal attacks like '..'
     norm_user_path = os.path.normpath(user_path)
+
     if os.path.isabs(norm_user_path) or norm_user_path.startswith(".."):
         raise ValueError(f"Path traversal detected. Absolute paths and '..' are not allowed. Provided: '{user_path}'")
 
-    if user_path.startswith(PROJECT_ROOT_PREFIX):
-        # Path is relative to the project root
-        base_dir = "."
-        path_to_join = user_path[len(PROJECT_ROOT_PREFIX):]
+    # Determine the base directory for the operation
+    if norm_user_path.startswith(PROJECT_ROOT_PREFIX):
+        base_dir = os.path.abspath(project_root)
+        path_to_join = norm_user_path[len(PROJECT_ROOT_PREFIX):]
     else:
-        # Path is relative to the sandbox
-        base_dir = SANDBOX_DIR
-        path_to_join = user_path
-        # Create sandbox if it doesn't exist for sandbox operations
-        if not os.path.exists(SANDBOX_DIR):
-            os.makedirs(SANDBOX_DIR)
+        # Default to the sandbox directory
+        sandbox_path = os.path.join(project_root, SANDBOX_DIR)
+        base_dir = os.path.abspath(sandbox_path)
+        path_to_join = norm_user_path
 
-    # Safely join the path
-    safe_path = os.path.join(base_dir, path_to_join)
+        # Create the sandbox directory if it doesn't exist
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
 
-    # Final check to ensure the resolved path is within the intended directory
-    abs_base_dir = os.path.abspath(base_dir)
-    abs_safe_path = os.path.abspath(safe_path)
+    # Safely join the base directory and the user-provided path
+    safe_path = os.path.abspath(os.path.join(base_dir, path_to_join))
 
-    if not abs_safe_path.startswith(abs_base_dir):
-        raise ValueError(f"Path traversal detected. Final path '{safe_path}' is outside the allowed directory.")
+    # Security check: Ensure the resolved path is within the allowed base directory
+    if not safe_path.startswith(base_dir):
+        # This check is crucial to prevent users from escaping the intended directory
+        raise ValueError(f"Path traversal detected. Final path '{user_path}' resolves outside the allowed directory.")
 
     return safe_path
 
-def list_files(path: str = ".") -> str:
+def list_files(path: str = ".", project_root: str = None) -> str:
     """
     Lists files and directories under a given path.
     Defaults to the 'sandbox/' directory.
     To list files from the project root, use the 'PROJECT_ROOT/' prefix (e.g., 'PROJECT_ROOT/core').
     """
     try:
-        safe_path = _resolve_path(path)
+        safe_path = _resolve_path(path, project_root)
         return "\n".join(os.listdir(safe_path))
     except Exception as e:
         return f"Error listing files: {e}"
 
-def read_file(filepath: str, line_limit: int = None) -> str:
+def read_file(filepath: str, line_limit: int = None, project_root: str = None) -> str:
     """
     Returns the content of the specified file.
     Defaults to the 'sandbox/' directory.
@@ -60,7 +66,7 @@ def read_file(filepath: str, line_limit: int = None) -> str:
     :param line_limit: Optional. If provided, only this many lines will be read from the start of the file.
     """
     try:
-        safe_path = _resolve_path(filepath)
+        safe_path = _resolve_path(filepath, project_root)
         with open(safe_path, 'r', encoding='utf-8') as f:
             # If line_limit is not a positive integer, read the whole file.
             if not isinstance(line_limit, int) or line_limit <= 0:
@@ -91,14 +97,14 @@ def read_file(filepath: str, line_limit: int = None) -> str:
     except Exception as e:
         return f"Error reading file: {e}"
 
-def overwrite_file_with_block(filepath: str, content: str) -> str:
+def overwrite_file_with_block(filepath: str, content: str, project_root: str = None) -> str:
     """
     Overwrites an existing file with new content. If the file does not exist, it is created.
     This special tool is designed to work with multi-line content blocks.
     Defaults to the 'sandbox/' directory. To operate on a file in the project root, use the 'PROJECT_ROOT/' prefix.
     """
     try:
-        safe_path = _resolve_path(filepath)
+        safe_path = _resolve_path(filepath, project_root)
         os.makedirs(os.path.dirname(safe_path), exist_ok=True)
         with open(safe_path, 'w') as f:
             f.write(content)
@@ -109,13 +115,13 @@ def overwrite_file_with_block(filepath: str, content: str) -> str:
 # Alias for `create_file_with_block` as specified in JULES.md special tools
 create_file_with_block = overwrite_file_with_block
 
-def create_file(filepath: str) -> str:
+def create_file(filepath: str, project_root: str = None) -> str:
     """
     Creates an empty file at the specified path.
     Defaults to the 'sandbox/' directory.
     To create a file in the project root, use the 'PROJECT_ROOT/' prefix.
     """
-    return overwrite_file_with_block(filepath, "")
+    return overwrite_file_with_block(filepath, "", project_root)
 
 def create_new_tool(tool_filename: str, code: str) -> str:
     """
@@ -144,14 +150,14 @@ def create_new_tool(tool_filename: str, code: str) -> str:
         return f"Error creating new tool: {e}"
 
 
-def delete_file(filepath: str) -> str:
+def delete_file(filepath: str, project_root: str = None) -> str:
     """
     Deletes the specified file.
     Defaults to the 'sandbox/' directory.
     To delete a file from the project root, use the 'PROJECT_ROOT/' prefix.
     """
     try:
-        safe_path = _resolve_path(filepath)
+        safe_path = _resolve_path(filepath, project_root)
         os.remove(safe_path)
         return f"File '{filepath}' deleted successfully."
     except FileNotFoundError:
@@ -160,15 +166,15 @@ def delete_file(filepath: str) -> str:
         return f"Error deleting file: {e}"
 
 
-def rename_file(filepath: str, new_filepath: str) -> str:
+def rename_file(filepath: str, new_filepath: str, project_root: str = None) -> str:
     """
     Renames or moves a file.
     Defaults to the 'sandbox/' directory for both paths.
     To use paths from the project root, use the 'PROJECT_ROOT/' prefix.
     """
     try:
-        safe_old_path = _resolve_path(filepath)
-        safe_new_path = _resolve_path(new_filepath)
+        safe_old_path = _resolve_path(filepath, project_root)
+        safe_new_path = _resolve_path(new_filepath, project_root)
         os.rename(safe_old_path, safe_new_path)
         return f"File '{filepath}' renamed to '{new_filepath}' successfully."
     except FileNotFoundError:
@@ -177,14 +183,14 @@ def rename_file(filepath: str, new_filepath: str) -> str:
         return f"Error renaming file: {e}"
 
 
-def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str) -> str:
+def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block: str, project_root: str = None) -> str:
     """
     Performs a targeted search-and-replace within a file.
     This special tool takes a search block and a replace block to perform the update.
     The search block must match a part of the file content exactly.
     """
     try:
-        original_content = read_file(filepath)
+        original_content = read_file(filepath, project_root=project_root)
         if original_content.startswith("Error:"):
             return original_content
 
@@ -193,7 +199,7 @@ def replace_with_git_merge_diff(filepath: str, search_block: str, replace_block:
 
         new_content = original_content.replace(search_block, replace_block, 1)
 
-        write_result = overwrite_file_with_block(filepath, new_content)
+        write_result = overwrite_file_with_block(filepath, new_content, project_root=project_root)
         if write_result.startswith("Error"):
             return write_result
         else:
