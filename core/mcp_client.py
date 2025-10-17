@@ -36,10 +36,14 @@ class MCPClient:
     async def _start_and_init_server(self, server_name: str, script_path: str):
         """Pomocná metoda pro spuštění a inicializaci jednoho serveru."""
         from .rich_printer import RichPrinter
+        # Nastavíme prostředí pro subproces, abychom zajistili správný PYTHONPATH
+        env = os.environ.copy()
+        env['PYTHONPATH'] = self.project_root
         process = await asyncio.create_subprocess_exec(
             sys.executable, script_path,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-            cwd=self.project_root
+            cwd=self.project_root,
+            env=env
         )
         self.servers[server_name] = process
         RichPrinter.info(f"MCPClient spustil server '{server_name}' (PID: {process.pid}).")
@@ -136,12 +140,19 @@ class MCPClient:
             return f"Error from {server_name}: {response['error']['message']}"
         return str(response.get("result", {}).get("result", "No result returned."))
 
-    async def shutdown_servers(self):
+    async def shutdown(self):
         """Bezpečně ukončí všechny spuštěné MCP servery."""
         from .rich_printer import RichPrinter
         RichPrinter.info("Ukončuji MCP servery...")
         for server_name, process in self.servers.items():
             if process.returncode is None:
-                process.terminate()
-                await process.wait()
-                print(f"INFO: MCPClient ukončil server '{server_name}'.")
+                try:
+                    process.terminate()
+                    await asyncio.wait_for(process.wait(), timeout=5.0)
+                    RichPrinter.info(f"MCPClient ukončil server '{server_name}'.")
+                except asyncio.TimeoutError:
+                    RichPrinter.warning(f"Server '{server_name}' (PID: {process.pid}) neodpověděl na terminate, posílám kill.")
+                    process.kill()
+                    await process.wait()
+                except ProcessLookupError:
+                    RichPrinter.warning(f"Proces pro server '{server_name}' již neexistoval.")

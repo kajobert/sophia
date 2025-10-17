@@ -14,6 +14,10 @@ async def main():
     """
     Main function to run a local mission for the Nomad agent.
     """
+    # 0. Configure Logging
+    # This ensures that all output is captured to a file for later analysis.
+    RichPrinter.configure_logging()
+
     # 1. Check for API Key
     if "OPENROUTER_API_KEY" not in os.environ:
         RichPrinter.error("FATAL: The OPENROUTER_API_KEY environment variable is not set.")
