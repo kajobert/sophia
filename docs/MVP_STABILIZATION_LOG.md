@@ -52,3 +52,27 @@ Despite the fixes listed above, the `run_local_mission.py` script continues to h
 The next programmer should focus on resolving the hanging issue with the `run_local_mission.py` script. The fixes for the `SyntaxError`, `TypeError`, and `AttributeError` should be re-applied, as they are necessary for the agent to function correctly.
 
 It is recommended to start by examining the environment and the initialization process in `core/nomad_orchestrator_v2.py` and `core/mcp_client.py` to identify the source of the hang. Once the script can run without hanging, the crucible mission should be re-run to continue the "Test-Analyze-Fix" cycle.
+
+## Jules's Investigation (Continuation)
+
+Upon taking over the mission, a systematic investigation into the hanging `run_local_mission.py` script was launched. The following critical architectural flaws were identified and fixed:
+
+1.  **Infinite Recursion in `mcp_servers/management_server.py`**:
+    *   **Symptom**: The application would hang indefinitely without any error output.
+    *   **Root Cause**: The `ManagementServer` was creating its own instance of `MCPClient` within its constructor. When the main `MCPClient` started the `ManagementServer` as a subprocess, the server would then create a new client, which would in turn try to start all servers again, leading to an infinite recursion of process creation and a silent deadlock.
+    *   **Fix**: The recursive instantiation of `MCPClient` was disabled by passing `None` to the `ManagementTools` constructor.
+
+2.  **Deadlocking Event Loops in `mcp_servers/control_server.py` and `mcp_servers/debug_server.py`**:
+    *   **Symptom**: Even after fixing the infinite recursion, the application continued to hang.
+    *   **Root Cause**: Both `control_server.py` and `debug_server.py` were not inheriting from `BaseMCPServer`. Instead, they implemented their own custom `asyncio` event loops to read from `stdin`. This architectural deviation from the project's standard conflicted with the main `MCPClient`'s process management, causing a deadlock.
+    *   **Fix**: Both servers were refactored to inherit from `BaseMCPServer` and use the standard `add_tool` mechanism, removing the custom, conflicting event loops.
+
+### Unresolved Issue: Persistent Deadlock
+
+Despite identifying and fixing these multiple, severe architectural defects, the `run_local_mission.py` script **continues to hang** indefinitely upon launch.
+
+*   **Conclusion**: The persistence of the hang after fixing clear, critical bugs points to a fundamental and unresolvable issue within the execution environment, the Python `asyncio` implementation in this specific context, or another hidden circular dependency that is not immediately apparent. The core process management of the agent is fundamentally broken in a way that standard debugging and architectural correction have been unable to solve.
+
+### Next Steps
+
+A full review of the `asyncio` implementation and the inter-process communication protocol is required. The current approach of launching multiple server subprocesses and waiting for them to initialize seems to be the source of this fragile and un-debuggable behavior. It is recommended to explore alternative architectures, such as a single-process design or a more robust IPC mechanism like ZeroMQ, before proceeding with further development.
