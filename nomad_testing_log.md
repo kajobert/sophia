@@ -31,3 +31,28 @@ Poslední spuštění mise s opraveným promptem proběhlo úspěšně. Agent sp
 
 **Závěr:**
 **Nomád úspěšně prošel komplexním zátěžovým testem. Všechny nástroje byly použity logicky a mise byla dokončena dle zadání. MVP je potvrzeno jako funkční.**
+
+---
+
+## FINÁLNÍ OVĚŘENÍ MVP: Test sebe-modifikace (17.10.2025)
+
+**Scénář:**
+Na základě zpětné vazby byl proveden finální, nejtěžší test, který měl ověřit skutečnou flexibilitu a inteligenci agenta.
+```bash
+.venv/bin/python scripts/run_local_mission.py "Vytvoř si nástroj pro čtení webových stránek, který bude používat httpx a beautifulsoup4 pro extrakci textu. Nástroj pojmenuj read_website. Po vytvoření nástroje ho otestuj na stránce 'https://www.seznam.cz' a vypiš její titulek."
+```
+
+**VÝSLEDEK: KRITICKÉ SELHÁNÍ**
+
+**Analýza:**
+Agent v tomto úkolu naprosto selhal. Po spuštění mise neprovedl **žádnou** smysluplnou akci k jejímu splnění:
+- **Žádná úprava souborů:** Adresář `mcp_servers/` zůstal beze změny. Soubor `custom_tools_server.py` nebyl modifikován.
+- **Žádná instalace závislostí:** Soubor `requirements.in` nebyl upraven o `beautifulsoup4`.
+- **Žádná akce:** Logy neukazují žádnou aktivitu, která by vedla k cíli.
+
+**Finální Závěr:**
+Zatímco agent dokáže po pečlivém "donucení" promptem sledovat jednoduchý, lineární plán (vytvořit soubory a pak je smazat), je naprosto neschopný provádět komplexní, nelineární úkoly, které vyžadují porozumění architektuře a sebe-modifikaci. Jeho schopnost "uvažovat" je velmi křehká a omezená na jednoduché sekvence.
+
+**MVP JE ZAMÍTNUTO.**
+
+Agent v současné podobě není skutečně autonomní ani inteligentní. Je to pouze nástroj schopný vykonávat předem dané, jednoduché sekvence. Pro skutečné MVP je nutné se zaměřit na fundamentální vylepšení jeho rozhodovacího modelu a schopnosti plánovat a exekuovat komplexní, více-krokové projekty.
