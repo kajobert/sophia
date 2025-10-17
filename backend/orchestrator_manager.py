@@ -236,9 +236,8 @@ class OrchestratorManager:
             await self._emit_event("state_update", self.get_state().model_dump())
             
             # Run the mission
-            await self._orchestrator.start_mission(
-                mission_goal=description,
-                recover_if_crashed=True
+            await self._orchestrator.execute_mission(
+                mission_goal=description
             )
             
             self._mission_completed_at = datetime.now()

@@ -35,36 +35,41 @@ def run_command(command, env=None):
     return result
 
 def setup_environment():
-    """Starts the Docker environment in detached mode."""
+    """Creates a .env file and starts the Docker environment."""
     print_header("Setting up E2E Test Environment")
 
     if not OPENROUTER_API_KEY:
         print("Error: OPENROUTER_API_KEY environment variable not set.")
         sys.exit(1)
 
+    # Create .env file with the API key
+    with open(".env", "w") as f:
+        f.write(f"OPENROUTER_API_KEY={OPENROUTER_API_KEY}\n")
+    print("Created temporary .env file.")
+
     # Ensure the summary file doesn't exist from a previous run
     if os.path.exists(SUMMARY_FILE_PATH):
         os.remove(SUMMARY_FILE_PATH)
         print(f"Removed existing summary file: {SUMMARY_FILE_PATH}")
 
-    # Set up environment variables for docker-compose
-    env = os.environ.copy()
-    env["OPENROUTER_API_KEY"] = OPENROUTER_API_KEY
-
-    # Using the main docker-compose.yml as discovered during exploration
-    command = ["docker", "compose", "-f", DOCKER_COMPOSE_FILE, "up", "-d", "--build"]
-    run_command(command, env=env)
+    command = ["sudo", "docker", "compose", "-f", DOCKER_COMPOSE_FILE, "up", "-d", "--build"]
+    run_command(command)
     print("Docker environment started.")
 
 def cleanup_environment():
-    """Stops and removes the Docker environment."""
+    """Stops the Docker environment and removes the .env file."""
     print_header("Cleaning up E2E Test Environment")
-    command = ["docker", "compose", "-f", DOCKER_COMPOSE_FILE, "down", "--volumes"]
     try:
+        command = ["sudo", "docker", "compose", "-f", DOCKER_COMPOSE_FILE, "down", "--volumes"]
         run_command(command)
         print("Docker environment stopped and cleaned up.")
     except RuntimeError as e:
-        print(f"Could not clean up environment, please do it manually. Error: {e}")
+        print(f"Could not clean up Docker environment, please do it manually. Error: {e}")
+    finally:
+        # Always attempt to remove the .env file
+        if os.path.exists(".env"):
+            os.remove(".env")
+            print("Removed temporary .env file.")
 
 def wait_for_backend(timeout=180, interval=5):
     """Waits for the backend API to become available."""
@@ -105,7 +110,7 @@ def monitor_and_verify(timeout=300, interval=10):
 
     while time.time() - start_time < timeout:
         print(f"Checking logs... (Elapsed: {int(time.time() - start_time)}s)")
-        logs = run_command(["docker", "compose", "-f", DOCKER_COMPOSE_FILE, "logs", "backend"]).stdout
+        logs = run_command(["sudo", "docker", "compose", "-f", DOCKER_COMPOSE_FILE, "logs", "backend"]).stdout
 
         if "MISSION COMPLETE" in logs:
             print("Success marker 'MISSION COMPLETE' found in logs.")
@@ -138,8 +143,20 @@ def monitor_and_verify(timeout=300, interval=10):
 
 # --- Main Execution ---
 
+def dump_logs():
+    """Dumps the docker logs to a file for debugging."""
+    print_header("Dumping logs for debugging")
+    try:
+        logs = run_command(["sudo", "docker", "compose", "-f", DOCKER_COMPOSE_FILE, "logs", "backend"]).stdout
+        with open("e2e_test_failure.log", "w") as f:
+            f.write(logs)
+        print("Logs dumped to e2e_test_failure.log")
+    except Exception as e:
+        print(f"Could not dump logs: {e}")
+
 def main():
     """Main function to orchestrate the E2E test."""
+    test_passed = False
     try:
         setup_environment()
         if not wait_for_backend():
@@ -151,13 +168,17 @@ def main():
 
         if monitor_and_verify():
             print_header("E2E Test PASSED")
-            sys.exit(0)
+            test_passed = True
         else:
             print_header("E2E Test FAILED")
+            dump_logs()
             sys.exit(1)
 
     finally:
         cleanup_environment()
+        # The script exits with 0 only if it reaches the end without sys.exit(1)
+        if test_passed:
+            sys.exit(0)
 
 if __name__ == "__main__":
     main()
