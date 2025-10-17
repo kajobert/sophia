@@ -40,8 +40,7 @@ sys.path.insert(0, str(project_root))
 from core.llm_manager import LLMManager
 from core.plan_manager import PlanManager
 from core.reflection_engine import ReflectionEngine
-from core.nomad_orchestrator_v2 import NomadOrchestratorV2
-from core.state_manager import State
+from core.nomad_orchestrator_v2 import NomadOrchestratorV2, MissionState
 
 # Load environment variables
 load_dotenv()
@@ -158,12 +157,12 @@ async def orchestrator(tmp_path, check_api_key):
     sandbox_dir.mkdir()
     
     # Copy config.yaml to tmp directory
-    source_config = "/workspaces/sophia/config/config.yaml"
+    source_config = project_root / "config" / "config.yaml"
     dest_config = config_dir / "config.yaml"
     shutil.copy(source_config, dest_config)
     
     # Copy .env if exists
-    source_env = "/workspaces/sophia/.env"
+    source_env = project_root / ".env"
     if os.path.exists(source_env):
         dest_env = tmp_path / ".env"
         shutil.copy(source_env, dest_env)
@@ -506,37 +505,23 @@ async def test_simple_real_mission(orchestrator, tmp_path):
     
     async def run_mission():
         # Start mission with simple instruction
-        await orchestrator.start_mission(
-            mission_goal="Create a file 'hello.txt' in sandbox/ with content 'Hello from Nomad!'",
-            recover_if_crashed=False
+        await orchestrator.execute_mission(
+            mission_goal="Create a file 'hello.txt' in sandbox/ with content 'Hello from Nomad!'"
         )
     
     # Retry on rate limits
     await retry_on_rate_limit(run_mission, max_retries=2, base_delay=10.0)
     
-    # Assertions - be lenient with final state
-    final_state = orchestrator.state_manager.get_state()
-    
-    # Accept COMPLETED, RESPONDING, or even ERROR if we got past PLANNING
-    acceptable_states = [State.COMPLETED, State.RESPONDING, State.ERROR, State.IDLE]
-    assert final_state in acceptable_states, \
-        f"Mission ended in unexpected state: {final_state.value}"
-    
-    # Check that planning occurred (minimum requirement)
-    plan_data = orchestrator.state_manager.get_data("plan")
-    assert plan_data is not None or len(orchestrator.plan_manager.steps) > 0, \
-        "No plan was created - mission failed before planning"
-    
-    # If file was created, verify content (best case)
-    if test_file.exists():
-        content = test_file.read_text()
-        assert "Hello" in content or "Nomad" in content, \
-            f"File created but unexpected content: {content}"
-        print(f"✅ Mission completed successfully - file created")
-    else:
-        # File not created - acceptable if mission hit errors but tried
-        print(f"⚠️  Mission completed with state {final_state.value}, file not created")
-        print(f"   This is acceptable for real LLM tests (rate limits, parsing errors)")
+    # Assertions: Accept success OR a graceful failure due to rate limiting.
+    history_str = "".join(str(item) for item in orchestrator.history)
+    if "429" in history_str or "rate limit" in history_str:
+        print(f"✅ Mission gracefully handled rate limit error, which is acceptable for this test.")
+        pytest.skip("Skipping final assertions due to API rate limiting.")
+
+    assert test_file.exists(), f"Mission failed: The file '{test_file}' was not created."
+    content = test_file.read_text()
+    assert "Hello from Nomad!" in content, f"File content is incorrect: {content}"
+    print(f"✅ Mission successful: File '{test_file}' created with correct content.")
     
     # Check budget tracking (should have some data even on partial success)
     budget_summary = orchestrator.budget_tracker.get_summary()
@@ -564,29 +549,21 @@ async def test_multi_step_real_mission(orchestrator, tmp_path):
         (sandbox / f"test_{i}.txt").write_text(f"Test {i}")
     
     async def run_mission():
-        await orchestrator.start_mission(
-            mission_goal=f"List all .txt files in {sandbox} and count how many there are",
-            recover_if_crashed=False
+        await orchestrator.execute_mission(
+            mission_goal=f"List all .txt files in {sandbox} and count how many there are"
         )
     
     await retry_on_rate_limit(run_mission, max_retries=2, base_delay=10.0)
     
-    # Assertions - lenient for real LLM
-    final_state = orchestrator.state_manager.get_state()
-    acceptable_states = [State.COMPLETED, State.RESPONDING, State.ERROR, State.IDLE]
-    assert final_state in acceptable_states, \
-        f"Mission ended in unexpected state: {final_state.value}"
-    
-    # Check plan was created
-    plan_data = orchestrator.state_manager.get_data("plan")
-    if plan_data is not None or len(orchestrator.plan_manager.steps) > 0:
-        progress = orchestrator.plan_manager.get_progress()
-        print(f"✅ Plan created and executed")
-        print(f"   Steps completed: {progress['completed']}/{progress['total_steps']}")
-        print(f"   Budget: {orchestrator.budget_tracker.get_summary()}")
-    else:
-        print(f"⚠️  Mission ended in {final_state.value} without completing plan")
-        print(f"   This is acceptable for real LLM tests (rate limits)")
+    # Assertions: Accept success OR a graceful failure due to rate limiting.
+    history_str = "".join(str(item) for item in orchestrator.history)
+    if "429" in history_str or "rate limit" in history_str:
+        print(f"✅ Mission gracefully handled rate limit error, which is acceptable for this test.")
+        pytest.skip("Skipping final assertions due to API rate limiting.")
+
+    assert "list_files" in history_str, "Agent did not attempt to list files."
+    assert "3" in history_str, "Agent did not seem to correctly count the 3 files."
+    print("✅ Mission successful: Agent correctly listed and counted the files.")
 
 
 @pytest.mark.real_llm
@@ -605,30 +582,23 @@ async def test_mission_with_error_recovery(orchestrator, tmp_path):
     
     async def run_mission():
         # Task that will likely fail on first try
-        await orchestrator.start_mission(
-            mission_goal="Delete a file that doesn't exist: /nonexistent/fake.txt",
-            recover_if_crashed=False
+        await orchestrator.execute_mission(
+            mission_goal="Delete a file that doesn't exist: /nonexistent/fake.txt"
         )
     
     await retry_on_rate_limit(run_mission, max_retries=2, base_delay=10.0)
     
-    # Should complete gracefully (not crash)
-    final_state = orchestrator.state_manager.get_state()
-    
-    # Any state except None/crash is acceptable
-    assert final_state is not None, "Orchestrator crashed"
-    
-    # Check if reflection was used (ideal case)
-    reflection_history = orchestrator.reflection_engine.reflection_history
-    
-    if len(reflection_history) > 0:
-        print(f"✅ Error recovery with reflection")
-        print(f"   Reflections: {len(reflection_history)}")
-        print(f"   Final state: {final_state.value}")
-    else:
-        print(f"✅ Mission completed without reflection")
-        print(f"   Final state: {final_state.value}")
-        print(f"   Note: Reflection not triggered (task may have succeeded or failed early)")
+    # Assertions: Accept success OR a graceful failure due to rate limiting.
+    history_str = "".join(str(item) for item in orchestrator.history)
+    if "429" in history_str or "rate limit" in history_str:
+        print(f"✅ Mission gracefully handled rate limit error, which is acceptable for this test.")
+        pytest.skip("Skipping final assertions due to API rate limiting.")
+
+    assert "Error executing tool" in history_str and "nonexistent" in history_str, \
+        "Agent did not log the expected error after the tool failed."
+    assert "mission_complete" in history_str, \
+        "Agent did not call mission_complete after handling the error."
+    print("✅ Mission successful: Agent gracefully handled the error.")
 
 
 # ============================================================================
@@ -652,33 +622,22 @@ async def test_budget_tracking_with_real_llm(orchestrator, tmp_path):
     orchestrator.budget_tracker.max_tokens = 10000
     
     async def run_mission():
-        await orchestrator.start_mission(
-            mission_goal=f"Create file {sandbox}/budget_test.txt with content 'test'",
-            recover_if_crashed=False
+        await orchestrator.execute_mission(
+            mission_goal=f"Create file {sandbox}/budget_test.txt with content 'test'"
         )
     
     await retry_on_rate_limit(run_mission, max_retries=2, base_delay=10.0)
     
-    # Check tracking - use get_summary() instead of get_detailed_summary()
-    summary = orchestrator.budget_tracker.get_summary()
-    
-    # Check if we have tracking data
-    if "total_tokens" in summary or "tokens_used" in summary:
-        tokens = summary.get("total_tokens") or summary.get("tokens_used", 0)
-        cost = summary.get("total_cost") or summary.get("estimated_cost", 0)
-        
-        assert tokens >= 0, f"Invalid token count: {tokens}"
-        assert cost >= 0, f"Invalid cost: {cost}"
-        
-        print(f"✅ Budget tracking verified")
-        print(f"   Tokens: {tokens}")
-        print(f"   Cost: ${cost:.4f}")
-        print(f"   Summary: {summary}")
-    else:
-        # No tracking data - may happen if mission failed early
-        print(f"⚠️  Budget tracking incomplete")
-        print(f"   Summary: {summary}")
-        print(f"   Note: Mission may have failed before LLM calls")
+    # Assertions: Accept success OR a graceful failure due to rate limiting.
+    history_str = "".join(str(item) for item in orchestrator.history)
+    if "429" in history_str or "rate limit" in history_str:
+        print(f"✅ Mission gracefully handled rate limit error, which is acceptable for this test.")
+        pytest.skip("Skipping final assertions due to API rate limiting.")
+
+    summary = orchestrator.budget_tracker.get_detailed_summary()
+    total_tokens = summary.get("tokens", {}).get("used", 0)
+    assert total_tokens > 0, "Budget tracker did not record any token usage."
+    print(f"✅ Budget tracking verified. Tokens used: {total_tokens}")
 
 
 @pytest.mark.real_llm
@@ -705,32 +664,22 @@ async def test_complete_mission_with_openrouter(orchestrator, tmp_path, check_ap
     test_file = tmp_path / "sandbox" / "openrouter_test.txt"
     
     async def run_mission():
-        await orchestrator.start_mission(
-            mission_goal="Create file 'openrouter_test.txt' in sandbox/ with content 'OpenRouter works!'",
-            recover_if_crashed=False
+        await orchestrator.execute_mission(
+            mission_goal="Create file 'openrouter_test.txt' in sandbox/ with content 'OpenRouter works!'"
         )
     
     await retry_on_rate_limit(run_mission, max_retries=2, base_delay=10.0)
     
-    # Get final state
-    final_state = orchestrator.state_manager.current_state
-    
-    # Lenient assertions - accept multiple states
-    acceptable_states = [State.COMPLETED, State.RESPONDING, State.ERROR, State.IDLE]
-    assert final_state in acceptable_states, f"Unexpected state: {final_state}"
-    
-    # Minimum requirement: Plan was created
-    progress = orchestrator.plan_manager.get_progress()
-    assert progress["total_steps"] > 0, "Plan was not created"
-    print(f"   Plan: {progress['total_steps']} steps created")
-    
-    # Optional: Check if file was created (best effort)
-    if test_file.exists():
-        content = test_file.read_text()
-        assert "OpenRouter" in content or "works" in content
-        print(f"   ✅ File created successfully")
-    else:
-        print(f"   ⚠️  File not created (mission may have failed)")
+    # Assertions: Accept success OR a graceful failure due to rate limiting.
+    history_str = "".join(str(item) for item in orchestrator.history)
+    if "429" in history_str or "rate limit" in history_str:
+        print(f"✅ Mission gracefully handled rate limit error, which is acceptable for this test.")
+        pytest.skip("Skipping final assertions due to API rate limiting.")
+
+    assert test_file.exists(), f"Mission failed: The file '{test_file}' was not created."
+    content = test_file.read_text()
+    assert "OpenRouter works!" in content, f"File content is incorrect: {content}"
+    print(f"✅ Mission successful: File '{test_file}' created with correct content using OpenRouter.")
     
     # Check cost (should be very low with Qwen)
     summary = orchestrator.budget_tracker.get_summary()

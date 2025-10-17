@@ -60,6 +60,30 @@ This mode runs the new, simplified proactive agent directly. It's ideal for test
 4.  **Observe the Agent:**
     The agent will now begin its work, and you can observe its thinking process, tool calls, and results directly in the terminal output.
 
+## New: Simplified Local Mission Runner
+
+For developers who want to quickly test the agent's core logic without the overhead of Docker or the full API/TUI stack, a new local testing script is available. This script runs the `NomadOrchestratorV2` directly in your local terminal.
+
+**Prerequisites:**
+*   A configured Python virtual environment (`./scripts/setup.sh`).
+*   The `OPENROUTER_API_KEY` environment variable must be set.
+
+**Execution:**
+
+1.  **Activate the virtual environment:**
+    ```bash
+    source .venv/bin/activate
+    ```
+
+2.  **Run the script with a mission goal:**
+    Pass the mission goal as a string argument to the script.
+    ```bash
+    python scripts/run_local_mission.py "Your mission goal here. For example, 'write a hello world script in python'"
+    ```
+
+3.  **Observe the Agent:**
+    The agent will immediately start working on the mission, and all its thoughts, tool calls, and results will be printed directly to your console in real-time.
+
 ## Running Tests
 
 To run the test suite, you can execute `pytest` from the root of the project. It's recommended to do this within the virtual environment.
