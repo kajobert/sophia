@@ -32,11 +32,8 @@ class SophiaChatCore:
         # 4. Get AI response
         try:
             llm_adapter = self.llm_manager.get_llm("powerful")
-            # The method returns a tuple: (response_object, usage_data)
-            assistant_response_obj, _ = await llm_adapter.generate_content_async(prompt)
-
-            # **THE FIX:** Correctly extract the text content from the response object.
-            response_text = assistant_response_obj.choices[0].message.content
+            # **THE FINAL FIX:** The `generate_content_async` method already returns the response text directly.
+            response_text, _ = await llm_adapter.generate_content_async(prompt)
 
         except Exception as e:
             logger.error(f"Error processing LLM response for session {session_id}", exc_info=True)
