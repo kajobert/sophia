@@ -28,20 +28,18 @@ class SophiaChatCore:
         prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
 
         # 4. Get AI response
-        # **CORRECTED LOGIC:** First, get the adapter, then get the response.
+        # **CORRECTED LOGIC AGAIN:** Use the correct method name `generate_content_async`.
         try:
             llm_adapter = self.llm_manager.get_llm("powerful")
-            assistant_response = await llm_adapter.get_response(prompt)
+            # The method returns a tuple: (content, usage_data)
+            assistant_response, _ = await llm_adapter.generate_content_async(prompt)
         except Exception as e:
             # Log the error and provide a user-friendly message
             print(f"Error getting response from LLM: {e}")
             assistant_response = "I'm sorry, I encountered an error while processing your request."
 
-        # In case the response is not a simple string, extract it.
-        if hasattr(assistant_response, 'content'):
-             response_text = assistant_response.content
-        else:
-            response_text = str(assistant_response)
+        # The response from this method should be a simple string already.
+        response_text = str(assistant_response)
 
         # 5. Store AI response
         self.db_manager.add_message(session_id, 'assistant', response_text)
