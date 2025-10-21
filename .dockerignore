@@ -1,6 +1,7 @@
 # ==============================================================================
 # Docker Build Ignore File
-# Excludes files and directories from Docker build context
+# Excludes files and directories from Docker build context.
+# This version is corrected to NOT ignore Dockerfile and other essential files.
 # ==============================================================================
 
 # Version Control
@@ -34,25 +35,21 @@ htmlcov/
 .tox/
 .nox/
 
-# Runtime Data
+# Runtime Data (These are generated inside the container, not needed in context)
 logs/
 *.log
 memory/
 *.json
 sandbox/
-*.txt
 
 # Environment Files
 .env
 .env.*
 !.env.example
 
-# Allow requirements.txt in build context (someprojects list *.txt globally)
-!requirements.txt
-
 # Documentation (not needed in runtime)
 docs/
-*.md
+# *.md # This can be too broad, let's be specific if needed.
 !README.md
 
 # CI/CD
@@ -65,15 +62,6 @@ dist/
 build/
 *.egg-info/
 .eggs/
-
-# Docker
-docker-compose.yml
-Dockerfile
-.dockerignore
-
-# Scripts (not needed in runtime container)
-scripts/
-systemd/
 
 # Archives
 archive/
@@ -89,10 +77,8 @@ temp/
 Thumbs.db
 desktop.ini
 
-# Project-Specific
-sanctuary/
-test_*.py
+# Project-Specific (allow test files to be copied if needed for in-container tests)
+# test_*.py
 pytest.ini
-requirements.in
 WORKLOG.md
 AGENTS.md
