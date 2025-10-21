@@ -19,7 +19,7 @@ class SophiaChatCore:
         relevant_memories = self.db_manager.query_memory(session_id, user_message)
         recent_messages_tuples = self.db_manager.get_recent_messages(session_id)
 
-        # Convert tuples to a more usable format if needed
+        # Convert tuples to a more usable format
         recent_messages = [
             {"role": msg[2], "content": msg[3]} for msg in recent_messages_tuples
         ]
@@ -28,18 +28,20 @@ class SophiaChatCore:
         prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
 
         # 4. Get AI response
-        # Assuming llm_manager has a method like 'get_response'
-        # Note: The actual method might have a different name or signature.
-        # This is a placeholder based on the plan.
-        # We'll use a powerful model for the chat.
-        assistant_response = await self.llm_manager.get_response(prompt, "powerful")
+        # **CORRECTED LOGIC:** First, get the adapter, then get the response.
+        try:
+            llm_adapter = self.llm_manager.get_llm("powerful")
+            assistant_response = await llm_adapter.get_response(prompt)
+        except Exception as e:
+            # Log the error and provide a user-friendly message
+            print(f"Error getting response from LLM: {e}")
+            assistant_response = "I'm sorry, I encountered an error while processing your request."
 
         # In case the response is not a simple string, extract it.
         if hasattr(assistant_response, 'content'):
              response_text = assistant_response.content
         else:
             response_text = str(assistant_response)
-
 
         # 5. Store AI response
         self.db_manager.add_message(session_id, 'assistant', response_text)
