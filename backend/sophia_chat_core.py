@@ -1,6 +1,10 @@
 import asyncio
+import logging # Import logging module
 from backend.database_manager import DatabaseManager
 from core.llm_manager import LLMManager
+
+# Get the logger for this module
+logger = logging.getLogger(__name__)
 
 class SophiaChatCore:
     def __init__(self):
@@ -28,17 +32,14 @@ class SophiaChatCore:
         prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
 
         # 4. Get AI response
-        # **CORRECTED LOGIC AGAIN:** Use the correct method name `generate_content_async`.
         try:
             llm_adapter = self.llm_manager.get_llm("powerful")
-            # The method returns a tuple: (content, usage_data)
             assistant_response, _ = await llm_adapter.generate_content_async(prompt)
         except Exception as e:
-            # Log the error and provide a user-friendly message
-            print(f"Error getting response from LLM: {e}")
+            # **IMPROVED LOGGING:** Use logger.error with exc_info=True for a full traceback.
+            logger.error(f"Error getting response from LLM for session {session_id}", exc_info=True)
             assistant_response = "I'm sorry, I encountered an error while processing your request."
 
-        # The response from this method should be a simple string already.
         response_text = str(assistant_response)
 
         # 5. Store AI response
