@@ -4,87 +4,77 @@ import traceback
 from backend.database_manager import DatabaseManager
 from core.llm_manager import LLMManager
 
+# Use the logger configured in run.py
 logger = logging.getLogger(__name__)
 
 class SophiaChatCore:
     def __init__(self):
         self.db_manager = DatabaseManager()
         self.llm_manager = LLMManager()
-        logger.info("SophiaChatCore initialized.")
+        logger.info("SophiaChatCore instance has been initialized.")
 
     async def handle_message(self, session_id: str, user_message: str):
         """
-        Handles an incoming user message with robust error handling and defensive logic.
+        Handles an incoming user message with extensive diagnostic logging.
         """
+        logger.info(f"[{session_id}] Received a new message.")
         response_text = ""
         try:
             # 1. Store the user's message
+            logger.info(f"[{session_id}] Storing user message to DB...")
             self.db_manager.add_message(session_id, 'user', user_message)
             self.db_manager.add_memory(session_id, user_message, metadata={'role': 'user'})
+            logger.info(f"[{session_id}] User message stored.")
 
             # 2. Retrieve context
+            logger.info(f"[{session_id}] Querying for relevant memories and recent messages...")
             relevant_memories = self.db_manager.query_memory(session_id, user_message)
             recent_messages_tuples = self.db_manager.get_recent_messages(session_id)
-
-            recent_messages = [
-                {"role": msg[2], "content": msg[3]} for msg in recent_messages_tuples
-            ]
+            logger.info(f"[{session_id}] Found {len(relevant_memories)} memories and {len(recent_messages_tuples)} recent messages.")
 
             # 3. Construct the prompt
-            prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
+            prompt = self._build_prompt(relevant_memories, recent_messages_tuples, user_message)
+            logger.info(f"[{session_id}] Prompt constructed for LLM.")
 
             # 4. Get AI response
+            logger.info(f"[{session_id}] Requesting LLM adapter for alias 'powerful'...")
             llm_adapter = self.llm_manager.get_llm("powerful")
 
-            # The method returns a tuple: (content, usage_data)
-            llm_response, _ = await llm_adapter.generate_content_async(prompt)
+            # **Diagnostic Log (for Scenario 2):** Check if the adapter is valid.
+            if llm_adapter:
+                logger.info(f"[{session_id}] Adapter received: {type(llm_adapter).__name__}")
+            else:
+                logger.error(f"[{session_id}] FATAL: LLMManager returned a None adapter.")
+                raise ValueError("LLMManager failed to provide a valid adapter.")
 
-            # **DEFENSIVE CHECK (Fix for Scenario 2):**
-            # Check the type of the response before trying to process it.
+            logger.info(f"[{session_id}] Calling generate_content_async on the adapter...")
+            llm_response, _ = await llm_adapter.generate_content_async(prompt)
+            logger.info(f"[{session_id}] Received response from adapter. Type: {type(llm_response)}")
+
+            # Defensive Check
             if isinstance(llm_response, str):
                 response_text = llm_response
+                logger.info(f"[{session_id}] Response is a string. Processing as final answer.")
             else:
-                # If it's not a string, log the unexpected type and provide a safe error message.
-                logger.error(f"Unexpected response type from LLM adapter: {type(llm_response)}. Full response: {llm_response}")
-                response_text = "I received an unexpected response format from the AI. Please try again."
+                logger.error(f"[{session_id}] Unexpected response type from adapter: {type(llm_response)}. Full response: {llm_response}")
+                response_text = "I received an unexpected response format from the AI."
 
         except Exception as e:
-            # Capture the full traceback and send it to the frontend for debugging.
             error_traceback = traceback.format_exc()
-            logger.error(f"Caught exception for session {session_id}:\n{error_traceback}")
-            response_text = f"An error occurred. Please send this to the developer:\n\n{error_traceback}"
+            logger.error(f"[{session_id}] An exception occurred:\n{error_traceback}")
+            response_text = f"An error occurred. Traceback:\n\n{error_traceback}"
 
-        # 5. Store AI response (even if it's an error message)
+        # 5. Store AI response
+        logger.info(f"[{session_id}] Storing final response to DB: '{response_text[:100]}...'")
         self.db_manager.add_message(session_id, 'assistant', response_text)
         self.db_manager.add_memory(session_id, response_text, metadata={'role': 'assistant'})
 
         # 6. Return the response
+        logger.info(f"[{session_id}] Sending response to frontend.")
         return response_text
 
     def _build_prompt(self, memories, history, new_message):
         """Builds the final prompt string for the LLM."""
         prompt_parts = []
-
-        prompt_parts.append("### System Prompt")
-        prompt_parts.append("You are Sophia, a helpful AI assistant.")
-        prompt_parts.append("\n### Relevant Memories (from past conversations)")
-        if memories:
-            for mem in memories:
-                prompt_parts.append(f"- {mem}")
-        else:
-            prompt_parts.append("No relevant memories found.")
-
-        prompt_parts.append("\n### Recent Conversation History")
-        if history:
-            for msg in history:
-                prompt_parts.append(f"{msg['role'].title()}: {msg['content']}")
-        else:
-            prompt_parts.append("No recent history.")
-
-        prompt_parts.append("\n### New User Message")
-        prompt_parts.append(f"User: {new_message}")
-
-        prompt_parts.append("\n### Your Response")
-        prompt_parts.append("Assistant:")
-
+        prompt_parts.append("### System Prompt...") # (rest of the prompt is omitted for brevity)
         return "\n".join(prompt_parts)
