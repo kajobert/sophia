@@ -1,9 +1,8 @@
 import asyncio
-import logging # Import logging module
+import logging
 from backend.database_manager import DatabaseManager
 from core.llm_manager import LLMManager
 
-# Get the logger for this module
 logger = logging.getLogger(__name__)
 
 class SophiaChatCore:
@@ -19,11 +18,10 @@ class SophiaChatCore:
         self.db_manager.add_message(session_id, 'user', user_message)
         self.db_manager.add_memory(session_id, user_message, metadata={'role': 'user'})
 
-        # 2. Retrieve context (memories and recent messages)
+        # 2. Retrieve context
         relevant_memories = self.db_manager.query_memory(session_id, user_message)
         recent_messages_tuples = self.db_manager.get_recent_messages(session_id)
 
-        # Convert tuples to a more usable format
         recent_messages = [
             {"role": msg[2], "content": msg[3]} for msg in recent_messages_tuples
         ]
@@ -34,13 +32,15 @@ class SophiaChatCore:
         # 4. Get AI response
         try:
             llm_adapter = self.llm_manager.get_llm("powerful")
-            assistant_response, _ = await llm_adapter.generate_content_async(prompt)
-        except Exception as e:
-            # **IMPROVED LOGGING:** Use logger.error with exc_info=True for a full traceback.
-            logger.error(f"Error getting response from LLM for session {session_id}", exc_info=True)
-            assistant_response = "I'm sorry, I encountered an error while processing your request."
+            # The method returns a tuple: (response_object, usage_data)
+            assistant_response_obj, _ = await llm_adapter.generate_content_async(prompt)
 
-        response_text = str(assistant_response)
+            # **THE FIX:** Correctly extract the text content from the response object.
+            response_text = assistant_response_obj.choices[0].message.content
+
+        except Exception as e:
+            logger.error(f"Error processing LLM response for session {session_id}", exc_info=True)
+            response_text = "I'm sorry, I encountered an error while processing your request."
 
         # 5. Store AI response
         self.db_manager.add_message(session_id, 'assistant', response_text)
@@ -54,11 +54,11 @@ class SophiaChatCore:
         prompt_parts = []
 
         prompt_parts.append("### System Prompt")
-        prompt_parts.append("You are Sophia, a helpful AI assistant. Your goal is to provide accurate and relevant information. Here's some context to help you with your response.")
+        prompt_parts.append("You are Sophia, a helpful AI assistant.")
         prompt_parts.append("\n### Relevant Memories (from past conversations)")
         if memories:
-            for i, mem in enumerate(memories):
-                prompt_parts.append(f"Memory {i+1}: {mem}")
+            for mem in memories:
+                prompt_parts.append(f"- {mem}")
         else:
             prompt_parts.append("No relevant memories found.")
 
