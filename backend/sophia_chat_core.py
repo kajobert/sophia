@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback # Import traceback module
 from backend.database_manager import DatabaseManager
 from core.llm_manager import LLMManager
 
@@ -14,32 +15,36 @@ class SophiaChatCore:
         """
         Handles an incoming user message, generates a response, and stores the conversation.
         """
-        # 1. Store the user's message
-        self.db_manager.add_message(session_id, 'user', user_message)
-        self.db_manager.add_memory(session_id, user_message, metadata={'role': 'user'})
-
-        # 2. Retrieve context
-        relevant_memories = self.db_manager.query_memory(session_id, user_message)
-        recent_messages_tuples = self.db_manager.get_recent_messages(session_id)
-
-        recent_messages = [
-            {"role": msg[2], "content": msg[3]} for msg in recent_messages_tuples
-        ]
-
-        # 3. Construct the prompt
-        prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
-
-        # 4. Get AI response
+        response_text = ""
         try:
+            # 1. Store the user's message
+            self.db_manager.add_message(session_id, 'user', user_message)
+            self.db_manager.add_memory(session_id, user_message, metadata={'role': 'user'})
+
+            # 2. Retrieve context
+            relevant_memories = self.db_manager.query_memory(session_id, user_message)
+            recent_messages_tuples = self.db_manager.get_recent_messages(session_id)
+
+            recent_messages = [
+                {"role": msg[2], "content": msg[3]} for msg in recent_messages_tuples
+            ]
+
+            # 3. Construct the prompt
+            prompt = self._build_prompt(relevant_memories, recent_messages, user_message)
+
+            # 4. Get AI response
             llm_adapter = self.llm_manager.get_llm("powerful")
-            # **THE FINAL FIX:** The `generate_content_async` method already returns the response text directly.
             response_text, _ = await llm_adapter.generate_content_async(prompt)
 
         except Exception as e:
-            logger.error(f"Error processing LLM response for session {session_id}", exc_info=True)
-            response_text = "I'm sorry, I encountered an error while processing your request."
+            # **DEBUGGING WITH BRUTE FORCE:**
+            # Capture the full traceback and send it to the frontend.
+            error_traceback = traceback.format_exc()
+            logger.error(f"Caught exception for session {session_id}:\n{error_traceback}")
+            response_text = f"An error occurred inside the container. Please send this to the developer:\n\n{error_traceback}"
 
-        # 5. Store AI response
+        # 5. Store AI response (even if it's an error message)
+        # This helps in logging and understanding the flow.
         self.db_manager.add_message(session_id, 'assistant', response_text)
         self.db_manager.add_memory(session_id, response_text, metadata={'role': 'assistant'})
 
