@@ -1,52 +1,31 @@
 version: '3.8'
 
 services:
-  # Proactive Nomad Agent (MVP)
-  # This service runs the new, simplified proactive orchestrator directly.
-  nomad-mvp:
+  sophia-chat-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nomad-proactive-mvp
-    restart: "no" # Run as a one-off task
+    container_name: sophia-chat-backend
+    restart: "unless-stopped"
+    ports:
+      - "8080:8080"
     environment:
-      - NOMAD_ENV=mvp
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - PYTHONUNBUFFERED=1
     volumes:
-      # Persistent data
-      - ./logs:/app/logs
-      - ./memory:/app/memory
-      - ./sandbox:/app/sandbox
+      # Persistent data for databases
+      - ./data:/app/data
       # Config (read-only)
       - ./config:/app/config:ro
-      - ./prompts:/app/prompts:ro
-    stdin_open: true
-    tty: true
-    # The command will start a Python script that instantiates and runs the orchestrator.
-    # We will pass the mission goal as a command-line argument.
-    command: >
-      /bin/bash -c "
-      echo 'Please enter the mission goal for the proactive agent:';
-      read mission_goal;
-      python -c '
-      import asyncio
-      from core.nomad_orchestrator_v2 import NomadOrchestratorV2
-      async def main():
-          orchestrator = NomadOrchestratorV2()
-          await orchestrator.initialize()
-          await orchestrator.execute_mission(\"'"$$mission_goal"'\")
-          await orchestrator.cleanup()
-      asyncio.run(main())'
-      "
+    command: ["uvicorn", "backend.server:app", "--host", "0.0.0.0", "--port", "8080"]
 
 # Usage:
 # ======
-# Start the proactive MVP mission:
+# Start the Sophia Chat backend:
 #   docker-compose -f docker-compose.mvp.yml up
 #
-# You will be prompted to enter a mission goal in the terminal.
+# The backend will be available at http://localhost:8080
+# The WebSocket will be available at ws://localhost:8080/ws/{session_id}
 #
 # To rebuild the image:
 #   docker-compose -f docker-compose.mvp.yml build --no-cache

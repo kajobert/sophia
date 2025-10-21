@@ -8,6 +8,8 @@ pydantic
 
 # Database
 psycopg2-binary
+sqlalchemy
+chromadb
 
 # AI Agent Frameworks & Libraries
 openai

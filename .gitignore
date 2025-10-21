@@ -126,3 +126,7 @@ memory/
 
 # logs
 logs/
+
+# Sophia Chat Data
+data/
+tests/temp_data/
