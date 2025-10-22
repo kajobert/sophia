@@ -455,6 +455,55 @@ pytest tests/test_e2e_real_llm.py -m real_llm -v  # ✅ 4/8 PASSED
 - Den 12: Performance optimization & production deployment
 ---
 ---
+**Datum**: 2025-10-22
+**Autor**: Jules (AI Agent)
+**Ticket/Task**: #0.9.3 - Sophia Chat MVP v1.0 Refactoring
+
+### Téma: Implementace a stabilizace "Sophia Chat" MVP
+
+**Popis Práce:**
+- **Kompletní Implementace MVP:**
+    - Vytvořen `backend/database_manager.py` pro duální paměť (SQLite + ChromaDB).
+    - Vytvořen `backend/sophia_chat_core.py` jako mozek aplikace s logikou pro zpracování zpráv.
+    - Přepracován `backend/server.py` a `websocket.py` pro obsluhu chatu.
+    - Vytvořen `frontend/chat.html` jako jednoduché webové rozhraní.
+- **Stabilizace a Robustnost:**
+    - Implementován `run.py` a FastAPI `lifespan` manager pro bezpečný a kontrolovaný start aplikace, což řeší "race conditions" při inicializaci.
+    - Přepracována architektura promptů na strukturovaný formát (`list[dict]` se správnými rolemi), což je klíčové pro správné chování moderních LLM.
+    - "Opevněn" `core/llm_adapters.py`, aby defenzivně zpracovával odpovědi od API a předcházel pádům.
+    - Implementováno detailní, strukturované logování napříč celou aplikací pro snadné ladění.
+- **Konfigurace Persony:**
+    - Vytvořeny externí soubory `prompts/sophia/sophia_dna.txt` a `prompts/sophia/sophia_system_prompt.txt` pro snadnou konfiguraci osobnosti a instrukcí AI.
+- **Dokumentace a UI:**
+    - Vytvořena profesionální dokumentace `docs/sophia_chat_guide.md`.
+    - Vylepšen `frontend/chat.html` o záložkovou navigaci a záložku "Nápověda", která dynamicky zobrazuje dokumentaci.
+- **Testování:**
+    - Vytvořeny jednotkové testy (`tests/test_sophia_chat.py`, `tests/test_message_building.py`) pro ověření klíčových částí backendu.
+
+**Důvod a Kontext:**
+- Původní úkol byl vytvořit jednoduchý a stabilní chat jako "pevný bod" pro další vývoj, oddělený od komplexní architektury Nomáda.
+- Během implementace jsme narazili na řadu hlubokých problémů (Docker cache, platformně specifické závislosti, chyby v logice), které bylo nutné systematicky vyřešit.
+- Cíl se postupně rozšířil z pouhé implementace na vytvoření skutečně robustního, dobře zdokumentovaného a snadno laditelného produktu.
+
+**Narazené Problémy a Řešení:**
+1.  **Problém:** Opakované selhání `docker-compose up --build` kvůli chybějícím závislostem (`ModuleNotFoundError: chromadb`).
+    - **Analýza:** Problém byl v agresivním `.dockerignore`, který bránil Dockeru vidět změny v `Dockerfile`, a také v platformně specifickém `requirements.txt`.
+    - **Řešení:** Zjednodušení `Dockerfile`, oprava `.dockerignore` a vygenerování multiplatformního `requirements.txt`.
+
+2.  **Problém:** AI se chovala neočekávaně a ignorovala instrukce.
+    - **Analýza:** Finální a klíčové zjištění bylo, že prompt byl posílán jako jeden velký `string` pod rolí "user", což model zcela zmátlo.
+    - **Řešení:** Kompletní refaktoring na strukturovaný seznam zpráv se správnými rolemi (`system`, `user`, `assistant`).
+
+3.  **Problém:** Aplikace tiše selhávala bez detailních logů.
+    - **Analýza:** Nedostatečné logování a možné "race conditions" při startu, kdy se `ChromaDB` nestihla inicializovat.
+    - **Řešení:** Implementace `run.py` pro kontrolu nad logováním a `lifespan` manageru ve FastAPI pro řízený start.
+
+**Dopad na Projekt:**
+- ✅ Vznikl plně funkční, stabilní a dobře zdokumentovaný Sophia Chat MVP.
+- ✅ Architektura je nyní robustní, snadno rozšiřitelná a (hlavně) snadno laditelná.
+- ✅ Projekt získal cenné zkušenosti a poučení z náročného procesu ladění, které jsou zapsány v paměti agenta.
+
+---
 **Datum**: 2025-10-12
 **Autor**: Jules (Nomad)
 **Ticket/Task**: Den 11-12 - Real LLM Integration & Production Deployment
