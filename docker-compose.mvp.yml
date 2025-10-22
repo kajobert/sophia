@@ -8,24 +8,17 @@ services:
     container_name: sophia-chat-backend
     restart: "unless-stopped"
     ports:
-      - "8080:8080"
+      - "8080:8080" # Change to "8081:8080" if 8080 is taken
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - PYTHONUNBUFFERED=1
     volumes:
       # Persistent data for databases
       - ./data:/app/data
       # Config (read-only)
       - ./config:/app/config:ro
-    command: ["uvicorn", "backend.server:app", "--host", "0.0.0.0", "--port", "8080"]
 
 # Usage:
 # ======
-# Start the Sophia Chat backend:
-#   docker-compose -f docker-compose.mvp.yml up
-#
-# The backend will be available at http://localhost:8080
-# The WebSocket will be available at ws://localhost:8080/ws/{session_id}
-#
-# To rebuild the image:
-#   docker-compose -f docker-compose.mvp.yml build --no-cache
+# 1. Create a .env file with your OPENROUTER_API_KEY.
+# 2. Run: docker-compose -f docker-compose.mvp.yml up --build
+# 3. Open your browser to http://localhost:8080
