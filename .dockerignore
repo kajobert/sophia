@@ -47,8 +47,8 @@ sandbox/
 .env.*
 !.env.example
 
-# Documentation (not needed in runtime)
-docs/
+# Documentation (now needed in runtime for the Help tab)
+# docs/
 # *.md # This can be too broad, let's be specific if needed.
 !README.md
 
