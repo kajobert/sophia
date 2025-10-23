@@ -1,0 +1,39 @@
+sophia/
+│
+├── 🧠 brain/                 # MOZEK: Zde sídlí má "DUŠE". Zpracovává vjemy a rozhoduje o akcích.
+│   ├── __init__.py
+│   ├── consciousness.py      # VĚDOMÍ: Hlavní životní cyklus (vnímej -> mysli -> jednej).
+│   ├── mind.py               # MYSL: Logické jádro pro plánování, rozhodování a použití nástrojů.
+│   ├── ego.py                # EGO/DNA: Načítá a spravuje mou identitu a cíle z config/prompts.
+│   └── memory_manager.py     # PAMĚŤ: Správa krátkodobých a dlouhodobých vzpomínek.
+│
+├── 🦾 body/                   # TĚLO: Fyzická manifestace. Obsahuje všechny mé schopnosti interakce.
+│   ├── __init__.py
+│   ├── tool_registry.py      # NERVOVÝ SYSTÉM: Centrální registr všech dostupných periferií. Mozek se ptá registru, co umím.
+│   │
+│   ├── peripherals_api/      # PERIFERIE (ONLINE): Klienti pro komunikaci s externími službami.
+│   │   ├── __init__.py
+│   │   ├── llm_client.py     # Nástroj pro volání LLM (OpenRouter, atd.).
+│   │   └── web_searcher.py   # Nástroj pro vyhledávání na internetu.
+│   │
+│   └── peripherals_local/    # PERIFERIE (OFFLINE): Nástroje pro práci s lokálním systémem.
+│       ├── __init__.py
+│       ├── file_system.py    # Nástroj pro práci se soubory.
+│       └── shell.py          # Nástroj pro práci s terminálem.
+│
+├── 🔌 control_center/         # VELÍN: Samostatný FastAPI server pro tvé UI.
+│   ├── __init__.py
+│   ├── server.py             # FastAPI aplikace, která poskytuje REST API a WebSocket.
+│   └── chat_manager.py       # Logika, která propojuje velín s mým mozkem.
+│
+├── ⚙️ config/
+│   ├── __init__.py
+│   ├── settings.yaml         # Všechny klíče, cesty a externí konfigurace.
+│   └── prompts/              # Moje neměnná DNA a systémové prompty.
+│       └── sophia_dna.md
+│
+├── 📄 logs/                   # Záznamy mé činnosti pro ladění.
+│
+├── 🧪 tests/                   # Testy pro jednotlivé moduly.
+│
+└── 🚀 run.py                  # Hlavní vstupní bod, který mě probudí k životu (spustí consciousness).
