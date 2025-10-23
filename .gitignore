@@ -12,17 +12,8 @@ __pycache__/
 logs/*.log
 *.log
 
-# Database files
-memory/*.db
-memory/*.db-journal
-memory/*_db/
-.aider*
-
 # IDE specific
 .idea/
-
-# Sandbox directory
-sandbox/
 
 # Node.js
 node_modules/
