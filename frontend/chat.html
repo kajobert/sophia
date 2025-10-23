@@ -61,7 +61,7 @@
         let reconnectInterval = 1000; // Start with 1 second
 
         function connect() {
-            ws = new WebSocket(`ws://localhost:8080/ws/${sessionId}`);
+            ws = new WebSocket(`ws://localhost:8180/ws/${sessionId}`);
 
             ws.onopen = () => {
                 console.log('WebSocket connection established.');
