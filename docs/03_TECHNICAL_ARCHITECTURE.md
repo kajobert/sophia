@@ -46,7 +46,8 @@ graph TD
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#f9f,stroke:#333,stroke-width:2px```
+    style C fill:#f9f,stroke:#333,stroke-width:2px
+```
 
 ---
 
