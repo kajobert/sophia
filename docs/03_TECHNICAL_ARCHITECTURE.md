@@ -22,9 +22,9 @@ Architektura je postavena na striktním oddělení dvou typů komponent:
 graph TD
     subgraph "SOPHIA KERNEL (Jádro - Zamčené Moduly v `core/`)"
         direction LR
-        A[ConsciousnessLoop\n(Životní Cyklus)]
-        B[PluginManager\n(Dynamické Načítání Pluginů)]
-        C[SharedContext\n(Datová Sběrnice)]
+        A["ConsciousnessLoop\n(Životní Cyklus)"]
+        B["PluginManager\n(Dynamické Načítání Pluginů)"]
+        C["SharedContext\n(Datová Sběrnice)"]
         A -- "Řídí stavy a volá..." --> B
         B -- "Poskytuje a spouští..." --> P((Pluginy))
         P -- "Čtou a zapisují do..." --> C
@@ -33,16 +33,16 @@ graph TD
 
     subgraph "PLUGINS (Rozšiřující Moduly v `plugins/`)"
         direction TB
-        P1[Interface Plugins\n(Terminal, WebUI)]
-        P2[Memory Plugins\n(SQLite, ChromaDB)]
-        P3[Tool Plugins\n(LLM Client, File System)]
+        P1["Interface Plugins\n(Terminal, WebUI)"]
+        P2["Memory Plugins\n(SQLite, ChromaDB)"]
+        P3["Tool Plugins\n(LLM Client, File System)"]
         P4[...]
     end
 
-    P((Pluginy)) --> P1
-    P((Pluginy)) --> P2
-    P((Pluginy)) --> P3
-    P((Pluginy)) --> P4
+    P --> P1
+    P --> P2
+    P --> P3
+    P --> P4
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style B fill:#f9f,stroke:#333,stroke-width:2px
