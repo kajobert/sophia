@@ -70,8 +70,12 @@ Veškeré znalosti o tomto projektu jsou uloženy v adresáři `docs/`. Je to ne
 
 ### 🗺️ Roadmapa
 
-Náš plán pro dosažení MVP a budoucích verzí je veřejný a najdete ho zde:
-*   **[roadmap/](./roadmap/)**
+Náš strategický plán je rozdělen do čtyř klíčových fází. Každá fáze staví na té předchozí a vede Sophii od základního jádra až k plné provozní autonomii.
+
+*   **[Fáze 1: Implementace MVP](./roadmap/01_MVP_IMPLEMENTATION.md):** Vybudovat stabilní, rozšiřitelné Jádro a základní pluginy.
+*   **[Fáze 2: Integrace Nástrojů](./roadmap/02_TOOL_INTEGRATION.md):** Vybavit Sophii nástroji pro interakci s jejím prostředím (Git, souborový systém, web).
+*   **[Fáze 3: Rámec pro Sebe-Analýzu](./roadmap/03_SELF_ANALYSIS_FRAMEWORK.md):** Umožnit Sophii číst a chápat svůj vlastní kód a dokumentaci.
+*   **[Fáze 4: Autonomní Operace](./roadmap/04_AUTONOMOUS_OPERATIONS.md):** Dosáhnout konečného cíle samostatně řízeného vývoje a evoluce.
 
 ## 🤝 Jak Přispívat
 

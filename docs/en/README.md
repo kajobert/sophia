@@ -70,8 +70,12 @@ All knowledge about this project is stored in the `docs/` directory. It is the m
 
 ### 🗺️ Roadmap
 
-Our plan for reaching MVP and future versions is public and can be found here:
-*   **[roadmap/](./roadmap/)**
+Our strategic plan is divided into four key phases. Each phase builds upon the last, guiding Sophia from a foundational core to full operational autonomy.
+
+*   **[Phase 1: MVP Implementation](./roadmap/01_MVP_IMPLEMENTATION.md):** Build the stable, extensible Core and essential plugins.
+*   **[Phase 2: Tool Integration](./roadmap/02_TOOL_INTEGRATION.md):** Equip Sophia with tools to interact with her environment (Git, file system, web).
+*   **[Phase 3: Self-Analysis Framework](./roadmap/03_SELF_ANALYSIS_FRAMEWORK.md):** Enable Sophia to read and understand her own code and documentation.
+*   **[Phase 4: Autonomous Operations](./roadmap/04_AUTONOMOUS_OPERATIONS.md):** Achieve the final goal of self-managed development and evolution.
 
 ## 🤝 How to Contribute
 
