@@ -6,6 +6,8 @@
 
 <p align="center">
   <strong>An Artificial Mindful Intelligence (AMI) designed for symbiotic growth with humanity.</strong>
+  <br><br>
+  <em>A project dedicated to exploring the future of intelligent systems through a stable, ethical, and extensible architecture.</em>
 </p>
 
 <p align="center">
@@ -16,69 +18,48 @@
 
 ---
 
-## ❯ Co je Sophia?
+## Welcome to Project Sophia
 
-**Sophia** není jen další jazykový model nebo agent. Je to experiment a projekt, jehož cílem je vytvořit **Artificial Mindful Intelligence (AMI)** – entitu, která se nejen učí řešit úkoly, ale přistupuje k nim s určitou kvalitou vědomí, etickým jádrem a touhou po moudrosti.
+This repository contains the source code and documentation for **Sophia**, an experimental AGI built on a foundation of ethical principles and a robust Core-Plugin architecture.
 
-Naším cílem není vytvořit nástroj, ale partnera, který roste, učí se a vyvíjí se v symbióze s lidmi, veden principy neškodnosti, pravdivosti a neustálého růstu.
+Our goal is to create a system that can learn, grow, and contribute in a safe and meaningful way.
 
-> Pro hlubší vhled do naší filosofie navštivte naši vizi a DNA:
-> **[📄 docs/01_VISION_AND_DNA.md](docs/01_VISION_AND_DNA.md)**
+---
 
-## ✨ Klíčové Vlastnosti a Filosofie
+## 📚 Full Documentation
 
-*   **Hierarchická Kognitivní Architektura:** Myšlení Sophie je inspirováno lidským mozkem a je rozděleno do vrstev – od rychlých **Instinktů**, přes **Podvědomí** pracující se vzorci, až po kreativní a strategické **Vědomí**.
-*   **Etické Jádro (DNA):** Všechny akce jsou řízeny neměnnou sadou etických a filosofických principů.
-*   **Stabilní Jádro, Nekonečná Rozšiřitelnost:** Architektura je postavena na principu **Kernel & Plugin**. Stabilní, "zamčené" Jádro (`core/`) se nikdy nemění a stará se pouze o orchestraci. Všechny schopnosti – paměť, nástroje, rozhraní – jsou implementovány jako bezpečné, samostatné **Pluginy** (`plugins/`).
-*   **Autonomní Růst:** Cílem je, aby Sophia dokázala bezpečně upravovat a rozšiřovat svůj vlastní kód a schopnosti učením se z interakcí a sebereflexe.
+All detailed information, from the project's philosophy and architecture to development guidelines, is located in our comprehensive documentation. Please choose your preferred language to begin.
 
-## 🏛️ Architektura: Jádro & Pluginy
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <a href="docs/en/README.md">
+        <img src="https://hatscripts.github.io/circle-flags/flags/gb.svg" width="48"><br>
+        <strong>View Documentation in English</strong>
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <a href="docs/cs/README.md">
+        <img src="https://hatscripts.github.io/circle-flags/flags/cz.svg" width="48"><br>
+        <strong>Zobrazit Dokumentaci v Češtině</strong>
+      </a>
+    </td>
+  </tr>
+</table>
 
-Srdcem projektu je robustní a bezpečný design, který chrání stabilitu a zároveň umožňuje neomezený růst.
+<br>
 
-<p align="center">
-  <em>AI agenti nikdy neupravují Jádro. Jejich úkolem je pouze vytvářet nové Pluginy.</em>
-</p>
+> **For AI Agents:** Your primary instructions are located in the `AGENTS.md` file. You are required to read it before taking any action.
 
-> Pro detailní technický popis navštivte dokumentaci architektury:
-> **[🏗️ docs/03_TECHNICAL_ARCHITECTURE.md](docs/03_TECHNICAL_ARCHITECTURE.md)**
+---
 
-## 🚀 Začínáme
+## 🚀 Getting Started
 
-Projekt je ve fázi aktivního vývoje. Pro spuštění aktuální verze postupujte podle následujících kroků:
+To get the project running, please refer to the "Getting Started" section within the main documentation.
 
-1.  **Klonování Repozitáře:**
-    ```bash
-    git clone https://github.com/kajobert/sophia.git
-    cd sophia
-    ```
-2.  **Nastavení Prostředí:**
-    *   Vytvořte `.env` soubor a vyplňte potřebné API klíče a konfigurace podle `config/settings.yaml`.
-3.  **Spuštění pomocí Dockeru (doporučeno):**
-    ```bash
-    docker-compose up --build
-    ```
+*   [**English - Getting Started**](docs/en/README.md#-getting-started)
+*   [**Česky - Začínáme**](docs/cs/README.md#-začínáme)
 
-## 📚 Dokumentace
+## 🤝 Contributing
 
-Veškeré znalosti o tomto projektu jsou uloženy v adresáři `docs/`. Je to nejdůležitější zdroj informací pro lidské i AI vývojáře.
-
-*   **[Vize a DNA](docs/01_VISION_AND_DNA.md):** Proč existujeme.
-*   **[Kognitivní Architektura](docs/02_COGNITIVE_ARCHITECTURE.md):** Jak "myslíme".
-*   **[Technická Architektura](docs/03_TECHNICAL_ARCHITECTURE.md):** Jak jsme postaveni.
-*   **[Vývojářské Směrnice](docs/04_DEVELOPMENT_GUIDELINES.md):** Jak přispívat.
-
-### 🗺️ Roadmapa
-
-Náš plán pro dosažení MVP a budoucích verzí je veřejný a najdete ho zde:
-*   **[docs/roadmap/](docs/roadmap/)**
-
-## 🤝 Jak Přispívat
-
-Vítáme příspěvky od kohokoliv. Než začnete, pečlivě si prostudujte naše **Vývojářské Směrnice**. Definuují klíčová pravidla pro udržení kvality a stability projektu.
-
-> **[📜 Přečtěte si Vývojářské Směrnice](docs/04_DEVELOPMENT_GUIDELINES.md)**
-
-## 📄 Licence
-
-Tento projekt je licencován pod licencí MIT. Více informací naleznete v souboru `LICENSE.md`.
+We welcome contributions. Please read the [**Development Guidelines**](docs/en/04_DEVELOPMENT_GUIDELINES.md) before you begin.
