@@ -46,7 +46,7 @@ graph TD
     E -- "Filtrovaná a klasifikovaná data" --> C
     C -- "Obohacená data s kontextem a vzory" --> A
     A -- "Finální Plán / Odpověď" --> UI
-
+```
 
 ## 2. Popis Kognitivních Vrstev
 Architektura se skládá ze tří hierarchicky uspořádaných vrstev, inspirovaných evolučním vývojem mozku.
