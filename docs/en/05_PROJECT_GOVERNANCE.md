@@ -50,3 +50,15 @@ The CI pipeline consists of the following jobs:
 ## 5. Living Architectural Documentation
 
 *   **`PROJECT_STRUCTURE.md`:** This file will contain a machine-readable overview of all implemented plugins, their types, and a brief description. It will be **automatically updated** by a script (`scripts/update_structure_doc.py`) triggered by a GitHub Action after every successful merge into `develop`. This ensures the documentation never becomes outdated.
+
+## 6. Idea and Note Management (`roberts-notes.txt`)
+
+To facilitate a rapid and unstructured flow of ideas from the project lead, the following workflow is established:
+
+*   **`docs/roberts-notes.txt`:** This file serves as a dedicated log for high-level ideas, feature requests, and strategic notes from the project lead. It is intentionally unstructured.
+*   **AI Agent Responsibility:** During dedicated "planning" or "ideation" tasks, an AI agent (like Jules) is expected to:
+    1.  Read and parse the contents of `roberts-notes.txt`.
+    2.  Analyze the notes in the context of the current project architecture, roadmap, and goals.
+    3.  For any viable and actionable ideas, formulate a concrete, step-by-step implementation plan.
+    4.  Present this plan for review and approval.
+*   **Goal:** This "human-in-the-loop" process ensures that valuable, spontaneous ideas are captured and can be systematically integrated into the formal project backlog and documentation.

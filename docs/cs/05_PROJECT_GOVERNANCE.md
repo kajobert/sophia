@@ -50,3 +50,15 @@ CI pipeline se skládá z následujících úloh:
 ## 5. Živá Dokumentace Architektury
 
 *   **`PROJECT_STRUCTURE.md`**: Tento soubor bude obsahovat strojově čitelný přehled všech implementovaných pluginů, jejich typů a stručný popis. Bude **automaticky aktualizován** skriptem (`scripts/update_structure_doc.py`) spouštěným pomocí GitHub Action po každém úspěšném sloučení do větve `develop`. Tím je zajištěno, že dokumentace nikdy nezastará.
+
+## 6. Správa Nápadů a Poznámek (`roberts-notes.txt`)
+
+Pro umožnění rychlého a nestrukturovaného toku nápadů od vedoucího projektu je zaveden následující pracovní postup:
+
+*   **`docs/roberts-notes.txt`**: Tento soubor slouží jako vyhrazený záznamník pro nápady na vysoké úrovni, požadavky na funkce a strategické poznámky od vedoucího projektu. Je záměrně nestrukturovaný.
+*   **Odpovědnost AI Agenta**: Během specializovaných úkolů "plánování" nebo "ideace" se od AI agenta (jako je Jules) očekává, že:
+    1.  Přečte a analyzuje obsah souboru `roberts-notes.txt`.
+    2.  Zanalyzuje poznámky v kontextu aktuální architektury projektu, roadmapy a cílů.
+    3.  Pro jakékoli životaschopné a realizovatelné nápady zformuluje konkrétní, krok-za-krokem implementační plán.
+    4.  Předloží tento plán ke schválení.
+*   **Cíl**: Tento proces "člověka ve smyčce" (human-in-the-loop) zajišťuje, že cenné, spontánní nápady jsou zachyceny a mohou být systematicky integrovány do formálního backlogu a dokumentace projektu.
