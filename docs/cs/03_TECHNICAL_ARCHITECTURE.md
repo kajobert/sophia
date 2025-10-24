@@ -70,15 +70,15 @@ Tyto komponenty tvoří stabilní a neměnné jádro.
 
 ### 3.3. `SharedContext` (`core/context.py`)
 * **Zodpovědnost:** Datová sběrnice a "krevní oběh" systému.
-    1.  Je to `dataclass`, jehož instance se předává všem pluginům v každém cyklu.
-    2.  Obsahuje veškerý stav pro aktuální cyklus: `session_id`, `current_state`, `user_input`, `history`, flexibilní `payload` pro data mezi pluginy a **specifický logger pro danou session**.
+1. Je to `dataclass`, jehož instance se předává všem pluginům v každém cyklu.
+2. Obsahuje veškerý stav pro aktuální cyklus: `session_id`, `current_state`, `user_input`, `history`, flexibilní `payload` pro data mezi pluginy a **specifický logger pro danou session**.
 * **Struktura (`dataclass`):**
-    * `session_id: str`: Unikátní ID pro aktuální sezení.
-    * `current_state: str`: Aktuální stav smyčky (`LISTENING`, `THINKING`, ...).
-    * `user_input: str | None`: Poslední vstup od uživatele.
-    * `history: list`: Krátkodobá historie aktuální konverzace.
-    * `payload: dict`: "Nákladový prostor" pro data mezi pluginy.
-    * `logger: logging.Logger`: Nakonfigurovaný logger, který automaticky přidává `session_id` do všech záznamů. Tím je zajištěno přehledné a kontextuální logování napříč všemi pluginy.
+* `session_id: str`: Unikátní ID pro aktuální sezení.
+* `current_state: str`: Aktuální stav smyčky (`LISTENING`, `THINKING`, ...).
+* `user_input: str | None`: Poslední vstup od uživatele.
+* `history: list`: Krátkodobá historie aktuální konverzace.
+* `payload: dict`: "Nákladový prostor" pro data mezi pluginy.
+* `logger: logging.Logger`: Nakonfigurovaný logger, který automaticky přidává `session_id` do všech záznamů. Tím je zajištěno přehledné a kontextuální logování napříč všemi pluginy.
 
 ---
 
