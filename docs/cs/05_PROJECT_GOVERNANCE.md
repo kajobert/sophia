@@ -6,7 +6,7 @@ Tento dokument definuje procesy, nástroje a automatizaci, které zajišťují k
 
 Pro zajištění stability a předvídatelnosti dodržujeme strukturovaný Git workflow.
 
-*   **`main`**: Tato větev je zdrojem pravdy pro stabilní, produkčně připravený kód. Přímé nahrávání (push) je zakázáno. Sloučení do `main` je povoleno pouze prostřednictvím Pull Requestu z větve `develop` po důkladné revizi a testování.
+*   **`master`**: Tato větev je zdrojem pravdy pro stabilní, produkčně připravený kód. Přímé nahrávání (push) je zakázáno. Sloučení do `master` je povoleno pouze prostřednictvím Pull Requestu z větve `develop` po důkladné revizi a testování.
 *   **`develop`**: Primární vývojová větev. Obsahuje nejnovější integrované funkce a představuje aktuální "edge" verzi aplikace. Všechny feature větve jsou slučovány do `develop`.
 *   **`feature/<nazev-pluginu>` nebo `fix/<nazev-problemu>`**: Veškerý nový vývoj, ať už se jedná o nový plugin nebo opravu chyby, musí probíhat v samostatné větvi pro danou funkci nebo opravu. Tyto větve jsou vytvářeny z nejnovější verze větve `develop`.
 
@@ -20,7 +20,7 @@ Každá změna kódu musí být odeslána prostřednictvím Pull Requestu do vě
 
 ## 3. Automatizace (CI/CD) s GitHub Actions
 
-Continuous Integration (CI) pipeline, definovaná v `.github/workflows/ci.yml`, se automaticky spouští při každém push a Pull Requestu do větví `develop` a `main`. Jejím účelem je zaručit kvalitu a stabilitu kódu.
+Continuous Integration (CI) pipeline, definovaná v `.github/workflows/ci.yml`, se automaticky spouští při každém push a Pull Requestu do větví `develop` a `master`. Jejím účelem je zaručit kvalitu a stabilitu kódu.
 
 CI pipeline se skládá z následujících úloh:
 

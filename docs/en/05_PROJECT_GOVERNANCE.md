@@ -6,7 +6,7 @@ This document defines the processes, tools, and automation that ensure the quali
 
 We follow a structured Git workflow to ensure stability and predictability.
 
-*   **`main`:** This branch is the source of truth for stable, production-ready code. Direct pushes are disabled. Merges into `main` are only permitted through a Pull Request from the `develop` branch after thorough review and testing.
+*   **`master`:** This branch is the source of truth for stable, production-ready code. Direct pushes are disabled. Merges into `master` are only permitted through a Pull Request from the `develop` branch after thorough review and testing.
 *   **`develop`:** The primary development branch. It contains the latest integrated features and represents the current "edge" version of the application. All feature branches are merged into `develop`.
 *   **`feature/<plugin-name>` or `fix/<issue-name>`:** All new development, whether it's a new plugin or a bug fix, must occur in a dedicated feature or fix branch. These branches are created from the latest `develop` branch.
 
@@ -20,7 +20,7 @@ Every code change must be submitted through a Pull Request to the `develop` bran
 
 ## 3. Automation (CI/CD) with GitHub Actions
 
-The Continuous Integration (CI) pipeline, defined in `.github/workflows/ci.yml`, runs automatically on every push and Pull Request to the `develop` and `main` branches. Its purpose is to guarantee code quality and stability.
+The Continuous Integration (CI) pipeline, defined in `.github/workflows/ci.yml`, runs automatically on every push and Pull Request to the `develop` and `master` branches. Its purpose is to guarantee code quality and stability.
 
 The CI pipeline consists of the following jobs:
 
