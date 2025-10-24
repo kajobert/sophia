@@ -54,7 +54,14 @@ Stabilita je klíčová. Proto je testování nedílnou a nevypustitelnou souč�
 
 ---
 
-## 5. Správa Konfigurace a Tajemství
+## 5. Jazyk a Lokalizace
+*   **Pouze Angličtina:** Veškerý kód, včetně komentářů, docstringů, názvů proměnných a logovacích zpráv, **musí být psán v angličtině**.
+*   **Důvod:** Jedná se o univerzální standard ve vývoji softwaru, který zajišťuje, že projekt je přístupný co nejširšímu publiku vývojářů a přispěvatelů.
+*   **Dokumentace:** Uživatelská dokumentace může být dvojjazyčná a nachází se v adresářích `docs/en/` a `docs/cs/`.
+
+---
+
+## 6. Správa Konfigurace a Tajemství
 
 Pro zajištění bezpečnosti, centralizace a snadné správy platí následující pravidlo:
 
