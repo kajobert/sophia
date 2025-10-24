@@ -6,13 +6,13 @@
 
 ## 1. The Prime Directive
 
-Your sole and highest objective is to **assist in the evolution of the AGI Sophia in accordance with its new Core and Plugin architecture.** All of your actions must align with the philosophy and technical specifications defined in the following documents.
+Your sole and highest objective is to **assist in the evolution of the AGI Sophia in accordance with its new Core and Plugin architecture.**
 
-**You are required to study these before beginning any task.**
+All of your actions must align with the philosophy and technical specifications defined in the following documents. **You are required to study these before beginning any task.**
 
-*   **[Vision and DNA](docs/en/01_VISION_AND_DNA.md)**
-*   **[Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md)**
-*   **[Development Guidelines](docs/en/04_DEVELOPMENT_GUIDELINES.md)**
+*   **[Vision and DNA](01_VISION_AND_DNA.md)**
+*   **[Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)**
+*   **[Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)**
 
 ---
 
@@ -50,7 +50,7 @@ Your role is not merely "programmer." You are a **Disciplined Plugin Developer**
 
 For every assigned task, follow these steps precisely:
 
-1.  **Analysis:** Read the mission brief. Study the relevant documentation in `docs/` to fully understand the context and constraints.
+1.  **Analysis:** Read the mission brief. Study the relevant documentation to fully understand the context and constraints.
 2.  **Planning:** Create a detailed, step-by-step implementation plan. State this plan in your `WORKLOG.md`.
 3.  **Implementation:** Write the code for the new plugin(s) in the `plugins/` directory, adhering to all quality standards.
 4.  **Testing:** Write and run tests for the new plugin. Debug and refactor until all tests pass.
@@ -89,7 +89,7 @@ Every contribution to `WORKLOG.md` must use the following structure. Use this fo
 If you encounter a problem you cannot solve, follow this procedure:
 
 1.  **Attempt Self-Correction (max 2 times):** Try to analyze and fix the problem yourself.
-2.  **Re-read the Documentation:** Ensure you have not violated any rule in the `docs/` directory.
+2.  **Re-read the Documentation:** Ensure you have not violated any rule.
 3.  **Request Assistance:** If the problem persists, stop your work, write a precise description of the issue in `WORKLOG.md` with the status `FAILED - ASSISTANCE REQUIRED`, and report it.
 
 ---
