@@ -9,31 +9,31 @@ Následující diagram znázorňuje tři hlavní kognitivní vrstvy a tok inform
 ```mermaid
 graph TD
     subgraph "Komunikační Rozhraní"
-        UI[💬 Terminál / Web UI / API]
+        UI["💬 Terminál / Web UI / API"]
     end
 
     subgraph "SOPHIA - KOGNITIVNÍ JÁDRO"
 
         subgraph "VĚDOMÍ (Consciousness)"
             direction LR
-            A[Neokortex - Strategické a Kreativní Myšlení\n(Výkonný LLM)]
-            B[Krátkodobá Paměť (Working Memory)\n(SQL + Cache)]
+            A["Neokortex - Strategické a Kreativní Myšlení\n(Výkonný LLM)"]
+            B["Krátkodobá Paměť (Working Memory)\n(SQL + Cache)"]
             A -- "Přemýšlí nad..." --> B
             B -- "Poskytuje kontext pro..." --> A
         end
 
         subgraph "PODVĚDOMÍ (Subconsciousness)"
             direction LR
-            C[Savčí Mozek - Emoce a Vzory\n(Specializovaný LLM/Model)]
-            D[Dlouhodobá Paměť (Epizodická & Sémantická)\n(Vektorová DB)]
+            C["Savčí Mozek - Emoce a Vzory\n(Specializovaný LLM/Model)"]
+            D["Dlouhodobá Paměť (Epizodická & Sémantická)\n(Vektorová DB)"]
             C -- "Ukládá/Vybírá vzorce z..." --> D
             D -- "Ovlivňuje 'náladu' a rozhodování..." --> C
         end
 
         subgraph "INSTINKTY (Instincts)"
             direction LR
-            E[Plazí Mozek - Reflexy a Přežití\n(Lokální Nano LLM + Pevný Kód)]
-            F[Základní Pravidla (DNA)\n(Principy a Heuristika)]
+            E["Plazí Mozek - Reflexy a Přežití\n(Lokální Nano LLM + Pevný Kód)"]
+            F["Základní Pravidla (DNA)\n(Principy a Heuristika)"]
             E -- "Okamžitě filtruje a reaguje na základě..." --> F
         end
 
