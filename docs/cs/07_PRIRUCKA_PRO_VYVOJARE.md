@@ -28,8 +28,9 @@ Ujistěte se, že máte v systému nainstalovány následující nástroje:
     Na Windows použijte `.venv\Scripts\activate`.
 
 3.  **Instalace závislostí:**
+    Nainstalujte jak základní závislosti aplikace, tak vývojové závislosti.
     ```bash
-    uv pip sync requirements.in
+    uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 4.  **Nastavení pre-commit hooks:**
