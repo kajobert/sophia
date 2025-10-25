@@ -99,7 +99,24 @@ The `SharedContext` is a data object passed between plugins. It allows them to s
 - `history`: The conversation history.
 - `payload`: A dictionary for plugins to store and retrieve data.
 
-## 6. Submitting Changes
+## 6. Available Tool Plugins
+
+This section provides an overview of the available `TOOL` plugins that can be used by cognitive plugins.
+
+### 6.1. File System Tool (`tool_file_system`)
+
+-   **Purpose:** Provides safe, sandboxed access to the local file system.
+-   **Configuration (`config/settings.yaml`):**
+    ```yaml
+    tool_file_system:
+      sandbox_dir: "sandbox"
+    ```
+-   **Methods:**
+    -   `read_file(path: str) -> str`: Reads the content of a file within the sandbox.
+    -   `write_file(path: str, content: str) -> str`: Writes content to a file within the sandbox.
+    -   `list_directory(path: str) -> List[str]`: Lists the contents of a directory within the sandbox.
+
+## 7. Submitting Changes
 
 1.  **Ensure all tests pass:** Run `PYTHONPATH=. .venv/bin/python -m pytest`.
 2.  **Ensure all quality checks pass:** Run `pre-commit run --all-files`.
