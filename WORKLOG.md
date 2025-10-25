@@ -1,3 +1,46 @@
+
+**Mission:** REFACTOR: Externalize LLM Configuration
+**Agent:** Jules v1.8
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Move the hardcoded LLM model name to a `config/settings.yaml` file.
+*   Update the `LLMTool` plugin to load the model from the configuration file.
+*   Update the tests to support the new configuration-driven approach.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Created `config/settings.yaml` and added the specified model `google/gemini-2.5-flash-lite-preview-09-2025`.
+*   Added `PyYAML` to `requirements.in` to handle YAML parsing.
+*   Modified `plugins/tool_llm.py` to load the model from the config file at setup, with a sensible fallback.
+*   Updated `tests/plugins/test_tool_llm.py` to use a temporary config file, ensuring the test remains isolated and robust.
+
+**3. Result:**
+*   Mission accomplished. The LLM model is now configurable, making the system more flexible and easier to maintain.
+
+---
+
+**Mission:** HOTFIX: Invalid LLM Model
+**Agent:** Jules v1.7
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Replace the invalid LLM model `openrouter/auto` with a valid model.
+*   Run tests to confirm the fix.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Researched a suitable free model on OpenRouter and updated the `LLMTool` plugin in `plugins/tool_llm.py` to use `mistralai/mistral-7b-instruct`.
+*   Successfully ran the full test suite to ensure the fix was effective and introduced no regressions.
+
+**3. Result:**
+*   Mission accomplished. The application can now successfully connect to the LLM and generate responses.
+
+---
+
+
 **Mission:** HOTFIX: Runtime Error and Venv Guard
 **Agent:** Jules v1.6
 **Date:** 2025-10-25
