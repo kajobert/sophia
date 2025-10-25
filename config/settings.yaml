@@ -5,3 +5,6 @@ plugins:
   interface_webui:
     host: "127.0.0.1"
     port: 8000
+
+memory_chroma:
+  db_path: "data/chroma_db"
