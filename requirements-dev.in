@@ -7,7 +7,6 @@ pre-commit
 pytest
 pytest-asyncio
 ruff
-types-PyYAML
 
 # Dependencies for running tests and verification scripts
 aiofiles
