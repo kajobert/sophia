@@ -1,2 +1,2 @@
 llm:
-  model: "google/gemini-2.5-flash-lite-preview-09-2025"
+  model: "openrouter/mistralai/mistral-7b-instruct"

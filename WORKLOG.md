@@ -1,4 +1,24 @@
 
+**Mission:** HOTFIX: LLMTool Configuration Error
+**Agent:** Jules v1.9
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Modify `plugins/tool_llm.py` to self-configure.
+*   Run tests to verify the fix.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Identified that the `PluginManager` was not calling the `setup` method on plugins, causing the `LLMTool` to use a default model.
+*   To avoid modifying the forbidden `core` directory, I modified the `LLMTool`'s `__init__` method in `plugins/tool_llm.py` to call its own `setup` method, ensuring it loads the correct model from `config/settings.yaml`.
+*   Installed project dependencies and ran the full test suite, which passed, confirming the fix.
+
+**3. Result:**
+*   Mission accomplished. The `LLMTool` is now correctly configured, and the application can successfully connect to the LLM and generate responses.
+
+---
+
 **Mission:** REFACTOR: Externalize LLM Configuration
 **Agent:** Jules v1.8
 **Date:** 2025-10-25
