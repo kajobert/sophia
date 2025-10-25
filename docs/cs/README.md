@@ -45,28 +45,21 @@ Srdcem projektu je robustní a bezpečný design, který chrání stabilitu a z�
 
 ## 🚀 Začínáme
 
-Projekt je ve fázi aktivního vývoje. Pro spuštění aktuální verze postupujte podle následujících kroků:
+Chcete-li začít se Sophií, postupujte podle naší podrobné **Uživatelské příručky**, která obsahuje kompletní pokyny k nastavení.
 
-1.  **Klonování Repozitáře:**
-    ```bash
-    git clone https://github.com/kajobert/sophia.git
-    cd sophia
-    ```
-2.  **Nastavení Prostředí:**
-    *   Vytvořte `.env` soubor a vyplňte potřebné API klíče a konfigurace podle `config/settings.yaml`.
-3.  **Spuštění pomocí Dockeru (doporučeno):**
-    ```bash
-    docker-compose up --build
-    ```
+*   **[➡️ Uživatelská příručka](./06_UZIVATELSKA_PRIRUCKA.md)**
 
-## 📚 Dokumentace
+## 📚 Projektová dokumentace
 
 Veškeré znalosti o tomto projektu jsou uloženy v adresáři `docs/`. Je to nejdůležitější zdroj informací pro lidské i AI vývojáře.
 
-*   **[Vize a DNA](01_VISION_AND_DNA.md):** Proč existujeme.
-*   **[Kognitivní Architektura](02_COGNITIVE_ARCHITECTURE.md):** Jak "myslíme".
-*   **[Technická Architektura](03_TECHNICAL_ARCHITECTURE.md):** Jak jsme postaveni.
-*   **[Vývojářské Směrnice](04_DEVELOPMENT_GUIDELINES.md):** Jak přispívat.
+*   **[Uživatelská příručka](./06_UZIVATELSKA_PRIRUCKA.md):** Jak spustit aplikaci.
+*   **[Příručka pro vývojáře](./07_PRIRUCKA_PRO_VYVOJARE.md):** Jak přispívat do projektu.
+*   **[Přehled projektu](./08_PREHLED_PROJEKTU.md):** Celková architektura, tok dat a roadmapa.
+*   **[Vize a DNA](./01_VISION_AND_DNA.md):** Klíčová filozofie projektu.
+*   **[Kognitivní architektura](./02_COGNITIVE_ARCHITECTURE.md):** Koncepční model AI.
+*   **[Technická architektura](./03_TECHNICAL_ARCHITECTURE.md):** Návrh a struktura softwaru.
+*   **[Pokyny pro vývoj](./04_POKYNY_PRO_VYVOJ.md):** Pravidla a standardy pro vývoj.
 
 ### 🗺️ Roadmapa
 

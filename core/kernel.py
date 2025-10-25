@@ -79,7 +79,9 @@ class Kernel:
                     continue
 
                 input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
-                done, pending = await asyncio.wait(input_tasks, return_when=asyncio.FIRST_COMPLETED)
+                done, pending = await asyncio.wait(
+                    input_tasks, return_when=asyncio.FIRST_COMPLETED
+                )
 
                 for task in pending:
                     task.cancel()

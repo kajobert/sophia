@@ -1,8 +1,8 @@
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
-import sqlalchemy
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, insert, select
 from typing import List, Dict
+
 
 class SQLiteMemory(BasePlugin):
     """A memory plugin that stores conversation history in a SQLite database."""
@@ -43,16 +43,16 @@ class SQLiteMemory(BasePlugin):
             return context
 
         with self.engine.connect() as conn:
-            conn.execute(insert(self.history_table).values(
-                session_id=context.session_id,
-                role="user",
-                content=user_input
-            ))
-            conn.execute(insert(self.history_table).values(
-                session_id=context.session_id,
-                role="assistant",
-                content=llm_response
-            ))
+            conn.execute(
+                insert(self.history_table).values(
+                    session_id=context.session_id, role="user", content=user_input
+                )
+            )
+            conn.execute(
+                insert(self.history_table).values(
+                    session_id=context.session_id, role="assistant", content=llm_response
+                )
+            )
             conn.commit()
             context.logger.info("Saved interaction to short-term memory.")
 
@@ -61,9 +61,11 @@ class SQLiteMemory(BasePlugin):
     def get_history(self, session_id: str, limit: int = 10) -> List[Dict[str, str]]:
         """Retrieves the most recent history for a session."""
         with self.engine.connect() as conn:
-            stmt = select(self.history_table.c.role, self.history_table.c.content)\
-                .where(self.history_table.c.session_id == session_id)\
-                .order_by(self.history_table.c.id.desc())\
+            stmt = (
+                select(self.history_table.c.role, self.history_table.c.content)
+                .where(self.history_table.c.session_id == session_id)
+                .order_by(self.history_table.c.id.desc())
                 .limit(limit)
+            )
             results = conn.execute(stmt).fetchall()
             return [{"role": row[0], "content": row[1]} for row in reversed(results)]

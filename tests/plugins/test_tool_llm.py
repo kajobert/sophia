@@ -6,6 +6,7 @@ import logging
 import os
 import yaml
 
+
 @pytest.fixture
 def temp_config_file(tmp_path):
     config_dir = tmp_path / "config"
@@ -32,7 +33,7 @@ async def test_llm_tool_execute_with_config(temp_config_file):
         current_state="THINKING",
         user_input="Hello",
         history=[{"role": "user", "content": "Hello"}],
-        logger=logging.getLogger("test")
+        logger=logging.getLogger("test"),
     )
 
     assert llm_tool.model == "test-model"
@@ -40,14 +41,19 @@ async def test_llm_tool_execute_with_config(temp_config_file):
     mock_response = AsyncMock()
     mock_response.choices[0].message.content = "Hi there!"
 
-    with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_acompletion:
+    with patch(
+        "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
+    ) as mock_acompletion:
         result_context = await llm_tool.execute(context)
 
         # The tool should now be called with the history, which includes the user input.
         mock_acompletion.assert_called_once_with(
             model="test-model",
             messages=[
-                {"role": "system", "content": "You are Sophia, an Artificial Mindful Intelligence."},
+                {
+                    "role": "system",
+                    "content": "You are Sophia, an Artificial Mindful Intelligence.",
+                },
                 {"role": "user", "content": "Hello"},
             ],
         )
