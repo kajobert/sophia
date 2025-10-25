@@ -1,2 +1,7 @@
 llm:
   model: "openrouter/mistralai/mistral-7b-instruct"
+
+plugins:
+  interface_webui:
+    host: "127.0.0.1"
+    port: 8000

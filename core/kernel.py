@@ -1,6 +1,7 @@
 import asyncio
 import logging
-import uuid
+import yaml
+from pathlib import Path
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
@@ -21,17 +22,41 @@ class Kernel:
     def __init__(self):
         self.plugin_manager = PluginManager()
         self.is_running = False
+        self._setup_plugins()
+
+    def _setup_plugins(self):
+        """Loads plugin configurations and calls their setup methods."""
+        config_path = Path("config/settings.yaml")
+        if not config_path.exists():
+            logger.warning("Configuration file 'config/settings.yaml' not found.")
+            config = {}
+        else:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f) or {}
+
+        plugin_configs = config.get("plugins", {})
+
+        all_plugins = [
+            plugin
+            for plugin_list in self.plugin_manager._plugins.values()
+            for plugin in plugin_list
+        ]
+
+        for plugin in all_plugins:
+            plugin_config = plugin_configs.get(plugin.name, {})
+            try:
+                plugin.setup(plugin_config)
+                logger.info(f"Successfully set up plugin '{plugin.name}'.")
+            except Exception as e:
+                logger.error(f"Error setting up plugin '{plugin.name}': {e}", exc_info=True)
 
     async def consciousness_loop(self):
         self.is_running = True
         session_id = "persistent_session_01"
         logger.info(f"New session started with ID: {session_id}")
 
-        # Manually initialize memory plugin to load history
-        # This is a temporary solution until plugin setup is implemented in the Kernel
         memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
         if memory_plugins:
-            memory_plugins[0].setup(config={})  # HACK: assuming one memory plugin for now
             initial_history = memory_plugins[0].get_history(session_id)
         else:
             initial_history = []
@@ -47,7 +72,6 @@ class Kernel:
             try:
                 # 1. LISTENING PHASE
                 context.current_state = "LISTENING"
-                # ... (code for this phase remains the same as before)
                 interface_plugins = self.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
                 if not interface_plugins:
                     logger.warning("No INTERFACE plugins found. Waiting...")
@@ -73,7 +97,16 @@ class Kernel:
                     context = await plugin.execute(context)
                 llm_response = context.payload.get("llm_response", "I have no response.")
                 context.history.append({"role": "assistant", "content": llm_response})
+
+                # 4. RESPONDING PHASE
+                # The terminal gets the response by default.
                 print(f">>> Sophia: {llm_response}")
+                # Check if the context contains a special callback for responding.
+                # This allows any plugin to request a direct response.
+                response_callback = context.payload.get("_response_callback")
+                if callable(response_callback):
+                    context.logger.info("Found a response callback. Sending response...")
+                    await response_callback(llm_response)
 
                 # 3. MEMORIZING PHASE
                 context.current_state = "MEMORIZING"
