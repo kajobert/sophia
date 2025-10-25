@@ -27,5 +27,3 @@ python-dateutil
 six
 backoff
 onnxruntime
-starlette
-typing-extensions

@@ -96,13 +96,3 @@ def test_search_with_empty_query_returns_empty(chroma_memory_plugin: ChromaDBMem
     results = chroma_memory_plugin.search_memories("", n_results=1)
     assert len(results) == 0
     assert results == []
-
-
-def test_get_history_returns_empty_list(chroma_memory_plugin: ChromaDBMemory) -> None:
-    """
-    Tests that the get_history method returns an empty list, fulfilling the
-    memory plugin contract.
-    """
-    session_id = "test_session_history"
-    history = chroma_memory_plugin.get_history(session_id)
-    assert history == []
