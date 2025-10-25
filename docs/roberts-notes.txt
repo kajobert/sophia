@@ -1,0 +1,1 @@
+v terminálu chybí "kurzor" pro vstup, například "<<< Uživatel:"
