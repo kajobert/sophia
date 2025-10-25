@@ -22,7 +22,7 @@ This document outlines the technical design of the Sophia AGI system, focusing o
 
 *   **Responsibility:** Encapsulates a specific piece of functionality.
 *   **Structure:**
-    *   Each plugin is a single Python file (e.g., `plugins/tool_web_search.py`).
+    *   Each plugin is a single Python file (e.g., `plugins/tool_file_system.py`).
     *   Every plugin **must** inherit from the `BasePlugin` class defined in `plugins/base_plugin.py`.
     *   Plugins are discovered and loaded at runtime by the `PluginManager`.
 
