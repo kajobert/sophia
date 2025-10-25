@@ -3,3 +3,5 @@ pytest-asyncio
 pre-commit
 sqlalchemy
 litellm
+PyYAML
+
