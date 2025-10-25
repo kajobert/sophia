@@ -25,17 +25,13 @@ jobs:
         run: uv venv
 
       - name: Install dependencies
-        # Spouštíme uv z virtuálního prostředí
-        run: .venv/bin/uv pip sync requirements.in
+        run: uv pip sync requirements.in
 
       - name: Lint with ruff
-        # Spouštíme ruff z virtuálního prostředí
-        run: .venv/bin/ruff check .
+        run: uv run ruff check .
 
       - name: Check formatting with ruff
-        # A znovu...
-        run: .venv/bin/ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Run tests
-        # A nakonec i pytest
-        run: PYTHONPATH=. .venv/bin/pytest
+        run: uv run pytest
