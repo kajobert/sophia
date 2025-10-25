@@ -12,3 +12,6 @@ tool_file_system:
 
 memory_chroma:
   db_path: "data/chroma_db"
+
+tool_bash:
+  timeout: 10 # Default timeout for shell commands in seconds

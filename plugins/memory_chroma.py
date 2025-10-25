@@ -57,10 +57,7 @@ class ChromaDBMemory(BasePlugin):
         try:
             self.client: chromadb.Client = chromadb.PersistentClient(
                 path=db_path,
-                settings=Settings(
-                    allow_reset=allow_reset,
-                    anonymized_telemetry=False
-                )
+                settings=Settings(allow_reset=allow_reset, anonymized_telemetry=False),
             )
             self.collection: Collection = self.client.get_or_create_collection(
                 name="sophia_long_term_memory"
@@ -97,9 +94,7 @@ class ChromaDBMemory(BasePlugin):
         try:
             doc_id = f"{session_id}_{hash(text)}"
             self.collection.add(
-                documents=[text],
-                metadatas=[{"session_id": session_id}],
-                ids=[doc_id]
+                documents=[text], metadatas=[{"session_id": session_id}], ids=[doc_id]
             )
             logger.info(f"Added a new long-term memory: '{text[:50]}...'")
         except Exception as e:
@@ -122,13 +117,14 @@ class ChromaDBMemory(BasePlugin):
             return []
 
         try:
-            results = self.collection.query(
-                query_texts=[query_text],
-                n_results=n_results
-            )
+            results = self.collection.query(query_texts=[query_text], n_results=n_results)
 
-            memories: List[str] = results['documents'][0] if results and results.get('documents') else []
-            logger.info(f"Found {len(memories)} relevant memories for query: '{query_text[:50]}...'")
+            memories: List[str] = (
+                results["documents"][0] if results and results.get("documents") else []
+            )
+            logger.info(
+                f"Found {len(memories)} relevant memories for query: '{query_text[:50]}...'"
+            )
             return memories
         except Exception as e:
             logger.error(f"Failed to search memories in ChromaDB: {e}", exc_info=True)
