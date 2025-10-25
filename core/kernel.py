@@ -54,7 +54,7 @@ class Kernel:
                     await asyncio.sleep(5)
                     continue
 
-                input_tasks = [p.execute(context) for p in interface_plugins]
+                input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
                 done, pending = await asyncio.wait(input_tasks, return_when=asyncio.FIRST_COMPLETED)
 
                 for task in pending:
