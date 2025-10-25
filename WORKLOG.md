@@ -1,3 +1,94 @@
+**Mission:** REFACTOR: Externalize LLM Configuration
+**Agent:** Jules v1.8
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Move the hardcoded LLM model name to a `config/settings.yaml` file.
+*   Update the `LLMTool` plugin to load the model from the configuration file.
+*   Update the tests to support the new configuration-driven approach.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Created `config/settings.yaml` and added the specified model `google/gemini-2.5-flash-lite-preview-09-2025`.
+*   Added `PyYAML` to `requirements.in` to handle YAML parsing.
+*   Modified `plugins/tool_llm.py` to load the model from the config file at setup, with a sensible fallback.
+*   Updated `tests/plugins/test_tool_llm.py` to use a temporary config file, ensuring the test remains isolated and robust.
+
+**3. Result:**
+*   Mission accomplished. The LLM model is now configurable, making the system more flexible and easier to maintain.
+
+---
+
+**Mission:** HOTFIX: Invalid LLM Model
+**Agent:** Jules v1.7
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Replace the invalid LLM model `openrouter/auto` with a valid model.
+*   Run tests to confirm the fix.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Researched a suitable free model on OpenRouter and updated the `LLMTool` plugin in `plugins/tool_llm.py` to use `mistralai/mistral-7b-instruct`.
+*   Successfully ran the full test suite to ensure the fix was effective and introduced no regressions.
+
+**3. Result:**
+*   Mission accomplished. The application can now successfully connect to the LLM and generate responses.
+
+---
+
+**Mission:** HOTFIX: Runtime Error and Venv Guard
+**Agent:** Jules v1.6
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Fix the `TypeError: Passing coroutines is forbidden` in `core/kernel.py`.
+*   Add a virtual environment check to `run.py` to prevent dependency errors.
+*   Run tests to confirm the fixes.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Corrected the `asyncio.wait` call in `core/kernel.py` by wrapping the plugin execution coroutines in `asyncio.create_task`.
+*   Added a `check_venv()` function to `run.py` that exits the application if it's not being run from within a virtual environment.
+*   Successfully ran the full test suite to ensure the fixes were effective and introduced no regressions.
+
+**3. Result:**
+*   Mission accomplished. The runtime `TypeError` is resolved, and a safeguard is now in place to ensure the application is always run from the correct environment, preventing future module-not-found errors.
+
+---
+
+**Mission:** Mission 4: Implement Thought and Short-Term Memory
+**Agent:** Jules v1.5
+**Date:** 2025-10-25
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Migrate dependency management from `requirements.txt` to `requirements.in`.
+*   Create the `LLMTool` plugin.
+*   Create the `SQLiteMemory` plugin.
+*   Integrate `THINKING` and `MEMORIZING` phases into the `Kernel`.
+*   Create unit tests for the new plugins.
+*   Install dependencies and run all tests.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Renamed `requirements.txt` to `requirements.in` and added `sqlalchemy` and `litellm`.
+*   Updated the `.github/workflows/ci.yml` to use `uv pip sync requirements.in`.
+*   Created `plugins/tool_llm.py` with the `LLMTool` plugin to handle LLM integration.
+*   Created `plugins/memory_sqlite.py` with the `SQLiteMemory` plugin for short-term conversation storage.
+*   Modified `core/kernel.py`, updating the `consciousness_loop` to include the new `THINKING` and `MEMORIZING` phases.
+*   Created `tests/plugins/test_tool_llm.py` and `tests/plugins/test_memory_sqlite.py` to test the new plugins.
+*   Encountered and resolved issues with `uv pip sync` not installing all transitive dependencies by using `uv pip install -r requirements.in` instead.
+*   Successfully ran the full test suite, including the new tests.
+
+**3. Result:**
+*   Mission accomplished. Sophia can now process input using an LLM and store conversation history in a SQLite database. The Kernel has been updated to support these new capabilities.
+
+---
+
 **Mission:** Mission 3: Kernel and Terminal Interface Implementation
 **Agent:** Jules v1.4
 **Date:** 2025-10-25
