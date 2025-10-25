@@ -4,6 +4,7 @@ from core.context import SharedContext
 import logging
 import os
 
+
 @pytest.mark.asyncio
 async def test_sqlite_memory_execute_and_get_history():
     db_file = "test_memory.db"
@@ -14,7 +15,7 @@ async def test_sqlite_memory_execute_and_get_history():
         current_state="MEMORIZING",
         user_input="My input",
         payload={"llm_response": "My response"},
-        logger=logging.getLogger("test")
+        logger=logging.getLogger("test"),
     )
 
     await memory_plugin.execute(context)

@@ -45,28 +45,21 @@ The heart of the project is a robust and secure design that protects stability w
 
 ## 🚀 Getting Started
 
-The project is in the active development phase. To run the current version, follow these steps:
+To get started with Sophia, please follow our detailed **User Guide**, which contains complete setup instructions.
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/kajobert/sophia.git
-    cd sophia
-    ```
-2.  **Set Up the Environment:**
-    *   Create a `.env` file and fill in the necessary API keys and configurations according to `config/settings.yaml`.
-3.  **Run with Docker (Recommended):**
-    ```bash
-    docker-compose up --build
-    ```
+*   **[➡️ User Guide](./06_USER_GUIDE.md)**
 
-## 📚 Documentation
+## 📚 Project Documentation
 
 All knowledge about this project is stored in the `docs/` directory. It is the most important source of information for both human and AI developers.
 
-*   **[Vision and DNA](01_VISION_AND_DNA.md):** Why we exist.
-*   **[Cognitive Architecture](02_COGNITIVE_ARCHITECTURE.md):** How we "think".
-*   **[Technical Architecture](03_TECHNICAL_ARCHITECTURE.md):** How we are built.
-*   **[Development Guidelines](04_DEVELOPMENT_GUIDELINES.md):** How to contribute.
+*   **[User Guide](./06_USER_GUIDE.md):** How to run the application.
+*   **[Developer Guide](./07_DEVELOPER_GUIDE.md):** How to contribute to the project.
+*   **[Project Overview](./08_PROJECT_OVERVIEW.md):** High-level architecture, data flow, and roadmap.
+*   **[Vision and DNA](./01_VISION_AND_DNA.md):** The project's core philosophy.
+*   **[Cognitive Architecture](./02_COGNITIVE_ARCHITECTURE.md):** The conceptual model of the AI.
+*   **[Technical Architecture](./03_TECHNICAL_ARCHITECTURE.md):** The software design and structure.
+*   **[Development Guidelines](./04_DEVELOPMENT_GUIDELINES.md):** Rules and standards for development.
 
 ### 🗺️ Roadmap
 

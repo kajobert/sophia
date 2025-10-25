@@ -55,11 +55,14 @@ All detailed information, from the project's philosophy and architecture to deve
 
 ## 🚀 Getting Started
 
-To get the project running, please refer to the "Getting Started" section within the main documentation.
+Quickly get Sophia running on your local machine by following our step-by-step guide.
 
-*   [**English - Getting Started**](docs/en/README.md#-getting-started)
-*   [**Česky - Začínáme**](docs/cs/README.md#-začínáme)
+*   [**English User Guide**](./docs/en/06_USER_GUIDE.md)
+*   [**Česká uživatelská příručka**](./docs/cs/06_UZIVATELSKA_PRIRUCKA.md)
 
 ## 🤝 Contributing
 
-We welcome contributions. Please read the [**Development Guidelines**](docs/en/04_DEVELOPMENT_GUIDELINES.md) before you begin.
+We welcome contributions! If you're interested in helping develop Sophia, please start by reading our developer guide.
+
+*   [**English Developer Guide**](./docs/en/07_DEVELOPER_GUIDE.md)
+*   [**Příručka pro vývojáře (CS)**](./docs/cs/07_PRIRUCKA_PRO_VYVOJARE.md)
