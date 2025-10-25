@@ -2,8 +2,6 @@
 Tests for the ChromaDBMemory plugin.
 """
 
-import os
-import shutil
 import pytest
 from typing import Generator
 from plugins.memory_chroma import ChromaDBMemory
@@ -23,10 +21,7 @@ def chroma_memory_plugin() -> Generator[ChromaDBMemory, None, None]:
     memory_plugin = ChromaDBMemory()
     # Use an in-memory, ephemeral instance of ChromaDB for testing
     memory_plugin.client = chromadb.Client(
-        settings=Settings(
-            allow_reset=True,
-            anonymized_telemetry=False
-        )
+        settings=Settings(allow_reset=True, anonymized_telemetry=False)
     )
     memory_plugin.collection = memory_plugin.client.get_or_create_collection(
         name="sophia_long_term_memory"
