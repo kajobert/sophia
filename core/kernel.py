@@ -23,57 +23,72 @@ class Kernel:
         self.is_running = False
 
     async def consciousness_loop(self):
-        """
-        The main, infinite loop that keeps Sophia "conscious".
-        """
         self.is_running = True
-        session_id = str(uuid.uuid4())
+        session_id = "persistent_session_01"
         logger.info(f"New session started with ID: {session_id}")
 
-        # Create a context for this session
+        # Manually initialize memory plugin to load history
+        # This is a temporary solution until plugin setup is implemented in the Kernel
+        memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
+        if memory_plugins:
+            memory_plugins[0].setup(config={})  # HACK: assuming one memory plugin for now
+            initial_history = memory_plugins[0].get_history(session_id)
+        else:
+            initial_history = []
+
         context = SharedContext(
             session_id=session_id,
             current_state="INITIALIZING",
             logger=logging.getLogger(f"session-{session_id[:8]}"),
+            history=initial_history,
         )
 
         while self.is_running:
             try:
-                # 1. LISTENING PHASE: Get input from all interface plugins
+                # 1. LISTENING PHASE
                 context.current_state = "LISTENING"
+                # ... (code for this phase remains the same as before)
                 interface_plugins = self.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
-
                 if not interface_plugins:
                     logger.warning("No INTERFACE plugins found. Waiting...")
                     await asyncio.sleep(5)
                     continue
 
                 input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
-
-                # Wait for any input to be received
-                done, pending = await asyncio.wait(
-                    input_tasks, return_when=asyncio.FIRST_COMPLETED
-                )
+                done, pending = await asyncio.wait(input_tasks, return_when=asyncio.FIRST_COMPLETED)
 
                 for task in pending:
-                    task.cancel()  # Cancel other pending input tasks
+                    task.cancel()
 
-                # Process the result from the first completed task
                 if done:
                     context = done.pop().result()
                     if context.user_input:
-                        user_input = context.user_input
-                        logger.info(f"Received user input: '{user_input}'")
-                        # Future phases (THINKING, ACTING, etc.) will be added here.
-                        # For now, just print the input and wait for the next one.
-                        print(f">>> Sophia received: {user_input}")
-                        context.user_input = None  # Clear the input for the next cycle
+                        logger.info(f"User input received: '{context.user_input}'")
+                        context.history.append({"role": "user", "content": context.user_input})
 
-                await asyncio.sleep(0.1)  # A short pause to prevent high CPU usage
+                # 2. THINKING PHASE
+                context.current_state = "THINKING"
+                tool_plugins = self.plugin_manager.get_plugins_by_type(PluginType.TOOL)
+                for plugin in tool_plugins:
+                    context = await plugin.execute(context)
+                llm_response = context.payload.get("llm_response", "I have no response.")
+                context.history.append({"role": "assistant", "content": llm_response})
+                print(f">>> Sophia: {llm_response}")
 
+                # 3. MEMORIZING PHASE
+                context.current_state = "MEMORIZING"
+                memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
+                for plugin in memory_plugins:
+                    context = await plugin.execute(context)
+
+                # Cleanup for next cycle
+                context.user_input = None
+                context.payload = {}
+
+                await asyncio.sleep(0.1)
             except asyncio.CancelledError:
                 self.is_running = False
-                logger.info("Consciousness loop was interrupted.")
+                logger.info("Consciousness loop was cancelled.")
             except Exception as e:
                 logger.error(f"Unexpected error in consciousness loop: {e}", exc_info=True)
                 self.is_running = False
