@@ -60,6 +60,7 @@ For every assigned task, follow these steps precisely:
 4.  **Testing:** Write and run tests for the new plugin. Debug and refactor until all tests pass.
 5.  **Documentation:** Record the final status of your work in `WORKLOG.md`.
 6.  **Submission:** Announce that the task is complete and ready for review.
+7.  **Adhere to Mission Scope:** Strictly adhere to the tasks defined in the mission brief. Do not add new tasks, technologies, or tests that were not explicitly requested. If you think of an improvement, write it down in the `IDEAS.md` file and continue with the original plan.
 
 ---
 
