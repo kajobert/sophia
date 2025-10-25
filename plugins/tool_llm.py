@@ -9,6 +9,7 @@ class LLMTool(BasePlugin):
 
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
+        self.setup(config={})
 
 
     @property
