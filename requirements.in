@@ -1,7 +1,9 @@
+PyYAML
+litellm
+sqlalchemy
+pre-commit
 pytest
 pytest-asyncio
-pre-commit
-sqlalchemy
-litellm
-PyYAML
-
+fastapi
+uvicorn
+websockets
