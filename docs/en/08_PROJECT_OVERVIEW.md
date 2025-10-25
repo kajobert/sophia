@@ -6,9 +6,14 @@ This document provides a high-level overview of the Sophia V2 project, its archi
 
 Here is a "cheat sheet" of the most common commands for managing the project:
 
--   **Set up the environment (first time):**
+-   **User Setup (first time):**
     ```bash
     uv venv && source .venv/bin/activate && uv pip sync requirements.in
+    ```
+
+-   **Developer Setup (first time):**
+    ```bash
+    uv venv && source .venv/bin/activate && uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 -   **Activate the virtual environment:**
@@ -16,9 +21,14 @@ Here is a "cheat sheet" of the most common commands for managing the project:
     source .venv/bin/activate
     ```
 
--   **Install/update dependencies:**
+-   **Install/update dependencies (User):**
     ```bash
     uv pip sync requirements.in
+    ```
+
+-   **Install/update dependencies (Developer):**
+    ```bash
+    uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 -   **Run the application (Terminal and Web UI):**

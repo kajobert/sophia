@@ -28,8 +28,9 @@ Ensure you have the following installed on your system:
     On Windows, use `.venv\Scripts\activate`.
 
 3.  **Install dependencies:**
+    Install both the core application dependencies and the development dependencies.
     ```bash
-    uv pip sync requirements.in
+    uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 4.  **Set up pre-commit hooks:**

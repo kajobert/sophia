@@ -6,9 +6,14 @@ Tento dokument poskytuje celkový přehled projektu Sophia V2, jeho architektury
 
 Zde je "tahák" nejběžnějších příkazů pro správu projektu:
 
--   **Nastavení prostředí (první spuštění):**
+-   **Nastavení pro uživatele (první spuštění):**
     ```bash
     uv venv && source .venv/bin/activate && uv pip sync requirements.in
+    ```
+
+-   **Nastavení pro vývojáře (první spuštění):**
+    ```bash
+    uv venv && source .venv/bin/activate && uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 -   **Aktivace virtuálního prostředí:**
@@ -16,9 +21,14 @@ Zde je "tahák" nejběžnějších příkazů pro správu projektu:
     source .venv/bin/activate
     ```
 
--   **Instalace/aktualizace závislostí:**
+-   **Instalace/aktualizace závislostí (Uživatel):**
     ```bash
     uv pip sync requirements.in
+    ```
+
+-   **Instalace/aktualizace závislostí (Vývojář):**
+    ```bash
+    uv pip install -r requirements.in -r requirements-dev.in
     ```
 
 -   **Spuštění aplikace (terminál a webové rozhraní):**
