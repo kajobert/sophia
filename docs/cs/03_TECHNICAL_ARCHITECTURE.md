@@ -35,7 +35,7 @@ graph TD
         direction TB
         P1["Interface Plugins\n(Terminal, WebUI)"]
         P2["Memory Plugins\n(SQLite, ChromaDB)"]
-        P3["Tool Plugins\n(LLM Client, File System)"]
+        P3["Tool Plugins\n(LLM Client, FileSystemTool)"]
         P4[...]
     end
 
