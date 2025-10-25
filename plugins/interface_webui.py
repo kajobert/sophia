@@ -3,11 +3,12 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from uvicorn import Config, Server
-from typing import Dict, Callable, Awaitable
+from typing import Dict
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
+
 
 class WebUIInterface(BasePlugin):
     """A plugin that provides a web-based chat interface via FastAPI and WebSockets."""
@@ -33,7 +34,7 @@ class WebUIInterface(BasePlugin):
         self.host = config.get("host", "127.0.0.1")
         self.port = config.get("port", 8000)
         self.connections: Dict[str, WebSocket] = {}
-        self.input_queue = asyncio.Queue()
+        self.input_queue: asyncio.Queue = asyncio.Queue()
 
         @self.app.get("/")
         async def get_chat_ui():
@@ -47,8 +48,10 @@ class WebUIInterface(BasePlugin):
             try:
                 while True:
                     data = await websocket.receive_text()
+
                     async def response_callback(message: str):
                         await self.send_response(session_id, message)
+
                     await self.input_queue.put((data, response_callback))
             except WebSocketDisconnect:
                 del self.connections[session_id]

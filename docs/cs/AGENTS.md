@@ -44,8 +44,12 @@ Tvá role není jen "programátor". Jsi **Disciplinovaný Plugin Developer**. To
 4.  ### **AKTUALIZUJ `WORKLOG.md`.**
     *   Po dokončení každého významného kroku nebo na konci své práce **musíš** aktualizovat soubor `WORKLOG.md` podle formátu definovaného níže.
 
-5.  ### **V KÓDU POUZE ANGLIČTINA.**
-    * Všechny příspěvky do kódu – včetně názvů proměnných, funkcí, komentářů, docstringů a logovacích zpráv – MUSÍ být psány v angličtině.
+5.  ### **DOKUMENTACE JE POVINNÁ.**
+    *   Jakákoli úprava kódu **musí** být promítnuta v dokumentaci.
+    *   Pokud přidáš nový plugin, vytvoříš funkci nebo změníš chování, jsi zodpovědný za aktualizaci všech relevantních dokumentů (`Uživatelská příručka`, `Příručka pro vývojáře` atd.) v anglické i české verzi. Kód není považován za dokončený, dokud není aktualizována dokumentace.
+
+6.  ### **V KÓDU POUZE ANGLIČTINA.**
+    *   Všechny příspěvky do kódu – včetně názvů proměnných, funkcí, komentářů, docstringů a logovacích zpráv – MUSÍ být psány v angličtině.
     * Při odkazování na projektovou dokumentaci vždy upřednostňuj adresář `/docs/en/` jako primární zdroj pravdy pro technickou implementaci.
 
 ---

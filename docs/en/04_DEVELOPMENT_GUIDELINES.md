@@ -40,3 +40,11 @@ To ensure security, centralization, and ease of management, the following rule a
     *   **Security:** API keys and other sensitive data are centralized, not scattered throughout the plugin codebase.
     *   **Centralization:** When a parameter needs to be changed, it is done in a single location.
     *   **Testability:** During testing, we can easily inject a mock configuration into a plugin without needing to manipulate files or environment variables.
+
+## 6. Documentation Maintenance
+
+**Rule:** Code is not complete until the documentation is updated.
+
+*   **Mandatory Updates:** Every code change that introduces a new feature, alters existing behavior, or changes the setup process **must** be accompanied by a corresponding update to the documentation.
+*   **Responsibility:** The developer making the code change is responsible for updating all relevant documents.
+*   **Bilingual Sync:** All documentation must be kept in sync between the English (`docs/en/`) and Czech (`docs/cs/`) versions. The English version is considered the source of truth.
