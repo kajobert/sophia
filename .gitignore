@@ -14,6 +14,8 @@ logs/*.log
 
 # Databases
 *.db
+data/chroma_db/
+test_chroma_db/
 
 # IDE specific
 .idea/

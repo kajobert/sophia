@@ -1,3 +1,5 @@
+-r requirements.in
+
 # Development & Testing Dependencies
 black
 mypy
