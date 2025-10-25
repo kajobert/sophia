@@ -76,6 +76,22 @@ class ChromaDBMemory(BasePlugin):
         """
         return context
 
+    def get_history(self, session_id: str) -> List[Dict[str, str]]:
+        """
+        Retrieves the chronological chat history. Not applicable for ChromaDB.
+
+        This method is required to fulfill the memory plugin contract, but because
+        ChromaDB stores semantic data rather than a chronological chat log,
+        it returns an empty list.
+
+        Args:
+            session_id: The ID of the session (unused).
+
+        Returns:
+            An empty list.
+        """
+        return []
+
     def add_memory(self, session_id: str, text: str) -> None:
         """
         Creates an embedding for a piece of text and stores it as a long-term memory.
