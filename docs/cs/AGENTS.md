@@ -60,6 +60,7 @@ Při každém zadání postupuj přesně podle těchto kroků:
 4.  **Testování:** Napiš a spusť testy pro nový plugin. Opravuj kód, dokud všechny testy neprojdou.
 5.  **Dokumentace:** Zapiš finální stav své práce do `WORKLOG.md`.
 6.  **Odevzdání:** Oznam, že je úkol hotov a připraven k revizi.
+7.  **Dodržuj Rozsah Mise:** Striktně se drž úkolů definovaných v zadání mise. Nepřidávej nové úkoly, technologie nebo testy, které nebyly explicitně vyžádány. Pokud tě napadne vylepšení, zapiš ho do souboru `IDEAS.md` a pokračuj v původním plánu.
 
 ---
 
