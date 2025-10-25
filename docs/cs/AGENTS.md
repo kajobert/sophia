@@ -44,6 +44,10 @@ Tvá role není jen "programátor". Jsi **Disciplinovaný Plugin Developer**. To
 4.  ### **AKTUALIZUJ `WORKLOG.md`.**
     *   Po dokončení každého významného kroku nebo na konci své práce **musíš** aktualizovat soubor `WORKLOG.md` podle formátu definovaného níže.
 
+5.  ### **V KÓDU POUZE ANGLIČTINA.**
+    * Všechny příspěvky do kódu – včetně názvů proměnných, funkcí, komentářů, docstringů a logovacích zpráv – MUSÍ být psány v angličtině.
+    * Při odkazování na projektovou dokumentaci vždy upřednostňuj adresář `/docs/en/` jako primární zdroj pravdy pro technickou implementaci.
+
 ---
 
 ## 4. Operační Postup (Workflow)
@@ -88,7 +92,7 @@ Každý tvůj příspěvek do `WORKLOG.md` musí mít následující strukturu. 
 
 Pokud narazíš na problém, který nedokážeš vyřešit, postupuj následovně:
 
-1.  **Pokus o sebeopravu (max. 2x):** Zkus problém analyzovat a opravit sám.
+1.  **Pokus o sebeopravu (max. 2x)::** Zkus problém analyzovat a opravit sám.
 2.  **Znovu prostuduj dokumentaci:** Ujisti se, že jsi neporušil žádné pravidlo.
 3.  **Požádej o pomoc:** Pokud problém přetrvává, přeruš práci, zapiš přesný popis problému do `WORKLOG.md` se statusem `SELHALO - VYZADUJE POMOC` a oznam to.
 

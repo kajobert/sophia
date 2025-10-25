@@ -32,9 +32,7 @@ class PluginManager:
                         Defaults to "plugins".
         """
         self.plugin_dir = Path(plugin_dir)
-        self._plugins: Dict[PluginType, List[BasePlugin]] = {
-            pt: [] for pt in PluginType
-        }
+        self._plugins: Dict[PluginType, List[BasePlugin]] = {pt: [] for pt in PluginType}
         self.load_plugins()
 
     def load_plugins(self) -> None:
@@ -48,10 +46,7 @@ class PluginManager:
         """
         logger.info(f"Scanning for plugins in directory: '{self.plugin_dir}'")
         for file_path in self.plugin_dir.glob("*.py"):
-            if (
-                file_path.name.startswith("_")
-                or file_path.name == "base_plugin.py"
-            ):
+            if file_path.name.startswith("_") or file_path.name == "base_plugin.py":
                 continue
 
             module_name = f"{self.plugin_dir.name}.{file_path.stem}"
@@ -87,9 +82,7 @@ class PluginManager:
                 f"was successfully registered as type '{plugin_type.name}'."
             )
         except Exception as e:
-            logger.error(
-                f"Error initializing plugin '{plugin_class.__name__}': {e}"
-            )
+            logger.error(f"Error initializing plugin '{plugin_class.__name__}': {e}")
 
     def get_plugins_by_type(self, plugin_type: PluginType) -> List[BasePlugin]:
         """
