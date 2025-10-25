@@ -1,3 +1,4 @@
+
 import yaml
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
@@ -8,6 +9,7 @@ class LLMTool(BasePlugin):
 
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
+
 
     @property
     def name(self) -> str:
@@ -50,6 +52,7 @@ class LLMTool(BasePlugin):
             # Using litellm allows us to easily switch models and providers
             response = await litellm.acompletion(
                 model=self.model,
+
                 messages=messages
             )
             llm_response = response.choices[0].message.content
