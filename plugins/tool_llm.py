@@ -1,8 +1,8 @@
-
 import yaml
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 import litellm
+
 
 class LLMTool(BasePlugin):
     """A tool plugin that uses an LLM to generate a response."""
@@ -10,7 +10,6 @@ class LLMTool(BasePlugin):
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
         self.setup(config={})
-
 
     @property
     def name(self) -> str:
@@ -37,7 +36,6 @@ class LLMTool(BasePlugin):
             # Handle other potential errors like parsing errors
             print(f"Error loading config: {e}")
 
-
     async def execute(self, context: SharedContext) -> SharedContext:
         """Generate a response using the configured LLM."""
         if not context.user_input:
@@ -51,11 +49,7 @@ class LLMTool(BasePlugin):
         context.logger.info(f"Calling LLM with {len(messages)} messages.")
         try:
             # Using litellm allows us to easily switch models and providers
-            response = await litellm.acompletion(
-                model=self.model,
-
-                messages=messages
-            )
+            response = await litellm.acompletion(model=self.model, messages=messages)
             llm_response = response.choices[0].message.content
             context.payload["llm_response"] = llm_response
             context.logger.info("LLM response received successfully.")

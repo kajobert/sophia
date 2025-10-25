@@ -1,10 +1,9 @@
-import asyncio
-import pytest
 import logging
+import pytest
 from unittest.mock import MagicMock, AsyncMock
 
 from core.context import SharedContext
-from plugins.interface_webui import WebUIInterface, PluginType
+from plugins.interface_webui import WebUIInterface
 
 
 @pytest.fixture
@@ -29,13 +28,16 @@ async def test_webui_server_starts_on_first_execute(webui_plugin):
     """
     Tests that the web server is started only on the first call to execute.
     """
+
     async def mock_start_server():
         webui_plugin._server_started = True
 
     webui_plugin.start_server = AsyncMock(side_effect=mock_start_server)
     webui_plugin.input_queue.put_nowait(("test input", lambda msg: None))
 
-    context = SharedContext(session_id="test_session", current_state="TESTING", logger=logging.getLogger())
+    context = SharedContext(
+        session_id="test_session", current_state="TESTING", logger=logging.getLogger()
+    )
     await webui_plugin.execute(context)
 
     webui_plugin.start_server.assert_called_once()
@@ -56,7 +58,9 @@ async def test_webui_execute_updates_context(webui_plugin):
     mock_callback = MagicMock()
     webui_plugin.input_queue.put_nowait(("hello from web", mock_callback))
 
-    context = SharedContext(session_id="test_session", current_state="TESTING", logger=logging.getLogger())
+    context = SharedContext(
+        session_id="test_session", current_state="TESTING", logger=logging.getLogger()
+    )
     updated_context = await webui_plugin.execute(context)
 
     assert updated_context.user_input == "hello from web"

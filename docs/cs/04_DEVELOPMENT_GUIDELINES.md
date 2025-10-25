@@ -40,3 +40,11 @@ Pro zajištění bezpečnosti, centralizace a snadné správy platí následují
     *   **Bezpečnost:** API klíče a další citlivá data jsou centralizována, nikoli roztroušena po kódu pluginů.
     *   **Centralizace:** Když je třeba změnit parametr, děje se tak na jediném místě.
     *   **Testovatelnost:** Během testování můžeme snadno podstrčit falešnou (mock) konfiguraci do pluginu, aniž bychom museli manipulovat se soubory.
+
+## 6. Údržba Dokumentace
+
+**Pravidlo:** Kód není kompletní, dokud není aktualizována dokumentace.
+
+*   **Povinné Aktualizace:** Každá změna kódu, která zavádí novou funkci, mění stávající chování nebo upravuje proces nastavení, **musí** být doprovázena odpovídající aktualizací dokumentace.
+*   **Zodpovědnost:** Vývojář provádějící změnu kódu je zodpovědný za aktualizaci všech relevantních dokumentů.
+*   **Dvojjazyčná Synchronizace:** Veškerá dokumentace musí být udržována v souladu mezi anglickou (`docs/en/`) a českou (`docs/cs/`) verzí. Anglická verze je považována za zdroj pravdy.

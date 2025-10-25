@@ -44,8 +44,12 @@ Your role is not merely "programmer." You are a **Disciplined Plugin Developer**
 4.  ### **UPDATE `WORKLOG.md`.**
     *   After completing any significant step, and always at the end of your work, you **must** update the `WORKLOG.md` file according to the format defined below.
 
+5.  ### **DOCUMENTATION IS MANDATORY.**
+    *   Any modification to the code **must** be reflected in the documentation.
+    *   If you add a new plugin, create a feature, or change a behavior, you are responsible for updating all relevant documents (`User Guide`, `Developer Guide`, etc.) in both English and Czech. Code is not considered complete until the documentation is updated.
+
 6.  ### **ENGLISH ONLY IN CODE.**
-    * All code contributions—including variable names, function names, comments, docstrings, and log messages—MUST be written in English.
+    *   All code contributions—including variable names, function names, comments, docstrings, and log messages—MUST be written in English.
     * When referring to project documentation, always prioritize the `/docs/en/` directory as the primary source of truth for technical implementation.
 
 ---
