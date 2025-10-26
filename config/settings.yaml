@@ -22,3 +22,6 @@ tool_web_search:
 
 cognitive_doc_reader:
   docs_dir: "docs"
+
+cognitive_historian:
+  worklog_file: "WORKLOG.md"

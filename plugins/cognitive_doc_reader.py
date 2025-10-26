@@ -6,6 +6,7 @@ from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
 
+
 class DocReader(BasePlugin):
     """A cognitive plugin for reading and understanding the project's documentation."""
 
@@ -30,9 +31,15 @@ class DocReader(BasePlugin):
         docs_dir = config.get("docs_dir", "docs")
         self.docs_path = Path(docs_dir).resolve()
         if not self.docs_path.is_dir():
-            logger.warning(f"Documentation directory not found at '{self.docs_path}'. This plugin may not work.")
+            logger.warning(
+                "Documentation directory not found at '%s'. " "This plugin may not work.",
+                self.docs_path,
+            )
         else:
-            logger.info(f"Doc reader tool initialized. Documentation root is at '{self.docs_path}'")
+            logger.info(
+                "Doc reader tool initialized. Documentation root is at" " '%s'",
+                self.docs_path,
+            )
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """This plugin is not directly executed; its methods are called by other cognitive processes."""
