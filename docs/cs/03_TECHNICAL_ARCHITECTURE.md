@@ -93,4 +93,10 @@ Tyto komponenty tvoří stabilní a neměnné jádro.
     *   `setup()`: Metoda volaná `PluginManagerem` při inicializaci. Slouží k nastavení (např. připojení k databázi).
     *   `execute(context: SharedContext) -> SharedContext`: Hlavní metoda, kterou volá Jádro. Plugin provede svou operaci na základě dat v `context` a vrátí upravený `context`.
 
+#### 4.1.1. Dostupné Nástrojové Pluginy (Tool Plugins)
+
+*   **`FileSystemTool`:** Poskytuje agentovi bezpečné, izolované prostředí (sandbox) pro čtení, zápis a výpis souborů. Všechny operace jsou omezeny na určený adresář `sandbox/`, aby se zabránilo neúmyslnému přístupu k systému.
+*   **`BashTool`:** Umožňuje agentovi spouštět shellové příkazy v bezpečném, izolovaném prostředí. To je užitečné pro spouštění skriptů, správu procesů nebo kontrolovanou interakci s operačním systémem.
+*   **`GitTool`:** Umožňuje agentovi interagovat s jeho vlastním repozitářem zdrojového kódu. Může kontrolovat stav, prohlížet změny (diffs) a zjišťovat název aktuální větve, což mu dává základní úroveň povědomí o vlastním kódu.
+
 Tato architektura zajišťuje, že systém může růst a získávat nové schopnosti pouhým přidáním nových souborů do adresáře `plugins/`, aniž by bylo nutné zasahovat do jeho stabilního a chráněného jádra.
