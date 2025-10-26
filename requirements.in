@@ -28,3 +28,4 @@ six
 backoff
 onnxruntime
 GitPython
+google-api-python-client
