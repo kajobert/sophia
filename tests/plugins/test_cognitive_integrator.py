@@ -13,6 +13,36 @@ from plugins.base_plugin import PluginType
 from core.context import SharedContext
 
 
+@pytest.fixture(autouse=True)
+def cleanup_test_files():
+    """
+    Automatically cleanup test-generated files before and after each test.
+    
+    This prevents test artifacts from breaking subsequent test runs.
+    Files created during integration tests are removed to maintain clean state.
+    """
+    # Cleanup before test
+    test_files = [
+        Path("plugins/test_plugin.py"),
+        Path("plugins/cleanup_test.py"),
+        Path("plugins/example_plugin.py"),
+        Path("tests/plugins/test_test_plugin.py"),
+        Path("tests/plugins/test_cleanup_test.py"),
+    ]
+    
+    for file_path in test_files:
+        if file_path.exists():
+            file_path.unlink()
+    
+    # Run test
+    yield
+    
+    # Cleanup after test
+    for file_path in test_files:
+        if file_path.exists():
+            file_path.unlink()
+
+
 @pytest.fixture
 def test_context():
     """Create test SharedContext for testing."""
