@@ -26,3 +26,8 @@ cognitive_doc_reader:
 
 cognitive_historian:
   worklog_file: "WORKLOG.md"
+
+cognitive_notes_analyzer:
+  notes_file: "docs/roberts-notes.txt"
+  enabled: true
+
