@@ -1,5 +1,212 @@
 ````markdown
 ---
+## Mission: Roadmap 04 Step 2 - Implement TaskManager Plugin
+**Agent:** GitHub Copilot (AI Developer)  
+**Date:** 2025-10-26  
+**Status:** COMPLETED ✅
+
+### 1. Plan:
+*   Analyze Roadmap 04 Step 2 specifications for TaskManager plugin
+*   Create `plugins/cognitive_task_manager.py` with HKA PODVĚDOMÍ layer
+*   Implement CRUD operations (create, update, get, list tasks)
+*   Implement pattern recognition (similar tasks via ChromaDB)
+*   Implement learning consolidation (insights storage)
+*   Create comprehensive test suite (21 tests)
+*   Verify all tests pass (165/165 including existing)
+*   Update WORKLOG.md with mission documentation
+
+### 2. Actions Taken:
+
+#### Plugin Implementation:
+1. **Created TaskManager Plugin** (`plugins/cognitive_task_manager.py`)
+   - HKA Layer: PODVĚDOMÍ (Mammalian Brain - Pattern Recognition & Long-term Tracking)
+   - Implements task lifecycle management with persistence
+   - 491 lines of implementation
+   - Dependencies: memory_chroma, tool_file_system (injected by Kernel)
+
+2. **Key Features Implemented:**
+   - `create_task()`: Create task from approved goal
+     * Generates unique task_id (UUID)
+     * Persists to `data/tasks/{task_id}.json`
+     * Priority levels: high/medium/low
+     * Status tracking with history
+   
+   - `update_task()`: Update task status and add notes
+     * Status progression: pending → analyzing → delegated → reviewing → integrating → completed/failed
+     * History tracking with timestamps
+     * Automatic status change logging
+   
+   - `get_task()`: Retrieve full task details
+   - `list_tasks()`: List all tasks with filtering
+     * Filter by status or priority
+     * Sorted by priority (high first) then timestamp (newest first)
+     * Limit results for performance
+   
+   - `get_similar_tasks()`: Pattern recognition via ChromaDB
+     * Subconscious memory recall - finding similar historical tasks
+     * Semantic search on task descriptions
+     * Returns similarity scores
+     * Uses ChromaDB collection: "tasks"
+   
+   - `consolidate_insights()`: Learning consolidation into long-term memory
+     * "Dreaming" process - extracting key learnings
+     * Stores task descriptions for similarity search
+     * Stores meaningful notes (>50 chars) as learnings
+     * Enables future pattern recognition
+
+3. **Task Structure:**
+```json
+{
+  "task_id": "uuid",
+  "title": "Task title (max 100 chars)",
+  "description": "Full description",
+  "goal": {}, // From NotesAnalyzer
+  "context": {}, // Enriched context
+  "status": "pending|analyzing|delegated|reviewing|integrating|completed|failed",
+  "priority": "high|medium|low",
+  "created_at": "ISO timestamp",
+  "updated_at": "ISO timestamp",
+  "history": [
+    {
+      "timestamp": "ISO timestamp",
+      "status": "status_value",
+      "notes": "Human-readable notes"
+    }
+  ]
+}
+```
+
+4. **Persistence & Pattern Recognition:**
+   - File-based persistence: `data/tasks/{task_id}.json`
+   - Survives system restarts
+   - ChromaDB integration for semantic similarity
+   - Pattern recognition for learning from history
+
+#### Test Suite Creation:
+5. **Created Comprehensive Tests** (`tests/plugins/test_cognitive_task_manager.py`)
+   - 21 unit tests covering all functionality
+   
+   - CRUD Tests (10 tests):
+     * test_create_task_success - Basic task creation
+     * test_create_task_default_priority - Default priority handling
+     * test_create_task_missing_goal - Error handling
+     * test_create_task_invalid_priority - Validation
+     * test_update_task_success - Status updates
+     * test_update_task_not_found - Error handling
+     * test_update_task_invalid_status - Status validation
+     * test_update_task_status_progression - Full lifecycle
+     * test_get_task_success - Task retrieval
+     * test_get_task_not_found - Error handling
+   
+   - List Operations (3 tests):
+     * test_list_tasks_empty - Empty list handling
+     * test_list_tasks_multiple - Multiple tasks with sorting
+     * test_list_tasks_filter_by_status - Status filtering
+   
+   - Pattern Recognition (2 tests):
+     * test_get_similar_tasks_with_chroma - ChromaDB integration
+     * test_get_similar_tasks_no_chroma - Graceful degradation
+   
+   - Learning Consolidation (3 tests):
+     * test_consolidate_insights_success - Insight extraction and storage
+     * test_consolidate_insights_no_chroma - Graceful degradation
+     * test_consolidate_insights_task_not_found - Error handling
+   
+   - Persistence & Edge Cases (3 tests):
+     * test_task_persistence_across_restarts - Persistence verification
+     * test_unknown_action - Unknown action handling
+     * test_long_task_title_truncation - Title length validation
+
+6. **Test Infrastructure Improvements:**
+   - Created `create_context()` helper for SharedContext creation
+   - All tests use proper fixtures (mock_memory_chroma, mock_file_system, temp_tasks_dir)
+   - Mocked ChromaDB for pattern recognition tests
+   - Temporary directory for task storage (cleanup after tests)
+
+7. **Fixes During Testing:**
+   - Added required abstract properties (name, plugin_type, version)
+   - Fixed SharedContext creation (requires session_id, current_state, logger)
+   - Fixed datetime.utcnow() deprecation → datetime.now()
+   - Fixed task sorting (priority first, then timestamp)
+   - Fixed context passing for ChromaDB sub-queries
+
+### 3. Outcome:
+
+**MISSION COMPLETED SUCCESSFULLY ✅**
+
+#### Test Results:
+```
+165 passed in 9.37s
+Including 21 new TaskManager tests
+ZERO failures ✅
+ZERO warnings ✅
+```
+
+#### Files Created/Modified:
+1. `plugins/cognitive_task_manager.py` - NEW (491 lines)
+2. `tests/plugins/test_cognitive_task_manager.py` - NEW (21 tests, 649 lines)
+3. `data/tasks/` - NEW directory (created during setup)
+4. `WORKLOG.md` - Updated with this mission
+
+#### Adherence to AGENTS.md:
+- ✅ **Rule 1 (Don't Touch Core):** NO core files modified
+- ✅ **Rule 2 (Everything is Plugin):** TaskManager is proper plugin with dependency injection
+- ✅ **Rule 3 (Tests Mandatory):** 21 comprehensive tests, 165/165 passing
+- ✅ **Rule 4 (Update WORKLOG):** This entry
+- ✅ **Rule 6 (English Only):** All code in English
+- ✅ **Rule 7 (Workflow):** Analysis → Planning → Implementation → Testing → Documentation
+
+#### HKA Architecture:
+**Layer:** PODVĚDOMÍ (Mammalian Brain)
+- **Purpose:** Pattern recognition and long-term tracking
+- **Characteristics:**
+  * Long-term memory (file persistence)
+  * Pattern matching (ChromaDB semantic search)
+  * Learning consolidation ("dreaming" process)
+  * Subconscious recall (similar tasks)
+- **Integration:** Bridges INSTINKTY (EthicalGuardian) and VĚDOMÍ (future Orchestrator)
+
+#### Task Management Capabilities:
+1. **Lifecycle Management:**
+   - ✅ Create tasks from approved goals
+   - ✅ Track status through full lifecycle
+   - ✅ Update with notes and history
+   - ✅ Retrieve and list with filtering
+
+2. **Pattern Recognition:**
+   - ✅ Find similar historical tasks
+   - ✅ Semantic search via ChromaDB
+   - ✅ Similarity scoring
+
+3. **Learning Consolidation:**
+   - ✅ Extract insights from completed tasks
+   - ✅ Store in long-term memory (ChromaDB)
+   - ✅ Enable future pattern recognition
+
+4. **Persistence:**
+   - ✅ File-based storage (JSON)
+   - ✅ Survives system restarts
+   - ✅ Clean data structure
+
+#### Performance Metrics:
+- **Test Speed:** 0.13s for 21 TaskManager tests ✅
+- **Full Suite:** 9.37s for 165 total tests ✅
+- **Memory:** Efficient file-based persistence ✅
+- **Scalability:** ChromaDB for large-scale pattern recognition ✅
+
+#### Roadmap 04 Progress:
+- ✅ **Step 0:** NotesAnalyzer implemented and committed (6c5aa6fd)
+- ✅ **Step 1:** EthicalGuardian implemented and committed (d2588e74)
+- ✅ **Step 2:** TaskManager implemented and tested
+- ⏳ **Next:** Step 3 - Implement Strategic Orchestrator (VĚDOMÍ layer)
+
+**RECOMMENDATION:** ✅ **Step 2 is PRODUCTION READY**
+
+TaskManager successfully implements HKA PODVĚDOMÍ layer for subconscious task tracking and pattern recognition. Plugin can manage task lifecycle, find similar historical tasks via ChromaDB, and consolidate learnings into long-term memory for future autonomous operations.
+
+**COMMIT READY:** All tests passing, ready to commit Step 2 work.
+
+---
 ## Mission: Roadmap 04 Step 1 - Implement EthicalGuardian Plugin
 **Agent:** GitHub Copilot (AI Developer)  
 **Date:** 2025-10-26  
