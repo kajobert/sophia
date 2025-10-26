@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Optional
 
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
@@ -31,7 +31,10 @@ class DependencyAnalyzer(BasePlugin):
         """Sets up the path to the project's root directory."""
         # We assume the script runs from the root, so "." is the project root.
         self.root_path = Path(".").resolve()
-        logger.info(f"Dependency analyzer initialized. Project root is at '{self.root_path}'")
+        logger.info(
+            "Dependency analyzer initialized. Project root is at" " '%s'",
+            self.root_path,
+        )
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """This plugin is not directly executed; its methods are called by other cognitive processes."""
@@ -53,9 +56,7 @@ class DependencyAnalyzer(BasePlugin):
             with open(req_file_path, "r", encoding="utf-8") as f:
                 # Filter out comments and empty lines
                 dependencies = [
-                    line.strip()
-                    for line in f
-                    if line.strip() and not line.strip().startswith("#")
+                    line.strip() for line in f if line.strip() and not line.strip().startswith("#")
                 ]
             return dependencies
         except FileNotFoundError as e:
