@@ -31,3 +31,12 @@ cognitive_notes_analyzer:
   notes_file: "docs/roberts-notes.txt"
   enabled: true
 
+# Jules API Tool - for delegating coding tasks to external AI agents
+tool_jules_api:
+  backend: "mock"  # Options: jules, copilot, claude, mock
+  api_key: "${JULES_API_KEY}"  # Or GITHUB_COPILOT_KEY, ANTHROPIC_API_KEY
+  endpoint: "https://jules.googleapis.com/v1"  # Backend-specific endpoint
+  timeout: 300  # Task timeout in seconds
+  max_retries: 3  # Maximum retry attempts
+  poll_interval: 30  # Status polling interval in seconds
+
