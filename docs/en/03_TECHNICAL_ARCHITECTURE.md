@@ -26,6 +26,12 @@ This document outlines the technical design of the Sophia AGI system, focusing o
     *   Every plugin **must** inherit from the `BasePlugin` class defined in `plugins/base_plugin.py`.
     *   Plugins are discovered and loaded at runtime by the `PluginManager`.
 
+#### 2.2.1. Available Tool Plugins
+
+*   **`FileSystemTool`:** Provides a secure, sandboxed environment for the agent to read, write, and list files. All file operations are restricted to a designated `sandbox/` directory to prevent unintended access to the system.
+*   **`BashTool`:** Allows the agent to execute shell commands within a secure, isolated environment. This is useful for running scripts, managing processes, or interacting with the operating system in a controlled manner.
+*   **`GitTool`:** Enables the agent to interact with its own source code repository. It can check the status, view diffs of changes, and get the current branch name, providing a basic level of self-awareness of its own code.
+
 ### 2.3. `SharedContext` (`core/context.py`)
 
 *   **Responsibility:** The data bus and "lifeblood" of the system.
