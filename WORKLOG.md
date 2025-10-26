@@ -1,5 +1,156 @@
 ````markdown
 ---
+## 🔴 CRITICAL FIX: Broken Plugin Registration (System-Wide Failure)
+**Agent:** GitHub Copilot (AI Developer)  
+**Date:** 2025-10-26  
+**Status:** COMPLETED ✅  
+**Severity:** CRITICAL - System completely non-functional
+
+### 1. Discovery Context:
+
+User insight: "jedno kolečko v hodinkách rozbyje celé hodinky" (one broken cog breaks the whole watch)
+
+**Architectural Integrity Check** revealed system-wide failure:
+- Plugin count: Expected 21, Found 19
+- **Missing**: `cognitive_task_manager` + `cognitive_orchestrator`
+- **Error**: `Error initializing plugin 'TaskManager': 'COGNITIVE'`
+- **Impact**: Entire autonomous workflow DEAD - no task management, no orchestration
+
+### 2. Root Cause Analysis:
+
+**The Broken Cog:**
+```python
+# TaskManager & Orchestrator (WRONG - causes init failure):
+plugin_type = "COGNITIVE"  # ❌ String literal
+
+# All other 19 plugins (CORRECT):
+plugin_type = PluginType.COGNITIVE  # ✅ Enum value
+```
+
+**Why It Failed:**
+```python
+# PluginManager._register_plugin() expects:
+plugin_type = plugin_instance.plugin_type  # Gets "COGNITIVE" (string)
+self._plugins[plugin_type].append(plugin_instance)  # KeyError!
+# self._plugins only has PluginType enum keys, not string keys
+```
+
+### 3. Impact Assessment:
+
+**Before Fix (BROKEN):**
+- ✅ INTERFACE: 2 plugins loaded
+- ✅ MEMORY: 2 plugins loaded  
+- ✅ TOOL: 6 plugins loaded
+- ⚠️  COGNITIVE: 9/11 plugins (missing TaskManager + Orchestrator)
+- ❌ Autonomous workflow: COMPLETELY NON-FUNCTIONAL
+- ❌ Goal analysis: UNAVAILABLE
+- ❌ Mission execution: UNAVAILABLE
+
+**After Fix (OPERATIONAL):**
+- ✅ All plugin types: 21/21 plugins loaded
+- ✅ TaskManager: Loaded and functional
+- ✅ Orchestrator: Loaded and functional
+- ✅ Autonomous workflow: FULLY OPERATIONAL
+- ✅ Complete HKA architecture: INSTINKTY + PODVĚDOMÍ + VĚDOMÍ
+
+### 4. Changes Made:
+
+**File: `plugins/cognitive_task_manager.py`**
+```python
+- from plugins.base_plugin import BasePlugin
++ from plugins.base_plugin import BasePlugin, PluginType
+
+  class TaskManager(BasePlugin):
+      name = "cognitive_task_manager"
+-     plugin_type = "COGNITIVE"
++     plugin_type = PluginType.COGNITIVE
+      version = "1.0.0"
+```
+
+**File: `plugins/cognitive_orchestrator.py`**
+```python
+- from plugins.base_plugin import BasePlugin
++ from plugins.base_plugin import BasePlugin, PluginType
+
+  class StrategicOrchestrator(BasePlugin):
+      name: str = "cognitive_orchestrator"
+-     plugin_type: str = "COGNITIVE"
++     plugin_type = PluginType.COGNITIVE
+      version: str = "1.0.0"
+```
+
+**File: `tests/plugins/test_cognitive_orchestrator.py`**
+```python
++ from plugins.base_plugin import PluginType
+
+  def test_plugin_metadata():
+      orch = StrategicOrchestrator()
+      assert orch.name == "cognitive_orchestrator"
+-     assert orch.plugin_type == "COGNITIVE"
++     assert orch.plugin_type == PluginType.COGNITIVE
+      assert orch.version == "1.0.0"
+```
+
+### 5. Verification:
+
+**Plugin Discovery:**
+```bash
+python3 -c "from core.plugin_manager import PluginManager; ..."
+✅ COGNITIVE plugins: 11/11 loaded
+  🎯 cognitive_task_manager v1.0.0
+  🎯 cognitive_orchestrator v1.0.0
+  ... (9 others)
+📊 Total: 21 plugins
+```
+
+**Test Suite:**
+```bash
+PYTHONPATH=/workspaces/sophia pytest tests/ -q
+✅ 287 passed in 9.68s (100% pass rate)
+```
+
+**Autonomous Workflow Validation:**
+```python
+# Kernel can now successfully:
+1. Detect "autonomous:" trigger ✅
+2. Get cognitive_orchestrator from plugin map ✅
+3. Call orchestrator.execute(context) ✅
+4. Execute analyze_goal action ✅
+5. Execute execute_mission action ✅
+6. Update WORKLOG automatically ✅
+```
+
+### 6. Lessons Learned:
+
+**Why This Bug Was Hidden:**
+1. Tests mocked TaskManager/Orchestrator → never tested real plugin loading
+2. Type system didn't catch string vs enum (both assignable in Python)
+3. Individual components tested perfectly → integration failure invisible
+4. Error message misleading: "'COGNITIVE'" suggested value error, not type error
+
+**Prevention Strategy:**
+1. Add plugin registration integration test
+2. Add PluginManager type checking
+3. Use mypy strict mode to catch enum misuse
+4. Test full Kernel initialization in CI
+
+**Architectural Insight:**
+This demonstrates the "broken watch cog" principle perfectly:
+- All 19 plugins: Perfect ✅
+- TaskManager code: Perfect ✅
+- Orchestrator code: Perfect ✅  
+- **But one type mismatch = complete system failure** 🔴
+
+### 7. Commit:
+
+```
+git commit 9b499fa5
+"CRITICAL FIX: TaskManager and Orchestrator plugin_type enum"
+```
+
+---
+````markdown
+---
 ## Mission: Multi-Angle Deep Inspection & Type Safety Fix
 **Agent:** GitHub Copilot (AI Developer)  
 **Date:** 2025-10-26  
