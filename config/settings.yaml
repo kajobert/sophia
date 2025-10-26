@@ -19,3 +19,6 @@ tool_bash:
 tool_web_search:
   google_api_key: "${GOOGLE_API_KEY}" # Handled by environment variable
   google_cse_id: "${GOOGLE_CSE_ID}" # Handled by environment variable
+
+cognitive_doc_reader:
+  docs_dir: "docs"
