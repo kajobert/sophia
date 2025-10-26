@@ -44,6 +44,8 @@ class Kernel:
 
         for plugin in all_plugins:
             plugin_config = plugin_configs.get(plugin.name, {})
+            # Add the plugin_manager to the config
+            plugin_config["plugin_manager"] = self.plugin_manager
             try:
                 plugin.setup(plugin_config)
                 logger.info(f"Successfully set up plugin '{plugin.name}'.")
