@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from plugins.base_plugin import BasePlugin
+from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class StrategicOrchestrator(BasePlugin):
     
     # Plugin Metadata
     name: str = "cognitive_orchestrator"
-    plugin_type: str = "COGNITIVE"
+    plugin_type = PluginType.COGNITIVE
     version: str = "1.0.0"
     
     def __init__(self):

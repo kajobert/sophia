@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, AsyncMock, patch
 from core.context import SharedContext
 from plugins.cognitive_orchestrator import StrategicOrchestrator
+from plugins.base_plugin import PluginType
 
 
 # Test Fixtures
@@ -120,7 +121,7 @@ def test_plugin_metadata():
     """Test plugin has correct metadata."""
     orch = StrategicOrchestrator()
     assert orch.name == "cognitive_orchestrator"
-    assert orch.plugin_type == "COGNITIVE"
+    assert orch.plugin_type == PluginType.COGNITIVE
     assert orch.version == "1.0.0"
 
 

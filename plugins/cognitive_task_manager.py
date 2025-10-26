@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import uuid4
 
-from plugins.base_plugin import BasePlugin
+from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class TaskManager(BasePlugin):
     """
     
     name = "cognitive_task_manager"
-    plugin_type = "COGNITIVE"
+    plugin_type = PluginType.COGNITIVE
     version = "1.0.0"
     
     TASK_STATUSES = [
