@@ -40,3 +40,13 @@ tool_jules_api:
   max_retries: 3  # Maximum retry attempts
   poll_interval: 30  # Status polling interval in seconds
 
+# Quality Assurance - INSTINKTY layer for code validation
+cognitive_qa:
+  min_compliance_score: 0.80  # Minimum score (0.0-1.0) to approve code
+  allow_warnings: true  # Allow integration with warnings (not errors)
+  require_tests: true  # Require test file for all plugins
+  # Optional tool references (injected by PluginManager)
+  # tool_llm: Reference to LLM tool for Level 3 deep review
+  # tool_file_system: Reference to file system tool
+  # tool_bash: Reference to bash tool for test execution
+
