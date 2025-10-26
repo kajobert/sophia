@@ -5,6 +5,7 @@ Tests the roberts-notes.txt analysis functionality.
 """
 
 import pytest
+import logging
 from unittest.mock import AsyncMock, Mock, patch
 from pathlib import Path
 
@@ -19,6 +20,18 @@ def mock_kernel():
     kernel.plugin_manager = AsyncMock()
     kernel.plugin_manager.get_plugin = AsyncMock()
     return kernel
+
+def create_context(user_input: str = "", payload: dict = None) -> SharedContext:
+    """Helper to create SharedContext for testing."""
+    return SharedContext(
+        session_id="test-session",
+        user_input=user_input,
+        current_state="testing",
+        logger=logging.getLogger("test"),
+        payload=payload or {}
+    )
+
+
 
 
 @pytest.fixture
@@ -85,9 +98,12 @@ async def test_analyze_empty_notes(notes_analyzer, mock_file_system, mock_llm):
         "content": ""
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     # Should return empty goals
     assert result["status"] == "success"
@@ -112,9 +128,12 @@ async def test_analyze_simple_notes(notes_analyzer, mock_file_system, mock_llm):
         "response": "1. Create a new plugin for email notifications"
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "success"
     assert result["total_ideas"] == 1
@@ -148,9 +167,12 @@ Idea 3: Create backup system"""
 3. Create backup system"""
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "success"
     assert result["total_ideas"] == 3
@@ -233,9 +255,11 @@ def test_extract_keywords(notes_analyzer):
 @pytest.mark.asyncio
 async def test_get_status(notes_analyzer):
     """Test status endpoint."""
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "get_status"
-    })
+    }))
+
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "success"
     assert "notes_file" in result
@@ -252,9 +276,12 @@ async def test_file_read_error(notes_analyzer, mock_file_system):
         "error": "File not found"
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "error"
     assert "Failed to read notes" in result["error"]
@@ -275,9 +302,12 @@ async def test_llm_extraction_fallback(notes_analyzer, mock_file_system, mock_ll
         "error": "LLM timeout"
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     # Should use fallback extraction
     assert result["status"] == "success"
@@ -300,9 +330,12 @@ async def test_goal_structure(notes_analyzer, mock_file_system, mock_llm):
         "response": "1. Test idea"
     }
     
-    result = await notes_analyzer.execute({
+    result_ctx = await notes_analyzer.execute(create_context(payload={
         "action": "analyze_notes"
-    })
+    }))
+
+    
+    result = result_ctx.payload.get("result")
     
     goal = result["goals"][0]
     

@@ -89,14 +89,17 @@ async def test_create_task_success(task_manager, sample_goal, temp_tasks_dir):
     context = create_context(
         user_input="create task",
         payload={
-            "action": "create",
+            "action": "create_task",
             "goal": sample_goal,
             "context": {"project": "sophia"},
             "priority": "high"
         }
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "task_id" in result
     assert result["status"] == "pending"
@@ -125,12 +128,15 @@ async def test_create_task_default_priority(task_manager, sample_goal):
     context = create_context(
         user_input="create task",
         payload={
-            "action": "create",
+            "action": "create_task",
             "goal": sample_goal
         }
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "task_id" in result
     
@@ -145,10 +151,13 @@ async def test_create_task_missing_goal(task_manager):
     """Test task creation without goal."""
     context = create_context(
         user_input="create task",
-        payload={"action": "create"}
+        payload={"action": "create_task"}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "goal" in result["error"].lower()
@@ -160,13 +169,16 @@ async def test_create_task_invalid_priority(task_manager, sample_goal):
     context = create_context(
         user_input="create task",
         payload={
-            "action": "create",
+            "action": "create_task",
             "goal": sample_goal,
             "priority": "critical"  # Invalid
         }
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "priority" in result["error"].lower()
@@ -182,23 +194,26 @@ async def test_update_task_success(task_manager, sample_goal):
     # Create task first
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Update task
     update_context = create_context(
         user_input="update task",
         payload={
-            "action": "update",
+            "action": "update_task",
             "task_id": task_id,
             "status": "analyzing",
             "notes": "Starting analysis phase"
         }
     )
     
-    result = await task_manager.execute(update_context)
+    result_ctx = await task_manager.execute(update_context)
+    result = result_ctx.payload.get("result")
     
     assert result["task_id"] == task_id
     assert result["status"] == "analyzing"
@@ -218,13 +233,16 @@ async def test_update_task_not_found(task_manager):
     context = create_context(
         user_input="update task",
         payload={
-            "action": "update",
+            "action": "update_task",
             "task_id": "nonexistent-uuid",
             "status": "analyzing"
         }
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "not found" in result["error"].lower()
@@ -236,22 +254,25 @@ async def test_update_task_invalid_status(task_manager, sample_goal):
     # Create task first
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Update with invalid status
     update_context = create_context(
         user_input="update task",
         payload={
-            "action": "update",
+            "action": "update_task",
             "task_id": task_id,
             "status": "invalid_status"
         }
     )
     
-    result = await task_manager.execute(update_context)
+    result_ctx = await task_manager.execute(update_context)
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "status" in result["error"].lower()
@@ -263,9 +284,11 @@ async def test_update_task_status_progression(task_manager, sample_goal):
     # Create task
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Progress through statuses
@@ -275,12 +298,13 @@ async def test_update_task_status_progression(task_manager, sample_goal):
         update_context = create_context(
             user_input="update task",
             payload={
-                "action": "update",
+                "action": "update_task",
                 "task_id": task_id,
                 "status": status
             }
         )
-        result = await task_manager.execute(update_context)
+        result_ctx = await task_manager.execute(update_context)
+        result = result_ctx.payload.get("result")
         assert result["status"] == status
     
     # Verify history
@@ -299,18 +323,21 @@ async def test_get_task_success(task_manager, sample_goal):
     # Create task
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal, "priority": "high"}
+        payload={"action": "create_task", "goal": sample_goal, "priority": "high"}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Get task
     get_context = create_context(
         user_input="get task",
-        payload={"action": "get", "task_id": task_id}
+        payload={"action": "get_task", "task_id": task_id}
     )
     
-    result = await task_manager.execute(get_context)
+    result_ctx = await task_manager.execute(get_context)
+    result = result_ctx.payload.get("result")
     
     assert result["task_id"] == task_id
     assert result["status"] == "pending"
@@ -323,10 +350,13 @@ async def test_get_task_not_found(task_manager):
     """Test getting non-existent task."""
     context = create_context(
         user_input="get task",
-        payload={"action": "get", "task_id": "nonexistent-uuid"}
+        payload={"action": "get_task", "task_id": "nonexistent-uuid"}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "not found" in result["error"].lower()
@@ -341,10 +371,13 @@ async def test_list_tasks_empty(task_manager):
     """Test listing tasks when none exist."""
     context = create_context(
         user_input="list tasks",
-        payload={"action": "list"}
+        payload={"action": "list_tasks"}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["tasks"] == []
     assert result["total"] == 0
@@ -361,21 +394,24 @@ async def test_list_tasks_multiple(task_manager, sample_goal):
         context = create_context(
             user_input="create task",
             payload={
-                "action": "create",
+                "action": "create_task",
                 "goal": {**sample_goal, "raw_idea": f"Task {priority}"},
                 "priority": priority
             }
         )
-        result = await task_manager.execute(context)
+        result_ctx = await task_manager.execute(context)
+
+        result = result_ctx.payload.get("result")
         task_ids.append(result["task_id"])
     
     # List all tasks
     list_context = create_context(
         user_input="list tasks",
-        payload={"action": "list"}
+        payload={"action": "list_tasks"}
     )
     
-    result = await task_manager.execute(list_context)
+    result_ctx = await task_manager.execute(list_context)
+    result = result_ctx.payload.get("result")
     
     assert len(result["tasks"]) == 3
     assert result["total"] == 3
@@ -392,16 +428,18 @@ async def test_list_tasks_filter_by_status(task_manager, sample_goal):
     for i in range(2):
         context = create_context(
             user_input="create task",
-            payload={"action": "create", "goal": sample_goal}
+            payload={"action": "create_task", "goal": sample_goal}
         )
-        result = await task_manager.execute(context)
+        result_ctx = await task_manager.execute(context)
+
+        result = result_ctx.payload.get("result")
         task_ids.append(result["task_id"])
     
     # Update one to analyzing
     update_context = create_context(
         user_input="update task",
         payload={
-            "action": "update",
+            "action": "update_task",
             "task_id": task_ids[0],
             "status": "analyzing"
         }
@@ -411,10 +449,11 @@ async def test_list_tasks_filter_by_status(task_manager, sample_goal):
     # List only analyzing tasks
     list_context = create_context(
         user_input="list tasks",
-        payload={"action": "list", "status": "analyzing"}
+        payload={"action": "list_tasks", "status": "analyzing"}
     )
     
-    result = await task_manager.execute(list_context)
+    result_ctx = await task_manager.execute(list_context)
+    result = result_ctx.payload.get("result")
     
     assert len(result["tasks"]) == 1
     assert result["tasks"][0]["task_id"] == task_ids[0]
@@ -430,9 +469,11 @@ async def test_get_similar_tasks_with_chroma(task_manager, mock_memory_chroma, s
     # Create a task first
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Mock ChromaDB response
@@ -450,13 +491,14 @@ async def test_get_similar_tasks_with_chroma(task_manager, mock_memory_chroma, s
     similar_context = create_context(
         user_input="find similar",
         payload={
-            "action": "similar",
+            "action": "get_similar_tasks",
             "task": {"title": "Similar feature", "description": "Similar description"},
             "top_k": 5
         }
     )
     
-    result = await task_manager.execute(similar_context)
+    result_ctx = await task_manager.execute(similar_context)
+    result = result_ctx.payload.get("result")
     
     assert "similar_tasks" in result
     assert result["count"] == 1
@@ -472,12 +514,15 @@ async def test_get_similar_tasks_no_chroma(task_manager):
     context = create_context(
         user_input="find similar",
         payload={
-            "action": "similar",
+            "action": "get_similar_tasks",
             "task": {"title": "Test", "description": "Test"}
         }
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["similar_tasks"] == []
     assert result["count"] == 0
@@ -493,16 +538,18 @@ async def test_consolidate_insights_success(task_manager, mock_memory_chroma, sa
     # Create task
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Update with meaningful history
     update_context = create_context(
         user_input="update task",
         payload={
-            "action": "update",
+            "action": "update_task",
             "task_id": task_id,
             "status": "completed",
             "notes": "Learned important lesson: Always validate input data before processing"
@@ -515,11 +562,12 @@ async def test_consolidate_insights_success(task_manager, mock_memory_chroma, sa
     
     # Consolidate insights
     consolidate_context = create_context(
-        user_input="consolidate",
-        payload={"action": "consolidate", "task_id": task_id}
+        user_input="consolidate_insights",
+        payload={"action": "consolidate_insights", "task_id": task_id}
     )
     
-    result = await task_manager.execute(consolidate_context)
+    result_ctx = await task_manager.execute(consolidate_context)
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "success"
     assert result["insights_stored"] >= 2  # Description + learning note
@@ -535,18 +583,23 @@ async def test_consolidate_insights_no_chroma(task_manager, sample_goal):
     # Create task
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await task_manager.execute(ctx)
+    result_ctx = await task_manager.execute(ctx)
+
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Consolidate insights
     context = create_context(
-        user_input="consolidate",
-        payload={"action": "consolidate", "task_id": task_id}
+        user_input="consolidate_insights",
+        payload={"action": "consolidate_insights", "task_id": task_id}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert result["status"] == "skipped"
     assert "ChromaDB" in result.get("reason", "")
@@ -556,11 +609,14 @@ async def test_consolidate_insights_no_chroma(task_manager, sample_goal):
 async def test_consolidate_insights_task_not_found(task_manager):
     """Test consolidating insights for non-existent task."""
     context = create_context(
-        user_input="consolidate",
-        payload={"action": "consolidate", "task_id": "nonexistent-uuid"}
+        user_input="consolidate_insights",
+        payload={"action": "consolidate_insights", "task_id": "nonexistent-uuid"}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "not found" in result["error"].lower()
@@ -585,9 +641,10 @@ async def test_task_persistence_across_restarts(temp_tasks_dir, mock_memory_chro
     
     ctx = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": sample_goal}
+        payload={"action": "create_task", "goal": sample_goal}
     )
-    create_result = await manager1.execute(ctx)
+    result_ctx = await manager1.execute(ctx)
+    create_result = result_ctx.payload.get("result")
     task_id = create_result["task_id"]
     
     # Create second instance (simulating restart)
@@ -597,10 +654,11 @@ async def test_task_persistence_across_restarts(temp_tasks_dir, mock_memory_chro
     # Retrieve task with new instance
     get_ctx = create_context(
         user_input="get task",
-        payload={"action": "get", "task_id": task_id}
+        payload={"action": "get_task", "task_id": task_id}
     )
     
-    result = await manager2.execute(get_ctx)
+    result_ctx = await manager2.execute(get_ctx)
+    result = result_ctx.payload.get("result")
     
     assert result["task_id"] == task_id
     assert result["goal"] == sample_goal
@@ -618,7 +676,10 @@ async def test_unknown_action(task_manager):
         payload={"action": "unknown_action"}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     assert "error" in result
     assert "unknown" in result["error"].lower()
@@ -634,10 +695,13 @@ async def test_long_task_title_truncation(task_manager):
     
     context = create_context(
         user_input="create task",
-        payload={"action": "create", "goal": long_goal}
+        payload={"action": "create_task", "goal": long_goal}
     )
     
-    result = await task_manager.execute(context)
+    result_ctx = await task_manager.execute(context)
+
+    
+    result = result_ctx.payload.get("result")
     
     # Load task
     task_file = task_manager.tasks_dir / f"{result['task_id']}.json"

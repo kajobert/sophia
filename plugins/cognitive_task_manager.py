@@ -18,6 +18,7 @@ from typing import Any, Optional
 from uuid import uuid4
 
 from plugins.base_plugin import BasePlugin
+from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
 
@@ -89,37 +90,45 @@ class TaskManager(BasePlugin):
             f"file_system={'✓' if self.file_system else '✗'}"
         )
     
-    async def execute(self, context) -> dict:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """
         Execute task management command.
         
         Supported commands in context.payload:
-        - action: "create" - Create new task
-        - action: "update" - Update task status
-        - action: "get" - Get task details
-        - action: "list" - List all tasks
-        - action: "similar" - Find similar tasks
-        - action: "consolidate" - Consolidate task insights
+        - action: "create_task" - Create new task
+        - action: "update_task" - Update task status
+        - action: "get_task" - Get task details
+        - action: "list_tasks" - List all tasks
+        - action: "get_similar_tasks" - Find similar tasks
+        - action: "consolidate_insights" - Consolidate task insights
         
         Returns:
-            dict: Result of the operation
+            SharedContext: Updated context with result in payload["result"]
         """
         action = context.payload.get("action")
         
-        if action == "create":
-            return await self._create_task(context.payload)
-        elif action == "update":
-            return await self._update_task(context.payload)
-        elif action == "get":
-            return await self._get_task(context.payload)
-        elif action == "list":
-            return await self._list_tasks(context.payload)
-        elif action == "similar":
-            return await self._get_similar_tasks(context.payload, context)
-        elif action == "consolidate":
-            return await self._consolidate_insights(context.payload, context)
+        if action == "create_task":
+            result = await self._create_task(context.payload)
+            context.payload["result"] = result
+        elif action == "update_task":
+            result = await self._update_task(context.payload)
+            context.payload["result"] = result
+        elif action == "get_task":
+            result = await self._get_task(context.payload)
+            context.payload["result"] = result
+        elif action == "list_tasks":
+            result = await self._list_tasks(context.payload)
+            context.payload["result"] = result
+        elif action == "get_similar_tasks":
+            result = await self._get_similar_tasks(context.payload, context)
+            context.payload["result"] = result
+        elif action == "consolidate_insights":
+            result = await self._consolidate_insights(context.payload, context)
+            context.payload["result"] = result
         else:
-            return {"error": f"Unknown action: {action}"}
+            context.payload["result"] = {"error": f"Unknown action: {action}"}
+        
+        return context
     
     async def _create_task(self, payload: dict) -> dict:
         """

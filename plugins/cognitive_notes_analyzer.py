@@ -17,6 +17,7 @@ from typing import Any, List, Dict
 import re
 
 from plugins.base_plugin import BasePlugin, PluginType
+from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
 
@@ -98,19 +99,24 @@ class NotesAnalyzer(BasePlugin):
                 "status": "success|error"
             }
         """
-        action = context.get("action", "analyze_notes")
+        action = context.payload.get("action", "analyze_notes")
         
         if action == "analyze_notes":
-            return await self._analyze_notes(context)
+            result = await self._analyze_notes(context)
+            context.payload["result"] = result
+            return context
         elif action == "get_status":
-            return await self._get_analysis_status()
+            result = await self._get_analysis_status()
+            context.payload["result"] = result
+            return context
         else:
-            return {
+            context.payload["result"] = {
                 "status": "error",
                 "error": f"Unknown action: {action}"
             }
+            return context
     
-    async def _analyze_notes(self, context: dict) -> dict:
+    async def _analyze_notes(self, context: SharedContext) -> dict:
         """
         Analyzes roberts-notes.txt and extracts structured goals.
         
@@ -124,7 +130,7 @@ class NotesAnalyzer(BasePlugin):
         4. Validate against DNA principles
         5. Return structured goals
         """
-        notes_path = context.get("notes_path", self.NOTES_FILE)
+        notes_path = context.payload.get("notes_path", self.NOTES_FILE)
         
         # Step 1: Read notes file
         logger.info(f"Reading notes from: {notes_path}")
