@@ -81,17 +81,17 @@ class NotesAnalyzer(BasePlugin):
         
         logger.info(f"NotesAnalyzer initialized - HKA SUBCONSCIOUS layer (notes_file={self.notes_file})")
     
-    async def execute(self, context: dict) -> dict:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """
         Main entry point for notes analysis.
         
         Args:
-            context: {
+            context: SharedContext with payload containing:
                 "action": "analyze_notes",  # or "get_goals", "get_status"
                 "notes_path": Optional[str]  # override default path
-            }
         
         Returns:
+            SharedContext with result in payload["result"]:
             {
                 "goals": [...],
                 "total_ideas": int,
