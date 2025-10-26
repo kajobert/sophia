@@ -50,3 +50,14 @@ cognitive_qa:
   # tool_file_system: Reference to file system tool
   # tool_bash: Reference to bash tool for test execution
 
+# Safe Integrator - INSTINKTY layer for atomic integration with rollback
+cognitive_integrator:
+  backup_dir: "data/backups"  # Directory for backup metadata
+  auto_rollback: true  # Automatically rollback on integration failure
+  require_tests_pass: true  # Require all tests to pass before integration
+  backup_retention_days: 30  # Days to keep backup metadata
+  # Tool references (injected by PluginManager)
+  # tool_git: Reference to Git tool for backup/rollback operations
+  # tool_bash: Reference to bash tool for test execution
+  # tool_file_system: Reference to file system tool
+
