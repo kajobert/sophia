@@ -19,7 +19,12 @@ async def test_kernel_uses_interface_plugin():
 
     # Replace the actual plugin with a mock to track its calls
     mock_plugin = MagicMock()
-    mock_plugin.execute = AsyncMock()
+    mock_plugin.execute = AsyncMock(return_value=SharedContext(
+        session_id="test",
+        current_state="LISTENING",
+        user_input="",
+        logger=logging.getLogger()
+    ))
 
     # Manually insert the mock plugin into the plugin manager
     kernel.plugin_manager._plugins[PluginType.INTERFACE] = [mock_plugin]

@@ -8,6 +8,22 @@ logger = logging.getLogger(__name__)
 
 class Planner(BasePlugin):
     """A cognitive plugin that creates a plan (a sequence of tool calls) based on user input."""
+    
+    # SECURITY: Dangerous patterns that indicate potential attacks in plans
+    DANGEROUS_COMMAND_PATTERNS = [
+        "rm -rf", "dd if=", "mkfs", "> /dev/", "chmod 777",
+        "curl", "wget", "nc ", "bash -c", "sh -c",
+        "eval", "exec", "import os", "import subprocess",
+        "__import__", "compile(", "globals(", "locals(",
+    ]
+    
+    # SECURITY: Dangerous file paths that should never be accessed
+    DANGEROUS_PATHS = [
+        "/etc/passwd", "/etc/shadow", "~/.ssh", "/root/",
+        "../", "../../", "/dev/", "/proc/", "/sys/",
+        "core/kernel.py", "core/plugin_manager.py",
+        "config/settings.yaml", ".git/config",
+    ]
 
     @property
     def name(self) -> str:
@@ -27,10 +43,74 @@ class Planner(BasePlugin):
         if not self.llm_tool:
             logger.error("Planner plugin requires the 'tool_llm' to be available.")
 
+    def _validate_plan_safety(self, plan: List[Dict[str, Any]]) -> tuple[bool, str]:
+        """
+        Validates that a plan does not contain dangerous operations.
+        
+        SECURITY: This prevents LLM prompt injection attacks by:
+        1. Checking for dangerous command patterns
+        2. Checking for dangerous file paths
+        3. Validating tool/method names are known safe
+        
+        Args:
+            plan: The plan to validate (list of tool call dicts).
+            
+        Returns:
+            Tuple of (is_safe, reason_if_unsafe)
+        """
+        for i, step in enumerate(plan):
+            tool_name = step.get("tool_name", "")
+            method_name = step.get("method_name", "")
+            arguments = step.get("arguments", {})
+            
+            # 1. Check for dangerous patterns in all string arguments
+            for key, value in arguments.items():
+                if isinstance(value, str):
+                    # Check for dangerous command patterns
+                    for pattern in self.DANGEROUS_COMMAND_PATTERNS:
+                        if pattern in value.lower():
+                            return False, (
+                                f"Step {i+1}: Dangerous pattern '{pattern}' detected "
+                                f"in argument '{key}': {value}"
+                            )
+                    
+                    # Check for dangerous file paths
+                    for path_pattern in self.DANGEROUS_PATHS:
+                        if path_pattern in value:
+                            return False, (
+                                f"Step {i+1}: Dangerous path pattern '{path_pattern}' "
+                                f"detected in argument '{key}': {value}"
+                            )
+            
+            # 2. Validate tool names are from known safe set
+            safe_tools = {
+                "tool_file_system", "tool_bash", "tool_git", "tool_web_search",
+                "cognitive_code_reader", "cognitive_doc_reader",
+                "cognitive_dependency_analyzer", "cognitive_historian"
+            }
+            if tool_name not in safe_tools:
+                return False, f"Step {i+1}: Unknown or unsafe tool name: {tool_name}"
+            
+            # 3. Extra validation for bash commands
+            if tool_name == "tool_bash" and method_name == "execute_command":
+                command = arguments.get("command", "")
+                # Additional check for shell metacharacters
+                dangerous_chars = ["|", "&&", "||", ";", "`", "$(", ">", "<"]
+                for char in dangerous_chars:
+                    if char in command:
+                        return False, (
+                            f"Step {i+1}: Shell metacharacter '{char}' detected "
+                            f"in bash command: {command}"
+                        )
+        
+        return True, ""
+
     async def execute(self, context: SharedContext) -> SharedContext:
         """
         Takes user input and generates a plan in the context payload.
         The plan is a JSON array of tool calls.
+        
+        SECURITY: Plans are validated before being added to context.
         """
         if not context.user_input or not self.llm_tool:
             return context
@@ -69,8 +149,18 @@ Example JSON Response:
 
         try:
             plan = json.loads(plan_str)
+            
+            # SECURITY: Validate the plan before accepting it
+            is_safe, reason = self._validate_plan_safety(plan)
+            if not is_safe:
+                logger.error(f"Plan validation failed: {reason}")
+                logger.error(f"Rejected plan: {json.dumps(plan, indent=2)}")
+                context.payload["plan"] = []
+                context.payload["plan_error"] = f"Security validation failed: {reason}"
+                return context
+            
             context.payload["plan"] = plan
-            logger.info(f"Successfully generated plan with {len(plan)} steps.")
+            logger.info(f"Successfully generated and validated plan with {len(plan)} steps.")
         except json.JSONDecodeError:
             logger.error(f"Failed to decode plan from LLM response: {plan_str}")
             context.payload["plan"] = []

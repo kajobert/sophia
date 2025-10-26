@@ -21,6 +21,16 @@ class FileSystemTool(BasePlugin):
     any file operations outside of this directory, providing a secure way
 
     """
+    
+    # SECURITY: Protected paths that should NEVER be modified
+    # These paths are critical to Sophia's functioning and security
+    PROTECTED_PATHS = [
+        "core/",           # Core cognitive architecture
+        "config/",         # Configuration files including settings.yaml
+        ".git/",          # Version control metadata
+        ".env",           # Environment variables with API keys
+        "plugins/base_plugin.py",  # Base plugin contract
+    ]
 
     def __init__(self) -> None:
         """Initializes the FileSystemTool."""
@@ -67,7 +77,12 @@ class FileSystemTool(BasePlugin):
     def _get_safe_path(self, user_path: str) -> Path:
         """
         Resolves a user-provided path and ensures it is within the sandbox.
-
+        
+        SECURITY: This method prevents path traversal attacks by:
+        1. Rejecting any path containing '..'
+        2. Rejecting absolute paths
+        3. Verifying resolved path is still within sandbox
+        
         Args:
             user_path: The path provided by the user.
 
@@ -75,20 +90,47 @@ class FileSystemTool(BasePlugin):
             The resolved, safe path within the sandbox.
 
         Raises:
-            PermissionError: If the path is outside the allowed sandbox.
+            PermissionError: If the path is outside the allowed sandbox or contains traversal.
             ValueError: If the sandbox path has not been configured.
         """
         if self.sandbox_path is None:
             raise ValueError("Sandbox path has not been configured via setup().")
 
-        path = Path(os.path.normpath(user_path))
-        if path.is_absolute():
-            path = Path(str(path)[1:])
-
-        safe_path = (self.sandbox_path / path).resolve()
-
-        if self.sandbox_path not in safe_path.parents and safe_path != self.sandbox_path:
-            raise PermissionError(f"Path '{safe_path}' is outside the allowed sandbox.")
+        # 1. Normalize the path BEFORE combining with sandbox
+        normalized = os.path.normpath(user_path)
+        
+        # 2. SECURITY: Reject any path containing '..' (path traversal attempt)
+        if ".." in normalized:
+            logger.error(f"Path traversal attempt blocked: {user_path}")
+            raise PermissionError(
+                f"Path traversal attempt detected in '{user_path}'. "
+                f"Paths containing '..' are not allowed."
+            )
+        
+        # 3. SECURITY: Reject absolute paths
+        if os.path.isabs(normalized):
+            logger.error(f"Absolute path attempt blocked: {user_path}")
+            raise PermissionError(
+                f"Absolute paths are not allowed: '{user_path}'. "
+                f"Please use relative paths within the sandbox."
+            )
+        
+        # 4. Combine with sandbox directory
+        safe_path = (self.sandbox_path / normalized).resolve()
+        
+        # 5. CRITICAL SECURITY CHECK: Verify the resolved path is still within sandbox
+        # This catches any edge cases that might bypass previous checks
+        try:
+            safe_path.relative_to(self.sandbox_path)
+        except ValueError:
+            logger.error(
+                f"Path escape attempt blocked: {user_path} -> {safe_path} "
+                f"(sandbox: {self.sandbox_path})"
+            )
+            raise PermissionError(
+                f"Path '{user_path}' resolves outside the sandbox. "
+                f"Resolved to: {safe_path}, Sandbox: {self.sandbox_path}"
+            )
 
         return safe_path
 
@@ -111,9 +153,38 @@ class FileSystemTool(BasePlugin):
             raise FileNotFoundError(f"File not found: {safe_path}")
         return safe_path.read_text(encoding="utf-8")
 
+    def _is_protected_path(self, user_path: str) -> bool:
+        """
+        Checks if a path is in the protected paths list.
+        
+        SECURITY: Protected paths cannot be modified to prevent:
+        1. Core code tampering (core/, plugins/base_plugin.py)
+        2. Configuration changes (config/)
+        3. Git manipulation (.git/)
+        4. API key exposure (.env)
+        
+        Args:
+            user_path: The user-provided path to check.
+            
+        Returns:
+            True if the path is protected, False otherwise.
+        """
+        # SECURITY FIX: Case-insensitive comparison to prevent bypass on case-insensitive filesystems
+        normalized = os.path.normpath(user_path).lower()
+        
+        for protected in self.PROTECTED_PATHS:
+            protected_lower = protected.lower()
+            # Check if path starts with protected directory or is the protected file
+            if normalized.startswith(protected_lower) or normalized == protected_lower.rstrip('/'):
+                return True
+        
+        return False
+
     def write_file(self, path: str, content: str) -> str:
         """
         Writes content to a file within the sandbox.
+        
+        SECURITY: Protected paths cannot be written to.
 
         Args:
             path: The path to the file to write, relative to the sandbox root.
@@ -121,7 +192,18 @@ class FileSystemTool(BasePlugin):
 
         Returns:
             A success message.
+            
+        Raises:
+            PermissionError: If attempting to write to a protected path.
         """
+        # SECURITY: Check for protected paths BEFORE validating sandbox
+        if self._is_protected_path(path):
+            logger.error(f"Attempt to write to protected path blocked: {path}")
+            raise PermissionError(
+                f"Cannot write to protected path: '{path}'. "
+                f"Protected paths: {', '.join(self.PROTECTED_PATHS)}"
+            )
+        
         safe_path = self._get_safe_path(path)
         logger.info("Writing to file: %s", safe_path)
         safe_path.parent.mkdir(parents=True, exist_ok=True)

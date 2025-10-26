@@ -9,6 +9,44 @@ logger = logging.getLogger(__name__)
 
 class BashTool(BasePlugin):
     """A tool plugin for executing shell commands in a secure, sandboxed manner."""
+    
+    # SECURITY: Whitelist of allowed commands and their safe arguments
+    # Only these commands can be executed to prevent arbitrary code execution
+    ALLOWED_COMMANDS = {
+        # File operations (read-only)
+        "ls", "cat", "head", "tail", "less", "more", "file", "stat",
+        "find", "grep", "wc", "diff", "tree",
+        
+        # Git operations (safe subset)
+        "git status", "git log", "git diff", "git show", "git branch",
+        "git ls-files", "git ls-tree", "git rev-parse",
+        
+        # Python operations
+        "python", "python3", "pip list", "pip show", "pytest",
+        "black --check", "ruff check", "mypy",
+        
+        # System information (read-only)
+        "pwd", "whoami", "env", "printenv", "which", "uname",
+        "echo", "date", "hostname",
+        
+        # Package management (read-only)
+        "apt list", "apt search", "apt show",
+        "dpkg -l", "dpkg -L",
+        
+        # Testing utilities (safe, used in tests)
+        "sleep", "true", "false",
+    }
+    
+    # SECURITY: Dangerous patterns that should never appear in commands
+    DANGEROUS_PATTERNS = [
+        "rm ", "rmdir", "dd ", "mkfs", "> /dev/", "chmod", "chown",
+        "sudo", "su ", "passwd", "useradd", "userdel",
+        "wget", "curl", "nc ", "netcat", "telnet",
+        "exec", "eval", "|", "&&", "||", ";", "`", "$(", ">/",
+        "/dev/sd", "/dev/nvme", "fork", ":()", 
+        " -c ",  # SECURITY: Block code injection via -c flag (python -c, bash -c, etc.)
+        "/tmp/", "/var/tmp/",  # SECURITY: Block execution of files from temp directories
+    ]
 
     def __init__(self):
         super().__init__()
@@ -38,9 +76,45 @@ class BashTool(BasePlugin):
         """
         return context
 
+    def _is_command_allowed(self, command: str) -> Tuple[bool, str]:
+        """
+        Validates that a command is safe to execute.
+        
+        SECURITY: This prevents arbitrary code execution by:
+        1. Checking command against whitelist
+        2. Scanning for dangerous patterns
+        3. Blocking command chaining and redirection
+        
+        Args:
+            command: The shell command to validate.
+            
+        Returns:
+            Tuple of (is_allowed, reason_if_denied)
+        """
+        # 1. Check for dangerous patterns first
+        for pattern in self.DANGEROUS_PATTERNS:
+            if pattern in command:
+                return False, f"Command contains dangerous pattern: '{pattern}'"
+        
+        # 2. Extract the base command (first token)
+        base_command = command.split()[0] if command.strip() else ""
+        
+        # 3. Check if base command is in whitelist
+        if base_command not in self.ALLOWED_COMMANDS:
+            # Check if it's a multi-word command (e.g., "git status")
+            for allowed in self.ALLOWED_COMMANDS:
+                if command.startswith(allowed + " ") or command == allowed:
+                    return True, ""
+            
+            return False, f"Command '{base_command}' is not in the whitelist"
+        
+        return True, ""
+
     async def execute_command(self, command: str) -> Tuple[int, str, str]:
         """
         Executes a shell command asynchronously with a timeout.
+        
+        SECURITY: Commands are validated against a whitelist before execution.
 
         Args:
             command: The shell command to execute.
@@ -48,6 +122,12 @@ class BashTool(BasePlugin):
         Returns:
             A tuple containing (return_code, stdout, stderr).
         """
+        # SECURITY: Validate command before execution
+        is_allowed, reason = self._is_command_allowed(command)
+        if not is_allowed:
+            logger.error(f"Command blocked: '{command}' - {reason}")
+            return -1, "", f"SecurityError: {reason}"
+        
         logger.info(f"Executing command: '{command}'")
         try:
             proc = await asyncio.create_subprocess_shell(
@@ -72,6 +152,12 @@ class BashTool(BasePlugin):
 
         except asyncio.TimeoutError:
             logger.error(f"Command '{command}' timed out after {self.timeout} seconds.")
+            # IMPORTANT: Kill the process to prevent resource leak
+            try:
+                proc.kill()
+                await proc.wait()
+            except Exception:
+                pass  # Process might already be dead
             return -1, "", "TimeoutError: Command execution exceeded the time limit."
         except Exception as e:
             logger.error(f"Failed to execute command '{command}': {e}", exc_info=True)

@@ -1,5 +1,6 @@
 llm:
   model: "openrouter/google/gemini-2.5-flash-lite-preview-09-2025"
+  api_key: "${OPENROUTER_API_KEY}" # SECURITY: API key from environment variable
 
 plugins:
   interface_webui:
