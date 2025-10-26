@@ -12,40 +12,40 @@ class PluginType(Enum):
 
 class BasePlugin(ABC):
     """
-    Abstraktni trida definujici striktni kontrakt, ktery musi kazdy plugin dodrzet.
+    Abstract class defining the strict contract that every plugin must adhere to.
     """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """Unikatni, popisne jmeno pluginu (napr. "tool_file_system")."""
+        """A unique, descriptive name for the plugin (e.g., "tool_file_system")."""
         pass
 
     @property
     @abstractmethod
     def plugin_type(self) -> PluginType:
-        """Typ pluginu (INTERFACE, MEMORY, TOOL, COGNITIVE)."""
+        """The type of the plugin (INTERFACE, MEMORY, TOOL, COGNITIVE)."""
         pass
 
     @property
     @abstractmethod
     def version(self) -> str:
-        """Verze pluginu (napr. "1.0.0")."""
+        """The version of the plugin (e.g., "1.0.0")."""
         pass
 
     @abstractmethod
     def setup(self, config: dict) -> None:
         """
-        Metoda volana jednou pri nacteni pluginu.
-        Slouzi k inicializaci (napr. pripojeni k API, nacteni modelu, konfigurace).
+        Method called once when the plugin is loaded.
+        Used for initialization (e.g., connecting to an API, loading a model, configuration).
         """
         pass
 
     @abstractmethod
     async def execute(self, context: SharedContext) -> SharedContext:
         """
-        Hlavni metoda, kterou vola Jadr (Kernel).
-        Musi prijmout SharedContext a po dokonceni sve prace ho vratit
-        (upraveny nebo puvodni).
+        The main method called by the Kernel.
+        It must accept a SharedContext and return it (modified or original)
+        after its work is complete.
         """
         pass
