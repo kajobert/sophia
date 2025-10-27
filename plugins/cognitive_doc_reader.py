@@ -42,13 +42,17 @@ class DocReader(BasePlugin):
             )
 
     async def execute(self, context: SharedContext) -> SharedContext:
-        """This plugin is not directly executed; its methods are called by other cognitive processes."""
+        """
+        This plugin is not directly executed; its methods are called by other
+        cognitive processes.
+        """
         return context
 
     def read_document(self, doc_path: str) -> str:
         """
         Reads the content of a specific document file within the /docs directory.
-        The path should be relative to the /docs directory (e.g., "en/03_TECHNICAL_ARCHITECTURE.md").
+        The path should be relative to the /docs directory
+        (e.g., "en/03_TECHNICAL_ARCHITECTURE.md").
         """
         if not self.docs_path:
             return "Error: Documentation directory not configured."
@@ -65,7 +69,10 @@ class DocReader(BasePlugin):
             return f"An unexpected error occurred while reading '{doc_path}'."
 
     def list_all_documents(self) -> List[str]:
-        """Lists all Markdown documents within the /docs directory, returning their relative paths."""
+        """
+        Lists all Markdown documents within the /docs directory, returning their
+        relative paths.
+        """
         if not self.docs_path or not self.docs_path.is_dir():
             return ["Error: Documentation directory not found."]
         all_files = self.docs_path.rglob("*.md")

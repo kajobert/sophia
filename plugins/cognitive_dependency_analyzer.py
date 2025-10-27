@@ -37,7 +37,10 @@ class DependencyAnalyzer(BasePlugin):
         )
 
     async def execute(self, context: SharedContext) -> SharedContext:
-        """This plugin is not directly executed; its methods are called by other cognitive processes."""
+        """
+        This plugin is not directly executed; its methods are called by other
+        cognitive processes.
+        """
         return context
 
     def list_dependencies(self, file: str = "requirements.in") -> List[str]:
