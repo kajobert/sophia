@@ -42,7 +42,10 @@ class Historian(BasePlugin):
             )
 
     async def execute(self, context: SharedContext) -> SharedContext:
-        """This plugin is not directly executed; its methods are called by other cognitive processes."""
+        """
+        This plugin is not directly executed; its methods are called by other
+        cognitive processes.
+        """
         return context
 
     def review_past_missions(self, limit: int = 5) -> List[Dict[str, Any]]:
