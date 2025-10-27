@@ -1,13 +1,13 @@
 """
 Jules API Tool Plugin
 
-Integrace s Google Jules API (nebo alternativními coding agents) pro delegaci
-coding úkolů. Respektuje HKA: VĚDOMÍ vrstva - nástroj pro strategickou delegaci.
+Integration with Google Jules API (or alternative coding agents) for delegating
+coding tasks. Follows HKA: CONSCIOUSNESS layer - strategic delegation tool.
 
 DNA Principles:
-- Ahimsa (Non-harm): Pouze bezpečné, validované delegace
-- Satya (Truth): Transparentní komunikace s API
-- Kaizen (Continuous Improvement): Učení se z výsledků
+- Ahimsa (Non-harm): Only safe, validated delegations
+- Satya (Truth): Transparent API communication
+- Kaizen (Continuous Improvement): Learning from results
 
 Supported Backends:
 - Google Jules API (primary)
@@ -48,7 +48,7 @@ class JulesAPITool(BasePlugin):
     """
     Tool for delegating coding tasks to external AI agents.
     
-    HKA Layer: VĚDOMÍ (Neocortex) - Strategic delegation tool
+    HKA Layer: CONSCIOUSNESS (Neocortex) - Strategic delegation tool
     - Submits well-specified coding tasks
     - Monitors progress via polling
     - Retrieves and validates results

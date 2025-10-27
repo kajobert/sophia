@@ -811,54 +811,85 @@ Propojit všechny komponenty a zajistit dokumentaci.
 
 **Komponenty k Úpravě:**
 
-1. **`core/kernel.py`** - rozšířit consciousness_loop:
+1. **`plugins/interface_autonomous.py`** - NOVÝ plugin pro autonomní workflow:
 
 ```python
-# V Kernel třídě přidat:
-async def trigger_autonomous_mission(self):
+# NOVÝ: plugins/interface_autonomous.py
+class AutonomousInterface(BasePlugin):
     """
-    Nový entry point pro autonomní misi.
-    Volá orchestrator a zajišťuje governance.
+    Interface plugin pro autonomní vývojové mise.
+    
+    HKA Layer: INTERFACE (není součástí kognitivní hierarchie)
+    Detekuje 'autonomous:' příkazy a deleguje na Strategic Orchestrator.
+    
+    Zachovává čisté oddělení dle AGENTS.md Golden Rule #1:
+    "NEDOTÝKEJ SE JÁDRA!" - Core zůstává minimální.
     """
-    orchestrator = self.plugin_manager.get_plugin_by_name("cognitive_orchestrator")
+    name: str = "interface_autonomous"
+    plugin_type = PluginType.INTERFACE
     
-    if not orchestrator:
-        logger.error("Orchestrator not available")
-        return
+    async def execute(self, context: SharedContext) -> SharedContext:
+        """Zpracuje autonomní příkazy."""
+        if not context.user_input.startswith("autonomous:"):
+            return context  # Propustit dál
+        
+        goal_text = context.user_input[11:].strip()
+        
+        # Delegovat na orchestrator
+        result = await self._execute_autonomous_workflow(goal_text, context)
+        context.autonomous_response = result
+        return context
     
-    try:
-        result = await orchestrator.autonomous_mission()
+    async def _execute_autonomous_workflow(self, goal_text: str, context: SharedContext) -> str:
+        """Provede celý autonomní workflow přes orchestrator."""
+        # Fáze 1: Analyzovat cíl
+        context.payload = {"action": "analyze_goal", "goal": goal_text}
+        result_ctx = await self.orchestrator.execute(context)
         
-        # Automatická aktualizace WORKLOG.md
-        self._update_worklog(result)
+        # Fáze 2: Provést misi
+        task_id = result_ctx.payload["result"]["task_id"]
+        context.payload = {"action": "execute_mission", "task_id": task_id}
+        result_ctx = await self.orchestrator.execute(context)
         
-        return result
-    except Exception as e:
-        logger.error(f"Autonomous mission failed: {e}")
-        self._update_worklog({"status": "FAILED", "error": str(e)})
+        # Fáze 3: Aktualizovat WORKLOG
+        await self._update_worklog_autonomous(...)
+        
+        return formatted_result
 ```
 
 2. **Trigger Mechanisms:**
 
-**Option A: Command-based** (jednodušší)
+**Option A: Command-based** (implementováno)
 ```python
-# V interface_terminal.py:
-if user_input.startswith("autonomous:"):
-    goal_text = user_input[11:].strip()
-    # Uložit do roberts-notes.txt nebo předat přímo
-    result = await kernel.trigger_autonomous_mission()
+# Uživatel napíše v terminálu:
+> autonomous: Vytvoř plugin pro překlad textu pomocí externího API
+
+# AutonomousInterface plugin detekuje prefix a:
+# 1. Zavolá orchestrator.execute(action="analyze_goal")
+# 2. Orchestrator deleguje na NotesAnalyzer, EthicalGuardian, TaskManager
+# 3. Vytvoří task a vrátí task_id
+# 4. Zavolá orchestrator.execute(action="execute_mission")
+# 5. Formuluje strategický plán
+# 6. Automaticky aktualizuje WORKLOG.md
+# 7. Vrátí formátovaný výsledek uživateli
 ```
 
-**Option B: File-watching** (pokročilé)
+**Option B: File-watching** (budoucí rozšíření)
 ```python
-# Nový plugin: plugins/interface_notes_watcher.py
+# Budoucí: Nový plugin plugins/interface_notes_watcher.py
 class NotesWatcher(BasePlugin):
-    """Watches roberts-notes.txt for changes"""
+    """
+    Sleduje roberts-notes.txt pro změny.
+    Spouští autonomní workflow při detekci nového obsahu.
+    """
+    name = "interface_notes_watcher"
+    plugin_type = PluginType.INTERFACE
     
     async def execute(self, context: SharedContext):
         current = Path("docs/roberts-notes.txt").read_text()
         if current != self.last_content and current.strip():
-            context.payload["autonomous_trigger"] = True
+            # Vložit jako autonomní příkaz
+            context.user_input = f"autonomous: {current.strip()}"
             self.last_content = current
         return context
 ```
@@ -866,28 +897,29 @@ class NotesWatcher(BasePlugin):
 3. **WORKLOG Automation:**
 
 ```python
-# V SafeIntegrator nebo Orchestrator:
-def _update_worklog(self, mission_result: dict):
+# V AutonomousInterface pluginu:
+async def _update_worklog_autonomous(
+    self, task_id: str, goal: str, 
+    analysis: dict, plan: dict, status: str
+) -> None:
     """
     Automaticky přidá záznam do WORKLOG.md podle formátu
-    z AGENTS.md:
+    z AGENTS.md.
     
+    Formát:
     ---
-    **Mise:** {mission_result["title"]}
-    **Agent:** Sophia Autonomous v1.0
-    **Datum:** {date}
-    **Status:** {mission_result["status"]}
-    
-    **1. Plán:**
-    {mission_result["plan"]}
-    
-    **2. Provedené Akce:**
-    {mission_result["actions"]}
-    
-    **3. Výsledek:**
-    {mission_result["outcome"]}
+    ## [timestamp] AUTONOMOUS MISSION: {task_id}
+    **Status:** {status}
+    **Goal:** {goal}
+    **Analysis:** ...
+    **Strategic Plan:** ...
     ---
     """
+    worklog_path = Path(self.worklog_path)
+    entry = self._format_worklog_entry(task_id, goal, analysis, plan, status)
+    
+    content = worklog_path.read_text() if worklog_path.exists() else "# WORKLOG\n\n"
+    worklog_path.write_text(content + entry)
 ```
 
 **Testování:**
@@ -1573,68 +1605,96 @@ class SafeIntegrator(BasePlugin):
 
 **Implementační Detaily:**
 
-**Option A: User-Triggered (Jednodušší)**
+**Option A: User-Triggered (Implementováno)**
 Uživatel napíše příkaz v terminálu:
 ```
-> autonomous: Create a plugin that translates text using external API
+> autonomous: Vytvoř plugin pro překlad textu pomocí externího API
 ```
 
-Kernel rozpozná prefix "autonomous:" a:
-1. Zavolá `orchestrator.process_new_goal(text)`
-2. Vrátí task_id
-3. Uživatel může pak říct: `status: task-123` nebo `execute: task-123`
+AutonomousInterface plugin rozpozná prefix "autonomous:" a:
+1. Zavolá `orchestrator.execute(context)` s `action="analyze_goal"`
+2. Orchestrator deleguje na NotesAnalyzer, EthicalGuardian, TaskManager
+3. Vytvoří task a vrátí task_id
+4. Zavolá `orchestrator.execute(context)` s `action="execute_mission"`
+5. Formuluje strategický plán
+6. Automaticky aktualizuje WORKLOG.md
+7. Vrátí formátovaný výsledek uživateli
 
-**Option B: File-Watching (Pokročilé)**
+**Option B: File-Watching (Budoucí)**
 ```python
-# watch_roberts_notes.py
+# Budoucí: watch_roberts_notes.py integrace
+# Toto by používalo NotesWatcher plugin pro sledování změn souboru
+# a vkládání autonomních příkazů do consciousness loop
 import time
 from pathlib import Path
-from core.kernel import Kernel
 
 def watch_roberts_notes():
     """
-    Watches roberts-notes.txt for changes.
-    When new content detected, triggers autonomous workflow.
+    Sleduje roberts-notes.txt pro změny.
+    Při detekci nového obsahu ho NotesWatcher plugin zpracuje.
+    
+    Poznámka: Toto by běželo jako background služba,
+    vkládající příkazy přes INTERFACE vrstvu (ne Core).
     """
-    last_content = ""
-    while True:
-        current = Path("docs/roberts-notes.txt").read_text()
-        if current != last_content and current.strip():
-            # New goal detected
-            kernel = Kernel()
-            # Process goal...
-            last_content = current
-        time.sleep(5)
+    # Implementace delegována na NotesWatcher plugin
+    pass
 ```
 
-**Kompletní Workflow:**
+**Kompletní Workflow (Plugin-Based Architektura):**
 ```
-1. Goal Input (user or file)
+1. Goal Input (uživatelský příkaz: "autonomous: ...")
           ↓
-2. Orchestrator.process_new_goal()
-   - Analyze with doc/code/historian
-   - Create task in TaskManager
+2. AutonomousInterface.execute()
+   - Detekuje "autonomous:" prefix
+   - Extrahuje goal text
           ↓
-3. Orchestrator.execute_task()
-   - Gather full context
-   - Formulate specification
-   - Submit to Jules API
+3. Orchestrator.execute(action="analyze_goal")
+   - NotesAnalyzer strukturuje goal
+   - EthicalGuardian validuje
+   - TaskManager vytvoří task
           ↓
-4. Wait for Jules completion
-   - Poll status every 30s
-   - Log progress to task
+4. Orchestrator.execute(action="execute_mission")
+   - Shromáždí kontext (DocReader, CodeReader, Historian)
+   - Formuluje specifikaci
+   - (Budoucí: Odeslání do Jules API)
           ↓
-5. QA.review_code()
-   - Architecture compliance
-   - Code quality
-   - Run tests in sandbox
-   - Security checks
+5. (Budoucí) Čekání na dokončení Jules
+   - Poll status každých 30s
+   - Logování průběhu do tasku
+          ↓
+6. (Budoucí) QA.review_code()
+   - Architektonická compliance
+   - Kvalita kódu
+   - Spuštění testů v sandboxu
+   - Bezpečnostní kontroly
           ↓
    ┌─────┴─────┐
    │           │
 Approved    Rejected
    │           │
-   │      Send feedback
+   │      Poslat feedback
+   │      Jules pro
+   │      revizi
+   │      (iterace)
+   ↓
+7. (Budoucí) SafeIntegrator.integrate_plugin()
+   - Vytvořit backup
+   - Zapsat soubory
+   - Spustit celou test suite
+   - Commit nebo rollback
+          ↓
+8. TaskManager.update_task()
+   - Status: completed/failed
+   - Logovat výsledky
+          ↓
+9. AutonomousInterface._update_worklog_autonomous()
+   - Přidat do WORKLOG.md
+          ↓
+10. Vrátit formátovaný výsledek uživateli
+    "✅ Autonomous Mission Initiated
+     Task ID: task-123
+     Next Steps: ..."
+```
    │      to Jules for
    │      revision
    │      (iterate)

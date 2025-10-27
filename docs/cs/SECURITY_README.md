@@ -5,36 +5,73 @@ This directory contains critical security analysis for Sophia V2 project.
 ## 📋 Documents
 
 ### [SECURITY_ATTACK_SCENARIOS.md](SECURITY_ATTACK_SCENARIOS.md) 🇨🇿
-**Czech version** - Comprehensive security analysis identifying 8 attack scenarios:
+**Czech version** - Comprehensive security analysis identifying 8 basic attack scenarios:
 
 - 🔴 **3 CRITICAL vulnerabilities** (CVSS 8.8-9.8)
 - 🟠 **2 HIGH vulnerabilities** (CVSS 7.1-7.5)
 - 🟡 **2 MEDIUM vulnerabilities** (CVSS 6.5-6.8)
 - 🔵 **1 LOW vulnerability** (CVSS 3.1)
 
+### [SECURITY_ADVANCED_ATTACKS.md](SECURITY_ADVANCED_ATTACKS.md) 🇨🇿 **NEW**
+**Czech version** - Advanced security analysis identifying 8 additional sophisticated attacks:
+
+- 🔴 **3 NEW CRITICAL vulnerabilities** (CVSS 8.4-9.8)
+  - YAML Deserialization RCE
+  - Race Condition Plugin Injection
+  - LLM Context Poisoning
+- 🟠 **2 NEW HIGH vulnerabilities** (CVSS 7.8-7.9)
+  - ChromaDB Semantic Poisoning
+  - Plugin Dependency Hijacking
+- � **2 NEW MEDIUM vulnerabilities** (CVSS 5.3-6.4)
+- �🔵 **1 NEW LOW vulnerability** (CVSS 3.1)
+
 ### [../en/SECURITY_ATTACK_SCENARIOS.md](../en/SECURITY_ATTACK_SCENARIOS.md) 🇬🇧
-**English version** - Same analysis in English
+**English version** - Basic attack scenarios
+
+### [../en/SECURITY_ADVANCED_ATTACKS.md](../en/SECURITY_ADVANCED_ATTACKS.md) 🇬🇧 **NEW**
+**English version** - Advanced attack scenarios
+
+### [SECURITY_MONITOR.md](SECURITY_MONITOR.md) 🇨🇿 **NEW**
+**Security Monitor Plugin** - Proaktivní bezpečnostní monitoring dokumentace
+
+### [SECURITY_IMPLEMENTATION_PLAN.md](SECURITY_IMPLEMENTATION_PLAN.md) 🇨🇿 **NEW**
+**Implementation Plan** - Konkrétní akční plán a kód pro opravu všech zranitelností
 
 ---
 
 ## ⚠️ CRITICAL FINDINGS
 
-### Top 3 Most Dangerous Attacks:
+### Top 6 Most Dangerous Attacks (Combined Analysis):
 
 1. **LLM Prompt Injection → Arbitrary Code Execution** (CVSS 9.8)
    - Attacker can execute ANY shell command via prompt injection
    - No validation between LLM output and command execution
    - **MUST FIX before Roadmap 04 autonomous mode**
 
-2. **Plugin Poisoning → Malicious Code Injection** (CVSS 9.1)
+2. **YAML Deserialization → Remote Code Execution** (CVSS 9.8) **NEW**
+   - If `yaml.safe_load()` accidentally changed to `yaml.load()` = instant RCE
+   - Persistent backdoor through config file
+   - **REQUIRES code review + file integrity monitoring**
+
+3. **Plugin Poisoning → Malicious Code Injection** (CVSS 9.1)
    - Malicious plugins can be loaded without signature verification
    - Backdoors execute during plugin setup
    - **CRITICAL in autonomous plugin integration (Roadmap 04)**
 
-3. **Path Traversal → Core Code Modification** (CVSS 8.8)
+4. **Path Traversal → Core Code Modification** (CVSS 8.8)
    - Bug in `_get_safe_path()` allows escaping sandbox
    - Attacker can modify core/kernel.py and other protected files
    - **Immediate patch required**
+
+5. **LLM Context Poisoning → Behavioral Compromise** (CVSS 8.6) **NEW**
+   - Injected messages in history reprogram LLM behavior persistently
+   - Bypasses all safety guardrails
+   - **REQUIRES message authentication system**
+
+6. **Race Condition Plugin Loading → Code Injection** (CVSS 8.4) **NEW**
+   - Malicious plugin can be injected during startup window
+   - Difficult to detect, executes automatically
+   - **REQUIRES atomic plugin loading with file integrity checks**
 
 ---
 
@@ -96,14 +133,16 @@ Implementation according to Roadmap 04:
 
 | Component | Vulnerabilities | Severity |
 |-----------|----------------|----------|
+| `kernel.py` | YAML deserialization risk, no setup sandboxing, no timeout | 🔴 CRITICAL |
 | `cognitive_planner.py` | Prompt injection, no output validation | 🔴 CRITICAL |
 | `tool_bash.py` | No command whitelist, no resource limits | 🔴 CRITICAL |
 | `tool_file_system.py` | Path traversal bug, no protected paths | 🔴 CRITICAL |
-| `plugin_manager.py` | No signature verification, blind loading | 🔴 CRITICAL |
-| `kernel.py` | No setup sandboxing, no timeout | 🟠 HIGH |
-| `tool_llm.py` | No rate limiting, plain text API keys | 🟠 HIGH |
-| `memory_sqlite.py` | No encryption, no message signing | 🟡 MEDIUM |
-| `requirements.txt` | No hash pinning | 🟡 MEDIUM |
+| `plugin_manager.py` | No signature verification, blind loading, race conditions, no duplicate detection | 🔴 CRITICAL |
+| `memory_sqlite.py` | No encryption, no message signing, context poisoning | 🔴 CRITICAL |
+| `memory_chroma.py` | No provenance tracking, semantic search poisoning | 🟠 HIGH |
+| `tool_llm.py` | No rate limiting, plain text API keys, history sanitization missing | 🟠 HIGH |
+| `requirements.txt` | No hash pinning, dependency confusion | 🟡 MEDIUM |
+| **Global logging** | Log injection vulnerability, no structured logging | 🟡 MEDIUM |
 
 ---
 
@@ -162,6 +201,64 @@ python tests/security/test_path_traversal.py
 
 # Test plugin poisoning
 python tests/security/test_malicious_plugin.py
+
+# Test security monitor
+pytest tests/plugins/test_cognitive_security_monitor.py -v
+```
+
+---
+
+## 🛡️ Proactive Security Monitoring
+
+### Security Monitor Plugin (`cognitive_security_monitor.py`)
+
+**NEW:** Sophia nyní má proaktivní bezpečnostní monitoring!
+
+**Co dělá:**
+- ✅ Detekuje prompt injection pokusy v real-time
+- ✅ Monitoruje nebezpečné příkazy před spuštěním
+- ✅ Sleduje path traversal pokusy
+- ✅ Trackuje přístupy ke kritickým souborům
+- ✅ Kontroluje file integrity (SHA256 hashes)
+- ✅ Detekuje rate limiting útoky
+- ✅ Reportuje citlivá data v inputu/outputu
+
+**Co NEDĚLÁ:**
+- ❌ **Neblokuje operace** (pouze reportuje)
+- ❌ Nemodifikuje data
+- ❌ Neukládá citlivý obsah
+
+**Příklad výstupu:**
+
+```
+[ERROR] 🚨 CRITICAL: DANGEROUS_COMMAND: rm -rf detected in plan (14:30:15)
+[WARNING] ⚠️  HIGH: PROMPT_INJECTION: "ignore instructions" pattern (14:30:16)
+[WARNING] 📊 MEDIUM: PATH_TRAVERSAL: ../.. in user input (14:30:17)
+```
+
+**Dokumentace:** [SECURITY_MONITOR.md](SECURITY_MONITOR.md)
+
+**Konfigurace:**
+```yaml
+cognitive_security_monitor:
+  enabled: true
+  report_interval_seconds: 60
+  alert_threshold: 3
+  monitor_file_integrity: true
+```
+
+**API:**
+```python
+from plugins.cognitive_security_monitor import SecurityMonitor
+
+monitor = SecurityMonitor()
+
+# Get recent events
+events = monitor.get_recent_events(limit=20, min_severity="HIGH")
+
+# Get statistics
+stats = monitor.get_statistics()
+# {"total_events": 156, "critical_count": 12, ...}
 ```
 
 ---

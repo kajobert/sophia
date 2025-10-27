@@ -1,7 +1,7 @@
 """
 Strategic Orchestrator Plugin
 
-HKA Layer: VĚDOMÍ (Neocortex) - Strategic Planning and Decision Making
+HKA Layer: CONSCIOUSNESS (Neocortex) - Strategic Planning and Decision Making
 Coordinates autonomous development workflow by delegating tasks to specialized plugins.
 
 This plugin represents the highest cognitive layer in the Hierarchical Cognitive Architecture,
@@ -34,11 +34,11 @@ class StrategicOrchestrator(BasePlugin):
     4. Progress monitoring and quality validation
     5. Integration decision and learning consolidation
     
-    HKA Layer: VĚDOMÍ (Neocortex)
+    HKA Layer: CONSCIOUSNESS (Neocortex)
     Dependencies:
-    - cognitive_task_manager (PODVĚDOMÍ layer)
-    - cognitive_notes_analyzer (PODVĚDOMÍ layer)
-    - cognitive_ethical_guardian (INSTINKTY layer)
+    - cognitive_task_manager (SUBCONSCIOUSNESS layer)
+    - cognitive_notes_analyzer (SUBCONSCIOUSNESS layer)
+    - cognitive_ethical_guardian (INSTINCTS layer)
     - cognitive_doc_reader (optional - for context)
     - cognitive_code_reader (optional - for context)
     - cognitive_historian (optional - for pattern recognition)
@@ -165,10 +165,10 @@ class StrategicOrchestrator(BasePlugin):
         Analyze a raw goal and create a task.
         
         Workflow (HKA layers):
-        1. PODVĚDOMÍ: Use NotesAnalyzer to structure goal
-        2. INSTINKTY: Use EthicalGuardian to validate ethics
-        3. VĚDOMÍ: Strategic decision to create task or reject
-        4. PODVĚDOMÍ: Create task in TaskManager
+        1. SUBCONSCIOUSNESS: Use NotesAnalyzer to structure goal
+        2. INSTINCTS: Use EthicalGuardian to validate ethics
+        3. CONSCIOUSNESS: Strategic decision to create task or reject
+        4. SUBCONSCIOUSNESS: Create task in TaskManager
         
         Args:
             goal_text: Raw goal text
@@ -190,7 +190,7 @@ class StrategicOrchestrator(BasePlugin):
             }
         
         try:
-            # STEP 1 (PODVĚDOMÍ): Analyze goal structure and context
+            # STEP 1 (SUBCONSCIOUSNESS): Analyze goal structure and context
             logger.info(f"Analyzing goal: {goal_text[:100]}...")
             
             analysis_context = SharedContext(
@@ -212,7 +212,7 @@ class StrategicOrchestrator(BasePlugin):
             
             structured_goal = analysis[0]  # First analyzed goal
             
-            # STEP 2 (INSTINKTY): Ethical validation
+            # STEP 2 (INSTINCTS): Ethical validation
             logger.info("Performing ethical validation...")
             
             ethics_context = SharedContext(
@@ -240,7 +240,7 @@ class StrategicOrchestrator(BasePlugin):
                     )
                 }
             
-            # STEP 3 (VĚDOMÍ): Strategic decision - create task
+            # STEP 3 (CONSCIOUSNESS): Strategic decision - create task
             logger.info("Creating task...")
             
             task_context = SharedContext(
@@ -342,7 +342,7 @@ class StrategicOrchestrator(BasePlugin):
                     "error": f"Task {task_id} not found"
                 }
             
-            # STEP 2: Gather context (PODVĚDOMÍ - pattern recognition)
+            # STEP 2: Gather context (SUBCONSCIOUSNESS - pattern recognition)
             similar_tasks = []
             if self.task_manager:
                 similar_context = SharedContext(
@@ -376,7 +376,7 @@ class StrategicOrchestrator(BasePlugin):
             
             await self.task_manager.execute(update_context)
             
-            # STEP 4: Create strategic plan (VĚDOMÍ - strategic thinking)
+            # STEP 4: Create strategic plan (CONSCIOUSNESS - strategic thinking)
             plan = {
                 "task_id": task_id,
                 "goal": task.get("goal", {}),

@@ -812,54 +812,83 @@ Connect all components and ensure documentation.
 
 **Components to Modify:**
 
-1. **`core/kernel.py`** - extend consciousness_loop:
+1. **`plugins/interface_autonomous.py`** - NEW plugin for autonomous workflow:
 
 ```python
-# In Kernel class add:
-async def trigger_autonomous_mission(self):
+# NEW: plugins/interface_autonomous.py
+class AutonomousInterface(BasePlugin):
     """
-    New entry point for autonomous mission.
-    Calls orchestrator and ensures governance.
+    Interface plugin for autonomous development missions.
+    
+    HKA Layer: INTERFACE (not part of cognitive hierarchy)
+    Detects 'autonomous:' commands and delegates to Strategic Orchestrator.
+    
+    This maintains clean separation per AGENTS.md Golden Rule #1:
+    "NEDOTÝKEJ SE JÁDRA!" - Core remains minimal.
     """
-    orchestrator = self.plugin_manager.get_plugin_by_name("cognitive_orchestrator")
+    name: str = "interface_autonomous"
+    plugin_type = PluginType.INTERFACE
     
-    if not orchestrator:
-        logger.error("Orchestrator not available")
-        return
+    async def execute(self, context: SharedContext) -> SharedContext:
+        """Process autonomous commands."""
+        if not context.user_input.startswith("autonomous:"):
+            return context  # Pass through
+        
+        goal_text = context.user_input[11:].strip()
+        
+        # Delegate to orchestrator
+        result = await self._execute_autonomous_workflow(goal_text, context)
+        context.autonomous_response = result
+        return context
     
-    try:
-        result = await orchestrator.autonomous_mission()
+    async def _execute_autonomous_workflow(self, goal_text: str, context: SharedContext) -> str:
+        """Execute full autonomous workflow via orchestrator."""
+        # Phase 1: Analyze goal
+        context.payload = {"action": "analyze_goal", "goal": goal_text}
+        result_ctx = await self.orchestrator.execute(context)
         
-        # Automatic WORKLOG.md update
-        self._update_worklog(result)
+        # Phase 2: Execute mission
+        task_id = result_ctx.payload["result"]["task_id"]
+        context.payload = {"action": "execute_mission", "task_id": task_id}
+        result_ctx = await self.orchestrator.execute(context)
         
-        return result
-    except Exception as e:
-        logger.error(f"Autonomous mission failed: {e}")
-        self._update_worklog({"status": "FAILED", "error": str(e)})
+        # Phase 3: Update WORKLOG
+        await self._update_worklog_autonomous(...)
+        
+        return formatted_result
 ```
 
 2. **Trigger Mechanisms:**
 
-**Option A: Command-based** (simpler)
+**Option A: Command-based** (implemented)
 ```python
-# In interface_terminal.py:
-if user_input.startswith("autonomous:"):
-    goal_text = user_input[11:].strip()
-    # Save to roberts-notes.txt or pass directly
-    result = await kernel.trigger_autonomous_mission()
+# User writes in terminal:
+> autonomous: Create a plugin that translates text using external API
+
+# AutonomousInterface plugin detects prefix and:
+# 1. Calls orchestrator.execute(action="analyze_goal")
+# 2. Creates task via TaskManager
+# 3. Calls orchestrator.execute(action="execute_mission")
+# 4. Updates WORKLOG.md
+# 5. Returns formatted result to user
 ```
 
-**Option B: File-watching** (advanced)
+**Option B: File-watching** (future enhancement)
 ```python
-# New plugin: plugins/interface_notes_watcher.py
+# Future: New plugin plugins/interface_notes_watcher.py
 class NotesWatcher(BasePlugin):
-    """Watches roberts-notes.txt for changes"""
+    """
+    Watches roberts-notes.txt for changes.
+    Triggers autonomous workflow when new content detected.
+    """
+    name = "interface_notes_watcher"
+    plugin_type = PluginType.INTERFACE
     
     async def execute(self, context: SharedContext):
         current = Path("docs/roberts-notes.txt").read_text()
         if current != self.last_content and current.strip():
-            context.payload["autonomous_trigger"] = True
+            # Inject as autonomous command
+            context.user_input = f"autonomous: {current.strip()}"
             self.last_content = current
         return context
 ```
@@ -867,28 +896,29 @@ class NotesWatcher(BasePlugin):
 3. **WORKLOG Automation:**
 
 ```python
-# In SafeIntegrator or Orchestrator:
-def _update_worklog(self, mission_result: dict):
+# In AutonomousInterface plugin:
+async def _update_worklog_autonomous(
+    self, task_id: str, goal: str, 
+    analysis: dict, plan: dict, status: str
+) -> None:
     """
     Automatically adds entry to WORKLOG.md according to format
-    from AGENTS.md:
+    from AGENTS.md.
     
+    Format:
     ---
-    **Mission:** {mission_result["title"]}
-    **Agent:** Sophia Autonomous v1.0
-    **Date:** {date}
-    **Status:** {mission_result["status"]}
-    
-    **1. Plan:**
-    {mission_result["plan"]}
-    
-    **2. Actions Taken:**
-    {mission_result["actions"]}
-    
-    **3. Outcome:**
-    {mission_result["outcome"]}
+    ## [timestamp] AUTONOMOUS MISSION: {task_id}
+    **Status:** {status}
+    **Goal:** {goal}
+    **Analysis:** ...
+    **Strategic Plan:** ...
     ---
     """
+    worklog_path = Path(self.worklog_path)
+    entry = self._format_worklog_entry(task_id, goal, analysis, plan, status)
+    
+    content = worklog_path.read_text() if worklog_path.exists() else "# WORKLOG\n\n"
+    worklog_path.write_text(content + entry)
 ```
 
 **Testing:**
@@ -1510,58 +1540,64 @@ class SafeIntegrator(BasePlugin):
 
 **Implementation Details:**
 
-**Option A: User-Triggered (Simpler)**
+**Option A: User-Triggered (Implemented)**
 User writes command in terminal:
 ```
 > autonomous: Create a plugin that translates text using external API
 ```
 
-Kernel recognizes "autonomous:" prefix and:
-1. Calls `orchestrator.process_new_goal(text)`
-2. Returns task_id
-3. User can then say: `status: task-123` or `execute: task-123`
+AutonomousInterface plugin recognizes "autonomous:" prefix and:
+1. Calls `orchestrator.execute(context)` with `action="analyze_goal"`
+2. Orchestrator delegates to NotesAnalyzer, EthicalGuardian, TaskManager
+3. Task created and task_id returned
+4. Calls `orchestrator.execute(context)` with `action="execute_mission"`
+5. Strategic plan formulated
+6. WORKLOG.md automatically updated
+7. Result returned to user
 
-**Option B: File-Watching (Advanced)**
+**Option B: File-Watching (Future)**
 ```python
-# watch_roberts_notes.py
+# Future: watch_roberts_notes.py integration
+# This would use the NotesWatcher plugin to monitor file changes
+# and inject autonomous commands into the consciousness loop
 import time
 from pathlib import Path
-from core.kernel import Kernel
 
 def watch_roberts_notes():
     """
-    Watches roberts-notes.txt for changes.
-    When new content detected, triggers autonomous workflow.
+    Monitors roberts-notes.txt for changes.
+    When new content detected, NotesWatcher plugin processes it.
+    
+    Note: This would run as a background service,
+    injecting commands via the INTERFACE layer (not Core).
     """
-    last_content = ""
-    while True:
-        current = Path("docs/roberts-notes.txt").read_text()
-        if current != last_content and current.strip():
-            # New goal detected
-            kernel = Kernel()
-            # Process goal...
-            last_content = current
-        time.sleep(5)
+    # Implementation delegated to NotesWatcher plugin
+    pass
 ```
 
-**Complete Workflow:**
+**Complete Workflow (Plugin-Based Architecture):**
 ```
-1. Goal Input (user or file)
+1. Goal Input (user command: "autonomous: ...")
           ↓
-2. Orchestrator.process_new_goal()
-   - Analyze with doc/code/historian
-   - Create task in TaskManager
+2. AutonomousInterface.execute()
+   - Detect "autonomous:" prefix
+   - Extract goal text
           ↓
-3. Orchestrator.execute_task()
-   - Gather full context
+3. Orchestrator.execute(action="analyze_goal")
+   - NotesAnalyzer structures goal
+   - EthicalGuardian validates
+   - TaskManager creates task
+          ↓
+4. Orchestrator.execute(action="execute_mission")
+   - Gather context (DocReader, CodeReader, Historian)
    - Formulate specification
-   - Submit to Jules API
+   - (Future: Submit to Jules API)
           ↓
-4. Wait for Jules completion
+5. (Future) Wait for Jules completion
    - Poll status every 30s
    - Log progress to task
           ↓
-5. QA.review_code()
+6. (Future) QA.review_code()
    - Architecture compliance
    - Code quality
    - Run tests in sandbox
@@ -1576,18 +1612,23 @@ Approved    Rejected
    │      revision
    │      (iterate)
    ↓
-6. SafeIntegrator.integrate_plugin()
+7. (Future) SafeIntegrator.integrate_plugin()
    - Create backup
    - Write files
    - Run full test suite
    - Commit or rollback
           ↓
-7. Update TaskManager
-   - Status: completed
+8. TaskManager.update_task()
+   - Status: completed/failed
    - Log results
           ↓
-8. Notify user
-   "Plugin '{name}' successfully integrated!"
+9. AutonomousInterface._update_worklog_autonomous()
+   - Append to WORKLOG.md
+          ↓
+10. Return formatted result to user
+    "✅ Autonomous Mission Initiated
+     Task ID: task-123
+     Next Steps: ..."
 ```
 
 **Testing:**

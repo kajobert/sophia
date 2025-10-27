@@ -9,7 +9,7 @@ def test_plugin_manager_loads_interface_plugins():
     """
     manager = PluginManager()
     interface_plugins = manager.get_plugins_by_type(PluginType.INTERFACE)
-    assert len(interface_plugins) == 2
+    assert len(interface_plugins) == 3  # Now we have 3: webui, terminal, autonomous
 
     plugin_names = {p.name for p in interface_plugins}
     assert "interface_terminal" in plugin_names

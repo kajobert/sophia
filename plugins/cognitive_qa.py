@@ -1,5 +1,5 @@
 """
-Quality Assurance Plugin - INSTINKTY Layer (Reptilian Brain)
+Quality Assurance Plugin - INSTINCTS Layer (Reptilian Brain)
 
 HKA Layer: INSTINCTS
 Purpose: Reflexive multi-level code validation before integration

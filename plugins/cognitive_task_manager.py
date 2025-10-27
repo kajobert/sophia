@@ -62,7 +62,7 @@ class TaskManager(BasePlugin):
         self.memory_chroma = None
         self.file_system = None
     
-    def setup(self, config: dict):
+    def setup(self, config: dict) -> None:
         """
         Setup task manager with dependencies.
         

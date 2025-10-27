@@ -1,5 +1,5 @@
 """
-Safe Integrator Plugin - INSTINKTY Layer (Reptilian Brain)
+Safe Integrator Plugin - INSTINCTS Layer (Reptilian Brain)
 
 HKA Layer: INSTINCTS
 Purpose: Atomic integration with rollback capabilities - protect system from harm
@@ -412,7 +412,7 @@ class SafeIntegrator(BasePlugin):
             compliance_score = qa_report.get("compliance_score", 0.0)
             commit_message = f"feat: Auto-integrate plugin {plugin_name}\n\n"
             commit_message += f"QA compliance score: {compliance_score:.2f}\n"
-            commit_message += f"Integrated via SafeIntegrator (INSTINKTY layer)\n"
+            commit_message += f"Integrated via SafeIntegrator (INSTINCTS layer)\n"
             
             # Commit
             commit = repo.index.commit(commit_message)

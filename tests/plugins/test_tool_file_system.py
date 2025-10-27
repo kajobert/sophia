@@ -1,6 +1,10 @@
 # tests/plugins/test_tool_file_system.py
 """Tests for the FileSystemTool plugin."""
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pytest
 import os
 import shutil
