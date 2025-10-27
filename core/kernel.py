@@ -1,3 +1,4 @@
+
 import asyncio
 import logging
 import yaml
@@ -5,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
+from core.config_validator import validate_config
 from plugins.base_plugin import PluginType
 
 # Basic logging setup for Kernel execution
@@ -34,7 +36,23 @@ class Kernel:
             config = {}
         else:
             with open(config_path, "r") as f:
-                config = yaml.safe_load(f) or {}
+                # SECURITY: Read raw content first to check for dangerous YAML tags
+                raw_content = f.read()
+                
+                # SECURITY: Reject !!python tags (deserialization attack prevention)
+                if "!!python" in raw_content:
+                    logger.error("SECURITY VIOLATION: Dangerous YAML tag '!!python' detected in config file")
+                    raise ValueError(
+                        "Config file contains dangerous '!!python' tag. "
+                        "This could indicate a deserialization attack. "
+                        "Please review config/settings.yaml."
+                    )
+                
+                # Safe to parse (yaml.safe_load already blocks dangerous constructors)
+                config = yaml.safe_load(raw_content) or {}
+                
+                # SECURITY: Validate configuration schema
+                validate_config(config)
 
         plugin_configs = config.get("plugins", {})
 
@@ -111,28 +129,6 @@ class Kernel:
                     logger.info(f"User input received: '{context.user_input}'")
                     context.history.append({"role": "user", "content": context.user_input})
 
-                    # Check for autonomous mission trigger
-                    if context.user_input.startswith("autonomous:"):
-                        goal_text = context.user_input[11:].strip()
-                        result = await self.trigger_autonomous_mission(goal_text, context, all_plugins_map)
-                        print(f">>> Sophia: {result}")
-                        context.history.append({"role": "assistant", "content": result})
-                        
-                        response_callback = context.payload.get("_response_callback")
-                        if callable(response_callback):
-                            await response_callback(result)
-                        
-                        # Save to memory
-                        context.current_state = "MEMORIZING"
-                        memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
-                        for plugin in memory_plugins:
-                            context = await plugin.execute(context)
-                        
-                        # Cleanup for next cycle
-                        context.user_input = None
-                        context.payload = {}
-                        continue
-
                     # 2. PLANNING PHASE (NEW)
                     context.current_state = "PLANNING"
                     cognitive_plugins = self.plugin_manager.get_plugins_by_type(PluginType.COGNITIVE)
@@ -200,181 +196,4 @@ class Kernel:
             asyncio.run(self.consciousness_loop())
         except KeyboardInterrupt:
             logger.info("Application terminated by user (Ctrl+C).")
-    
-    async def trigger_autonomous_mission(
-        self,
-        goal_text: str,
-        context: SharedContext,
-        all_plugins_map: dict
-    ) -> str:
-        """
-        Triggers an autonomous development mission.
-        
-        This is the entry point for autonomous workflow that delegates to the
-        Strategic Orchestrator for coordination.
-        
-        Args:
-            goal_text: User's goal description
-            context: Current shared context
-            all_plugins_map: Map of all available plugins
-        
-        Returns:
-            Result message for the user
-        """
-        try:
-            logger.info(f"Triggering autonomous mission for goal: {goal_text}")
-            
-            # Get the orchestrator
-            orchestrator = all_plugins_map.get("cognitive_orchestrator")
-            if not orchestrator:
-                return "Error: Strategic Orchestrator not available. Cannot execute autonomous mission."
-            
-            # Phase 1: Analyze goal and create task
-            context.current_state = "AUTONOMOUS_ANALYZING"
-            context.payload = {
-                "action": "analyze_goal",
-                "goal": goal_text
-            }
-            
-            result_context = await orchestrator.execute(context)
-            analysis_result = result_context.payload.get("result", {})
-            
-            if not analysis_result.get("success"):
-                error_msg = analysis_result.get("error", "Unknown error")
-                message = analysis_result.get("message", error_msg)
-                logger.error(f"Goal analysis failed: {message}")
-                return f"Goal analysis failed: {message}"
-            
-            task_id = analysis_result.get("task_id")
-            logger.info(f"Task created: {task_id}")
-            
-            # Phase 2: Execute mission (strategic planning)
-            context.current_state = "AUTONOMOUS_EXECUTING"
-            context.payload = {
-                "action": "execute_mission",
-                "task_id": task_id
-            }
-            
-            result_context = await orchestrator.execute(context)
-            execution_result = result_context.payload.get("result", {})
-            
-            if not execution_result.get("success"):
-                error_msg = execution_result.get("error", "Unknown error")
-                logger.error(f"Mission execution failed: {error_msg}")
-                return f"Mission execution failed: {error_msg}"
-            
-            # Phase 3: Update WORKLOG.md
-            await self._update_worklog_autonomous(
-                task_id=task_id,
-                goal=goal_text,
-                analysis=analysis_result.get("analysis", {}),
-                plan=execution_result.get("plan", {}),
-                status="PLANNED"
-            )
-            
-            # Success message
-            plan = execution_result.get("plan", {})
-            message = execution_result.get("message", "")
-            
-            result_text = (
-                f"✅ Autonomous Mission Initiated\n\n"
-                f"Task ID: {task_id}\n"
-                f"Status: {execution_result.get('status', 'unknown')}\n\n"
-                f"Next Steps:\n"
-            )
-            
-            for i, step in enumerate(plan.get("next_steps", []), 1):
-                result_text += f"{i}. {step}\n"
-            
-            result_text += f"\n{message}"
-            
-            logger.info(f"Autonomous mission successful: {task_id}")
-            return result_text
-        
-        except Exception as e:
-            logger.error(f"Autonomous mission failed: {e}", exc_info=True)
-            return f"Autonomous mission error: {str(e)}"
-    
-    async def _update_worklog_autonomous(
-        self,
-        task_id: str,
-        goal: str,
-        analysis: dict,
-        plan: dict,
-        status: str
-    ) -> None:
-        """
-        Automatically updates WORKLOG.md with autonomous mission details.
-        
-        Args:
-            task_id: Task identifier
-            goal: Original goal text
-            analysis: Goal analysis from NotesAnalyzer
-            plan: Strategic plan from Orchestrator
-            status: Current mission status
-        """
-        try:
-            worklog_path = Path("WORKLOG.md")
-            
-            # Read current WORKLOG
-            if worklog_path.exists():
-                current_content = worklog_path.read_text()
-            else:
-                current_content = "# Sophia Development Worklog\n\n"
-            
-            # Format mission entry
-            entry = f"""
----
-## Autonomous Mission: {analysis.get('formulated_goal', goal)}
-**Task ID:** {task_id}  
-**Agent:** Sophia Autonomous System (Orchestrator v1.0)  
-**Date:** {datetime.now().strftime('%Y-%m-%d')}  
-**Status:** {status}
-
-### 1. Goal Analysis:
-**Raw Goal:** {goal}
-
-**Formulated Goal:** {analysis.get('formulated_goal', 'N/A')}
-
-**Feasibility:** {analysis.get('feasibility', 'N/A')}
-
-**DNA Alignment:**
-- Ahimsa (Non-harm): {analysis.get('alignment_with_dna', {}).get('ahimsa', 'N/A')}
-- Satya (Truth): {analysis.get('alignment_with_dna', {}).get('satya', 'N/A')}
-- Kaizen (Improvement): {analysis.get('alignment_with_dna', {}).get('kaizen', 'N/A')}
-
-### 2. Strategic Plan:
-"""
-            
-            # Add plan details
-            next_steps = plan.get("next_steps", [])
-            if next_steps:
-                entry += "\n**Next Steps:**\n"
-                for i, step in enumerate(next_steps, 1):
-                    entry += f"{i}. {step}\n"
-            
-            # Add context
-            context = plan.get("context", {})
-            if context:
-                entry += f"\n**Context:**\n"
-                entry += f"- Similar tasks found: {context.get('similar_tasks_found', 0)}\n"
-            
-            # Add estimated phases
-            phases = plan.get("estimated_phases", {})
-            if phases:
-                entry += f"\n**Estimated Phases:**\n"
-                for phase, description in phases.items():
-                    entry += f"- {phase.title()}: {description}\n"
-            
-            entry += "\n### 3. Current Status:\n"
-            entry += f"Mission is in '{status}' state. External agent delegation coming in future updates.\n"
-            
-            # Append to WORKLOG
-            updated_content = current_content + entry
-            worklog_path.write_text(updated_content)
-            
-            logger.info(f"WORKLOG.md updated for task {task_id}")
-        
-        except Exception as e:
-            logger.error(f"Failed to update WORKLOG.md: {e}", exc_info=True)
 

@@ -61,3 +61,12 @@ cognitive_integrator:
   # tool_bash: Reference to bash tool for test execution
   # tool_file_system: Reference to file system tool
 
+# Security Monitor - Proactive security monitoring and anomaly detection
+cognitive_security_monitor:
+  enabled: true  # Enable/disable security monitoring
+  report_interval_seconds: 60  # How often to generate summary reports
+  alert_threshold: 3  # Number of events to trigger alert
+  log_all_events: true  # Log every security event (verbose mode)
+  monitor_file_integrity: true  # Enable periodic file integrity checks
+  integrity_check_interval_minutes: 5  # How often to check file integrity
+
