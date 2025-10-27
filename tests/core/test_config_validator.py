@@ -157,6 +157,116 @@ class TestConvenienceFunction:
             validate_config(config)
 
 
+class TestNestedAPIKeyDetection:
+    """Test nested API key detection (CVE-2025-SOPHIA-001 fix)."""
+    
+    def test_top_level_api_key_rejected(self):
+        """Top-level hardcoded API key should be rejected."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "api_key": "sk-hardcoded123"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_nested_api_key_rejected(self):
+        """Nested API key (2 levels) should be rejected."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "settings": {
+                        "api_key": "hardcoded_secret"
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_deep_nested_api_key_rejected(self):
+        """Deep nested API key (3 levels) should be rejected."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "database": {
+                        "credentials": {
+                            "api_key": "super_secret"
+                        }
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_secret_key_rejected(self):
+        """secret_key field with hardcoded value should be rejected."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "secret_key": "my_secret_123"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_access_key_rejected(self):
+        """access_key field with hardcoded value should be rejected."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "access_key": "AKIAIOSFODNN7EXAMPLE"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_custom_api_key_suffix_rejected(self):
+        """Fields ending with _api_key should be checked."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "openai_api_key": "sk-123456"
+                }
+            }
+        }
+        with pytest.raises(ValueError, match="Hardcoded API key detected"):
+            validate_config(config)
+    
+    def test_nested_valid_env_var_accepted(self):
+        """Nested API key with env var format should be accepted."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "settings": {
+                        "api_key": "${OPENAI_API_KEY}"
+                    }
+                }
+            }
+        }
+        # Should not raise
+        validate_config(config)
+    
+    def test_non_credential_key_fields_allowed(self):
+        """Fields with 'key' in name but not credentials should be allowed."""
+        config = {
+            "plugins": {
+                "my_plugin": {
+                    "dict_key": "some_value",
+                    "primary_key": "id",
+                    "key_name": "mykey"
+                }
+            }
+        }
+        # Should not raise
+        validate_config(config)
+
+
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
     

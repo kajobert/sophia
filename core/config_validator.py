@@ -37,9 +37,13 @@ class ConfigValidator:
         r'exec\s*\(',
         r'compile\s*\(',
         r'open\s*\(',
-        r'\.\./',  # Path traversal
-        r'/etc/',  # System paths
-        r'/root/',
+        r'getattr\s*\(',      # Reflection bypass
+        r'globals\s*\(',      # Globals access
+        r'locals\s*\(',       # Locals access
+        r'__builtins__',      # Builtins access
+        r'\.\./',             # Path traversal
+        r'/etc/',             # System paths
+        r'/root/',            # Root paths
     ]
     
     @classmethod
@@ -118,15 +122,8 @@ class ConfigValidator:
             if plugin_conf is not None and not isinstance(plugin_conf, dict):
                 return False, f"Plugin '{plugin_name}' config must be a dictionary"
             
-            # Check for API keys in plugin configs
-            if plugin_conf and isinstance(plugin_conf, dict):
-                for key, value in plugin_conf.items():
-                    if "api_key" in key.lower() or "key" in key.lower():
-                        if isinstance(value, str) and not cls.ENV_VAR_PATTERN.match(value):
-                            return False, (
-                                f"Plugin '{plugin_name}' has hardcoded API key in '{key}'. "
-                                f"Use environment variable: ${{VAR_NAME}}"
-                            )
+            # NOTE: API key validation is now handled by _scan_for_dangerous_patterns()
+            # which recursively checks all nested configs
         
         return True, ""
     
@@ -135,10 +132,26 @@ class ConfigValidator:
         """
         Recursively scan configuration for dangerous patterns.
         
-        SECURITY: Detects potential code injection attempts.
+        SECURITY: Detects potential code injection attempts and hardcoded credentials.
         """
         if isinstance(config, dict):
             for key, value in config.items():
+                # SECURITY: Check for hardcoded API keys in nested configs
+                # Only check fields that are clearly credentials (api_key, secret_key, access_key, etc.)
+                key_lower = key.lower()
+                if (key_lower == "api_key" or 
+                    key_lower == "secret_key" or 
+                    key_lower == "access_key" or
+                    key_lower.endswith("_api_key") or
+                    key_lower.endswith("_secret_key") or
+                    key_lower.endswith("_access_key")):
+                    if isinstance(value, str) and not cls.ENV_VAR_PATTERN.match(value):
+                        return False, (
+                            f"Hardcoded API key detected at {path}.{key}. "
+                            f"Use environment variable format: ${{VAR_NAME}}"
+                        )
+                
+                # Recurse into nested structures
                 is_valid, error = cls._scan_for_dangerous_patterns(value, f"{path}.{key}")
                 if not is_valid:
                     return False, error
