@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
@@ -30,6 +29,6 @@ class TerminalInterface(BasePlugin):
         loop = asyncio.get_running_loop()
         # input() is a blocking call, so we must run it in an executor
         # to avoid blocking the entire asyncio loop.
-        user_input = await loop.run_in_executor(None, sys.stdin.readline)
+        user_input = await loop.run_in_executor(None, input, "<<< Uživatel: ")
         context.user_input = user_input.strip()
         return context

@@ -1,4 +1,22 @@
 ---
+**Mission:** UI: Improve Terminal Prompt
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Modify the `TerminalInterface` to display a clearer user prompt.
+*   Run tests and quality checks.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Modified `plugins/interface_terminal.py` to use `input("<<< Uživatel: ")` instead of `sys.stdin.readline` to provide a clear prompt for user input.
+*   Ran the full test suite and pre-commit checks to ensure the change was safe.
+
+**3. Outcome:**
+*   The terminal interface is now more user-friendly.
+
+---
 **Mission:** Refactor: Externalize Prompts and Fix Linters
 **Agent:** Jules v1.2
 **Date:** 2025-10-28
