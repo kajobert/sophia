@@ -26,7 +26,7 @@ Your Plan MUST be:
 }}
 
 **EXAMPLE 2 (Multi-Step Task with Chaining):**
-User Request: "Vytvoř v sandboxu soubor s názvem `ukol.txt` a zapiš do něj seznam všech pluginů, které jsou v systému k dispozici."
+User Request: "Vytvoř soubor 'plugins.txt' a zapiš do něj seznam všech pluginů."
 Your Plan MUST be:
 {{
   "plan": [
@@ -39,7 +39,7 @@ Your Plan MUST be:
       "tool_name": "tool_file_system",
       "method_name": "write_file",
       "arguments": {{
-        "path": "ukol.txt",
+        "path": "plugins.txt",
         "content": "$result.step_1"
       }}
     }}
