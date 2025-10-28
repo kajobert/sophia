@@ -1,0 +1,5 @@
+**Zlepšit UX v bash**
+* přehlednější výstup v bash, barevné logování, fomátovaný výstup.
+
+**Zlepšít logiku LLM**
+* zajistit aby LLM nemusel v ideálním případě opakovat pokusy s voláním nástrojů / prompt engineering
