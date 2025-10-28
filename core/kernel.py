@@ -28,11 +28,21 @@ class Kernel:
     def __init__(self):
         self.plugin_manager = PluginManager()
         self.is_running = False
+        self.json_repair_prompt_template = ""
 
     async def consciousness_loop(self):
         """The main, infinite loop that keeps Sophia "conscious"."""
         self.is_running = True
         session_id = str(uuid.uuid4())
+
+        # --- PROMPT LOADING PHASE ---
+        try:
+            with open("config/prompts/json_repair_prompt.txt", "r") as f:
+                self.json_repair_prompt_template = f.read()
+        except FileNotFoundError:
+            logger.error("JSON repair prompt template not found. The repair loop will fail.")
+            # Set a fallback to prevent crashing, though it will be less effective
+            self.json_repair_prompt_template = "The JSON is invalid. Errors: {e}. Please fix it."
 
         # --- PLUGIN SETUP PHASE ---
         logger.info("Initializing plugin setup...")
@@ -153,6 +163,7 @@ class Kernel:
 
                         # --- GATHER ALL TOOL DEFINITIONS AND VALIDATION SCHEMAS ---
                         from pydantic import create_model, Field
+
                         tool_schemas = {}
                         for plugin in all_plugins_list:
                             if hasattr(plugin, "get_tool_definitions"):
@@ -162,11 +173,24 @@ class Kernel:
                                     params_schema = function.get("parameters")
                                     if func_name and params_schema:
                                         fields = {}
-                                        for prop_name, prop_def in params_schema.get("properties", {}).items():
-                                            field_type = {"string": str, "integer": int, "number": float, "boolean": bool}.get(prop_def.get("type"), str)
-                                            fields[prop_name] = (field_type, Field(..., description=prop_def.get("description")))
+                                        for prop_name, prop_def in params_schema.get(
+                                            "properties", {}
+                                        ).items():
+                                            field_type = {
+                                                "string": str,
+                                                "integer": int,
+                                                "number": float,
+                                                "boolean": bool,
+                                            }.get(prop_def.get("type"), str)
+                                            desc = prop_def.get("description")
+                                            fields[prop_name] = (
+                                                field_type,
+                                                Field(..., description=desc),
+                                            )
 
-                                        validation_model = create_model(f"{func_name}ArgsModel", **fields)
+                                        validation_model = create_model(
+                                            f"{func_name}ArgsModel", **fields
+                                        )
                                         tool_schemas[func_name] = validation_model
 
                         step_results = []
@@ -183,23 +207,36 @@ class Kernel:
                                 try:
                                     validation_model = tool_schemas.get(method_name)
                                     if not validation_model:
-                                        raise ValueError(f"No validation schema found for method '{method_name}'.")
+                                        msg = f"No validation schema found for method '{method_name}'."
+                                        raise ValueError(msg)
 
                                     current_args = arguments
                                     if isinstance(current_args, str):
                                         try:
                                             current_args = json.loads(current_args)
                                         except json.JSONDecodeError:
-                                            raise ValueError(f"Arguments are a non-JSON string: {current_args}")
+                                            msg = (
+                                                f"Arguments are a non-JSON string: {current_args}"
+                                            )
+                                            raise ValueError(msg)
 
                                     validated_args = validation_model(**current_args).dict()
-                                    logger.info(f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: {tool_name}.{method_name}({validated_args})")
+                                    # fmt: off
+                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args)  # noqa: E501
+                                    # fmt: on
                                     break  # Success
 
                                 except (ValidationError, ValueError) as e:
-                                    logger.warning(f"Validation failed for step {step_index + 1} (Attempt {attempt + 1}/{max_attempts}): {e}")
+                                    # fmt: off
+                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e)  # noqa: E501
+                                    # fmt: on
                                     if attempt + 1 == max_attempts:
-                                        error_message = f"Plan failed at step {step_index + 1} after {max_attempts} attempts. Final error: {e}"
+                                        # fmt: off
+                                        error_message = (
+                                            f"Plan failed at step {step_index + 1} "
+                                            f"after {max_attempts} attempts. Final error: {e}"
+                                        )
+                                        # fmt: on
                                         logger.error(error_message)
                                         step_results.append(error_message)
                                         plan_failed = True
@@ -212,13 +249,25 @@ class Kernel:
                                         plan_failed = True
                                         break
 
-                                    repair_prompt = (f"ATTENTION: The tool call JSON failed validation. Tool: {tool_name}, Method: {method_name}, "
-                                                     f"Faulty Arguments: {arguments}. Validation Errors: {e}. "
-                                                     f"Please correct the 'arguments' JSON. Return ONLY the corrected JSON object.")
+                                    repair_prompt = self.json_repair_prompt_template.format(
+                                        tool_name=tool_name,
+                                        method_name=method_name,
+                                        arguments=arguments,
+                                        e=e,
+                                    )
 
-                                    repair_context = await llm_tool.execute(SharedContext(session_id=context.session_id, current_state="EXECUTING", logger=context.logger, user_input=repair_prompt))
+                                    repair_context = await llm_tool.execute(
+                                        SharedContext(
+                                            session_id=context.session_id,
+                                            current_state="EXECUTING",
+                                            logger=context.logger,
+                                            user_input=repair_prompt,
+                                        )
+                                    )
                                     arguments = repair_context.payload.get("llm_response")
-                                    logger.info(f"Received repaired arguments for step {step_index + 1}: {arguments}")
+                                    # fmt: off
+                                    logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
+                                    # fmt: on
 
                             if plan_failed or validated_args is None:
                                 execution_summary = f"Plan failed at step {step_index + 1}."
@@ -229,32 +278,54 @@ class Kernel:
                             method = getattr(tool, method_name, None) if tool else None
                             if method:
                                 try:
-                                    step_result = await method(**validated_args) if asyncio.iscoroutinefunction(method) else method(**validated_args)
+                                    step_result = (
+                                        await method(**validated_args)
+                                        if asyncio.iscoroutinefunction(method)
+                                        else method(**validated_args)
+                                    )
                                     step_results.append(str(step_result))
-                                    logger.info(f"Step '{method_name}' executed. Result: {step_result}")
+                                    logger.info(
+                                        f"Step '{method_name}' executed. Result: {step_result}"
+                                    )
                                 except Exception as exec_err:
-                                    error_message = f"Error executing {tool_name}.{method_name}: {exec_err}"
+                                    error_message = (
+                                        f"Error executing {tool_name}.{method_name}: {exec_err}"
+                                    )
                                     logger.error(error_message, exc_info=True)
                                     step_results.append(error_message)
-                                    execution_summary = f"Plan failed at step {step_index + 1}. Error: {error_message}"
+                                    execution_summary = (
+                                        f"Plan failed at step {step_index + 1}. "
+                                        f"Error: {error_message}"
+                                    )
                                     break
                             else:
-                                error_message = f"Error: Tool '{tool_name}' or method '{method_name}' not found."
+                                error_message = (
+                                    f"Error: Tool '{tool_name}' or method '{method_name}' "
+                                    "not found."
+                                )
                                 logger.error(error_message)
                                 step_results.append(error_message)
-                                execution_summary = f"Plan failed at step {step_index + 1}. {error_message}"
+                                execution_summary = (
+                                    f"Plan failed at step {step_index + 1}. {error_message}"
+                                )
                                 break
 
                         if not execution_summary:
-                            execution_summary = "Plan executed successfully. Result: " + " | ".join(step_results)
+                            execution_summary = (
+                                "Plan executed successfully. Result: " + " | ".join(step_results)
+                            )
 
                     else:
                         if llm_tool:
                             logger.info("No plan generated, attempting direct LLM response.")
                             context = await llm_tool.execute(context)
-                            execution_summary = context.payload.get("llm_response", "Input received, no plan formed.")
+                            execution_summary = context.payload.get(
+                                "llm_response", "Input received, no plan formed."
+                            )
                         else:
-                            execution_summary = "Input received, but no planner or LLM tool is configured."
+                            execution_summary = (
+                                "Input received, but no planner or LLM tool is configured."
+                            )
                             logger.warning("No plan and no LLM tool found for direct response.")
 
                     # 4. RESPONDING PHASE

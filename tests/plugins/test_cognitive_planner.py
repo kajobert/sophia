@@ -8,7 +8,10 @@ from core.context import SharedContext
 @pytest.fixture
 def planner():
     """Fixture for the Planner plugin."""
-    return Planner()
+    p = Planner()
+    # Mock the setup to ensure self.plugins exists.
+    p.setup({"plugins": {}})
+    return p
 
 
 @pytest.mark.asyncio
