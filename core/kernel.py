@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import uuid
 import yaml
 from pathlib import Path
 
