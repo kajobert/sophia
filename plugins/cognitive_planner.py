@@ -23,8 +23,16 @@ class Planner(BasePlugin):
 
     def setup(self, config: dict) -> None:
         """This plugin requires the LLM tool to function."""
-        plugins = config.get("plugins", {})
-        self.llm_tool = plugins.get("tool_llm")
+        self.prompt_template = ""
+        try:
+            with open("config/prompts/planner_prompt_template.txt", "r") as f:
+                self.prompt_template = f.read()
+        except FileNotFoundError:
+            logger.error("Planner prompt template not found. The planner will not be effective.")
+            self.prompt_template = "Create a plan. Available tools: {tool_list}"
+
+        self.plugins = config.get("plugins", {})
+        self.llm_tool = self.plugins.get("tool_llm")
         if not self.llm_tool:
             logger.error("Planner plugin requires 'tool_llm' to be available.")
 
@@ -36,12 +44,19 @@ class Planner(BasePlugin):
         if not context.user_input or not self.llm_tool:
             return context
 
-        tool_description = (
-            "Creates a multi-step plan to fulfill the user's request. "
-            "Available tools: 'tool_file_system', 'tool_bash', 'tool_git', "
-            "'tool_web_search', 'cognitive_code_reader', 'cognitive_doc_reader', "
-            "'cognitive_dependency_analyzer', 'cognitive_historian'."
-        )
+        # --- Dynamically discover available tools ---
+        available_tools = []
+        for plugin in self.plugins.values():
+            if hasattr(plugin, "get_tool_definitions"):
+                for tool_def in plugin.get_tool_definitions():
+                    # We only need the function name and description for the planner's prompt
+                    func = tool_def.get("function", {})
+                    if "name" in func and "description" in func:
+                        tool_string = f"- {plugin.name}.{func['name']}: {func['description']}"
+                        available_tools.append(tool_string)
+
+        tool_list_str = "\n".join(available_tools)
+        tool_description = self.prompt_template.format(tool_list=tool_list_str)
 
         planner_tool = [
             {
@@ -58,15 +73,23 @@ class Planner(BasePlugin):
                                 "items": {
                                     "type": "object",
                                     "properties": {
-                                        "tool_name": {"type": "string"},
-                                        "method_name": {"type": "string"},
-                                        "arguments": {"type": "object"},
+                                        "tool_name": {
+                                            "type": "string",
+                                            "description": "The name of the tool plugin to use.",
+                                        },
+                                        "method_name": {
+                                            "type": "string",
+                                            "description": "The name of the method to call on the tool.",
+                                        },
+                                        "arguments": {
+                                            "type": "object",
+                                            "description": (
+                                                "The arguments for the method, "
+                                                "as a key-value map."
+                                            ),
+                                        },
                                     },
-                                    "required": [
-                                        "tool_name",
-                                        "method_name",
-                                        "arguments",
-                                    ],
+                                    "required": ["tool_name", "method_name", "arguments"],
                                 },
                             }
                         },
@@ -89,6 +112,9 @@ class Planner(BasePlugin):
             planning_context, tools=planner_tool, tool_choice="required"
         )
         llm_message = planned_context.payload.get("llm_response")
+        # fmt: off
+        logger.info(f"Raw LLM response received in planner: {llm_message}")  # noqa: E501
+        # fmt: on
 
         try:
             tool_calls = llm_message.tool_calls
@@ -102,12 +128,14 @@ class Planner(BasePlugin):
                 raise ValueError("LLM did not return a tool call.")
 
         except (json.JSONDecodeError, AttributeError, ValueError) as e:
+            # fmt: off
             logger.error(
-                "Failed to decode plan from LLM response: %s\nResponse was: %s",
+                "Failed to decode plan from LLM response: %s\nResponse was: %s",  # noqa: E501
                 e,
                 llm_message,
                 exc_info=True,
             )
+            # fmt: on
             context.payload["plan"] = []
 
         return context

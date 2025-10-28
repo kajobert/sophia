@@ -1,26 +1,24 @@
-# IDEAS.md
+# IDEAS
 
-## Nápad: Robustní Tool-Calling pomocí "Validation & Repair Loop" místo Finetuningu (Autor: Gemini 2.5 Pro)
+## Robust Tool-Calling using "Validation & Repair Loop" instead of Finetuning
 
-**Problém:**
-Potřebujeme, aby AI agent (Sophia) volal nástroje pomocí JSONu se 100% spolehlivostí. Finetuning modelů je drahý, časově náročný a stejně nikdy nezaručí 100% úspěšnost.
+**Problem:**
+We need the AI agent (Sophia) to call tools using JSON with 100% reliability. Finetuning models is expensive, time-consuming, and never guarantees 100% success.
 
-**Řešení: "Validation & Repair Loop" (Validační a Opravná Smyčka)**
-Místo snahy donutit model, aby nikdy neudělal chybu, budeme aktivně předpokládat, že chybu udělá, a budeme mít proces na její okamžitou opravu.
+**Solution: "Validation & Repair Loop"**
+Instead of trying to force the model to never make a mistake, we will actively assume that it will make a mistake, and we will have a process to fix it immediately.
 
-**Platforma:**
-Použít OpenRouter pro přístup k nejlepším modelům v poměru cena/výkon (např. Claude 3 Haiku, Mixtral, Llama 3 70B) místo drahého placení za prémiové modely (Gemini Pro, GPT-4o).
+**Platform:**
+Use OpenRouter to access the best models in terms of price/performance (e.g., Claude 3 Haiku, Mixtral, Llama 3 70B) instead of paying a premium for expensive models (Gemini Pro, GPT-4o).
 
-**Technický postup (Python):**
+**Technical procedure (Python):**
 
-1.  **Definice Schématu:** Použít knihovnu **Pydantic** k definování přesné datové struktury (schématu) JSONu, který od AI očekáváme pro volání nástroje.
-2.  **První pokus (Try):** Požádáme levný model (např. Claude 3 Haiku) o vygenerování JSONu pro volání nástroje.
-3.  **Validace (Except):** Okamžitě se pokusíme naparsovat odpověď modelu pomocí našeho Pydantic schématu v `try...except` bloku.
-4.  **Opravná Smyčka (Repair Loop):**
-    * Pokud `ValidationError` selže (`except ValidationError as e:`):
-    * Vezmeme původní rozbitý JSON *a* detailní chybovou hlášku z Pydanticu (`e.errors()`).
-    * Pošleme obojí zpět tomu samému (nebo jinému levnému) modelu.
-    * Prompt pro opravu: `"POZOR: JSON selhal při validaci. Chyby: [zde vložit e.errors()]. Oprav JSON. Neomlouvej se, pošli jen opravený kód."`
-5.  **Výsledek:** Tento proces je levnější (využívá levné modely) a mnohem robustnější (zachytí a opraví i chyby, které by udělal drahý finetunovaný model). Cílem není 100% úspěšnost modelu, ale 99.9%+ úspěšnost celého systému.
-   
-
+1.  **Schema Definition:** Use the **Pydantic** library to define the exact data structure (schema) of the JSON we expect from the AI for the tool call.
+2.  **First attempt (Try):** We ask a cheap model (e.g., Claude 3 Haiku) to generate the JSON for the tool call.
+3.  **Validation (Except):** We immediately try to parse the model's response using our Pydantic schema in a `try...except` block.
+4.  **Repair Loop:**
+    * If `ValidationError` fails (`except ValidationError as e:`):
+    * We take the original broken JSON *and* the detailed error message from Pydantic (`e.errors()`).
+    * We send both back to the same (or another cheap) model.
+    * Prompt for repair: `"ATTENTION: The JSON failed validation. Errors: [insert e.errors() here]. Fix the JSON. Do not apologize, just send the corrected code."`
+5.  **Result:** This process is cheaper (uses cheap models) and much more robust (it catches and fixes errors that a more expensive, fine-tuned model would make). The goal is not 100% model success, but 99.9%+ success of the entire system.

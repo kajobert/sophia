@@ -1,7 +1,11 @@
 import asyncio
+import json
 import logging
 import yaml
 from pathlib import Path
+
+from pydantic import ValidationError
+
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
@@ -23,24 +27,30 @@ class Kernel:
     def __init__(self):
         self.plugin_manager = PluginManager()
         self.is_running = False
+        self.json_repair_prompt_template = ""
+        self.all_plugins_map = {}
 
-    async def consciousness_loop(self):
-        """The main, infinite loop that keeps Sophia "conscious"."""
-        self.is_running = True
-        session_id = str(uuid.uuid4())
+    async def initialize(self):
+        """Loads prompts, discovers, and sets up all plugins."""
+        # --- PROMPT LOADING PHASE ---
+        try:
+            with open("config/prompts/json_repair_prompt.txt", "r") as f:
+                self.json_repair_prompt_template = f.read()
+        except FileNotFoundError:
+            logger.error("JSON repair prompt template not found. The repair loop will fail.")
+            self.json_repair_prompt_template = "The JSON is invalid. Errors: {e}. Please fix it."
 
         # --- PLUGIN SETUP PHASE ---
         logger.info("Initializing plugin setup...")
         all_plugins_list = [
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
-        all_plugins_map = {p.name: p for p in all_plugins_list}
+        self.all_plugins_map = {p.name: p for p in all_plugins_list}
 
-        # Pass configuration and dependencies to all plugins
         for plugin in all_plugins_list:
             config_path = Path("config/settings.yaml")
             if not config_path.exists():
-                logger.warning("Config 'config/settings.yaml' not found during loop setup.")
+                logger.warning("Config 'config/settings.yaml' not found.")
                 main_config = {}
             else:
                 with open(config_path, "r") as f:
@@ -51,7 +61,7 @@ class Kernel:
             full_plugin_config = {
                 **specific_config,
                 "plugin_manager": self.plugin_manager,
-                "plugins": all_plugins_map,
+                "plugins": self.all_plugins_map,
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -60,7 +70,11 @@ class Kernel:
                 logger.error(f"Error setting up plugin '{plugin.name}': {e}", exc_info=True)
 
         logger.info(f"All {len(all_plugins_list)} plugins have been configured.")
-        # --- END PLUGIN SETUP PHASE ---
+
+    async def consciousness_loop(self):
+        """The main, infinite loop that keeps Sophia "conscious"."""
+        self.is_running = True
+        session_id = str(uuid.uuid4())
 
         context = SharedContext(
             session_id=session_id,
@@ -125,7 +139,7 @@ class Kernel:
 
                     # 2. PLANNING PHASE
                     context.current_state = "PLANNING"
-                    planner = all_plugins_map.get("cognitive_planner")
+                    planner = self.all_plugins_map.get("cognitive_planner")
                     plan = []
                     if planner:
                         context = await planner.execute(context)
@@ -141,31 +155,135 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
+                    llm_tool = self.all_plugins_map.get("tool_llm")
+
                     if plan:
-                        logger.info(f"Executing plan: {plan}")
+                        logger.info(f"Initiating execution for raw plan: {plan}")
+
+                        # --- GATHER ALL TOOL DEFINITIONS AND VALIDATION SCHEMAS ---
+                        from pydantic import create_model, Field
+
+                        tool_schemas = {}
+                        all_plugins = self.all_plugins_map.values()
+                        for plugin in all_plugins:
+                            if hasattr(plugin, "get_tool_definitions"):
+                                for tool_def in plugin.get_tool_definitions():
+                                    function = tool_def.get("function", {})
+                                    func_name = function.get("name")
+                                    params_schema = function.get("parameters")
+                                    if func_name and params_schema:
+                                        fields = {}
+                                        for prop_name, prop_def in params_schema.get(
+                                            "properties", {}
+                                        ).items():
+                                            field_type = {
+                                                "string": str,
+                                                "integer": int,
+                                                "number": float,
+                                                "boolean": bool,
+                                            }.get(prop_def.get("type"), str)
+                                            desc = prop_def.get("description")
+                                            fields[prop_name] = (
+                                                field_type,
+                                                Field(..., description=desc),
+                                            )
+
+                                        validation_model = create_model(
+                                            f"{func_name}ArgsModel", **fields
+                                        )
+                                        tool_schemas[func_name] = validation_model
+
                         step_results = []
+                        plan_failed = False
                         for step_index, step in enumerate(plan):
                             tool_name = step.get("tool_name")
                             method_name = step.get("method_name")
                             arguments = step.get("arguments", {})
 
-                            tool = all_plugins_map.get(tool_name)
-                            method = None
-                            step_result = None
+                            validated_args = None
+                            max_attempts = 3  # 1 initial + 2 retries
 
-                            if tool and hasattr(tool, method_name):
-                                method = getattr(tool, method_name, None)
-
-                            if method:
-                                logger.info(
-                                    f"Executing Step {step_index + 1}/{len(plan)}: "
-                                    f"{tool_name}.{method_name}({arguments})"
-                                )
+                            for attempt in range(max_attempts):
                                 try:
-                                    if asyncio.iscoroutinefunction(method):
-                                        step_result = await method(**arguments)
-                                    else:
-                                        step_result = method(**arguments)
+                                    validation_model = tool_schemas.get(method_name)
+                                    if not validation_model:
+                                        msg = f"No validation schema found for method '{method_name}'."
+                                        raise ValueError(msg)
+
+                                    current_args = arguments
+                                    if isinstance(current_args, str):
+                                        try:
+                                            current_args = json.loads(current_args)
+                                        except json.JSONDecodeError:
+                                            msg = f"Arguments are a non-JSON string: {current_args}"
+                                            raise ValueError(msg)
+
+                                    validated_args = validation_model(**current_args).dict()
+                                    # fmt: off
+                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args)  # noqa: E501
+                                    # fmt: on
+                                    break  # Success
+
+                                except (ValidationError, ValueError) as e:
+                                    # fmt: off
+                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e)  # noqa: E501
+                                    # fmt: on
+                                    if attempt + 1 == max_attempts:
+                                        # fmt: off
+                                        error_message = (
+                                            f"Plan failed at step {step_index + 1} "
+                                            f"after {max_attempts} attempts. Final error: {e}"
+                                        )
+                                        # fmt: on
+                                        logger.error(error_message)
+                                        step_results.append(error_message)
+                                        plan_failed = True
+                                        break
+
+                                    if not llm_tool:
+                                        error_message = "Cannot attempt repair: LLMTool not found."
+                                        logger.error(error_message)
+                                        step_results.append(error_message)
+                                        plan_failed = True
+                                        break
+
+                                    repair_prompt = self.json_repair_prompt_template.format(
+                                        tool_name=tool_name,
+                                        method_name=method_name,
+                                        arguments=arguments,
+                                        e=e,
+                                        user_input=context.user_input,
+                                    )
+
+                                    repair_context = await llm_tool.execute(
+                                        SharedContext(
+                                            session_id=context.session_id,
+                                            current_state="EXECUTING",
+                                            logger=context.logger,
+                                            user_input=repair_prompt,
+                                            history=[{"role": "user", "content": repair_prompt}], # TOTO JE TA KLÍČOVÁ OPRAVA
+                                        )
+                                    )
+                                    
+                                    arguments = repair_context.payload.get("llm_response")
+                                    # fmt: off
+                                    logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
+                                    # fmt: on
+
+                            if plan_failed or validated_args is None:
+                                execution_summary = f"Plan failed at step {step_index + 1}."
+                                break
+
+                            # --- EXECUTION OF VALIDATED STEP ---
+                            tool = self.all_plugins_map.get(tool_name)
+                            method = getattr(tool, method_name, None) if tool else None
+                            if method:
+                                try:
+                                    step_result = (
+                                        await method(**validated_args)
+                                        if asyncio.iscoroutinefunction(method)
+                                        else method(**validated_args)
+                                    )
                                     step_results.append(str(step_result))
                                     logger.info(
                                         f"Step '{method_name}' executed. Result: {step_result}"
@@ -183,8 +301,8 @@ class Kernel:
                                     break
                             else:
                                 error_message = (
-                                    f"Error: Tool '{tool_name}' or method "
-                                    f"'{method_name}' not found."
+                                    f"Error: Tool '{tool_name}' or method '{method_name}' "
+                                    "not found."
                                 )
                                 logger.error(error_message)
                                 step_results.append(error_message)
@@ -199,7 +317,6 @@ class Kernel:
                             )
 
                     else:
-                        llm_tool = all_plugins_map.get("tool_llm")
                         if llm_tool:
                             logger.info("No plan generated, attempting direct LLM response.")
                             context = await llm_tool.execute(context)
@@ -232,6 +349,10 @@ class Kernel:
                             )
                     else:
                         print(f">>> Sophia: {execution_summary}")
+                        # After printing to the console, re-display the user prompt.
+                        terminal = self.all_plugins_map.get("interface_terminal")
+                        if terminal and hasattr(terminal, "prompt"):
+                            terminal.prompt()
 
                     # 5. MEMORIZING PHASE
                     context.current_state = "MEMORIZING"
