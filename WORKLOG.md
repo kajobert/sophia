@@ -1,4 +1,33 @@
 ---
+**Mission:** Implement Robust Tool-Calling via Validation & Repair Loop
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Update `IDEAS.md` with the new concept.
+*   Define a tool interface via convention (`get_tool_definitions`).
+*   Update `FileSystemTool` to expose its `list_directory` function.
+*   Implement two-phase logging in the `CognitivePlanner` and `Kernel`.
+*   Implement the "Validation & Repair Loop" in the `Kernel`.
+*   Write a comprehensive integration test to verify the entire flow.
+*   Update the developer documentation.
+*   Update `WORKLOG.md` and submit.
+
+**2. Actions Taken:**
+*   Added the "Robust Tool-Calling" idea to `IDEAS.md`.
+*   Modified `plugins/tool_file_system.py` to expose the `list_directory` function and its Pydantic schema via a new `get_tool_definitions` method.
+*   Modified `plugins/cognitive_planner.py` to add first-phase logging, recording the raw "thought" from the LLM.
+*   Made an authorized modification to `core/kernel.py`, implementing the "Validation & Repair Loop" in the `EXECUTING` phase. This loop gathers tool schemas, validates plans, and orchestrates a repair with the `LLMTool` on failure.
+*   Implemented second-phase logging in `core/kernel.py` to record the final, validated "action" before execution.
+*   Created a new integration test, `tests/core/test_tool_calling_integration.py`. After a significant debugging effort involving installing numerous missing dependencies and refactoring the test multiple times to correctly isolate the Kernel, the test now passes, verifying the full end-to-end functionality.
+*   Fixed a bug in `core/kernel.py` discovered during testing where a `SharedContext` object was created without a `current_state`.
+*   Updated both the English and Czech developer guides (`docs/en/07_DEVELOPER_GUIDE.md` and `docs/cs/07_PRIRUCKA_PRO_VYVOJARE.md`) to document the new tool-calling architecture.
+
+**3. Outcome:**
+*   The mission was completed successfully. The Kernel is now significantly more robust, capable of automatically validating and repairing faulty tool calls from the AI. The system is fully tested and documented, completing the current phase of the roadmap.
+
+---
 **Mission:** Mission 15.1: PLANNER STABILIZATION AND KERNEL BUGFIX (EN)
 **Agent:** Jules v1.2
 **Date:** 2025-10-27
