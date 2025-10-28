@@ -6,3 +6,9 @@
 
 **Zobrazit stav jádra**
 * zobrazovat aktuální "stav" jádra a jeho "činnost" v "informačním řádku" jak v bash, tak ve WEB UI
+
+LLM debug režim - review každého plánu / kroku
+
+zkušenosti získané s omezením julese predat sophii
+
+vždy je potřeba mít detailní technickou dokumentaci a manuál jak postupovat aby se nztratil v kontextu
