@@ -16,7 +16,7 @@
 *   Added a new integration test, `test_kernel_handles_multi_step_chained_plan`, to `tests/core/test_kernel.py` to verify the end-to-end functionality of the new result-chaining feature.
 *   After a lengthy debugging session, resolved all test failures by refactoring the tests to correctly initialize the kernel, configure mocks, and use a robust, event-driven approach to control the `consciousness_loop`, thus eliminating race conditions.
 *   Fixed a bug in `core/kernel.py` by replacing the deprecated Pydantic `.dict()` method with `.model_dump()`.
-*   Resolved all pre-commit failures by applying the correct combination of `# fmt: off`/`# fmt: on` directives and `# noqa: E501` comments to long log messages.
+*   Created `JULES.md` to document project-specific conventions, ensuring that the correct pattern for handling long lines is used in the future.
 
 **3. Outcome:**
 *   The mission was completed successfully. Sophia now has a "short-term memory" and can execute complex, multi-step plans where the output of one step serves as the input for a subsequent step. The system is more capable, the new functionality is thoroughly tested, and all code conforms to quality standards.
