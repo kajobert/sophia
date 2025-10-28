@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 class ListDirectoryArgs(BaseModel):
     """Pydantic model for arguments of the list_directory tool."""
 
-    path: str = Field(..., description="The path to the directory to list, relative to the sandbox root.")
+    path: str = Field(
+        ..., description="The path to the directory to list, relative to the sandbox root."
+    )
 
 
 class FileSystemTool(BasePlugin):

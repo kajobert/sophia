@@ -10,6 +10,7 @@ class LLMTool(BasePlugin):
 
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
+        self.system_prompt = "You are a helpful assistant."
         self.setup(config={})
 
     @property
@@ -37,6 +38,13 @@ class LLMTool(BasePlugin):
             # Handle other potential errors like parsing errors
             print(f"Error loading config: {e}")
 
+        try:
+            with open("config/prompts/sophia_dna.txt", "r") as f:
+                self.system_prompt = f.read()
+        except FileNotFoundError:
+            # Keep default system prompt if file not found
+            pass
+
     async def execute(
         self,
         context: SharedContext,
@@ -48,7 +56,7 @@ class LLMTool(BasePlugin):
             return context
 
         messages = [
-            {"role": "system", "content": "You are Sophia, an Artificial Mindful Intelligence."},
+            {"role": "system", "content": self.system_prompt},
             # For planner calls, history is not needed, but it's here for general use
             *context.history,
         ]

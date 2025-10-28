@@ -1,4 +1,49 @@
 ---
+**Mission:** Refactor: Externalize Prompts and Fix Linters
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Externalize all hardcoded prompts into `.txt` files.
+*   Audit the codebase to ensure no prompts remain.
+*   Fix the persistent `black` vs. `ruff` linter conflicts.
+*   Run all tests and quality checks.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Created `config/prompts/json_repair_prompt.txt` and refactored `core/kernel.py` to load and use this template for the repair loop.
+*   Created `config/prompts/planner_prompt_template.txt` and refactored `plugins/cognitive_planner.py` to load and use this template for generating plans.
+*   Refactored `plugins/tool_llm.py` to load the AI's core identity from the existing `config/prompts/sophia_dna.txt` file.
+*   After a protracted struggle with `black` and `ruff` disagreeing on line formatting, I applied the correct pattern of using both `# fmt: off`/`# fmt: on` and `# noqa: E501` to the problematic lines, which finally resolved the conflict.
+*   Ran the full test suite and all pre-commit checks, which now pass cleanly.
+
+**3. Outcome:**
+*   The mission was completed successfully. The codebase is now cleaner and more maintainable, with all significant prompts externalized. The persistent linter conflict has been resolved, ensuring smoother future development.
+
+---
+**Mission:** Refine Tool-Calling with Dynamic Planner and Strict Repair
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Make the `CognitivePlanner` tool-aware by dynamically discovering tools.
+*   Strengthen the repair prompt in the `Kernel` to be more directive.
+*   Update the integration test to reflect the changes.
+*   Update `WORKLOG.md`.
+*   Complete pre-commit steps and submit.
+
+**2. Actions Taken:**
+*   Modified `plugins/cognitive_planner.py` to dynamically discover all available tools at runtime and include them in the prompt to the LLM, preventing the AI from hallucinating incorrect function names.
+*   Strengthened the repair prompt in `core/kernel.py` to be highly directive and technical, ensuring the LLM returns only a corrected JSON object instead of a conversational response.
+*   Updated the integration test `tests/core/test_tool_calling_integration.py` to assert that the new, stricter repair prompt is being used.
+*   Ran the full test suite to confirm that all changes are correct and introduced no regressions.
+
+**3. Outcome:**
+*   The mission was completed successfully. The final blockers for robust tool-calling have been removed. The AI planner is now explicitly aware of the tools it can use, and the Kernel's repair loop is significantly more reliable. Sophia is now fully equipped to use her tools correctly.
+
+---
 **Mission:** Implement Robust Tool-Calling via Validation & Repair Loop
 **Agent:** Jules v1.2
 **Date:** 2025-10-28
