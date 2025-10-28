@@ -18,7 +18,7 @@ class ListDirectoryArgs(BaseModel):
     """Pydantic model for arguments of the list_directory tool."""
 
     path: str = Field(
-        ..., description="The path to the directory to list, relative to the sandbox root."
+        ..., description="Lists files and directories inside the designated 'sandbox/' folder. All paths are relative to this sandbox."
     )
 
 
