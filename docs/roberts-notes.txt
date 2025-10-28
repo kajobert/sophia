@@ -3,3 +3,6 @@
 
 **Zlepšít logiku LLM**
 * zajistit aby LLM nemusel v ideálním případě opakovat pokusy s voláním nástrojů / prompt engineering
+
+**Zobrazit stav jádra**
+* zobrazovat aktuální "stav" jádra a jeho "činnost" v "informačním řádku" jak v bash, tak ve WEB UI
