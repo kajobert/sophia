@@ -1,4 +1,27 @@
 ---
+**Mission:** HOTFIX: Resolve `asyncio` Conflict in `Kernel`
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Refactor the `Kernel` to separate synchronous `__init__` from asynchronous `initialize`.
+*   Update `pytest` tests to correctly `await` the new `initialize` method.
+*   Update the main application entrypoint (`run.py`) to use the new asynchronous initialization.
+*   Run all tests to confirm the fix.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Refactored `core/kernel.py` by moving all `async` setup code from `__init__` into a new `async def initialize()` method.
+*   Modified `tests/core/test_kernel.py` to `await kernel.initialize()` after creating a `Kernel` instance, fixing the test failure.
+*   Modified `tests/core/test_tool_calling_integration.py` to also `await kernel.initialize()`, resolving the second test failure.
+*   Refactored `run.py` to be an `async` application, allowing it to correctly `await kernel.initialize()` before starting the main `consciousness_loop`.
+*   Ran the full test suite (`pytest`) and confirmed that all 42 tests now pass, resolving the `RuntimeError: asyncio.run() cannot be called from a running event loop`.
+
+**3. Outcome:**
+*   The critical `asyncio` conflict has been resolved. The test suite is now stable and the application's startup process is correctly aligned with `asyncio` best practices.
+
+---
 **Mission:** UI: Improve Terminal Prompt
 **Agent:** Jules v1.2
 **Date:** 2025-10-28
