@@ -89,6 +89,7 @@ class Planner(BasePlugin):
             planning_context, tools=planner_tool, tool_choice="required"
         )
         llm_message = planned_context.payload.get("llm_response")
+        logger.info(f"Raw LLM response received in planner: {llm_message}")
 
         try:
             tool_calls = llm_message.tool_calls

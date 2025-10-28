@@ -99,6 +99,48 @@ The `SharedContext` is a data object passed between plugins. It allows them to s
 - `history`: The conversation history.
 - `payload`: A dictionary for plugins to store and retrieve data.
 
+### 5.3. Exposing Functions as Tools for the AI
+Any plugin (regardless of its `PluginType`) can expose its methods to be callable by the AI. This is achieved through a "duck typing" convention. The Kernel will automatically discover any plugin that implements the `get_tool_definitions` method.
+
+To make a plugin's methods available as tools:
+1.  **Implement `get_tool_definitions(self) -> List[Dict[str, Any]]`:** Add this method to your plugin.
+2.  **Define a Pydantic Schema for Arguments:** For each function you want to expose, create a `pydantic.BaseModel` that defines its arguments. This is crucial for the Kernel's "Validation & Repair Loop" to function correctly.
+3.  **Return the Tool Schema:** The `get_tool_definitions` method must return a list of dictionaries, where each dictionary conforms to the [OpenAPI JSON Schema specification](https://swagger.io/specification/) that the AI model understands.
+
+**Example: Exposing a `list_directory` function in `FileSystemTool`**
+```python
+# In plugins/tool_file_system.py
+
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any
+
+# 1. Define the Pydantic schema for the function's arguments
+class ListDirectoryArgs(BaseModel):
+    path: str = Field(..., description="The path to the directory to list.")
+
+class FileSystemTool(BasePlugin):
+    # ... other plugin methods ...
+
+    def list_directory(self, path: str) -> List[str]:
+        # ... implementation ...
+        return ["file1.txt", "file2.txt"]
+
+    # 2. Implement the discovery method
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_directory",
+                    "description": "Lists the contents of a directory within the sandbox.",
+                    # 3. Reference the Pydantic schema
+                    "parameters": ListDirectoryArgs.model_json_schema(),
+                },
+            }
+        ]
+```
+By following this convention, the Kernel's planner and execution engine will automatically be able to see, validate, and call your plugin's methods.
+
 ## 6. Available Tool Plugins
 
 This section provides an overview of the available `TOOL` plugins that can be used by cognitive plugins.

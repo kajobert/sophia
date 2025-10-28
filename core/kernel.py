@@ -1,8 +1,12 @@
 import asyncio
+import json
 import logging
 import uuid
 import yaml
 from pathlib import Path
+
+from pydantic import ValidationError
+
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
@@ -142,75 +146,115 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
+                    llm_tool = all_plugins_map.get("tool_llm")
+
                     if plan:
-                        logger.info(f"Executing plan: {plan}")
+                        logger.info(f"Initiating execution for raw plan: {plan}")
+
+                        # --- GATHER ALL TOOL DEFINITIONS AND VALIDATION SCHEMAS ---
+                        from pydantic import create_model, Field
+                        tool_schemas = {}
+                        for plugin in all_plugins_list:
+                            if hasattr(plugin, "get_tool_definitions"):
+                                for tool_def in plugin.get_tool_definitions():
+                                    function = tool_def.get("function", {})
+                                    func_name = function.get("name")
+                                    params_schema = function.get("parameters")
+                                    if func_name and params_schema:
+                                        fields = {}
+                                        for prop_name, prop_def in params_schema.get("properties", {}).items():
+                                            field_type = {"string": str, "integer": int, "number": float, "boolean": bool}.get(prop_def.get("type"), str)
+                                            fields[prop_name] = (field_type, Field(..., description=prop_def.get("description")))
+
+                                        validation_model = create_model(f"{func_name}ArgsModel", **fields)
+                                        tool_schemas[func_name] = validation_model
+
                         step_results = []
+                        plan_failed = False
                         for step_index, step in enumerate(plan):
                             tool_name = step.get("tool_name")
                             method_name = step.get("method_name")
                             arguments = step.get("arguments", {})
 
-                            tool = all_plugins_map.get(tool_name)
-                            method = None
-                            step_result = None
+                            validated_args = None
+                            max_attempts = 3  # 1 initial + 2 retries
 
-                            if tool and hasattr(tool, method_name):
-                                method = getattr(tool, method_name, None)
-
-                            if method:
-                                logger.info(
-                                    f"Executing Step {step_index + 1}/{len(plan)}: "
-                                    f"{tool_name}.{method_name}({arguments})"
-                                )
+                            for attempt in range(max_attempts):
                                 try:
-                                    if asyncio.iscoroutinefunction(method):
-                                        step_result = await method(**arguments)
-                                    else:
-                                        step_result = method(**arguments)
+                                    validation_model = tool_schemas.get(method_name)
+                                    if not validation_model:
+                                        raise ValueError(f"No validation schema found for method '{method_name}'.")
+
+                                    current_args = arguments
+                                    if isinstance(current_args, str):
+                                        try:
+                                            current_args = json.loads(current_args)
+                                        except json.JSONDecodeError:
+                                            raise ValueError(f"Arguments are a non-JSON string: {current_args}")
+
+                                    validated_args = validation_model(**current_args).dict()
+                                    logger.info(f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: {tool_name}.{method_name}({validated_args})")
+                                    break  # Success
+
+                                except (ValidationError, ValueError) as e:
+                                    logger.warning(f"Validation failed for step {step_index + 1} (Attempt {attempt + 1}/{max_attempts}): {e}")
+                                    if attempt + 1 == max_attempts:
+                                        error_message = f"Plan failed at step {step_index + 1} after {max_attempts} attempts. Final error: {e}"
+                                        logger.error(error_message)
+                                        step_results.append(error_message)
+                                        plan_failed = True
+                                        break
+
+                                    if not llm_tool:
+                                        error_message = "Cannot attempt repair: LLMTool not found."
+                                        logger.error(error_message)
+                                        step_results.append(error_message)
+                                        plan_failed = True
+                                        break
+
+                                    repair_prompt = (f"ATTENTION: The tool call JSON failed validation. Tool: {tool_name}, Method: {method_name}, "
+                                                     f"Faulty Arguments: {arguments}. Validation Errors: {e}. "
+                                                     f"Please correct the 'arguments' JSON. Return ONLY the corrected JSON object.")
+
+                                    repair_context = await llm_tool.execute(SharedContext(session_id=context.session_id, current_state="EXECUTING", logger=context.logger, user_input=repair_prompt))
+                                    arguments = repair_context.payload.get("llm_response")
+                                    logger.info(f"Received repaired arguments for step {step_index + 1}: {arguments}")
+
+                            if plan_failed or validated_args is None:
+                                execution_summary = f"Plan failed at step {step_index + 1}."
+                                break
+
+                            # --- EXECUTION OF VALIDATED STEP ---
+                            tool = all_plugins_map.get(tool_name)
+                            method = getattr(tool, method_name, None) if tool else None
+                            if method:
+                                try:
+                                    step_result = await method(**validated_args) if asyncio.iscoroutinefunction(method) else method(**validated_args)
                                     step_results.append(str(step_result))
-                                    logger.info(
-                                        f"Step '{method_name}' executed. Result: {step_result}"
-                                    )
+                                    logger.info(f"Step '{method_name}' executed. Result: {step_result}")
                                 except Exception as exec_err:
-                                    error_message = (
-                                        f"Error executing {tool_name}.{method_name}: {exec_err}"
-                                    )
+                                    error_message = f"Error executing {tool_name}.{method_name}: {exec_err}"
                                     logger.error(error_message, exc_info=True)
                                     step_results.append(error_message)
-                                    execution_summary = (
-                                        f"Plan failed at step {step_index + 1}. "
-                                        f"Error: {error_message}"
-                                    )
+                                    execution_summary = f"Plan failed at step {step_index + 1}. Error: {error_message}"
                                     break
                             else:
-                                error_message = (
-                                    f"Error: Tool '{tool_name}' or method "
-                                    f"'{method_name}' not found."
-                                )
+                                error_message = f"Error: Tool '{tool_name}' or method '{method_name}' not found."
                                 logger.error(error_message)
                                 step_results.append(error_message)
-                                execution_summary = (
-                                    f"Plan failed at step {step_index + 1}. {error_message}"
-                                )
+                                execution_summary = f"Plan failed at step {step_index + 1}. {error_message}"
                                 break
 
                         if not execution_summary:
-                            execution_summary = (
-                                "Plan executed successfully. Result: " + " | ".join(step_results)
-                            )
+                            execution_summary = "Plan executed successfully. Result: " + " | ".join(step_results)
 
                     else:
-                        llm_tool = all_plugins_map.get("tool_llm")
                         if llm_tool:
                             logger.info("No plan generated, attempting direct LLM response.")
                             context = await llm_tool.execute(context)
-                            execution_summary = context.payload.get(
-                                "llm_response", "Input received, no plan formed."
-                            )
+                            execution_summary = context.payload.get("llm_response", "Input received, no plan formed.")
                         else:
-                            execution_summary = (
-                                "Input received, but no planner or LLM tool is configured."
-                            )
+                            execution_summary = "Input received, but no planner or LLM tool is configured."
                             logger.warning("No plan and no LLM tool found for direct response.")
 
                     # 4. RESPONDING PHASE
