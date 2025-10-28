@@ -18,8 +18,29 @@ class ListDirectoryArgs(BaseModel):
     """Pydantic model for arguments of the list_directory tool."""
 
     path: str = Field(
-        ..., description="Lists files and directories inside the designated 'sandbox/' folder. All paths are relative to this sandbox."
+        ...,
+        description=(
+            "Lists files and directories inside the designated 'sandbox/' folder. "
+            "All paths are relative to this sandbox."
+        ),
     )
+
+
+class ReadFileArgs(BaseModel):
+    """Pydantic model for arguments of the read_file tool."""
+
+    path: str = Field(
+        ..., description="The path to the file to read, relative to the sandbox root."
+    )
+
+
+class WriteFileArgs(BaseModel):
+    """Pydantic model for arguments of the write_file tool."""
+
+    path: str = Field(
+        ..., description="The path to the file to write, relative to the sandbox root."
+    )
+    content: str = Field(..., description="The content to write to the file.")
 
 
 class FileSystemTool(BasePlugin):
@@ -173,5 +194,21 @@ class FileSystemTool(BasePlugin):
                     "description": "Lists the contents of a directory within the sandbox.",
                     "parameters": ListDirectoryArgs.model_json_schema(),
                 },
-            }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "read_file",
+                    "description": "Reads the content of a file within the sandbox.",
+                    "parameters": ReadFileArgs.model_json_schema(),
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "write_file",
+                    "description": "Writes content to a file within the sandbox.",
+                    "parameters": WriteFileArgs.model_json_schema(),
+                },
+            },
         ]

@@ -65,3 +65,30 @@ def test_fs_tool_list_nondirectory(fs_tool: FileSystemTool):
     fs_tool.write_file("a_file.txt", "content")
     with pytest.raises(NotADirectoryError):
         fs_tool.list_directory("a_file.txt")
+
+
+def test_get_tool_definitions(fs_tool: FileSystemTool):
+    """Tests that the tool definitions are correctly structured."""
+    defs = fs_tool.get_tool_definitions()
+    assert isinstance(defs, list)
+    assert len(defs) == 3
+
+    func_names = {d["function"]["name"] for d in defs}
+    assert func_names == {"list_directory", "read_file", "write_file"}
+
+    for d in defs:
+        assert d["type"] == "function"
+        params = d["function"]["parameters"]
+        assert params["type"] == "object"
+        assert "properties" in params
+
+        if d["function"]["name"] == "list_directory":
+            assert "path" in params["properties"]
+            assert params["required"] == ["path"]
+        elif d["function"]["name"] == "read_file":
+            assert "path" in params["properties"]
+            assert params["required"] == ["path"]
+        elif d["function"]["name"] == "write_file":
+            assert "path" in params["properties"]
+            assert "content" in params["properties"]
+            assert sorted(params["required"]) == ["content", "path"]

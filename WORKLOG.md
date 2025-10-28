@@ -1,4 +1,28 @@
 ---
+**Mission:** #4.1 Mise: Dokončení implementace nástroje FileSystemTool
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Create Pydantic schemas for `read_file` and `write_file`.
+*   Update `get_tool_definitions` to expose all tools.
+*   Implement unit tests for the new functionality.
+*   Complete pre-commit steps.
+*   Update `WORKLOG.md`.
+*   Submit the changes.
+
+**2. Actions Taken:**
+*   Added `ReadFileArgs` and `WriteFileArgs` Pydantic schemas to `plugins/tool_file_system.py`.
+*   Extended the `get_tool_definitions` method in `plugins/tool_file_system.py` to include definitions for `read_file` and `write_file`.
+*   Added a new test, `test_get_tool_definitions`, to `tests/plugins/test_tool_file_system.py` to ensure the tool definitions were correctly structured.
+*   During pre-commit checks, reverted out-of-scope changes to other files to keep the submission focused.
+*   Resolved all `ruff` and `black` pre-commit errors within the scope of the modified files.
+
+**3. Outcome:**
+*   The `FileSystemTool` plugin is now fully implemented. All its functions (`read_file`, `write_file`, `list_directory`) are correctly exposed with Pydantic schemas, making them reliably available to the AI planner. The plugin is covered by unit tests, and the code adheres to all quality standards.
+
+---
 **Mission:** HOTFIX: Resolve `asyncio` Conflict in `Kernel`
 **Agent:** Jules v1.2
 **Date:** 2025-10-28
