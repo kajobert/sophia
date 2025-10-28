@@ -1,6 +1,6 @@
 # IDEAS.md
 
-## Nápad: Robustní Tool-Calling pomocí "Validation & Repair Loop" místo Finetuningu
+## Nápad: Robustní Tool-Calling pomocí "Validation & Repair Loop" místo Finetuningu (Autor: Gemini 2.5 Pro)
 
 **Problém:**
 Potřebujeme, aby AI agent (Sophia) volal nástroje pomocí JSONu se 100% spolehlivostí. Finetuning modelů je drahý, časově náročný a stejně nikdy nezaručí 100% úspěšnost.
@@ -23,3 +23,4 @@ Použít OpenRouter pro přístup k nejlepším modelům v poměru cena/výkon (
     * Prompt pro opravu: `"POZOR: JSON selhal při validaci. Chyby: [zde vložit e.errors()]. Oprav JSON. Neomlouvej se, pošli jen opravený kód."`
 5.  **Výsledek:** Tento proces je levnější (využívá levné modely) a mnohem robustnější (zachytí a opraví i chyby, které by udělal drahý finetunovaný model). Cílem není 100% úspěšnost modelu, ale 99.9%+ úspěšnost celého systému.
    
+
