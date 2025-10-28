@@ -99,6 +99,48 @@ Všechny pluginy musí dědit z `plugins.base_plugin.BasePlugin` a implementovat
 - `history`: Historie konverzace.
 - `payload`: Slovník, do kterého mohou pluginy ukládat a načítat data.
 
+### 5.3. Zpřístupnění funkcí jako nástrojů pro AI
+Jakýkoli plugin (bez ohledu na jeho `PluginType`) může zpřístupnit své metody, aby je AI mohla volat. Toho je dosaženo pomocí konvence "duck typing". Kernel automaticky objeví jakýkoli plugin, který implementuje metodu `get_tool_definitions`.
+
+Chcete-li zpřístupnit metody pluginu jako nástroje:
+1.  **Implementujte `get_tool_definitions(self) -> List[Dict[str, Any]]`:** Přidejte tuto metodu do svého pluginu.
+2.  **Definujte Pydantic schéma pro argumenty:** Pro každou funkci, kterou chcete zpřístupnit, vytvořte `pydantic.BaseModel`, který definuje její argumenty. To je klíčové pro správnou funkci "Validation & Repair Loop" v Kernelu.
+3.  **Vraťte schéma nástroje:** Metoda `get_tool_definitions` musí vrátit seznam slovníků, kde každý slovník odpovídá specifikaci [OpenAPI JSON Schema](https://swagger.io/specification/), které AI model rozumí.
+
+**Příklad: Zpřístupnění funkce `list_directory` v `FileSystemTool`**
+```python
+# V souboru plugins/tool_file_system.py
+
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any
+
+# 1. Definujte Pydantic schéma pro argumenty funkce
+class ListDirectoryArgs(BaseModel):
+    path: str = Field(..., description="Cesta k adresáři, jehož obsah se má vypsat.")
+
+class FileSystemTool(BasePlugin):
+    # ... další metody pluginu ...
+
+    def list_directory(self, path: str) -> List[str]:
+        # ... implementace ...
+        return ["soubor1.txt", "soubor2.txt"]
+
+    # 2. Implementujte metodu pro objevení
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_directory",
+                    "description": "Vypíše obsah adresáře v sandboxu.",
+                    # 3. Odkazujte na Pydantic schéma
+                    "parameters": ListDirectoryArgs.model_json_schema(),
+                },
+            }
+        ]
+```
+Dodržením této konvence bude plánovač a exekuční engine Kernelu schopen automaticky vidět, validovat a volat metody vašeho pluginu.
+
 ## 6. Odeslání změn
 
 1.  **Ujistěte se, že všechny testy procházejí:** Spusťte `PYTHONPATH=. .venv/bin/python -m pytest`.

@@ -1,4 +1,119 @@
 ---
+**Mission:** HOTFIX: Resolve `asyncio` Conflict in `Kernel`
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Refactor the `Kernel` to separate synchronous `__init__` from asynchronous `initialize`.
+*   Update `pytest` tests to correctly `await` the new `initialize` method.
+*   Update the main application entrypoint (`run.py`) to use the new asynchronous initialization.
+*   Run all tests to confirm the fix.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Refactored `core/kernel.py` by moving all `async` setup code from `__init__` into a new `async def initialize()` method.
+*   Modified `tests/core/test_kernel.py` to `await kernel.initialize()` after creating a `Kernel` instance, fixing the test failure.
+*   Modified `tests/core/test_tool_calling_integration.py` to also `await kernel.initialize()`, resolving the second test failure.
+*   Refactored `run.py` to be an `async` application, allowing it to correctly `await kernel.initialize()` before starting the main `consciousness_loop`.
+*   Ran the full test suite (`pytest`) and confirmed that all 42 tests now pass, resolving the `RuntimeError: asyncio.run() cannot be called from a running event loop`.
+
+**3. Outcome:**
+*   The critical `asyncio` conflict has been resolved. The test suite is now stable and the application's startup process is correctly aligned with `asyncio` best practices.
+
+---
+**Mission:** UI: Improve Terminal Prompt
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Modify the `TerminalInterface` to display a clearer user prompt.
+*   Run tests and quality checks.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Modified `plugins/interface_terminal.py` to use `input("<<< Uživatel: ")` instead of `sys.stdin.readline` to provide a clear prompt for user input.
+*   Ran the full test suite and pre-commit checks to ensure the change was safe.
+
+**3. Outcome:**
+*   The terminal interface is now more user-friendly.
+
+---
+**Mission:** Refactor: Externalize Prompts and Fix Linters
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Externalize all hardcoded prompts into `.txt` files.
+*   Audit the codebase to ensure no prompts remain.
+*   Fix the persistent `black` vs. `ruff` linter conflicts.
+*   Run all tests and quality checks.
+*   Update `WORKLOG.md`.
+
+**2. Actions Taken:**
+*   Created `config/prompts/json_repair_prompt.txt` and refactored `core/kernel.py` to load and use this template for the repair loop.
+*   Created `config/prompts/planner_prompt_template.txt` and refactored `plugins/cognitive_planner.py` to load and use this template for generating plans.
+*   Refactored `plugins/tool_llm.py` to load the AI's core identity from the existing `config/prompts/sophia_dna.txt` file.
+*   After a protracted struggle with `black` and `ruff` disagreeing on line formatting, I applied the correct pattern of using both `# fmt: off`/`# fmt: on` and `# noqa: E501` to the problematic lines, which finally resolved the conflict.
+*   Ran the full test suite and all pre-commit checks, which now pass cleanly.
+
+**3. Outcome:**
+*   The mission was completed successfully. The codebase is now cleaner and more maintainable, with all significant prompts externalized. The persistent linter conflict has been resolved, ensuring smoother future development.
+
+---
+**Mission:** Refine Tool-Calling with Dynamic Planner and Strict Repair
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Make the `CognitivePlanner` tool-aware by dynamically discovering tools.
+*   Strengthen the repair prompt in the `Kernel` to be more directive.
+*   Update the integration test to reflect the changes.
+*   Update `WORKLOG.md`.
+*   Complete pre-commit steps and submit.
+
+**2. Actions Taken:**
+*   Modified `plugins/cognitive_planner.py` to dynamically discover all available tools at runtime and include them in the prompt to the LLM, preventing the AI from hallucinating incorrect function names.
+*   Strengthened the repair prompt in `core/kernel.py` to be highly directive and technical, ensuring the LLM returns only a corrected JSON object instead of a conversational response.
+*   Updated the integration test `tests/core/test_tool_calling_integration.py` to assert that the new, stricter repair prompt is being used.
+*   Ran the full test suite to confirm that all changes are correct and introduced no regressions.
+
+**3. Outcome:**
+*   The mission was completed successfully. The final blockers for robust tool-calling have been removed. The AI planner is now explicitly aware of the tools it can use, and the Kernel's repair loop is significantly more reliable. Sophia is now fully equipped to use her tools correctly.
+
+---
+**Mission:** Implement Robust Tool-Calling via Validation & Repair Loop
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Update `IDEAS.md` with the new concept.
+*   Define a tool interface via convention (`get_tool_definitions`).
+*   Update `FileSystemTool` to expose its `list_directory` function.
+*   Implement two-phase logging in the `CognitivePlanner` and `Kernel`.
+*   Implement the "Validation & Repair Loop" in the `Kernel`.
+*   Write a comprehensive integration test to verify the entire flow.
+*   Update the developer documentation.
+*   Update `WORKLOG.md` and submit.
+
+**2. Actions Taken:**
+*   Added the "Robust Tool-Calling" idea to `IDEAS.md`.
+*   Modified `plugins/tool_file_system.py` to expose the `list_directory` function and its Pydantic schema via a new `get_tool_definitions` method.
+*   Modified `plugins/cognitive_planner.py` to add first-phase logging, recording the raw "thought" from the LLM.
+*   Made an authorized modification to `core/kernel.py`, implementing the "Validation & Repair Loop" in the `EXECUTING` phase. This loop gathers tool schemas, validates plans, and orchestrates a repair with the `LLMTool` on failure.
+*   Implemented second-phase logging in `core/kernel.py` to record the final, validated "action" before execution.
+*   Created a new integration test, `tests/core/test_tool_calling_integration.py`. After a significant debugging effort involving installing numerous missing dependencies and refactoring the test multiple times to correctly isolate the Kernel, the test now passes, verifying the full end-to-end functionality.
+*   Fixed a bug in `core/kernel.py` discovered during testing where a `SharedContext` object was created without a `current_state`.
+*   Updated both the English and Czech developer guides (`docs/en/07_DEVELOPER_GUIDE.md` and `docs/cs/07_PRIRUCKA_PRO_VYVOJARE.md`) to document the new tool-calling architecture.
+
+**3. Outcome:**
+*   The mission was completed successfully. The Kernel is now significantly more robust, capable of automatically validating and repairing faulty tool calls from the AI. The system is fully tested and documented, completing the current phase of the roadmap.
+
+---
 **Mission:** Mission 15.1: PLANNER STABILIZATION AND KERNEL BUGFIX (EN)
 **Agent:** Jules v1.2
 **Date:** 2025-10-27

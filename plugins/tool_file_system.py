@@ -4,12 +4,22 @@
 import logging
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
+
+from pydantic import BaseModel, Field
 
 from core.context import SharedContext
 from plugins.base_plugin import BasePlugin, PluginType
 
 logger = logging.getLogger(__name__)
+
+
+class ListDirectoryArgs(BaseModel):
+    """Pydantic model for arguments of the list_directory tool."""
+
+    path: str = Field(
+        ..., description="Lists files and directories inside the designated 'sandbox/' folder. All paths are relative to this sandbox."
+    )
 
 
 class FileSystemTool(BasePlugin):
@@ -146,3 +156,22 @@ class FileSystemTool(BasePlugin):
         if not safe_path.is_dir():
             raise NotADirectoryError(f"Path is not a directory: {safe_path}")
         return [p.name for p in safe_path.iterdir()]
+
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        """
+        Gets the definitions of the tools provided by this plugin.
+
+        Returns:
+            A list of tool definitions, where each definition is a dictionary
+            that conforms to the OpenAPI JSON Schema specification.
+        """
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_directory",
+                    "description": "Lists the contents of a directory within the sandbox.",
+                    "parameters": ListDirectoryArgs.model_json_schema(),
+                },
+            }
+        ]

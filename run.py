@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from core.kernel import Kernel
 
@@ -15,14 +16,25 @@ def check_venv():
         sys.exit(1)
 
 
-def main():
+from plugins.base_plugin import PluginType
+
+
+async def main():
     """The main entry point of the application."""
     check_venv()
     print("Starting Sophia's kernel...")
     kernel = Kernel()
-    kernel.start()
+    await kernel.initialize()
+
+    # Display the initial prompt for the terminal interface, if available.
+    terminal_plugins = kernel.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
+    for plugin in terminal_plugins:
+        if plugin.name == "interface_terminal" and hasattr(plugin, "prompt"):
+            plugin.prompt()
+
+    await kernel.consciousness_loop()
     print("Sophia's kernel has been terminated.")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
