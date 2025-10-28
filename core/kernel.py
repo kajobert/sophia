@@ -262,8 +262,10 @@ class Kernel:
                                             current_state="EXECUTING",
                                             logger=context.logger,
                                             user_input=repair_prompt,
+                                            history=[{"role": "user", "content": repair_prompt}], # TOTO JE TA KLÍČOVÁ OPRAVA
                                         )
                                     )
+                                    
                                     arguments = repair_context.payload.get("llm_response")
                                     # fmt: off
                                     logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
