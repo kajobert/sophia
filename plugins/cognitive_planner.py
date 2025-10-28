@@ -75,18 +75,15 @@ class Planner(BasePlugin):
                                     "properties": {
                                         "tool_name": {
                                             "type": "string",
-                                            "description": "The name of the tool plugin to use.",
+                                            "description": "Name of the tool plugin.",
                                         },
                                         "method_name": {
                                             "type": "string",
-                                            "description": "The name of the method to call on the tool.",
+                                            "description": "The method to call.",
                                         },
                                         "arguments": {
                                             "type": "object",
-                                            "description": (
-                                                "The arguments for the method, "
-                                                "as a key-value map."
-                                            ),
+                                            "description": "Arguments for the method.",
                                         },
                                     },
                                     "required": ["tool_name", "method_name", "arguments"],

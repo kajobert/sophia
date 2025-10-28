@@ -216,18 +216,21 @@ class Kernel:
                                         try:
                                             current_args = json.loads(current_args)
                                         except json.JSONDecodeError:
-                                            msg = f"Arguments are a non-JSON string: {current_args}"
+                                            msg = (
+                                                f"Arguments are a non-JSON string: {current_args}"
+                                            )
                                             raise ValueError(msg)
 
                                     validated_args = validation_model(**current_args).dict()
                                     # fmt: off
-                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args)  # noqa: E501
+                                    # fmt: off
+                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args) # noqa: E501
                                     # fmt: on
                                     break  # Success
 
                                 except (ValidationError, ValueError) as e:
                                     # fmt: off
-                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e)  # noqa: E501
+                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e) # noqa: E501
                                     # fmt: on
                                     if attempt + 1 == max_attempts:
                                         # fmt: off
@@ -262,10 +265,12 @@ class Kernel:
                                             current_state="EXECUTING",
                                             logger=context.logger,
                                             user_input=repair_prompt,
-                                            history=[{"role": "user", "content": repair_prompt}], # TOTO JE TA KLÍČOVÁ OPRAVA
+                                            history=[
+                                                {"role": "user", "content": repair_prompt}
+                                            ],  # TOTO JE TA KLÍČOVÁ OPRAVA
                                         )
                                     )
-                                    
+
                                     arguments = repair_context.payload.get("llm_response")
                                     # fmt: off
                                     logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
