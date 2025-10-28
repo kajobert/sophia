@@ -9,6 +9,7 @@ import logging
 from core.context import SharedContext
 from plugins.base_plugin import BasePlugin
 
+
 @pytest.mark.asyncio
 async def test_kernel_uses_interface_plugin():
     """
@@ -38,6 +39,7 @@ async def test_kernel_uses_interface_plugin():
 
     mock_plugin.execute.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_kernel_planning_and_executing_phases():
     """Test that the Kernel correctly runs the PLANNING and EXECUTING phases."""
@@ -50,13 +52,22 @@ async def test_kernel_planning_and_executing_phases():
 
     # Simulate interface returning user input
     mock_interface.execute.return_value = SharedContext(
-        session_id="test", current_state="LISTENING", user_input="test input", logger=logging.getLogger()
+        session_id="test",
+        current_state="LISTENING",
+        user_input="test input",
+        logger=logging.getLogger(),
     )
 
     # Simulate planner returning a plan
-    plan = [{"tool_name": "mock_tool", "method_name": "do_something", "arguments": {"arg1": "value1"}}]
+    plan = [
+        {"tool_name": "mock_tool", "method_name": "do_something", "arguments": {"arg1": "value1"}}
+    ]
     mock_planner.execute.return_value = SharedContext(
-        session_id="test", current_state="PLANNING", user_input="test input", logger=logging.getLogger(), payload={"plan": plan}
+        session_id="test",
+        current_state="PLANNING",
+        user_input="test input",
+        logger=logging.getLogger(),
+        payload={"plan": plan},
     )
 
     # Configure the mock tool
