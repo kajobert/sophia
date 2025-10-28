@@ -93,6 +93,7 @@ async def test_end_to_end_tool_call_with_repair_loop(mock_open, caplog):
         p for p in all_plugins if p.plugin_type == p_type
     ]
     kernel.plugin_manager = mock_plugin_manager
+    await kernel.initialize()
 
     # --- 3. Run a single iteration of the consciousness loop ---
     async def single_run_loop():

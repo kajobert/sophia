@@ -29,19 +29,16 @@ class Kernel:
         self.plugin_manager = PluginManager()
         self.is_running = False
         self.json_repair_prompt_template = ""
+        self.all_plugins_map = {}
 
-    async def consciousness_loop(self):
-        """The main, infinite loop that keeps Sophia "conscious"."""
-        self.is_running = True
-        session_id = str(uuid.uuid4())
-
+    async def initialize(self):
+        """Loads prompts, discovers, and sets up all plugins."""
         # --- PROMPT LOADING PHASE ---
         try:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
                 self.json_repair_prompt_template = f.read()
         except FileNotFoundError:
             logger.error("JSON repair prompt template not found. The repair loop will fail.")
-            # Set a fallback to prevent crashing, though it will be less effective
             self.json_repair_prompt_template = "The JSON is invalid. Errors: {e}. Please fix it."
 
         # --- PLUGIN SETUP PHASE ---
@@ -49,13 +46,12 @@ class Kernel:
         all_plugins_list = [
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
-        all_plugins_map = {p.name: p for p in all_plugins_list}
+        self.all_plugins_map = {p.name: p for p in all_plugins_list}
 
-        # Pass configuration and dependencies to all plugins
         for plugin in all_plugins_list:
             config_path = Path("config/settings.yaml")
             if not config_path.exists():
-                logger.warning("Config 'config/settings.yaml' not found during loop setup.")
+                logger.warning("Config 'config/settings.yaml' not found.")
                 main_config = {}
             else:
                 with open(config_path, "r") as f:
@@ -66,7 +62,7 @@ class Kernel:
             full_plugin_config = {
                 **specific_config,
                 "plugin_manager": self.plugin_manager,
-                "plugins": all_plugins_map,
+                "plugins": self.all_plugins_map,
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -75,7 +71,11 @@ class Kernel:
                 logger.error(f"Error setting up plugin '{plugin.name}': {e}", exc_info=True)
 
         logger.info(f"All {len(all_plugins_list)} plugins have been configured.")
-        # --- END PLUGIN SETUP PHASE ---
+
+    async def consciousness_loop(self):
+        """The main, infinite loop that keeps Sophia "conscious"."""
+        self.is_running = True
+        session_id = str(uuid.uuid4())
 
         context = SharedContext(
             session_id=session_id,
@@ -140,7 +140,7 @@ class Kernel:
 
                     # 2. PLANNING PHASE
                     context.current_state = "PLANNING"
-                    planner = all_plugins_map.get("cognitive_planner")
+                    planner = self.all_plugins_map.get("cognitive_planner")
                     plan = []
                     if planner:
                         context = await planner.execute(context)
@@ -156,7 +156,7 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
-                    llm_tool = all_plugins_map.get("tool_llm")
+                    llm_tool = self.all_plugins_map.get("tool_llm")
 
                     if plan:
                         logger.info(f"Initiating execution for raw plan: {plan}")
@@ -165,7 +165,8 @@ class Kernel:
                         from pydantic import create_model, Field
 
                         tool_schemas = {}
-                        for plugin in all_plugins_list:
+                        all_plugins = self.all_plugins_map.values()
+                        for plugin in all_plugins:
                             if hasattr(plugin, "get_tool_definitions"):
                                 for tool_def in plugin.get_tool_definitions():
                                     function = tool_def.get("function", {})
@@ -215,9 +216,7 @@ class Kernel:
                                         try:
                                             current_args = json.loads(current_args)
                                         except json.JSONDecodeError:
-                                            msg = (
-                                                f"Arguments are a non-JSON string: {current_args}"
-                                            )
+                                            msg = f"Arguments are a non-JSON string: {current_args}"
                                             raise ValueError(msg)
 
                                     validated_args = validation_model(**current_args).dict()
@@ -276,7 +275,7 @@ class Kernel:
                                 break
 
                             # --- EXECUTION OF VALIDATED STEP ---
-                            tool = all_plugins_map.get(tool_name)
+                            tool = self.all_plugins_map.get(tool_name)
                             method = getattr(tool, method_name, None) if tool else None
                             if method:
                                 try:
@@ -350,6 +349,10 @@ class Kernel:
                             )
                     else:
                         print(f">>> Sophia: {execution_summary}")
+                        # After printing to the console, re-display the user prompt.
+                        terminal = self.all_plugins_map.get("interface_terminal")
+                        if terminal and hasattr(terminal, "prompt"):
+                            terminal.prompt()
 
                     # 5. MEMORIZING PHASE
                     context.current_state = "MEMORIZING"

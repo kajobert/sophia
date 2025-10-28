@@ -12,6 +12,7 @@ async def test_kernel_uses_interface_plugin():
     plugin.
     """
     kernel = Kernel()
+    await kernel.initialize()
 
     # Replace the actual plugin with a mock to track its calls
     mock_plugin = MagicMock()
