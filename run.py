@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from core.kernel import Kernel
+from plugins.base_plugin import PluginType
 
 
 def check_venv():
@@ -15,8 +16,6 @@ def check_venv():
         print("---")
         sys.exit(1)
 
-
-from plugins.base_plugin import PluginType
 
 
 async def main():
