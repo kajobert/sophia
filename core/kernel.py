@@ -253,6 +253,7 @@ class Kernel:
                                         method_name=method_name,
                                         arguments=arguments,
                                         e=e,
+                                        user_input=context.user_input,
                                     )
 
                                     repair_context = await llm_tool.execute(
