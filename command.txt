@@ -1,0 +1,1 @@
+list all plugins and write them to a file named 'plugins.txt'
