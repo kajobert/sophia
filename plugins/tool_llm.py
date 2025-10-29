@@ -61,7 +61,10 @@ class LLMTool(BasePlugin):
             *context.history,
         ]
 
-        context.logger.info(f"Calling LLM with {len(messages)} messages.")
+        context.logger.info(
+            f"Calling LLM with {len(messages)} messages.",
+            extra={"plugin_name": self.name},
+        )
         try:
             # Using litellm allows us to easily switch models and providers
             response = await litellm.acompletion(
@@ -78,9 +81,13 @@ class LLMTool(BasePlugin):
             else:
                 context.payload["llm_response"] = message.content
 
-            context.logger.info("LLM response received successfully.")
+            context.logger.info(
+                "LLM response received successfully.", extra={"plugin_name": self.name}
+            )
         except Exception as e:
-            context.logger.error(f"Error calling LLM: {e}", exc_info=True)
+            context.logger.error(
+                f"Error calling LLM: {e}", exc_info=True, extra={"plugin_name": self.name}
+            )
             context.payload["llm_response"] = "I am having trouble thinking right now."
 
         return context
