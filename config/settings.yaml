@@ -1,27 +1,16 @@
+# This file contains the configuration settings for the Sophia V2 application.
+
 llm:
-  model: "openrouter/anthropic/claude-3-haiku" #openrouter/google/gemini-2.5-flash-lite-preview-09-2025
+  provider: "litellm"
+  model: "openrouter/anthropic/claude-3.5-sonnet"
+  temperature: 0.1
+  max_tokens: 4096
 
 plugins:
-  interface_webui:
-    host: "127.0.0.1"
-    port: 8000
+  # Configuration for the SQLite Memory plugin
+  memory_sqlite:
+    db_path: "data/sophia.db"
 
-# Configuration for the File System Tool plugin
-tool_file_system:
-  sandbox_dir: "sandbox"
-
-memory_chroma:
-  db_path: "data/chroma_db"
-
-tool_bash:
-  timeout: 10 # Default timeout for shell commands in seconds
-
-tool_web_search:
-  google_api_key: "${GOOGLE_API_KEY}" # Handled by environment variable
-  google_cse_id: "${GOOGLE_CSE_ID}" # Handled by environment variable
-
-cognitive_doc_reader:
-  docs_dir: "docs"
-
-cognitive_historian:
-  worklog_file: "WORKLOG.md"
+# Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
+# do not require specific configurations in this file as their setup is handled
+# programmatically or they use default values.
