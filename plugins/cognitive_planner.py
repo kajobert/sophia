@@ -106,7 +106,7 @@ class Planner(BasePlugin):
         )
 
         planned_context = await self.llm_tool.execute(
-            planning_context, tools=planner_tool, tool_choice="required"
+            context=planning_context, tools=planner_tool, tool_choice="auto"
         )
         llm_message = planned_context.payload.get("llm_response")
         context.logger.info(
@@ -118,53 +118,74 @@ class Planner(BasePlugin):
             tool_calls = llm_message.tool_calls
             plan = []
 
-            if not tool_calls:
-                context.logger.info(
-                    "No tool calls received, creating empty plan.",
-                    extra={"plugin_name": self.name},
-                )
-            # Scenario 1: The model returned a direct list of tool calls
-            elif len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
-                for call in tool_calls:
-                    try:
-                        tool_name, method_name = call.function.name.split(".", 1)
-                        # Robustly decode arguments
-                        raw_args = call.function.arguments
-                        if raw_args and raw_args.strip():
-                            try:
-                                arguments = json.loads(raw_args)
-                            except json.JSONDecodeError:
-                                context.logger.warning(
-                                    f"JSONDecodeError for arguments: '{raw_args}'. Defaulting to empty dict.",
-                                    extra={"plugin_name": self.name},
-                                )
+            # Scenario 1: The model used the tool_calls feature correctly
+            if tool_calls:
+                # Sub-scenario A: The model returned a direct list of tool calls
+                if len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
+                    for call in tool_calls:
+                        try:
+                            tool_name, method_name = call.function.name.split(".", 1)
+                            # Robustly decode arguments
+                            raw_args = call.function.arguments
+                            if raw_args and raw_args.strip():
+                                try:
+                                    arguments = json.loads(raw_args)
+                                except json.JSONDecodeError:
+                                    context.logger.warning(
+                                        f"JSONDecodeError for arguments: '{raw_args}'. Defaulting to empty dict.",
+                                        extra={"plugin_name": self.name},
+                                    )
+                                    arguments = {}
+                            else:
                                 arguments = {}
-                        else:
-                            arguments = {}
 
-                        plan.append(
-                            {
-                                "tool_name": tool_name,
-                                "method_name": method_name,
-                                "arguments": arguments,
-                            }
-                        )
-                    except ValueError:
-                        context.logger.error(
-                            f"Invalid tool call format: {call.function.name}. Expected 'plugin.method'.",
-                            extra={"plugin_name": self.name},
-                        )
+                            plan.append(
+                                {
+                                    "tool_name": tool_name,
+                                    "method_name": method_name,
+                                    "arguments": arguments,
+                                }
+                            )
+                        except ValueError:
+                            context.logger.error(
+                                f"Invalid tool call format: {call.function.name}. Expected 'plugin.method'.",
+                                extra={"plugin_name": self.name},
+                            )
+                    context.logger.info(
+                        f"Generated plan with {len(plan)} steps directly from tool calls.",
+                        extra={"plugin_name": self.name},
+                    )
+                # Sub-scenario B: The model wrapped the plan in a 'create_plan' function call
+                elif tool_calls[0].function.name == "create_plan":
+                    plan_str = tool_calls[0].function.arguments
+                    plan_data = json.loads(plan_str)
+                    plan = plan_data.get("plan", [])
+                    context.logger.info(
+                        f"Generated plan with {len(plan)} steps via function call.",
+                        extra={"plugin_name": self.name},
+                    )
+            # Scenario 2: The model returned a JSON blob in the content field
+            elif llm_message.content and "plan" in llm_message.content:
+                try:
+                    # Extract JSON from markdown if necessary
+                    json_str = llm_message.content
+                    if "```json" in json_str:
+                        json_str = json_str.split("```json")[1].split("```")[0]
+
+                    plan_data = json.loads(json_str)
+                    plan = plan_data.get("plan", [])
+                    context.logger.info(
+                        f"Generated plan with {len(plan)} steps from JSON content.",
+                        extra={"plugin_name": self.name},
+                    )
+                except (json.JSONDecodeError, IndexError) as json_err:
+                    context.logger.error(
+                        f"Failed to parse plan from JSON content: {json_err}",
+                        extra={"plugin_name": self.name},
+                    )
+            else:
                 context.logger.info(
-                    f"Generated plan with {len(plan)} steps directly from tool calls.",
-                    extra={"plugin_name": self.name},
-                )
-            # Scenario 2: The model wrapped the plan in a 'create_plan' function call
-            elif tool_calls[0].function.name == "create_plan":
-                plan_str = tool_calls[0].function.arguments
-                plan_data = json.loads(plan_str)
-                plan = plan_data.get("plan", [])
-                context.logger.info(
-                    f"Generated plan with {len(plan)} steps via function call.",
+                    "No tool calls or valid JSON plan found in response.",
                     extra={"plugin_name": self.name},
                 )
 

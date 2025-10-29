@@ -277,7 +277,7 @@ class Kernel:
                                             msg = f"Arguments are a non-JSON string: {current_args}"
                                             raise ValueError(msg)
 
-                                    validated_args = validation_model(**current_args).dict()
+                                    validated_args = validation_model(**current_args).model_dump()
                                     log_message = (
                                         f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: "
                                         f"{tool_name}.{method_name}({validated_args})"
@@ -349,13 +349,56 @@ class Kernel:
                             method = getattr(tool, method_name, None) if tool else None
                             if method:
                                 try:
+                                    # --- Context Injection & History Propagation ---
+                                    import inspect
+                                    sig = inspect.signature(method)
+                                    call_args = validated_args.copy()
+
+                                    if "context" in sig.parameters:
+                                        # Create a new context for this specific step that
+                                        # includes the complete history PLUS the results
+                                        # of all previous steps.
+                                        step_history = context.history[:]  # Copy original history
+                                        for i in range(1, step_index + 1):
+                                            if i in step_outputs:
+                                                step_history.append(
+                                                    {
+                                                        "role": "assistant",
+                                                        "content": f"Output of step {i}: {step_outputs[i]}",
+                                                    }
+                                                )
+
+                                        step_context = SharedContext(
+                                            session_id=context.session_id,
+                                            current_state="EXECUTING",
+                                            logger=context.logger,
+                                            history=step_history,
+                                            # The 'user_input' for this context is the prompt/arg for the current tool
+                                            user_input=str(call_args),
+                                        )
+                                        call_args["context"] = step_context
+
                                     step_result = (
-                                        await method(**validated_args)
+                                        await method(**call_args)
                                         if asyncio.iscoroutinefunction(method)
-                                        else method(**validated_args)
+                                        else method(**call_args)
                                     )
-                                    step_results.append(str(step_result))
-                                    step_outputs[step_index + 1] = step_result  # Store the result
+
+                                    # --- Result Handling & Chaining ---
+                                    output_for_chaining = ""
+                                    if isinstance(step_result, SharedContext):
+                                        # If the tool returns a context, extract the relevant payload for chaining
+                                        # and merge any other payload data back into the main context.
+                                        context.payload.update(step_result.payload)
+                                        output_for_chaining = step_result.payload.get("llm_response", "")
+                                        step_results.append(str(output_for_chaining))
+                                    else:
+                                        # For simpler tools, the direct result is used.
+                                        output_for_chaining = step_result
+                                        step_results.append(str(step_result))
+
+                                    # Store the clean, simple output for the next step.
+                                    step_outputs[step_index + 1] = output_for_chaining
                                     context.logger.info(
                                         f"Step '{method_name}' executed. Result: {step_result}",
                                         extra={"plugin_name": tool_name},

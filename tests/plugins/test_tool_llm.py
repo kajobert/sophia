@@ -56,7 +56,7 @@ async def test_llm_tool_execute_with_config(temp_config_file):
         with patch(
             "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
         ) as mock_acompletion:
-            result_context = await llm_tool.execute(context)
+            result_context = await llm_tool.execute(context=context)
 
         # The tool should now be called with the history, which includes the user input.
         mock_acompletion.assert_called_once_with(
@@ -69,6 +69,5 @@ async def test_llm_tool_execute_with_config(temp_config_file):
                 {"role": "user", "content": "Hello"},
             ],
             tools=None,
-            tool_choice="auto",
         )
         assert result_context.payload["llm_response"] == "Hi there!"
