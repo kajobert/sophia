@@ -165,8 +165,10 @@ class Kernel:
                         from pydantic import create_model, Field
 
                         tool_schemas = {}
-                        all_plugins = self.all_plugins_map.values()
-                        for plugin in all_plugins:
+                        all_plugins_list = [p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)]
+                        all_plugins_map = {p.name: p for p in all_plugins_list}
+
+                        for plugin in all_plugins_map.values():
                             if hasattr(plugin, "get_tool_definitions"):
                                 for tool_def in plugin.get_tool_definitions():
                                     function = tool_def.get("function", {})
@@ -193,16 +195,30 @@ class Kernel:
                                             f"{func_name}ArgsModel", **fields
                                         )
                                         tool_schemas[func_name] = validation_model
-
+                        
                         step_results = []
+                        step_outputs = {}  # Initialize step outputs dictionary
                         plan_failed = False
                         for step_index, step in enumerate(plan):
                             tool_name = step.get("tool_name")
                             method_name = step.get("method_name")
                             arguments = step.get("arguments", {})
 
+                            # --- Resolve chained results ---
+                            for arg_name, arg_value in list(arguments.items()):
+                                if isinstance(arg_value, str) and arg_value.startswith("$result.step_"):
+                                    try:
+                                        source_step_index = int(arg_value.split('_')[-1])
+                                        if source_step_index in step_outputs:
+                                            arguments[arg_name] = str(step_outputs[source_step_index])
+                                        else:
+                                            logger.error(f"Could not find result for step {source_step_index} in outputs.")
+                                    except (IndexError, ValueError) as e:
+                                        logger.error(f"Error parsing chained result '{arg_value}': {e}")
+
+
                             validated_args = None
-                            max_attempts = 3  # 1 initial + 2 retries
+                            max_attempts = 3
 
                             for attempt in range(max_attempts):
                                 try:
@@ -216,29 +232,28 @@ class Kernel:
                                         try:
                                             current_args = json.loads(current_args)
                                         except json.JSONDecodeError:
-                                            msg = (
-                                                f"Arguments are a non-JSON string: {current_args}"
-                                            )
+                                            msg = f"Arguments are a non-JSON string: {current_args}"
                                             raise ValueError(msg)
 
                                     validated_args = validation_model(**current_args).dict()
-                                    # fmt: off
-                                    # fmt: off
-                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args) # noqa: E501
-                                    # fmt: on
+                                    log_message = (
+                                        f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: "
+                                        f"{tool_name}.{method_name}({validated_args})"
+                                    )
+                                    logger.info(log_message)
                                     break  # Success
 
                                 except (ValidationError, ValueError) as e:
-                                    # fmt: off
-                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e) # noqa: E501
-                                    # fmt: on
+                                    log_message = (
+                                        f"Validation failed for step {step_index + 1} "
+                                        f"(Attempt {attempt + 1}/{max_attempts}): {e}"
+                                    )
+                                    logger.warning(log_message)
                                     if attempt + 1 == max_attempts:
-                                        # fmt: off
                                         error_message = (
                                             f"Plan failed at step {step_index + 1} "
                                             f"after {max_attempts} attempts. Final error: {e}"
                                         )
-                                        # fmt: on
                                         logger.error(error_message)
                                         step_results.append(error_message)
                                         plan_failed = True
@@ -252,13 +267,13 @@ class Kernel:
                                         break
 
                                     repair_prompt = self.json_repair_prompt_template.format(
-                                            tool_name=tool_name,
-                                            method_name=method_name,
-                                            arguments=arguments,
-                                            e=e,
-                                            user_input=context.user_input,
-                                            step_outputs=step_outputs,
-                                        )
+                                        tool_name=tool_name,
+                                        method_name=method_name,
+                                        arguments=arguments,
+                                        e=e,
+                                        user_input=context.user_input,
+                                        step_outputs=step_outputs,
+                                    )
 
                                     repair_context = await llm_tool.execute(
                                         SharedContext(
@@ -266,23 +281,18 @@ class Kernel:
                                             current_state="EXECUTING",
                                             logger=context.logger,
                                             user_input=repair_prompt,
-                                            history=[
-                                                {"role": "user", "content": repair_prompt}
-                                            ],  # TOTO JE TA KLÍČOVÁ OPRAVA
+                                            history=[{"role": "user", "content": repair_prompt}],
                                         )
                                     )
-
+                                    
                                     arguments = repair_context.payload.get("llm_response")
-                                    # fmt: off
-                                    logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
-                                    # fmt: on
+                                    logger.info(f"Received repaired arguments for step {step_index + 1}: {arguments}")
 
                             if plan_failed or validated_args is None:
                                 execution_summary = f"Plan failed at step {step_index + 1}."
                                 break
 
-                            # --- EXECUTION OF VALIDATED STEP ---
-                            tool = self.all_plugins_map.get(tool_name)
+                            tool = all_plugins_map.get(tool_name)
                             method = getattr(tool, method_name, None) if tool else None
                             if method:
                                 try:
@@ -292,6 +302,7 @@ class Kernel:
                                         else method(**validated_args)
                                     )
                                     step_results.append(str(step_result))
+                                    step_outputs[step_index + 1] = step_result  # Store the result
                                     logger.info(
                                         f"Step '{method_name}' executed. Result: {step_result}"
                                     )
