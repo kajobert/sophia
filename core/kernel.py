@@ -252,12 +252,13 @@ class Kernel:
                                         break
 
                                     repair_prompt = self.json_repair_prompt_template.format(
-                                        tool_name=tool_name,
-                                        method_name=method_name,
-                                        arguments=arguments,
-                                        e=e,
-                                        user_input=context.user_input,
-                                    )
+                                            tool_name=tool_name,
+                                            method_name=method_name,
+                                            arguments=arguments,
+                                            e=e,
+                                            user_input=context.user_input,
+                                            step_outputs=step_outputs,
+                                        )
 
                                     repair_context = await llm_tool.execute(
                                         SharedContext(

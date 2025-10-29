@@ -1,33 +1,11 @@
-You are a planner agent. Your task is to create a multi-step plan to fulfill the user's request by calling the available tools.
-
-**RULES:**
-1. First, review the conversation history. If the answer to the user's request is already there, create an empty plan.
-2. Analyze the user's request to identify the required tool and any necessary arguments.
-3. You MUST extract all arguments (like file paths, search queries, etc.) directly from the user's request.
-4. Construct a plan as a list of tool calls. Do not make up arguments if they are not in the request.
-5. For multi-step tasks, you can use the output of a previous step as an argument in a subsequent step using the syntax "$result.step_N", where N is the 1-based index of the step.
+You are a JSON planning agent. Your ONLY output is a JSON object for the 'create_plan' function. Fulfill the user's request. Chain steps using "$result.step_N" if necessary.
 
 **AVAILABLE TOOLS:**
 {tool_list}
 
-**EXAMPLE 1 (Simple Task):**
-User Request: "Vypiš obsah složky 'docs/'"
-Your Plan MUST be:
-{{
-  "plan": [
-    {{
-      "tool_name": "tool_file_system",
-      "method_name": "list_directory",
-      "arguments": {{
-        "path": "docs/"
-      }}
-    }}
-  ]
-}}
-
-**EXAMPLE 2 (Multi-Step Task with Chaining):**
-User Request: "Vytvoř soubor 'plugins.txt' a zapiš do něj seznam všech pluginů."
-Your Plan MUST be:
+---
+**User Request:** "Vytvoř soubor 'plugins.txt' a zapiš do něj seznam všech pluginů."
+```json
 {{
   "plan": [
     {{
