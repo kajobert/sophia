@@ -75,18 +75,15 @@ class Planner(BasePlugin):
                                     "properties": {
                                         "tool_name": {
                                             "type": "string",
-                                            "description": "The name of the tool plugin to use.",
+                                            "description": "Name of the tool plugin.",
                                         },
                                         "method_name": {
                                             "type": "string",
-                                            "description": "The name of the method to call on the tool.",
+                                            "description": "The method to call.",
                                         },
                                         "arguments": {
                                             "type": "object",
-                                            "description": (
-                                                "The arguments for the method, "
-                                                "as a key-value map."
-                                            ),
+                                            "description": "Arguments for the method.",
                                         },
                                     },
                                     "required": ["tool_name", "method_name", "arguments"],
@@ -118,24 +115,41 @@ class Planner(BasePlugin):
 
         try:
             tool_calls = llm_message.tool_calls
-            if tool_calls:
+            plan = []
+
+            if not tool_calls:
+                logger.info("No tool calls received, creating empty plan.")
+            # Scénář 1: Chytrý model vrátil přímo seznam nástrojů
+            elif len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
+                for call in tool_calls:
+                    tool_name, method_name = call.function.name.split('.')
+                    try:
+                        arguments = json.loads(call.function.arguments) if call.function.arguments else {}
+                    except json.JSONDecodeError:
+                        arguments = {}
+
+                    plan.append({
+                        "tool_name": tool_name,
+                        "method_name": method_name,
+                        "arguments": arguments,
+                    })
+                logger.info(f"Generated plan with {len(plan)} steps directly from tool calls.")
+            # Scénář 2: Starší model vrátil vše zabalené v 'create_plan'
+            elif tool_calls[0].function.name == "create_plan":
                 plan_str = tool_calls[0].function.arguments
                 plan_data = json.loads(plan_str)
                 plan = plan_data.get("plan", [])
-                context.payload["plan"] = plan
                 logger.info(f"Generated plan with {len(plan)} steps via function call.")
-            else:
-                raise ValueError("LLM did not return a tool call.")
+
+            context.payload["plan"] = plan
 
         except (json.JSONDecodeError, AttributeError, ValueError) as e:
-            # fmt: off
             logger.error(
-                "Failed to decode plan from LLM response: %s\nResponse was: %s",  # noqa: E501
+                "Failed to decode plan from LLM response: %s\nResponse was: %s",
                 e,
                 llm_message,
                 exc_info=True,
             )
-            # fmt: on
             context.payload["plan"] = []
 
         return context

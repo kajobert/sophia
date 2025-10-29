@@ -1,4 +1,27 @@
 ---
+**Mission:** #4.1+ Implement "short-term memory" for multi-step plans
+**Agent:** Jules v1.2
+**Date:** 2025-10-28
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Modify the planner prompt in `config/prompts/planner_prompt_template.txt`.
+*   Implement the result-chaining logic in `core/kernel.py`.
+*   Create a new integration test to verify the functionality.
+*   Ensure code quality and submit.
+
+**2. Actions Taken:**
+*   Updated `config/prompts/planner_prompt_template.txt` to include a new rule and a clear example for the `$result.step_N` syntax, which allows the output of one step to be used as input for another.
+*   Modified `core/kernel.py` to implement the "short-term memory" logic. This involved initializing a dictionary to store step outputs, substituting placeholders (e.g., `$result.step_1`) with actual results, and storing the output of each successful step.
+*   Added a new integration test, `test_kernel_handles_multi_step_chained_plan`, to `tests/core/test_kernel.py` to verify the end-to-end functionality of the new result-chaining feature.
+*   After a lengthy debugging session, resolved all test failures by refactoring the tests to correctly initialize the kernel, configure mocks, and use a robust, event-driven approach to control the `consciousness_loop`, thus eliminating race conditions.
+*   Fixed a bug in `core/kernel.py` by replacing the deprecated Pydantic `.dict()` method with `.model_dump()`.
+*   Created `JULES.md` to document project-specific conventions, ensuring that the correct pattern for handling long lines is used in the future.
+
+**3. Outcome:**
+*   The mission was completed successfully. Sophia now has a "short-term memory" and can execute complex, multi-step plans where the output of one step serves as the input for a subsequent step. The system is more capable, the new functionality is thoroughly tested, and all code conforms to quality standards.
+
+---
 **Mission:** #4.1 Mise: Dokončení implementace nástroje FileSystemTool
 **Agent:** Jules v1.2
 **Date:** 2025-10-28

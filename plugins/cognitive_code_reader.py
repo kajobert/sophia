@@ -5,6 +5,8 @@ from typing import List, Dict
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
+from typing import Any
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -75,3 +77,20 @@ class CodeReader(BasePlugin):
                         return f"Error retrieving source for '{plugin_name}': {e}"
 
         return f"Error: Plugin with name '{plugin_name}' not found."
+    
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        """Gets the definitions of the tools provided by this plugin."""
+
+        class ListPluginsArgs(BaseModel):
+            pass
+
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_plugins",
+                    "description": "Lists all registered plugins, grouped by their type.",
+                    "parameters": ListPluginsArgs.model_json_schema(),
+                },
+            }
+        ]
