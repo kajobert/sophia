@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 
 # Log files
+logs/
 logs/*.log
 *.log
 

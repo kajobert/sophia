@@ -10,13 +10,7 @@ from pydantic import ValidationError
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
-
-# Basic logging setup for Kernel execution
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+from core.logger import logger
 
 
 class Kernel:
@@ -221,24 +215,17 @@ class Kernel:
                                             )
                                             raise ValueError(msg)
 
-                                    validated_args = validation_model(**current_args).dict()
-                                    # fmt: off
-                                    # fmt: off
-                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args) # noqa: E501
-                                    # fmt: on
+                                    validated_args = validation_model(**current_args).model_dump()
+                                    logger.info("SECOND-PHASE LOG: Validated plan step %d: %s.%s(%s)", step_index + 1, tool_name, method_name, validated_args)
                                     break  # Success
 
                                 except (ValidationError, ValueError) as e:
-                                    # fmt: off
-                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e) # noqa: E501
-                                    # fmt: on
+                                    logger.warning("Validation failed for step %d (Attempt %d/%d): %s", step_index + 1, attempt + 1, max_attempts, e)
                                     if attempt + 1 == max_attempts:
-                                        # fmt: off
                                         error_message = (
                                             f"Plan failed at step {step_index + 1} "
                                             f"after {max_attempts} attempts. Final error: {e}"
                                         )
-                                        # fmt: on
                                         logger.error(error_message)
                                         step_results.append(error_message)
                                         plan_failed = True
@@ -257,7 +244,7 @@ class Kernel:
                                             arguments=arguments,
                                             e=e,
                                             user_input=context.user_input,
-                                            step_outputs=step_outputs,
+                                            step_outputs=step_results,
                                         )
 
                                     repair_context = await llm_tool.execute(
@@ -268,18 +255,31 @@ class Kernel:
                                             user_input=repair_prompt,
                                             history=[
                                                 {"role": "user", "content": repair_prompt}
-                                            ],  # TOTO JE TA KLÍČOVÁ OPRAVA
+                                            ],
                                         )
                                     )
 
                                     arguments = repair_context.payload.get("llm_response")
-                                    # fmt: off
-                                    logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)  # noqa: E501
-                                    # fmt: on
+                                    logger.info("Received repaired arguments for step %d: %s", step_index + 1, arguments)
 
                             if plan_failed or validated_args is None:
                                 execution_summary = f"Plan failed at step {step_index + 1}."
                                 break
+
+                            # --- ARGUMENT SUBSTITUTION ---
+                            substituted_args = {}
+                            for arg_name, arg_value in validated_args.items():
+                                if isinstance(arg_value, str) and arg_value.startswith("$result.step_"):
+                                    try:
+                                        ref_step_index = int(arg_value.split('_')[-1]) - 1
+                                        if 0 <= ref_step_index < len(step_results):
+                                            substituted_args[arg_name] = step_results[ref_step_index]
+                                        else:
+                                            raise ValueError(f"Reference to invalid step index {ref_step_index + 1}")
+                                    except (ValueError, IndexError):
+                                        raise ValueError(f"Invalid result reference format: {arg_value}")
+                                else:
+                                    substituted_args[arg_name] = arg_value
 
                             # --- EXECUTION OF VALIDATED STEP ---
                             tool = self.all_plugins_map.get(tool_name)
@@ -287,9 +287,9 @@ class Kernel:
                             if method:
                                 try:
                                     step_result = (
-                                        await method(**validated_args)
+                                        await method(**substituted_args)
                                         if asyncio.iscoroutinefunction(method)
-                                        else method(**validated_args)
+                                        else method(**substituted_args)
                                     )
                                     step_results.append(str(step_result))
                                     logger.info(
@@ -355,7 +355,7 @@ class Kernel:
                                 exc_info=True,
                             )
                     else:
-                        print(f">>> Sophia: {execution_summary}")
+                        logger.info(f"Sophia: {execution_summary}")
                         # After printing to the console, re-display the user prompt.
                         terminal = self.all_plugins_map.get("interface_terminal")
                         if terminal and hasattr(terminal, "prompt"):

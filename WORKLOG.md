@@ -1,4 +1,25 @@
 ---
+**Mission:** #5 Fix Logging and Document Ideas
+**Agent:** Jules v1.2
+**Date:** 2025-10-29
+**Status:** COMPLETED
+
+**1. Plan:**
+*   Implement a robust logging system.
+*   Create bilingual `IDEAS.md` files.
+*   Update `WORKLOG.md`.
+*   Complete pre-commit steps.
+*   Submit the changes.
+
+**2. Actions Taken:**
+*   Created `core/logger.py` to set up a centralized logging system that outputs to both the console and a rotating log file (`logs/sophia.log`).
+*   Refactored `run.py` and `core/kernel.py` to replace all `print()` statements with the new, structured logger, improving debuggability.
+*   Updated `.gitignore` to exclude the `logs/` directory from version control.
+*   Created `docs/en/IDEAS.md` and `docs/cs/IDEAS.md`, translating the concepts from `docs/roberts-notes.txt` into a formatted, bilingual document that aligns with the project's standards.
+
+**3. Outcome:**
+*   The mission was completed successfully. The application now has a robust file-based logging system, resolving the critical debugging issue. Additionally, the ideas from `roberts-notes.txt` have been formally documented in the bilingual `IDEAS.md` files, preserving them for future development cycles.
+---
 **Mission:** #4.1+ Implement "short-term memory" for multi-step plans
 **Agent:** Jules v1.2
 **Date:** 2025-10-28
@@ -624,7 +645,7 @@
 *   Fixed a runtime error in the `consciousness_loop` by wrapping coroutines in `asyncio.create_task`.
 *   Refactored all new and modified code to be exclusively in English, per a priority directive.
 *   Synchronized the Czech `AGENTS.md` with the English version.
-*   Verified the application runs and waits for user input.
+*   Verified the application runs and waits for user.
 
 **3. Result:**
 *   Mission accomplished. The Kernel is now functional, and the application can be interacted with via the terminal. The codebase is fully in English, and the documentation is synchronized.

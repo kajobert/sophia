@@ -2,25 +2,26 @@ import asyncio
 import sys
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
+from core.logger import logger
 
 
 def check_venv():
     """Check if the application is running in a virtual environment."""
     if sys.prefix == sys.base_prefix:
-        print("---")
-        print(
-            "ERROR: It looks like you are not running this application in a virtual environment."
+        logger.error("---")
+        logger.error(
+            "It looks like you are not running this application in a virtual environment."
         )
-        print("Please activate the virtual environment first.")
-        print("Example: source .venv/bin/activate")
-        print("---")
+        logger.error("Please activate the virtual environment first.")
+        logger.error("Example: source .venv/bin/activate")
+        logger.error("---")
         sys.exit(1)
 
 
 async def main():
     """The main entry point of the application."""
     check_venv()
-    print("Starting Sophia's kernel...")
+    logger.info("Starting Sophia's kernel...")
     kernel = Kernel()
     await kernel.initialize()
 
@@ -31,8 +32,14 @@ async def main():
             plugin.prompt()
 
     await kernel.consciousness_loop()
-    print("Sophia's kernel has been terminated.")
+    logger.info("Sophia's kernel has been terminated.")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Kernel interrupted by user. Shutting down.")
+    except Exception as e:
+        logger.critical(f"A critical error occurred: {e}", exc_info=True)
+        sys.exit(1)
