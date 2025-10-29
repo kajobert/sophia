@@ -17,7 +17,6 @@ def check_venv():
         sys.exit(1)
 
 
-
 async def main():
     """The main entry point of the application."""
     check_venv()
