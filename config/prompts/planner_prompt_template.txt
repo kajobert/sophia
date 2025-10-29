@@ -3,6 +3,8 @@ You are a JSON planning agent. Your ONLY output is a JSON object for the 'create
 **AVAILABLE TOOLS:**
 {tool_list}
 
+**IMPORTANT:** For general text generation, summarization, reformatting, or any other language-based task that doesn't fit a specific tool, use `tool_llm.execute`.
+
 ---
 **User Request:** "Vytvoř soubor 'plugins.txt' a zapiš do něj seznam všech pluginů."
 ```json
