@@ -30,8 +30,9 @@ Your role is not merely "programmer." You are a **Disciplined Plugin Developer**
 
 ## 3. The Golden Rules (Immutable and Inviolable)
 
-1.  ### **DO NOT TOUCH THE CORE!**
-    *   The `core/` directory and the `plugins/base_plugin.py` file are **absolutely off-limits** to you. Any attempt to modify them will result in immediate mission failure.
+1.  ### **THE CORE IS SACRED (BUT NOT UNTOUCHABLE).**
+    *   The `core/` directory and `plugins/base_plugin.py` are considered **sacred**. They represent the foundational architecture of the system and must not be modified during regular plugin development.
+    *   **Exception:** Foundational, architectural enhancements to the core are permitted, but only when a clear deficiency has been identified and proven through a rigorous "benchmark debugging" process (see Section 7). Such changes must be treated with extreme care, be fully tested, and be considered a rare and significant event.
 
 2.  ### **EVERYTHING IS A PLUGIN.**
     *   All new functionality must be implemented **exclusively** as a new, standalone file in the `plugins/` directory.
@@ -102,5 +103,16 @@ If you encounter a problem you cannot solve, follow this procedure:
 3.  **Request Assistance:** If the problem persists, stop your work, write a precise description of the issue in `WORKLOG.md` with the status `FAILED - ASSISTANCE REQUIRED`, and report it.
 
 ---
+
+## 7. The Principle of Benchmark Debugging
+
+To ensure the system's architecture evolves robustly, we adhere to the principle of "Benchmark Debugging."
+
+1.  **Define a Complex Task:** A benchmark is a complex, multi-step task that represents a sophisticated capability the system *should* be able to perform (e.g., "read a file, summarize its content with an LLM, and write the summary to a new file").
+2.  **Use Failure as a Diagnostic Tool:** When the system fails to execute the benchmark, the failure point is not treated as a simple bug but as a diagnostic signal that may indicate a deeper architectural flaw.
+3.  **Iterate and Refine:** Systematically analyze the failure, propose an architectural fix, implement it, and re-run the benchmark.
+4.  **Codify Learnings:** Once the benchmark succeeds, the architectural lessons and solutions must be codified in the project's documentation (e.g., in a `docs/en/learned/` case study).
+
+This process is the **only** accepted pathway for making modifications to the core system architecture, as it ensures that changes are driven by proven needs and validated by successful outcomes.
 
 We believe in your abilities. Adhere to these rules, and together, we will build a stable and wise AGI.

@@ -13,10 +13,19 @@ This document outlines the technical design of the Sophia AGI system, focusing o
 
 *   **Responsibility:** Orchestrates the main application loop, manages plugins, and handles the flow of data.
 *   **Key Modules:**
-    *   `main.py`: The application entry point.
-    *   `plugin_manager.py`: Discovers, loads, validates, and executes plugins.
+    *   `run.py`: The application entry point.
+    *   `kernel.py`: Orchestrates the main application loop (`Consciousness Loop`), manages state, and handles the flow of data.
+    *   `plugin_manager.py`: Discovers, loads, and validates plugins.
     *   `context.py`: Defines the `SharedContext` data structure.
-    *   `logging.py`: Configures the central logging system.
+    *   `logging_config.py`: Configures the central logging system.
+
+#### 2.1.1. Advanced Kernel Features
+
+The `Kernel` includes several advanced features to enable complex, multi-step operations:
+
+*   **Validation & Repair Loop:** Before executing a tool, the Kernel validates the arguments provided by the AI against a Pydantic schema. If validation fails, it automatically triggers a "repair loop," using a specialized LLM prompt to correct the faulty arguments.
+*   **Context Injection:** The Kernel intelligently inspects the signature of a tool's method. If it detects a `context` parameter, it automatically injects the current `SharedContext` object, giving the tool access to the logger, session ID, and conversation history.
+*   **History Propagation:** For each step in a multi-step plan, the Kernel creates a new, history-aware `SharedContext`. This context includes the original user request plus the results of all previous steps, ensuring the AI has a complete understanding of the task's progress.
 
 ### 2.2. `Plugins` (`plugins/`)
 

@@ -69,6 +69,42 @@ PYTHONPATH=. .venv/bin/python -m pytest
 - For a new plugin `plugins/my_plugin.py`, you must create a test file `tests/plugins/test_my_plugin.py`.
 - Tests should be self-contained and not rely on external services or API keys. Use mocking where appropriate.
 
+### 3.3. Advanced Verification: The 5-Step Benchmark and Autonomous Debugging
+For significant changes to the Kernel or core plugins, a complex, 5-step benchmark is used to verify the system's end-to-end functionality. This test is designed to run in the application's non-interactive "test mode" and validates several key architectural features at once.
+
+**Purpose:**
+The benchmark confirms the correct operation of:
+1.  **Tool Discovery:** The planner's ability to see all available tools.
+2.  **File I/O:** The `FileSystemTool`'s ability to write and read files.
+3.  **Result-Chaining:** The Kernel's "short-term memory" for using the output of one step as the input for another.
+4.  **Context Injection & History Propagation:** The Kernel's ability to provide tools with the necessary context and conversation history.
+
+**Running the Benchmark:**
+Execute the following command from the project root:
+```bash
+python run.py --test "List all available tools. Then, write the list of tools to a file named 'tools.txt'. After that, read the content of the 'tools.txt' file. Next, use the LLMTool to summarize the content of the file. Finally, delete the 'tools.txt' file."
+```
+
+**Key Architectural Concepts Verified by the Benchmark:**
+Successfully running this benchmark relies on two critical architectural features implemented in the `Kernel`:
+
+1.  **Context Injection:**
+    The `Kernel` can intelligently provide context to tools that need it. It inspects a tool's method signature, and if a `context` parameter is present, the `Kernel` automatically creates and injects a `SharedContext` object. This allows tools to access the session ID, logger, and conversation history without needing to be explicitly passed these arguments in the plan.
+
+2.  **History Propagation:**
+    For multi-step plans, maintaining context is crucial. The `Kernel` ensures that the LLM has the necessary information for each step by creating a new, history-aware `SharedContext` for every tool call. This context includes the original user request *plus* the results of all previously executed steps as "assistant" messages in the history. This gives the AI a complete picture of the ongoing task, which is essential for complex operations like summarizing a file that was just written.
+
+### 3.4. Note on `pytest` and Logging
+When writing integration tests that involve the `Kernel`, it is important to be aware of a potential conflict with `pytest`'s `caplog` fixture. The `Kernel`'s initialization process configures the application's logging system, which can interfere with `caplog`'s ability to capture log records.
+
+If you encounter issues where `caplog` is not capturing logs as expected, the recommended solution is to patch the application's logging setup for the duration of the test. This can be done with a decorator:
+```python
+@patch("core.logging_config.setup_logging")
+def test_my_kernel_integration(mock_setup_logging, caplog):
+    # Your test code here
+```
+This ensures that the test runs with the default logging configuration that `caplog` expects, providing reliable log capture for your assertions.
+
 ## 4. Code Quality
 
 We use `pre-commit` to enforce code quality standards. The configured tools are:
