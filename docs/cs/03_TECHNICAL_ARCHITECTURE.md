@@ -61,6 +61,14 @@ Tyto komponenty tvoří stabilní a neměnné jádro.
     2.  **Spuštění:** Spustí `ConsciousnessLoop`.
     3.  **Životní Cyklus (`ConsciousnessLoop`):** Nekonečná smyčka, která řídí stavy systému (např. `LISTENING`, `THINKING`, `ACTING`). V každém kroku se dotazuje `PluginManageru` na relevantní pluginy pro daný stav a spouští je s aktuálním `SharedContext`.
 
+#### 3.1.1. Pokročilé funkce Kernelu
+
+Kernel obsahuje několik pokročilých funkcí, které umožňují komplexní, vícekrokové operace:
+
+*   **Validační a opravná smyčka (Validation & Repair Loop):** Před spuštěním nástroje Kernel ověří argumenty poskytnuté AI proti Pydantic schématu. Pokud validace selže, automaticky spustí "opravnou smyčku", která použije specializovaný LLM prompt k opravě chybných argumentů.
+*   **Vkládání kontextu (Context Injection):** Kernel inteligentně prozkoumá signaturu metody nástroje. Pokud detekuje parametr `context`, automaticky vloží aktuální objekt `SharedContext`, čímž nástroji poskytne přístup k loggeru, ID sezení a historii konverzace.
+*   **Propagace historie (History Propagation):** Pro každý krok ve vícekrokovém plánu Kernel vytvoří nový `SharedContext` s kompletní historií. Tento kontext zahrnuje původní požadavek uživatele plus výsledky všech předchozích kroků, což zajišťuje, že AI má úplný přehled o postupu úkolu.
+
 ### 3.2. `PluginManager` (`core/plugin_manager.py`)
 *   **Zodpovědnost:** Správa životního cyklu pluginů.
     1.  **Dynamické Načítání:** Při startu Jádra automaticky prohledá adresář `plugins/`.
