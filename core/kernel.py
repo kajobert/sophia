@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
+from core.logging_config import setup_logging, SessionIdFilter
+import asyncio # ensure asyncio is imported
 
 # Get the root logger
 logger = logging.getLogger(__name__)
@@ -89,15 +91,9 @@ class Kernel:
         self.is_running = True
         session_id = str(uuid.uuid4())
 
-        # --- INITIALIZE SESSION LOGGER ---
-        logging_manager = self.all_plugins_map.get("core_logging_manager")
-        if logging_manager:
-            session_logger = logging_manager.setup_logging(session_id)
-        else:
-            # Fallback to a basic logger if the manager is not found
-            logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-            session_logger = logging.getLogger(f"session-{session_id[:8]}")
-            session_logger.warning("CoreLoggingManager not found. Using basic logging configuration.")
+        setup_logging(log_queue=asyncio.Queue()) # Placeholder queue
+        session_logger = logging.getLogger(f"session-{session_id[:8]}")
+        session_logger.addFilter(SessionIdFilter(session_id))
 
         context = SharedContext(
             session_id=session_id,

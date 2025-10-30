@@ -1,4 +1,4 @@
-from unittest.mock import patch, AsyncMock, mock_open
+from unittest.mock import patch, AsyncMock, mock_open, MagicMock
 import pytest
 from plugins.tool_llm import LLMTool
 from core.context import SharedContext
@@ -39,13 +39,16 @@ async def test_llm_tool_execute_with_config(temp_config_file):
         llm_tool = LLMTool()
         # The __init__ calls setup, so the mocks are already in effect
 
-        context = SharedContext(
-            session_id="test",
-            current_state="THINKING",
-            user_input="Hello",
-            history=[{"role": "user", "content": "Hello"}],
-            logger=logging.getLogger("test"),
-        )
+        mock_logger = MagicMock()
+        mock_logger.level = logging.INFO
+        with patch('logging.getLogger', return_value=mock_logger):
+            context = SharedContext(
+                session_id="test",
+                current_state="THINKING",
+                user_input="Hello",
+                history=[{"role": "user", "content": "Hello"}],
+                logger=logging.getLogger("test"),
+            )
 
         assert llm_tool.model == "test-model"
         assert llm_tool.system_prompt == sophia_dna_prompt
