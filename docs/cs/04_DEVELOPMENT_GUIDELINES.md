@@ -48,3 +48,32 @@ Pro zajištění bezpečnosti, centralizace a snadné správy platí následují
 *   **Povinné Aktualizace:** Každá změna kódu, která zavádí novou funkci, mění stávající chování nebo upravuje proces nastavení, **musí** být doprovázena odpovídající aktualizací dokumentace.
 *   **Zodpovědnost:** Vývojář provádějící změnu kódu je zodpovědný za aktualizaci všech relevantních dokumentů.
 *   **Dvojjazyčná Synchronizace:** Veškerá dokumentace musí být udržována v souladu mezi anglickou (`docs/en/`) a českou (`docs/cs/`) verzí. Anglická verze je považována za zdroj pravdy.
+
+## 7. Provádění vícekrokových plánů
+
+Kernel je schopen provádět komplexní, vícekrokové plány generované `CognitivePlanner`. Tato funkcionalita se opírá o dva klíčové architektonické vzory:
+
+### 7.1. Řetězení výsledků (Result Chaining)
+
+Krok v plánu může použít výstup předchozího kroku jako jeden ze svých argumentů. Toho je dosaženo pomocí specifické syntaxe zástupných symbolů.
+
+*   **Syntaxe:** `"$result.step_N"`
+*   **Příklad:** Pokud je Krok 1 `list_plugins()` a Krok 2 je `write_file()`, plán může systému nařídit, aby zapsal výstup prvního kroku do souboru takto:
+    ```json
+    "arguments": {
+        "path": "output.txt",
+        "content": "$result.step_1"
+    }
+    ```
+*   Kernel je zodpovědný za parsování této syntaxe, načtení uloženého výstupu z určeného kroku a jeho dosazení do argumentů před spuštěním nástroje.
+
+### 7.2. Propagace kontextu s historií (History-Aware Context Propagation)
+
+Aby byl vícekrokový plán úspěšný, musí mít pozdější kroky (zejména ty, které zahrnují LLM) přístup k výsledkům a akcím dřívějších kroků. Kernel to zajišťuje prostřednictvím **propagace kontextu s historií**.
+
+*   **Mechanismus:** Před spuštěním *každého* kroku v plánu vytvoří Kernel nový, dočasný objekt `SharedContext` pro tento konkrétní krok.
+*   **Obohacená historie:** Atribut `history` tohoto nového kontextu je kompletním záznamem sezení až do tohoto bodu. Obsahuje:
+    1.  Původní požadavek uživatele.
+    2.  Zprávy od "asistenta", které explicitně uvádějí výstup *všech předchozích provedených kroků* v aktuálním plánu.
+*   **Vkládání kontextu:** Tento obohacený kontext s historií je poté vložen do volání nástroje pro aktuální krok (pokud signatura metody nástroje vyžaduje argument `context`).
+*   **Důležitost:** Tím je zajištěno, že každý nástroj v řetězci má plný kontext nezbytný k provedení své funkce, což umožňuje agentovi uvažovat o a provádět komplexní, sekvenční úkoly.

@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from plugins.base_plugin import BasePlugin, PluginType
+from core.context import SharedContext
 
 # ANSI escape codes for colors
 COLORS = {
@@ -52,9 +53,9 @@ class CoreLoggingManager(BasePlugin):
         """This plugin has no external dependencies to set up."""
         pass
 
-    async def execute(self, context) -> None:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """This plugin is not meant to be executed directly."""
-        pass
+        return context
 
     def setup_logging(self, session_id: str) -> logging.Logger:
         """

@@ -1,4 +1,3 @@
-from typing import Optional
 import yaml
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
@@ -51,13 +50,19 @@ class LLMTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "execute",
-                    "description": "For general text generation, summarization, reformatting, or any other language-based task. The text to be processed must be passed as the 'prompt' argument.",
+                    "description": (
+                        "For general text generation, summarization, reformatting, or "
+                        "any other language-based task. The text to be processed must "
+                        "be passed as the 'prompt' argument."
+                    ),
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "prompt": {
                                 "type": "string",
-                                "description": "The text prompt to process for the language model.",
+                                "description": (
+                                    "The text prompt to process for the language model."
+                                ),
                             },
                         },
                         "required": ["prompt"],
@@ -66,25 +71,17 @@ class LLMTool(BasePlugin):
             }
         ]
 
-    async def execute(
-        self,
-        *,  # Make arguments keyword-only
-        context: SharedContext,
-        prompt: Optional[str] = None,
-        tools: Optional[list] = None,
-        tool_choice: Optional[str] = None,
-    ) -> SharedContext:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """
         Generate a response using the configured LLM.
-
-        This method is called in two primary ways:
-        1. By the Kernel as a planned tool: `prompt` is provided from the plan's
-           arguments, and `context` is injected.
-        2. By other plugins (e.g., CognitivePlanner): `context` is provided directly,
-           and the input is taken from `context.user_input`.
+        This method is now compatible with the BasePlugin and expects all
+        arguments to be passed within the context.payload.
         """
-        # Determine the final input for the LLM. Prioritize the 'prompt' argument
-        # from a tool call, fall back to the general user_input in the context.
+        prompt = context.payload.get("prompt")
+        tools = context.payload.get("tools")
+        tool_choice = context.payload.get("tool_choice")
+
+        # Determine the final input for the LLM.
         llm_input = prompt if prompt is not None else context.user_input
         if not llm_input:
             context.payload["llm_response"] = "Error: No input provided to LLMTool."
@@ -96,16 +93,12 @@ class LLMTool(BasePlugin):
             *context.history,
         ]
 
-        # If this is a tool call, 'prompt' will be set. The history contains the
-        # original user input, but the *actual* input for this specific LLM call
-        # is the 'prompt' argument. We append it as the final user message.
         if prompt is not None:
             messages.append({"role": "user", "content": prompt})
 
-        # If it's a call from the planner, prompt is None. The kernel ensures
-        # that history already contains the latest user_input, so we don't add it again.
-
-        context.logger.info(f"Calling LLM with {len(messages)} messages.", extra={"plugin_name": self.name})
+        context.logger.info(
+            f"Calling LLM with {len(messages)} messages.", extra={"plugin_name": self.name}
+        )
         try:
             completion_kwargs = {
                 "model": self.model,

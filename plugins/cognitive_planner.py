@@ -104,7 +104,11 @@ class Planner(BasePlugin):
 
         try:
             # Gracefully handle cases where there's no response or no tool calls
-            if not llm_message or not hasattr(llm_message, 'tool_calls') or not llm_message.tool_calls:
+            if (
+                not llm_message
+                or not hasattr(llm_message, "tool_calls")
+                or not llm_message.tool_calls
+            ):
                 logger.warning("No tool calls received from LLM, creating empty plan.")
                 context.payload["plan"] = []
                 return context
@@ -116,20 +120,24 @@ class Planner(BasePlugin):
             if len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
                 logger.info("Parsing direct tool calls from a smart model.")
                 for call in tool_calls:
-                    tool_name, method_name = call.function.name.split('.', 1)
+                    tool_name, method_name = call.function.name.split(".", 1)
                     # Handle cases where arguments might be an empty string or None
-                    arguments_str = call.function.arguments or '{}'
+                    arguments_str = call.function.arguments or "{}"
                     try:
                         arguments = json.loads(arguments_str)
                     except json.JSONDecodeError:
-                        logger.warning(f"Could not decode arguments for {call.function.name}: {arguments_str}")
-                        arguments = {} # Default to empty dict on error
+                        logger.warning(
+                            f"Could not decode arguments for {call.function.name}: {arguments_str}"
+                        )
+                        arguments = {}  # Default to empty dict on error
 
-                    plan.append({
-                        "tool_name": tool_name,
-                        "method_name": method_name,
-                        "arguments": arguments,
-                    })
+                    plan.append(
+                        {
+                            "tool_name": tool_name,
+                            "method_name": method_name,
+                            "arguments": arguments,
+                        }
+                    )
                 logger.info(f"Generated plan with {len(plan)} steps directly from tool calls.")
 
             # Scenario 2: Older model returned everything wrapped in 'create_plan'
@@ -148,7 +156,6 @@ class Planner(BasePlugin):
                 e,
                 llm_message,
                 exc_info=True,
-                extra={"plugin_name": self.name},
             )
             context.payload["plan"] = []
 
