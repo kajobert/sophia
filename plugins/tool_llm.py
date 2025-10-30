@@ -116,13 +116,9 @@ class LLMTool(BasePlugin):
             else:
                 context.payload["llm_response"] = message.content
 
-            context.logger.info(
-                "LLM response received successfully.", extra={"plugin_name": self.name}
-            )
+            context.logger.info("LLM response received successfully.", extra={"plugin_name": self.name})
         except Exception as e:
-            context.logger.error(
-                f"Error calling LLM: {e}", exc_info=True, extra={"plugin_name": self.name}
-            )
+            context.logger.error(f"Error calling LLM: {e}", exc_info=True, extra={"plugin_name": self.name})
             context.payload["llm_response"] = "I am having trouble thinking right now."
 
         return context

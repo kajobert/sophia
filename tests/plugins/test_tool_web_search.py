@@ -37,6 +37,8 @@ def test_web_search_success(web_search_tool):
     web_search_tool.service.cse().list.assert_called_with(q="test query", cx="test_cse_id", num=5)
 
 
+import logging
+
 def test_web_search_not_configured():
     """Tests that the tool handles being called without proper configuration."""
     with patch("plugins.tool_web_search.logger") as mock_logger:

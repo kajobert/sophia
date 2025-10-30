@@ -38,6 +38,8 @@ def test_git_tool_get_current_branch(git_tool):
     assert branch == "feature/new-plugin"
 
 
+import logging
+
 def test_git_tool_initialization_failure():
     """Tests that the tool handles a failure during repository initialization."""
     with patch("plugins.tool_git.Repo", side_effect=Exception("Test error")), patch(

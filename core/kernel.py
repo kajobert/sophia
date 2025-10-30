@@ -12,6 +12,8 @@ from core.context import SharedContext
 from core.logging_config import SessionIdFilter, setup_logging
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
+from core.logging_config import setup_logging, SessionIdFilter
+import asyncio # ensure asyncio is imported
 
 # Get the root logger
 logger = logging.getLogger(__name__)
