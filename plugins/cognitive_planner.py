@@ -148,6 +148,7 @@ class Planner(BasePlugin):
                 e,
                 llm_message,
                 exc_info=True,
+                extra={"plugin_name": self.name},
             )
             context.payload["plan"] = []
 
