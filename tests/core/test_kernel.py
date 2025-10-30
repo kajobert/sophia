@@ -80,11 +80,13 @@ async def test_kernel_planning_and_executing_phases():
         }
     ]
     mock_planner.name = "cognitive_planner"
+    mock_logger = MagicMock()
+    mock_logger.level = logging.INFO
     mock_planner.execute.return_value = SharedContext(
         session_id="test",
         payload={"plan": plan},
         current_state="PLANNING",
-        logger=logging.getLogger(),
+        logger=mock_logger,
         user_input="test input",
     )
 
@@ -164,9 +166,11 @@ async def test_kernel_handles_multi_step_chained_plan():
         },
     ]
     mock_planner.name = "cognitive_planner"
+    mock_logger = MagicMock()
+    mock_logger.level = logging.INFO
     mock_planner.execute.return_value = SharedContext(
         session_id="test",
-        logger=logging.getLogger(),
+        logger=mock_logger,
         payload={"plan": plan},
         current_state="PLANNING",
         user_input="List and write",

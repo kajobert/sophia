@@ -29,3 +29,6 @@ backoff
 onnxruntime
 GitPython
 google-api-python-client
+python-json-logger
+gitdb
+google-api-core

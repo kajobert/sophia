@@ -4,6 +4,7 @@ from core.context import SharedContext
 
 
 class PluginType(Enum):
+    CORE = auto()
     INTERFACE = auto()
     MEMORY = auto()
     TOOL = auto()
