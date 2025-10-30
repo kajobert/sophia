@@ -1,13 +1,15 @@
 import asyncio
 import json
 import logging
-import yaml
 import uuid
 from pathlib import Path
+from typing import Dict, Any
 
+import yaml
 from pydantic import ValidationError
 
 from core.context import SharedContext
+from core.logging_config import SessionIdFilter, setup_logging
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
 from core.logging_config import setup_logging, SessionIdFilter
@@ -91,7 +93,7 @@ class Kernel:
         self.is_running = True
         session_id = str(uuid.uuid4())
 
-        setup_logging(log_queue=asyncio.Queue()) # Placeholder queue
+        setup_logging(log_queue=asyncio.Queue())  # Placeholder queue
         session_logger = logging.getLogger(f"session-{session_id[:8]}")
         session_logger.addFilter(SessionIdFilter(session_id))
 
@@ -113,14 +115,21 @@ class Kernel:
                 else:
                     context.user_input = None
                     context.payload = {}
-                    interface_plugins = self.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
+                    interface_plugins = self.plugin_manager.get_plugins_by_type(
+                        PluginType.INTERFACE
+                    )
 
                     if not interface_plugins:
-                        context.logger.warning("No INTERFACE plugins found. Waiting...", extra={"plugin_name": "Kernel"})
+                        context.logger.warning(
+                            "No INTERFACE plugins found. Waiting...",
+                            extra={"plugin_name": "Kernel"},
+                        )
                         await asyncio.sleep(5)
                         continue
 
-                    input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
+                    input_tasks = [
+                        asyncio.create_task(p.execute(context)) for p in interface_plugins
+                    ]
 
                     try:
                         done, pending = await asyncio.wait(
@@ -141,13 +150,19 @@ class Kernel:
                             if not first_done_task.cancelled():
                                 context = await first_done_task
                             else:
-                                context.logger.warning("Input task was cancelled unexpectedly.", extra={"plugin_name": "Kernel"})
+                                context.logger.warning(
+                                    "Input task was cancelled unexpectedly.",
+                                    extra={"plugin_name": "Kernel"},
+                                )
                                 context.user_input = None
                         else:
                             context.user_input = None
 
                     except asyncio.TimeoutError:
-                        context.logger.debug("Listening timed out, no user input received.", extra={"plugin_name": "Kernel"})
+                        context.logger.debug(
+                            "Listening timed out, no user input received.",
+                            extra={"plugin_name": "Kernel"},
+                        )
                         context.user_input = None
                         for task in input_tasks:
                             if not task.done():
@@ -195,10 +210,14 @@ class Kernel:
                         )
 
                         # --- GATHER ALL TOOL DEFINITIONS AND VALIDATION SCHEMAS ---
-                        from pydantic import create_model, Field
+                        from pydantic import Field, create_model
 
                         tool_schemas = {}
-                        all_plugins_list = [p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)]
+                        all_plugins_list = [
+                            p
+                            for pt in PluginType
+                            for p in self.plugin_manager.get_plugins_by_type(pt)
+                        ]
                         all_plugins_map = {p.name: p for p in all_plugins_list}
 
                         for plugin in all_plugins_map.values():
@@ -228,9 +247,9 @@ class Kernel:
                                             f"{func_name}ArgsModel", **fields
                                         )
                                         tool_schemas[func_name] = validation_model
-                        
+
                         step_results = []
-                        step_outputs = {}  # Initialize step outputs dictionary
+                        step_outputs: Dict[int, Any] = {}
                         plan_failed = False
                         for step_index, step in enumerate(plan):
                             tool_name = step.get("tool_name")
@@ -239,14 +258,19 @@ class Kernel:
 
                             # --- Resolve chained results ---
                             for arg_name, arg_value in list(arguments.items()):
-                                if isinstance(arg_value, str) and arg_value.startswith("$result.step_"):
+                                if isinstance(arg_value, str) and arg_value.startswith(
+                                    "$result.step_"
+                                ):
                                     try:
-                                        source_step_index = int(arg_value.split('_')[-1])
+                                        source_step_index = int(arg_value.split("_")[-1])
                                         if source_step_index in step_outputs:
-                                            arguments[arg_name] = str(step_outputs[source_step_index])
+                                            arguments[arg_name] = str(
+                                                step_outputs[source_step_index]
+                                            )
                                         else:
                                             context.logger.error(
-                                                f"Could not find result for step {source_step_index} in outputs.",
+                                                f"Could not find result for step "
+                                                f"{source_step_index} in outputs.",
                                                 extra={"plugin_name": "Kernel"},
                                             )
                                     except (IndexError, ValueError) as e:
@@ -262,7 +286,10 @@ class Kernel:
                                 try:
                                     validation_model = tool_schemas.get(method_name)
                                     if not validation_model:
-                                        msg = f"No validation schema found for method '{method_name}'."
+                                        msg = (
+                                            f"No validation schema found for method "
+                                            f"'{method_name}'."
+                                        )
                                         raise ValueError(msg)
 
                                     current_args = arguments
@@ -270,12 +297,16 @@ class Kernel:
                                         try:
                                             current_args = json.loads(current_args)
                                         except json.JSONDecodeError:
-                                            msg = f"Arguments are a non-JSON string: {current_args}"
+                                            msg = (
+                                                f"Arguments are a non-JSON string: "
+                                                f"{current_args}"
+                                            )
                                             raise ValueError(msg)
 
                                     validated_args = validation_model(**current_args).model_dump()
                                     log_message = (
-                                        f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: "
+                                        f"SECOND-PHASE LOG: Validated plan step "
+                                        f"{step_index + 1}: "
                                         f"{tool_name}.{method_name}({validated_args})"
                                     )
                                     context.logger.info(
@@ -294,7 +325,8 @@ class Kernel:
                                     if attempt + 1 == max_attempts:
                                         error_message = (
                                             f"Plan failed at step {step_index + 1} "
-                                            f"after {max_attempts} attempts. Final error: {e}"
+                                            f"after {max_attempts} attempts. "
+                                            f"Final error: {e}"
                                         )
                                         context.logger.error(
                                             error_message, extra={"plugin_name": "Kernel"}
@@ -330,10 +362,11 @@ class Kernel:
                                             history=[{"role": "user", "content": repair_prompt}],
                                         )
                                     )
-                                    
+
                                     arguments = repair_context.payload.get("llm_response")
                                     context.logger.info(
-                                        f"Received repaired arguments for step {step_index + 1}: {arguments}",
+                                        f"Received repaired arguments for step "
+                                        f"{step_index + 1}: {arguments}",
                                         extra={"plugin_name": "Kernel"},
                                     )
 
@@ -347,20 +380,20 @@ class Kernel:
                                 try:
                                     # --- Context Injection & History Propagation ---
                                     import inspect
+
                                     sig = inspect.signature(method)
                                     call_args = validated_args.copy()
 
                                     if "context" in sig.parameters:
-                                        # Create a new context for this specific step that
-                                        # includes the complete history PLUS the results
-                                        # of all previous steps.
-                                        step_history = context.history[:]  # Copy original history
+                                        # Create a new context for this specific step
+                                        step_history = context.history[:]
                                         for i in range(1, step_index + 1):
                                             if i in step_outputs:
                                                 step_history.append(
                                                     {
                                                         "role": "assistant",
-                                                        "content": f"Output of step {i}: {step_outputs[i]}",
+                                                        "content": f"Output of step {i}: "
+                                                        f"{step_outputs[i]}",
                                                     }
                                                 )
 
@@ -369,7 +402,6 @@ class Kernel:
                                             current_state="EXECUTING",
                                             logger=context.logger,
                                             history=step_history,
-                                            # The 'user_input' for this context is the prompt/arg for the current tool
                                             user_input=str(call_args),
                                         )
                                         call_args["context"] = step_context
@@ -383,25 +415,25 @@ class Kernel:
                                     # --- Result Handling & Chaining ---
                                     output_for_chaining = ""
                                     if isinstance(step_result, SharedContext):
-                                        # If the tool returns a context, extract the relevant payload for chaining
-                                        # and merge any other payload data back into the main context.
                                         context.payload.update(step_result.payload)
-                                        output_for_chaining = step_result.payload.get("llm_response", "")
+                                        output_for_chaining = step_result.payload.get(
+                                            "llm_response", ""
+                                        )
                                         step_results.append(str(output_for_chaining))
                                     else:
-                                        # For simpler tools, the direct result is used.
                                         output_for_chaining = step_result
                                         step_results.append(str(step_result))
 
-                                    # Store the clean, simple output for the next step.
                                     step_outputs[step_index + 1] = output_for_chaining
                                     context.logger.info(
-                                        f"Step '{method_name}' executed. Result: {step_result}",
+                                        f"Step '{method_name}' executed. "
+                                        f"Result: {step_result}",
                                         extra={"plugin_name": tool_name},
                                     )
                                 except Exception as exec_err:
                                     error_message = (
-                                        f"Error executing {tool_name}.{method_name}: {exec_err}"
+                                        f"Error executing {tool_name}.{method_name}: "
+                                        f"{exec_err}"
                                     )
                                     context.logger.error(
                                         error_message,
@@ -416,8 +448,8 @@ class Kernel:
                                     break
                             else:
                                 error_message = (
-                                    f"Error: Tool '{tool_name}' or method '{method_name}' "
-                                    "not found."
+                                    f"Error: Tool '{tool_name}' or method "
+                                    f"'{method_name}' not found."
                                 )
                                 context.logger.error(
                                     error_message, extra={"plugin_name": "Kernel"}
@@ -508,9 +540,7 @@ class Kernel:
                 )
                 await asyncio.sleep(5)
 
-        context.logger.info(
-            "Consciousness loop finished.", extra={"plugin_name": "Kernel"}
-        )
+        context.logger.info("Consciousness loop finished.", extra={"plugin_name": "Kernel"})
 
     def start(self):
         """Starts the main consciousness loop."""

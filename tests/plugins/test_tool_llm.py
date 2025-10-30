@@ -41,7 +41,7 @@ async def test_llm_tool_execute_with_config(temp_config_file):
 
         mock_logger = MagicMock()
         mock_logger.level = logging.INFO
-        with patch('logging.getLogger', return_value=mock_logger):
+        with patch("logging.getLogger", return_value=mock_logger):
             context = SharedContext(
                 session_id="test",
                 current_state="THINKING",

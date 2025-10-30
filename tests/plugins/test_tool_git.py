@@ -1,4 +1,5 @@
 import pytest
+import logging
 from plugins.tool_git import GitTool
 from unittest.mock import patch, MagicMock
 
@@ -41,8 +42,9 @@ import logging
 
 def test_git_tool_initialization_failure():
     """Tests that the tool handles a failure during repository initialization."""
-    with patch("plugins.tool_git.Repo", side_effect=Exception("Test error")), \
-         patch("plugins.tool_git.logger") as mock_logger:
+    with patch("plugins.tool_git.Repo", side_effect=Exception("Test error")), patch(
+        "plugins.tool_git.logger"
+    ) as mock_logger:
         mock_logger.level = logging.INFO
         tool = GitTool()
         tool.setup({})

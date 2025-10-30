@@ -1,4 +1,5 @@
 import pytest
+import logging
 from plugins.tool_web_search import WebSearchTool
 from unittest.mock import patch, MagicMock
 

@@ -8,6 +8,7 @@ from plugins.cognitive_planner import Planner
 
 # --- Mock Object Factories ---
 
+
 def create_mock_tool_call(function_name: str, arguments_json_str: str) -> MagicMock:
     """Creates a single mock tool_call object."""
     mock_tool_call = MagicMock()
@@ -16,6 +17,7 @@ def create_mock_tool_call(function_name: str, arguments_json_str: str) -> MagicM
     mock_function.arguments = arguments_json_str
     mock_tool_call.function = mock_function
     return mock_tool_call
+
 
 def create_mock_llm_message(tool_calls: list) -> MagicMock:
     """Creates a mock message object with a list of tool calls."""
@@ -26,7 +28,9 @@ def create_mock_llm_message(tool_calls: list) -> MagicMock:
         mock_message.tool_calls = []
     return mock_message
 
+
 # --- Pytest Fixture ---
+
 
 @pytest.fixture
 def planner():
@@ -41,15 +45,19 @@ def planner():
 
     # Setting a default return value for the mock's execute method
     mock_llm_tool.execute.return_value = SharedContext(
-        "default_session", "default_state", logging.getLogger("test"),
-        payload={"llm_response": create_mock_llm_message([])}
+        "default_session",
+        "default_state",
+        logging.getLogger("test"),
+        payload={"llm_response": create_mock_llm_message([])},
     )
     p.setup({"plugins": {"tool_llm": mock_llm_tool}})
     # Avoid file read errors in tests
     p.prompt_template = "Test Prompt with tools: {tool_list}"
     return p
 
+
 # --- Test Cases ---
+
 
 @pytest.mark.asyncio
 async def test_planner_parses_legacy_create_plan_format(planner):
@@ -62,7 +70,11 @@ async def test_planner_parses_legacy_create_plan_format(planner):
 
     plan_dict = {
         "plan": [
-            {"tool_name": "tool_file_system", "method_name": "list_directory", "arguments": {"path": "."}}
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "list_directory",
+                "arguments": {"path": "."},
+            }
         ]
     }
     plan_json_str = json.dumps(plan_dict)
@@ -71,8 +83,10 @@ async def test_planner_parses_legacy_create_plan_format(planner):
     mock_response = create_mock_llm_message([tool_call])
 
     planner.llm_tool.execute.return_value = SharedContext(
-        "test_legacy", "PLANNING", logging.getLogger("test"),
-        payload={"llm_response": mock_response}
+        "test_legacy",
+        "PLANNING",
+        logging.getLogger("test"),
+        payload={"llm_response": mock_response},
     )
 
     # Act
@@ -82,6 +96,7 @@ async def test_planner_parses_legacy_create_plan_format(planner):
     assert "plan" in result_context.payload
     assert result_context.payload["plan"] == plan_dict["plan"]
     planner.llm_tool.execute.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_planner_parses_direct_tool_call_list_format(planner):
@@ -93,18 +108,16 @@ async def test_planner_parses_direct_tool_call_list_format(planner):
     context = SharedContext("test_direct", "PLANNING", logging.getLogger("test"), "write hello")
 
     tool_call_1 = create_mock_tool_call(
-        "tool_file_system.write_file",
-        '{"filepath": "hello.txt", "content": "Hello, World!"}'
+        "tool_file_system.write_file", '{"filepath": "hello.txt", "content": "Hello, World!"}'
     )
-    tool_call_2 = create_mock_tool_call(
-        "tool_file_system.read_file",
-        '{"filepath": "hello.txt"}'
-    )
+    tool_call_2 = create_mock_tool_call("tool_file_system.read_file", '{"filepath": "hello.txt"}')
     mock_response = create_mock_llm_message([tool_call_1, tool_call_2])
 
     planner.llm_tool.execute.return_value = SharedContext(
-        "test_direct", "PLANNING", logging.getLogger("test"),
-        payload={"llm_response": mock_response}
+        "test_direct",
+        "PLANNING",
+        logging.getLogger("test"),
+        payload={"llm_response": mock_response},
     )
 
     # Act
@@ -112,12 +125,21 @@ async def test_planner_parses_direct_tool_call_list_format(planner):
 
     # Assert
     expected_plan = [
-        {"tool_name": "tool_file_system", "method_name": "write_file", "arguments": {"filepath": "hello.txt", "content": "Hello, World!"}},
-        {"tool_name": "tool_file_system", "method_name": "read_file", "arguments": {"filepath": "hello.txt"}},
+        {
+            "tool_name": "tool_file_system",
+            "method_name": "write_file",
+            "arguments": {"filepath": "hello.txt", "content": "Hello, World!"},
+        },
+        {
+            "tool_name": "tool_file_system",
+            "method_name": "read_file",
+            "arguments": {"filepath": "hello.txt"},
+        },
     ]
     assert "plan" in result_context.payload
     assert result_context.payload["plan"] == expected_plan
     planner.llm_tool.execute.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_planner_handles_empty_llm_response(planner):
@@ -128,8 +150,10 @@ async def test_planner_handles_empty_llm_response(planner):
     context = SharedContext("test_empty", "PLANNING", logging.getLogger("test"), "do nothing")
 
     planner.llm_tool.execute.return_value = SharedContext(
-        "test_empty", "PLANNING", logging.getLogger("test"),
-        payload={"llm_response": None} # Simulate a complete failure or empty response
+        "test_empty",
+        "PLANNING",
+        logging.getLogger("test"),
+        payload={"llm_response": None},  # Simulate a complete failure or empty response
     )
 
     # Act
@@ -137,6 +161,7 @@ async def test_planner_handles_empty_llm_response(planner):
 
     # Assert
     assert result_context.payload["plan"] == []
+
 
 @pytest.mark.asyncio
 async def test_planner_handles_response_with_no_tool_calls(planner):
@@ -146,11 +171,13 @@ async def test_planner_handles_response_with_no_tool_calls(planner):
     # Arrange
     context = SharedContext("test_no_calls", "PLANNING", logging.getLogger("test"), "hello")
 
-    mock_response = create_mock_llm_message([]) # Empty list of tool calls
+    mock_response = create_mock_llm_message([])  # Empty list of tool calls
 
     planner.llm_tool.execute.return_value = SharedContext(
-        "test_no_calls", "PLANNING", logging.getLogger("test"),
-        payload={"llm_response": mock_response}
+        "test_no_calls",
+        "PLANNING",
+        logging.getLogger("test"),
+        payload={"llm_response": mock_response},
     )
 
     # Act
@@ -158,6 +185,7 @@ async def test_planner_handles_response_with_no_tool_calls(planner):
 
     # Assert
     assert result_context.payload["plan"] == []
+
 
 @pytest.mark.asyncio
 async def test_planner_handles_malformed_json_in_arguments(planner):
@@ -172,8 +200,10 @@ async def test_planner_handles_malformed_json_in_arguments(planner):
     mock_response = create_mock_llm_message([tool_call])
 
     planner.llm_tool.execute.return_value = SharedContext(
-        "test_json_error", "PLANNING", logging.getLogger("test"),
-        payload={"llm_response": mock_response}
+        "test_json_error",
+        "PLANNING",
+        logging.getLogger("test"),
+        payload={"llm_response": mock_response},
     )
 
     # Act
@@ -181,5 +211,7 @@ async def test_planner_handles_malformed_json_in_arguments(planner):
 
     # Assert
     # The planner should still create a step, but the arguments will be empty
-    expected_plan = [{"tool_name": "tool_file_system", "method_name": "write_file", "arguments": {}}]
+    expected_plan = [
+        {"tool_name": "tool_file_system", "method_name": "write_file", "arguments": {}}
+    ]
     assert result_context.payload["plan"] == expected_plan
