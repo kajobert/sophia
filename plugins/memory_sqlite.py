@@ -54,7 +54,10 @@ class SQLiteMemory(BasePlugin):
                 )
             )
             conn.commit()
-            context.logger.info("Saved interaction to short-term memory.")
+            context.logger.info(
+                "Saved interaction to short-term memory.",
+                extra={"plugin_name": self.name},
+            )
 
         return context
 
