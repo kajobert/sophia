@@ -24,13 +24,19 @@ async def main():
     kernel = Kernel()
     await kernel.initialize()
 
-    # Display the initial prompt for the terminal interface, if available.
-    terminal_plugins = kernel.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
-    for plugin in terminal_plugins:
-        if plugin.name == "interface_terminal" and hasattr(plugin, "prompt"):
-            plugin.prompt()
+    # Zjistíme, jestli byl zadán vstup jako argument
+    if len(sys.argv) > 1:
+        user_input = " ".join(sys.argv[1:])
+        print(f"Running in non-interactive mode with input: '{user_input}'")
+        await kernel.consciousness_loop(single_run_input=user_input)
+    else:
+        # Spustíme normální interaktivní smyčku
+        terminal_plugins = kernel.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
+        for plugin in terminal_plugins:
+            if plugin.name == "interface_terminal" and hasattr(plugin, "prompt"):
+                plugin.prompt()
+        await kernel.consciousness_loop()
 
-    await kernel.consciousness_loop()
     print("Sophia's kernel has been terminated.")
 
 

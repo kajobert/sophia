@@ -36,13 +36,18 @@ def test_web_search_success(web_search_tool):
     web_search_tool.service.cse().list.assert_called_with(q="test query", cx="test_cse_id", num=5)
 
 
+import logging
+
 def test_web_search_not_configured():
     """Tests that the tool handles being called without proper configuration."""
-    tool = WebSearchTool()
-    tool.setup({})  # No API key or CSE ID
-    results = tool.search("test query")
-    assert len(results) == 1
-    assert "not configured" in results[0].get("error", "")
+    with patch("plugins.tool_web_search.logger") as mock_logger:
+        mock_logger.level = logging.INFO
+        tool = WebSearchTool()
+        tool.setup({})  # No API key or CSE ID
+        results = tool.search("test query")
+        assert len(results) == 1
+        assert "not configured" in results[0].get("error", "")
+        mock_logger.warning.assert_called_once()
 
 
 def test_web_search_api_error(web_search_tool):
