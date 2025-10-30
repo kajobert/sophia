@@ -39,7 +39,8 @@ class Planner(BasePlugin):
     async def execute(self, context: SharedContext) -> SharedContext:
         """
         Takes user input and generates a plan by instructing the LLM to call a
-        predefined function.
+        predefined function. It can handle both a single 'create_plan' call
+        and a direct list of tool calls from more advanced models.
         """
         if not context.user_input or not self.llm_tool:
             return context
@@ -49,7 +50,6 @@ class Planner(BasePlugin):
         for plugin in self.plugins.values():
             if hasattr(plugin, "get_tool_definitions"):
                 for tool_def in plugin.get_tool_definitions():
-                    # We only need the function name and description for the planner's prompt
                     func = tool_def.get("function", {})
                     if "name" in func and "description" in func:
                         tool_string = f"- {plugin.name}.{func['name']}: {func['description']}"
@@ -73,18 +73,9 @@ class Planner(BasePlugin):
                                 "items": {
                                     "type": "object",
                                     "properties": {
-                                        "tool_name": {
-                                            "type": "string",
-                                            "description": "Name of the tool plugin.",
-                                        },
-                                        "method_name": {
-                                            "type": "string",
-                                            "description": "The method to call.",
-                                        },
-                                        "arguments": {
-                                            "type": "object",
-                                            "description": "Arguments for the method.",
-                                        },
+                                        "tool_name": {"type": "string"},
+                                        "method_name": {"type": "string"},
+                                        "arguments": {"type": "object"},
                                     },
                                     "required": ["tool_name", "method_name", "arguments"],
                                 },
@@ -106,94 +97,54 @@ class Planner(BasePlugin):
         )
 
         planned_context = await self.llm_tool.execute(
-            context=planning_context, tools=planner_tool, tool_choice="auto"
+            planning_context, tools=planner_tool, tool_choice="auto"  # Use auto for flexibility
         )
         llm_message = planned_context.payload.get("llm_response")
-        context.logger.info(
-            f"Raw LLM response received in planner: {llm_message}",
-            extra={"plugin_name": self.name},
-        )
+        logger.info(f"Raw LLM response received in planner: {llm_message}")
 
         try:
+            # Gracefully handle cases where there's no response or no tool calls
+            if not llm_message or not hasattr(llm_message, 'tool_calls') or not llm_message.tool_calls:
+                logger.warning("No tool calls received from LLM, creating empty plan.")
+                context.payload["plan"] = []
+                return context
+
             tool_calls = llm_message.tool_calls
             plan = []
 
-            # Scenario 1: The model used the tool_calls feature correctly
-            if tool_calls:
-                # Sub-scenario A: The model returned a direct list of tool calls
-                if len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
-                    for call in tool_calls:
-                        try:
-                            tool_name, method_name = call.function.name.split(".", 1)
-                            # Robustly decode arguments
-                            raw_args = call.function.arguments
-                            if raw_args and raw_args.strip():
-                                try:
-                                    arguments = json.loads(raw_args)
-                                except json.JSONDecodeError:
-                                    context.logger.warning(
-                                        f"JSONDecodeError for arguments: '{raw_args}'. Defaulting to empty dict.",
-                                        extra={"plugin_name": self.name},
-                                    )
-                                    arguments = {}
-                            else:
-                                arguments = {}
+            # Scenario 1: Smart model returned a direct list of tool calls
+            if len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
+                logger.info("Parsing direct tool calls from a smart model.")
+                for call in tool_calls:
+                    tool_name, method_name = call.function.name.split('.', 1)
+                    # Handle cases where arguments might be an empty string or None
+                    arguments_str = call.function.arguments or '{}'
+                    try:
+                        arguments = json.loads(arguments_str)
+                    except json.JSONDecodeError:
+                        logger.warning(f"Could not decode arguments for {call.function.name}: {arguments_str}")
+                        arguments = {} # Default to empty dict on error
 
-                            plan.append(
-                                {
-                                    "tool_name": tool_name,
-                                    "method_name": method_name,
-                                    "arguments": arguments,
-                                }
-                            )
-                        except ValueError:
-                            context.logger.error(
-                                f"Invalid tool call format: {call.function.name}. Expected 'plugin.method'.",
-                                extra={"plugin_name": self.name},
-                            )
-                    context.logger.info(
-                        f"Generated plan with {len(plan)} steps directly from tool calls.",
-                        extra={"plugin_name": self.name},
-                    )
-                # Sub-scenario B: The model wrapped the plan in a 'create_plan' function call
-                elif tool_calls[0].function.name == "create_plan":
-                    plan_str = tool_calls[0].function.arguments
-                    plan_data = json.loads(plan_str)
-                    plan = plan_data.get("plan", [])
-                    context.logger.info(
-                        f"Generated plan with {len(plan)} steps via function call.",
-                        extra={"plugin_name": self.name},
-                    )
-            # Scenario 2: The model returned a JSON blob in the content field
-            elif llm_message.content and "plan" in llm_message.content:
-                try:
-                    # Extract JSON from markdown if necessary
-                    json_str = llm_message.content
-                    if "```json" in json_str:
-                        json_str = json_str.split("```json")[1].split("```")[0]
+                    plan.append({
+                        "tool_name": tool_name,
+                        "method_name": method_name,
+                        "arguments": arguments,
+                    })
+                logger.info(f"Generated plan with {len(plan)} steps directly from tool calls.")
 
-                    plan_data = json.loads(json_str)
-                    plan = plan_data.get("plan", [])
-                    context.logger.info(
-                        f"Generated plan with {len(plan)} steps from JSON content.",
-                        extra={"plugin_name": self.name},
-                    )
-                except (json.JSONDecodeError, IndexError) as json_err:
-                    context.logger.error(
-                        f"Failed to parse plan from JSON content: {json_err}",
-                        extra={"plugin_name": self.name},
-                    )
-            else:
-                context.logger.info(
-                    "No tool calls or valid JSON plan found in response.",
-                    extra={"plugin_name": self.name},
-                )
+            # Scenario 2: Older model returned everything wrapped in 'create_plan'
+            elif tool_calls[0].function.name == "create_plan":
+                logger.info("Parsing 'create_plan' function call from a legacy model.")
+                plan_str = tool_calls[0].function.arguments
+                plan_data = json.loads(plan_str)
+                plan = plan_data.get("plan", [])
+                logger.info(f"Generated plan with {len(plan)} steps via function call.")
 
             context.payload["plan"] = plan
 
-        except (json.JSONDecodeError, AttributeError, ValueError) as e:
-            context.logger.error(
-                "Failed to decode plan from LLM response: %s\nResponse was: %s",
+        except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
+            logger.error(
+                "Failed to decode or process plan from LLM response: %s\nResponse was: %s",
                 e,
                 llm_message,
                 exc_info=True,

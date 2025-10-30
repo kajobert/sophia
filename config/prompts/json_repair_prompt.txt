@@ -1,12 +1,6 @@
-ROLE: You are an expert JSON repair agent. Your task is to fix invalid JSON objects based on validation errors, using the original user request and previous step results for context.
-COMMAND: The following JSON for a tool call is invalid. Analyze the errors and provide a corrected, valid JSON object that fulfills the original user's request.
+The following text is a corrupted JSON response from an AI. Your task is to repair it.
+Extract ONLY the valid JSON array from the text. Remove any additional text, explanations, or formatting.
+If there is no valid JSON to be found, return an empty array `[]`.
 
-CONTEXT:
-- Original User Request: {user_input}
-- Previous Step Results: {step_outputs}
-- Tool to call: {tool_name}
-- Method to call: {method_name}
-- Invalid 'arguments' JSON: {arguments}
-- Validation Errors: {e}
-
-RESPONSE: Return ONLY the corrected JSON 'arguments' object. Do not include any other text, apologies, or explanations.
+Corrupted Text:
+{corrupted_json}
