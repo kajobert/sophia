@@ -49,3 +49,19 @@ Tento dokument obsahuje zásobník nápadů, požadavků na funkce a cílů pro 
 *   **Úkoly:**
     *   Zavést přísné pravidlo, že žádná nová funkce není považována za dokončenou, dokud není aktualizována její odpovídající dokumentace (`Příručka pro vývojáře`, `Technická architektura` atd.).
     *   Vytvořit "Manuál pro vývojáře", který poskytuje jasné, krok-za-krokem postupy pro běžné vývojové úkoly, aby pomohl jak lidským, tak AI vývojářům udržet se v obraze.
+
+---
+
+## 4. Architektura Jádra a Pluginů
+
+### 4.1. Zlepšit Kompatibilitu s LLM
+*   **Cíl:** Zvýšit odolnost systému vůči různorodým a někdy nestandardním implementacím volání nástrojů napříč různými poskytovateli LLM.
+*   **Úkoly:**
+    *   **Dynamické Zpracování `tool_choice`:** Implementovat v `LLMTool` nebo Jádru logiku pro podmíněné použití parametru `tool_choice` na základě specifických potřeb modelu/poskytovatele, aby se předešlo chybám u modelů, které jej nepodporují.
+    *   **Adaptéry pro Konkrétní Poskytovatele:** Zvážit vytvoření vrstvy malých adaptérových modulů pro různé poskytovatele LLM (např. OpenRouter, Azure), které by elegantně řešily jejich specifické API zvláštnosti a požadavky.
+    *   **Cache Schopností Modelů:** Vyvinout mechanismus pro cachování známých schopností modelů (např. podpora nástrojů, podpora `tool_choice`) po první interakci. Tím by se zabránilo opakovaným neúspěšným pokusům u modelů s známými omezeními.
+
+### 4.2. Implementovat Pokročilou Opravu Plánu
+*   **Cíl:** Zlepšit schopnost systému zotavit se z chybně zformátovaných plánů generovaných LLM.
+*   **Úkoly:**
+    *   **Strukturální Oprava JSON:** Rozvinout současný mechanismus opravy JSON na pokročilejší systém "Opravy Plánu". Tento systém by nejen opravoval syntaktické chyby, ale také se pokoušel opravit strukturální problémy v logice plánu (např. převedení zploštělého seznamu volání nástrojů zpět na vnořenou strukturu) opětovným dotázáním LLM s konkrétními instrukcemi pro opravu.

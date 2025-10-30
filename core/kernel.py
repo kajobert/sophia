@@ -10,12 +10,10 @@ from pydantic import ValidationError
 from core.context import SharedContext
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
+from core.logging_config import setup_logging, SessionIdFilter
+import asyncio # ensure asyncio is imported
 
-# Basic logging setup for Kernel execution
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
+# Get the root logger
 logger = logging.getLogger(__name__)
 
 
@@ -38,11 +36,14 @@ class Kernel:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
                 self.json_repair_prompt_template = f.read()
         except FileNotFoundError:
-            logger.error("JSON repair prompt template not found. The repair loop will fail.")
+            logger.error(
+                "JSON repair prompt template not found. The repair loop will fail.",
+                extra={"plugin_name": "Kernel"},
+            )
             self.json_repair_prompt_template = "The JSON is invalid. Errors: {e}. Please fix it."
 
         # --- PLUGIN SETUP PHASE ---
-        logger.info("Initializing plugin setup...")
+        logger.info("Initializing plugin setup...", extra={"plugin_name": "Kernel"})
         all_plugins_list = [
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
@@ -51,7 +52,10 @@ class Kernel:
         for plugin in all_plugins_list:
             config_path = Path("config/settings.yaml")
             if not config_path.exists():
-                logger.warning("Config 'config/settings.yaml' not found.")
+                logger.warning(
+                    "Config 'config/settings.yaml' not found.",
+                    extra={"plugin_name": "Kernel"},
+                )
                 main_config = {}
             else:
                 with open(config_path, "r") as f:
@@ -66,21 +70,35 @@ class Kernel:
             }
             try:
                 plugin.setup(full_plugin_config)
-                logger.info(f"Successfully set up plugin '{plugin.name}'.")
+                logger.info(
+                    f"Successfully set up plugin '{plugin.name}'.",
+                    extra={"plugin_name": "Kernel"},
+                )
             except Exception as e:
-                logger.error(f"Error setting up plugin '{plugin.name}': {e}", exc_info=True)
+                logger.error(
+                    f"Error setting up plugin '{plugin.name}': {e}",
+                    exc_info=True,
+                    extra={"plugin_name": "Kernel"},
+                )
 
-        logger.info(f"All {len(all_plugins_list)} plugins have been configured.")
+        logger.info(
+            f"All {len(all_plugins_list)} plugins have been configured.",
+            extra={"plugin_name": "Kernel"},
+        )
 
-    async def consciousness_loop(self):
+    async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
         self.is_running = True
         session_id = str(uuid.uuid4())
 
+        setup_logging(log_queue=asyncio.Queue()) # Placeholder queue
+        session_logger = logging.getLogger(f"session-{session_id[:8]}")
+        session_logger.addFilter(SessionIdFilter(session_id))
+
         context = SharedContext(
             session_id=session_id,
             current_state="INITIALIZING",
-            logger=logging.getLogger(f"session-{session_id[:8]}"),
+            logger=session_logger,
             history=[],
         )
 
@@ -88,54 +106,62 @@ class Kernel:
             try:
                 # 1. LISTENING PHASE
                 context.current_state = "LISTENING"
-                context.user_input = None
-                context.payload = {}
-                interface_plugins = self.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
 
-                if not interface_plugins:
-                    logger.warning("No INTERFACE plugins found. Waiting...")
-                    await asyncio.sleep(5)
-                    continue
-
-                input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
-
-                try:
-                    done, pending = await asyncio.wait(
-                        input_tasks,
-                        return_when=asyncio.FIRST_COMPLETED,
-                        timeout=60.0,
-                    )
-
-                    for task in pending:
-                        task.cancel()
-                        try:
-                            await task
-                        except asyncio.CancelledError:
-                            pass
-
-                    if done:
-                        first_done_task = done.pop()
-                        if not first_done_task.cancelled():
-                            context = await first_done_task
-                        else:
-                            logger.warning("Input task was cancelled unexpectedly.")
-                            context.user_input = None
-                    else:
-                        context.user_input = None
-
-                except asyncio.TimeoutError:
-                    logger.debug("Listening timed out, no user input received.")
+                if single_run_input:
+                    context.user_input = single_run_input
+                    self.is_running = False  # End the loop after this run
+                else:
                     context.user_input = None
-                    for task in input_tasks:
-                        if not task.done():
+                    context.payload = {}
+                    interface_plugins = self.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
+
+                    if not interface_plugins:
+                        context.logger.warning("No INTERFACE plugins found. Waiting...", extra={"plugin_name": "Kernel"})
+                        await asyncio.sleep(5)
+                        continue
+
+                    input_tasks = [asyncio.create_task(p.execute(context)) for p in interface_plugins]
+
+                    try:
+                        done, pending = await asyncio.wait(
+                            input_tasks,
+                            return_when=asyncio.FIRST_COMPLETED,
+                            timeout=60.0,
+                        )
+
+                        for task in pending:
                             task.cancel()
                             try:
                                 await task
                             except asyncio.CancelledError:
                                 pass
 
+                        if done:
+                            first_done_task = done.pop()
+                            if not first_done_task.cancelled():
+                                context = await first_done_task
+                            else:
+                                context.logger.warning("Input task was cancelled unexpectedly.", extra={"plugin_name": "Kernel"})
+                                context.user_input = None
+                        else:
+                            context.user_input = None
+
+                    except asyncio.TimeoutError:
+                        context.logger.debug("Listening timed out, no user input received.", extra={"plugin_name": "Kernel"})
+                        context.user_input = None
+                        for task in input_tasks:
+                            if not task.done():
+                                task.cancel()
+                                try:
+                                    await task
+                                except asyncio.CancelledError:
+                                    pass
+
                 if context.user_input:
-                    logger.info(f"User input received: '{context.user_input}'")
+                    context.logger.info(
+                        f"User input received: '{context.user_input}'",
+                        extra={"plugin_name": "Kernel"},
+                    )
                     context.history.append({"role": "user", "content": context.user_input})
 
                     # 2. PLANNING PHASE
@@ -146,12 +172,16 @@ class Kernel:
                         context = await planner.execute(context)
                         plan = context.payload.get("plan", [])
                         if not isinstance(plan, list):
-                            logger.error(
-                                f"Planner returned invalid plan: {plan}. Defaulting to empty."
+                            context.logger.error(
+                                f"Planner returned invalid plan: {plan}. Defaulting to empty.",
+                                extra={"plugin_name": "Kernel"},
                             )
                             plan = []
                     else:
-                        logger.warning("Cognitive planner plugin not found.")
+                        context.logger.warning(
+                            "Cognitive planner plugin not found.",
+                            extra={"plugin_name": "Kernel"},
+                        )
 
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
@@ -159,7 +189,10 @@ class Kernel:
                     llm_tool = self.all_plugins_map.get("tool_llm")
 
                     if plan:
-                        logger.info(f"Initiating execution for raw plan: {plan}")
+                        context.logger.info(
+                            f"Initiating execution for raw plan: {plan}",
+                            extra={"plugin_name": "Kernel"},
+                        )
 
                         # --- GATHER ALL TOOL DEFINITIONS AND VALIDATION SCHEMAS ---
                         from pydantic import create_model, Field
@@ -212,10 +245,15 @@ class Kernel:
                                         if source_step_index in step_outputs:
                                             arguments[arg_name] = str(step_outputs[source_step_index])
                                         else:
-                                            logger.error(f"Could not find result for step {source_step_index} in outputs.")
+                                            context.logger.error(
+                                                f"Could not find result for step {source_step_index} in outputs.",
+                                                extra={"plugin_name": "Kernel"},
+                                            )
                                     except (IndexError, ValueError) as e:
-                                        logger.error(f"Error parsing chained result '{arg_value}': {e}")
-
+                                        context.logger.error(
+                                            f"Error parsing chained result '{arg_value}': {e}",
+                                            extra={"plugin_name": "Kernel"},
+                                        )
 
                             validated_args = None
                             max_attempts = 3
@@ -235,12 +273,14 @@ class Kernel:
                                             msg = f"Arguments are a non-JSON string: {current_args}"
                                             raise ValueError(msg)
 
-                                    validated_args = validation_model(**current_args).dict()
+                                    validated_args = validation_model(**current_args).model_dump()
                                     log_message = (
                                         f"SECOND-PHASE LOG: Validated plan step {step_index + 1}: "
                                         f"{tool_name}.{method_name}({validated_args})"
                                     )
-                                    logger.info(log_message)
+                                    context.logger.info(
+                                        log_message, extra={"plugin_name": tool_name}
+                                    )
                                     break  # Success
 
                                 except (ValidationError, ValueError) as e:
@@ -248,20 +288,26 @@ class Kernel:
                                         f"Validation failed for step {step_index + 1} "
                                         f"(Attempt {attempt + 1}/{max_attempts}): {e}"
                                     )
-                                    logger.warning(log_message)
+                                    context.logger.warning(
+                                        log_message, extra={"plugin_name": "Kernel"}
+                                    )
                                     if attempt + 1 == max_attempts:
                                         error_message = (
                                             f"Plan failed at step {step_index + 1} "
                                             f"after {max_attempts} attempts. Final error: {e}"
                                         )
-                                        logger.error(error_message)
+                                        context.logger.error(
+                                            error_message, extra={"plugin_name": "Kernel"}
+                                        )
                                         step_results.append(error_message)
                                         plan_failed = True
                                         break
 
                                     if not llm_tool:
                                         error_message = "Cannot attempt repair: LLMTool not found."
-                                        logger.error(error_message)
+                                        context.logger.error(
+                                            error_message, extra={"plugin_name": "Kernel"}
+                                        )
                                         step_results.append(error_message)
                                         plan_failed = True
                                         break
@@ -286,7 +332,10 @@ class Kernel:
                                     )
                                     
                                     arguments = repair_context.payload.get("llm_response")
-                                    logger.info(f"Received repaired arguments for step {step_index + 1}: {arguments}")
+                                    context.logger.info(
+                                        f"Received repaired arguments for step {step_index + 1}: {arguments}",
+                                        extra={"plugin_name": "Kernel"},
+                                    )
 
                             if plan_failed or validated_args is None:
                                 execution_summary = f"Plan failed at step {step_index + 1}."
@@ -296,21 +345,69 @@ class Kernel:
                             method = getattr(tool, method_name, None) if tool else None
                             if method:
                                 try:
+                                    # --- Context Injection & History Propagation ---
+                                    import inspect
+                                    sig = inspect.signature(method)
+                                    call_args = validated_args.copy()
+
+                                    if "context" in sig.parameters:
+                                        # Create a new context for this specific step that
+                                        # includes the complete history PLUS the results
+                                        # of all previous steps.
+                                        step_history = context.history[:]  # Copy original history
+                                        for i in range(1, step_index + 1):
+                                            if i in step_outputs:
+                                                step_history.append(
+                                                    {
+                                                        "role": "assistant",
+                                                        "content": f"Output of step {i}: {step_outputs[i]}",
+                                                    }
+                                                )
+
+                                        step_context = SharedContext(
+                                            session_id=context.session_id,
+                                            current_state="EXECUTING",
+                                            logger=context.logger,
+                                            history=step_history,
+                                            # The 'user_input' for this context is the prompt/arg for the current tool
+                                            user_input=str(call_args),
+                                        )
+                                        call_args["context"] = step_context
+
                                     step_result = (
-                                        await method(**validated_args)
+                                        await method(**call_args)
                                         if asyncio.iscoroutinefunction(method)
-                                        else method(**validated_args)
+                                        else method(**call_args)
                                     )
-                                    step_results.append(str(step_result))
-                                    step_outputs[step_index + 1] = step_result  # Store the result
-                                    logger.info(
-                                        f"Step '{method_name}' executed. Result: {step_result}"
+
+                                    # --- Result Handling & Chaining ---
+                                    output_for_chaining = ""
+                                    if isinstance(step_result, SharedContext):
+                                        # If the tool returns a context, extract the relevant payload for chaining
+                                        # and merge any other payload data back into the main context.
+                                        context.payload.update(step_result.payload)
+                                        output_for_chaining = step_result.payload.get("llm_response", "")
+                                        step_results.append(str(output_for_chaining))
+                                    else:
+                                        # For simpler tools, the direct result is used.
+                                        output_for_chaining = step_result
+                                        step_results.append(str(step_result))
+
+                                    # Store the clean, simple output for the next step.
+                                    step_outputs[step_index + 1] = output_for_chaining
+                                    context.logger.info(
+                                        f"Step '{method_name}' executed. Result: {step_result}",
+                                        extra={"plugin_name": tool_name},
                                     )
                                 except Exception as exec_err:
                                     error_message = (
                                         f"Error executing {tool_name}.{method_name}: {exec_err}"
                                     )
-                                    logger.error(error_message, exc_info=True)
+                                    context.logger.error(
+                                        error_message,
+                                        exc_info=True,
+                                        extra={"plugin_name": tool_name},
+                                    )
                                     step_results.append(error_message)
                                     execution_summary = (
                                         f"Plan failed at step {step_index + 1}. "
@@ -322,7 +419,9 @@ class Kernel:
                                     f"Error: Tool '{tool_name}' or method '{method_name}' "
                                     "not found."
                                 )
-                                logger.error(error_message)
+                                context.logger.error(
+                                    error_message, extra={"plugin_name": "Kernel"}
+                                )
                                 step_results.append(error_message)
                                 execution_summary = (
                                     f"Plan failed at step {step_index + 1}. {error_message}"
@@ -336,7 +435,10 @@ class Kernel:
 
                     else:
                         if llm_tool:
-                            logger.info("No plan generated, attempting direct LLM response.")
+                            context.logger.info(
+                                "No plan generated, attempting direct LLM response.",
+                                extra={"plugin_name": "Kernel"},
+                            )
                             context = await llm_tool.execute(context)
                             execution_summary = context.payload.get(
                                 "llm_response", "Input received, no plan formed."
@@ -345,12 +447,18 @@ class Kernel:
                             execution_summary = (
                                 "Input received, but no planner or LLM tool is configured."
                             )
-                            logger.warning("No plan and no LLM tool found for direct response.")
+                            context.logger.warning(
+                                "No plan and no LLM tool found for direct response.",
+                                extra={"plugin_name": "Kernel"},
+                            )
 
                     # 4. RESPONDING PHASE
                     context.current_state = "RESPONDING"
                     context.payload["final_response"] = execution_summary
-                    logger.info(f"Final response: {execution_summary}")
+                    context.logger.info(
+                        f"Final response: {execution_summary}",
+                        extra={"plugin_name": "Kernel"},
+                    )
                     context.history.append({"role": "assistant", "content": execution_summary})
 
                     response_callback = context.payload.get("_response_callback")
@@ -361,9 +469,10 @@ class Kernel:
                             else:
                                 response_callback(execution_summary)
                         except Exception as cb_err:
-                            logger.error(
+                            context.logger.error(
                                 f"Error in response callback: {cb_err}",
                                 exc_info=True,
+                                extra={"plugin_name": "Kernel"},
                             )
                     else:
                         print(f">>> Sophia: {execution_summary}")
@@ -386,18 +495,29 @@ class Kernel:
                     await asyncio.sleep(0.1)
 
             except asyncio.CancelledError:
-                logger.info("Consciousness loop cancelled.")
+                context.logger.info(
+                    "Consciousness loop cancelled.", extra={"plugin_name": "Kernel"}
+                )
                 self.is_running = False
                 break
             except Exception as e:
-                logger.error(f"Unexpected error in consciousness loop: {e}", exc_info=True)
+                context.logger.error(
+                    f"Unexpected error in consciousness loop: {e}",
+                    exc_info=True,
+                    extra={"plugin_name": "Kernel"},
+                )
                 await asyncio.sleep(5)
 
-        logger.info("Consciousness loop finished.")
+        context.logger.info(
+            "Consciousness loop finished.", extra={"plugin_name": "Kernel"}
+        )
 
     def start(self):
         """Starts the main consciousness loop."""
         try:
             asyncio.run(self.consciousness_loop())
         except KeyboardInterrupt:
-            logger.info("Application terminated by user (Ctrl+C).")
+            logger.info(
+                "Application terminated by user (Ctrl+C).",
+                extra={"plugin_name": "Kernel"},
+            )

@@ -37,11 +37,16 @@ def test_git_tool_get_current_branch(git_tool):
     assert branch == "feature/new-plugin"
 
 
+import logging
+
 def test_git_tool_initialization_failure():
     """Tests that the tool handles a failure during repository initialization."""
-    with patch("plugins.tool_git.Repo", side_effect=Exception("Test error")):
+    with patch("plugins.tool_git.Repo", side_effect=Exception("Test error")), \
+         patch("plugins.tool_git.logger") as mock_logger:
+        mock_logger.level = logging.INFO
         tool = GitTool()
         tool.setup({})
         assert tool.repo is None
         status = tool.get_status()
         assert "Error: Git repository not initialized" in status
+        mock_logger.error.assert_called_once()
