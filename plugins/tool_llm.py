@@ -11,6 +11,7 @@ class LLMTool(BasePlugin):
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
         self.system_prompt = "You are a helpful assistant."
+        self.api_key = None
         self.setup(config={})
 
     @property
@@ -44,6 +45,7 @@ class LLMTool(BasePlugin):
         except FileNotFoundError:
             # Keep default system prompt if file not found
             pass
+        self.api_key = os.getenv("OPENROUTER_API_KEY")
 
     def get_tool_definitions(self) -> list[dict]:
         return [
@@ -54,25 +56,25 @@ class LLMTool(BasePlugin):
                     "description": (
                         "For general text generation, summarization, reformatting, or "
                         "any other language-based task. The text to be processed must "
-                        "be passed as the 'prompt' argument."
+                        "be passed in the context payload."
                     ),
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "prompt": {
-                                "type": "string",
+                            "context": {
+                                "type": "object",
                                 "description": (
-                                    "The text prompt to process for the language model."
+                                    "The shared context containing the prompt in its payload."
                                 ),
                             },
                         },
-                        "required": ["prompt"],
+                        "required": ["context"],
                     },
                 },
             }
         ]
 
-    async def execute(self, context: SharedContext) -> SharedContext:
+    async def execute(self, *, context: SharedContext) -> SharedContext:
         """
         Generate a response using the configured LLM.
         This method is now compatible with the BasePlugin and expects all
@@ -101,14 +103,11 @@ class LLMTool(BasePlugin):
             f"Calling LLM with {len(messages)} messages.", extra={"plugin_name": self.name}
         )
         try:
-            # Explicitly load the API key for robust authentication
-            api_key = os.getenv("OPENROUTER_API_KEY")
-
             completion_kwargs = {
                 "model": self.model,
                 "messages": messages,
                 "tools": tools,
-                "api_key": api_key,
+                "api_key": self.api_key,
             }
             if tool_choice:
                 completion_kwargs["tool_choice"] = tool_choice
