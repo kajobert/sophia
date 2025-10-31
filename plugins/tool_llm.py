@@ -11,7 +11,6 @@ class LLMTool(BasePlugin):
     def __init__(self):
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
         self.system_prompt = "You are a helpful assistant."
-        self.api_key = None
         self.setup(config={})
 
     @property
@@ -28,6 +27,31 @@ class LLMTool(BasePlugin):
 
     def setup(self, config: dict) -> None:
         """Configure the LLM provider from a YAML file."""
+        # --- Logging Filter Injection ---
+        # This is a targeted fix to ensure that the litellm library's logger
+        # gets the session_id filter, even if it's initialized before the
+        # main application's logging is fully configured.
+        import logging
+        from core.logging_filter import SessionIdFilter
+
+        # Get the root logger
+        root_logger = logging.getLogger()
+
+        # Clear any potentially pre-existing handlers to avoid duplicates
+        if hasattr(root_logger, "handlers_initialized_by_llmtool"):
+            for handler in list(root_logger.handlers):
+                root_logger.removeHandler(handler)
+
+        # Add a session ID filter to the root logger.
+        # This will be inherited by all loggers, including litellm's.
+        has_session_id_filter = any(
+            isinstance(f, SessionIdFilter) for f in root_logger.filters
+        )
+        if not has_session_id_filter:
+            root_logger.addFilter(SessionIdFilter())
+            setattr(root_logger, "handlers_initialized_by_llmtool", True)
+
+
         try:
             with open("config/settings.yaml", "r") as f:
                 config_data = yaml.safe_load(f)
@@ -45,7 +69,6 @@ class LLMTool(BasePlugin):
         except FileNotFoundError:
             # Keep default system prompt if file not found
             pass
-        self.api_key = os.getenv("OPENROUTER_API_KEY")
 
     def get_tool_definitions(self) -> list[dict]:
         return [
@@ -107,7 +130,6 @@ class LLMTool(BasePlugin):
                 "model": self.model,
                 "messages": messages,
                 "tools": tools,
-                "api_key": self.api_key,
             }
             if tool_choice:
                 completion_kwargs["tool_choice"] = tool_choice

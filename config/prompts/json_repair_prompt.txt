@@ -1,6 +1,8 @@
 The following text is a corrupted JSON response from an AI. Your task is to repair it.
-Extract ONLY the valid JSON array from the text. Remove any additional text, explanations, or formatting.
-If there is no valid JSON to be found, return an empty array `[]`.
+- Extract ONLY the valid JSON array from the text. Remove any additional text, explanations, or formatting.
+- **Crucially, ensure all required fields are present and have valid values.**
+- Use the original user request and the output of previous steps (provided in the 'error' and 'previous_steps' fields) to infer the correct values for any missing fields.
+- If there is no valid JSON to be found, return an empty array `[]`.
 
 Corrupted Text:
 {corrupted_json}

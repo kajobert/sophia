@@ -131,11 +131,12 @@ class FileSystemTool(BasePlugin):
 
         return safe_path
 
-    def read_file(self, path: str) -> str:
+    def read_file(self, context: SharedContext, path: str) -> str:
         """
         Reads the content of a file within the sandbox.
 
         Args:
+            context: The shared context for the session, providing the logger.
             path: The path to the file to read, relative to the sandbox root.
 
         Returns:
@@ -145,16 +146,17 @@ class FileSystemTool(BasePlugin):
             FileNotFoundError: If the file does not exist at the specified path.
         """
         safe_path = self._get_safe_path(path)
-        logger.info("Reading file: %s", safe_path)
+        context.logger.info("Reading file: %s", safe_path)
         if not safe_path.is_file():
             raise FileNotFoundError(f"File not found: {safe_path}")
         return safe_path.read_text(encoding="utf-8")
 
-    def write_file(self, path: str, content: str) -> str:
+    def write_file(self, context: SharedContext, path: str, content: str) -> str:
         """
         Writes content to a file within the sandbox.
 
         Args:
+            context: The shared context for the session, providing the logger.
             path: The path to the file to write, relative to the sandbox root.
             content: The content to write to the file.
 
@@ -162,33 +164,35 @@ class FileSystemTool(BasePlugin):
             A success message.
         """
         safe_path = self._get_safe_path(path)
-        logger.info("Writing to file: %s", safe_path)
+        context.logger.info("Writing to file: %s", safe_path)
         safe_path.parent.mkdir(parents=True, exist_ok=True)
         safe_path.write_text(content, encoding="utf-8")
         return f"Successfully wrote {len(content)} bytes to {path}"
 
-    def delete_file(self, path: str) -> str:
+    def delete_file(self, context: SharedContext, path: str) -> str:
         """
         Deletes a file within the sandbox.
 
         Args:
+            context: The shared context for the session, providing the logger.
             path: The path to the file to delete, relative to the sandbox root.
 
         Returns:
             A success message.
         """
         safe_path = self._get_safe_path(path)
-        logger.info("Deleting file: %s", safe_path)
+        context.logger.info("Deleting file: %s", safe_path)
         if not safe_path.is_file():
             raise FileNotFoundError(f"File not found: {safe_path}")
         safe_path.unlink()
         return f"Successfully deleted {path}"
 
-    def list_directory(self, path: str = ".") -> List[str]:
+    def list_directory(self, context: SharedContext, path: str = ".") -> List[str]:
         """
         Lists the contents of a directory within the sandbox.
 
         Args:
+            context: The shared context for the session, providing the logger.
             path: The path to the directory to list, relative to the sandbox.
 
         Returns:
@@ -198,7 +202,7 @@ class FileSystemTool(BasePlugin):
             NotADirectoryError: If the path is not a directory.
         """
         safe_path = self._get_safe_path(path)
-        logger.info("Listing directory: %s", safe_path)
+        context.logger.info("Listing directory: %s", safe_path)
         if not safe_path.is_dir():
             raise NotADirectoryError(f"Path is not a directory: {safe_path}")
         return [p.name for p in safe_path.iterdir()]
