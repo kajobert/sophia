@@ -4,7 +4,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class ListDirectoryArgs(BaseModel):
     """Pydantic model for arguments of the list_directory tool."""
 
-    path: str = Field(
-        ...,
+    path: Optional[str] = Field(
+        ".",
         description=(
             "Lists files and directories inside the designated 'sandbox/' folder. "
-            "All paths are relative to this sandbox."
+            "All paths are relative to this sandbox. Defaults to the sandbox root '.'"
         ),
     )
 
@@ -41,6 +41,14 @@ class WriteFileArgs(BaseModel):
         ..., description="The path to the file to write, relative to the sandbox root."
     )
     content: str = Field(..., description="The content to write to the file.")
+
+
+class DeleteFileArgs(BaseModel):
+    """Pydantic model for arguments of the delete_file tool."""
+
+    path: str = Field(
+        ..., description="The path to the file to delete, relative to the sandbox root."
+    )
 
 
 class FileSystemTool(BasePlugin):
@@ -159,7 +167,24 @@ class FileSystemTool(BasePlugin):
         safe_path.write_text(content, encoding="utf-8")
         return f"Successfully wrote {len(content)} bytes to {path}"
 
-    def list_directory(self, path: str) -> List[str]:
+    def delete_file(self, path: str) -> str:
+        """
+        Deletes a file within the sandbox.
+
+        Args:
+            path: The path to the file to delete, relative to the sandbox root.
+
+        Returns:
+            A success message.
+        """
+        safe_path = self._get_safe_path(path)
+        logger.info("Deleting file: %s", safe_path)
+        if not safe_path.is_file():
+            raise FileNotFoundError(f"File not found: {safe_path}")
+        safe_path.unlink()
+        return f"Successfully deleted {path}"
+
+    def list_directory(self, path: str = ".") -> List[str]:
         """
         Lists the contents of a directory within the sandbox.
 
@@ -209,6 +234,14 @@ class FileSystemTool(BasePlugin):
                     "name": "write_file",
                     "description": "Writes content to a file within the sandbox.",
                     "parameters": WriteFileArgs.model_json_schema(),
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_file",
+                    "description": "Deletes a file within the sandbox.",
+                    "parameters": DeleteFileArgs.model_json_schema(),
                 },
             },
         ]

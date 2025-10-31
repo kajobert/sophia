@@ -71,10 +71,10 @@ def test_get_tool_definitions(fs_tool: FileSystemTool):
     """Tests that the tool definitions are correctly structured."""
     defs = fs_tool.get_tool_definitions()
     assert isinstance(defs, list)
-    assert len(defs) == 3
+    assert len(defs) == 4
 
     func_names = {d["function"]["name"] for d in defs}
-    assert func_names == {"list_directory", "read_file", "write_file"}
+    assert func_names == {"list_directory", "read_file", "write_file", "delete_file"}
 
     for d in defs:
         assert d["type"] == "function"
@@ -84,7 +84,6 @@ def test_get_tool_definitions(fs_tool: FileSystemTool):
 
         if d["function"]["name"] == "list_directory":
             assert "path" in params["properties"]
-            assert params["required"] == ["path"]
         elif d["function"]["name"] == "read_file":
             assert "path" in params["properties"]
             assert params["required"] == ["path"]
@@ -92,3 +91,6 @@ def test_get_tool_definitions(fs_tool: FileSystemTool):
             assert "path" in params["properties"]
             assert "content" in params["properties"]
             assert sorted(params["required"]) == ["content", "path"]
+        elif d["function"]["name"] == "delete_file":
+            assert "path" in params["properties"]
+            assert params["required"] == ["path"]
