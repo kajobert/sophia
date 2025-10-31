@@ -1,3 +1,4 @@
+import os
 import yaml
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
@@ -100,10 +101,14 @@ class LLMTool(BasePlugin):
             f"Calling LLM with {len(messages)} messages.", extra={"plugin_name": self.name}
         )
         try:
+            # Explicitly load the API key for robust authentication
+            api_key = os.getenv("OPENROUTER_API_KEY")
+
             completion_kwargs = {
                 "model": self.model,
                 "messages": messages,
                 "tools": tools,
+                "api_key": api_key,
             }
             if tool_choice:
                 completion_kwargs["tool_choice"] = tool_choice

@@ -73,11 +73,15 @@ frozenlist==1.8.0
 fsspec==2025.9.0
     # via huggingface-hub
 gitdb==4.0.12
-    # via gitpython
+    # via
+    #   -r requirements.in
+    #   gitpython
 gitpython==3.1.45
     # via -r requirements.in
 google-api-core==2.27.0
-    # via google-api-python-client
+    # via
+    #   -r requirements.in
+    #   google-api-python-client
 google-api-python-client==2.185.0
     # via -r requirements.in
 google-auth==2.41.1
@@ -277,8 +281,11 @@ python-dateutil==2.9.0.post0
     #   posthog
 python-dotenv==1.1.1
     # via
+    #   -r requirements.in
     #   litellm
     #   uvicorn
+python-json-logger==4.0.0
+    # via -r requirements.in
 pyyaml==6.0.3
     # via
     #   -r requirements.in

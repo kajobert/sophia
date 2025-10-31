@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from dotenv import load_dotenv
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
 
@@ -19,6 +20,7 @@ def check_venv():
 
 async def main():
     """The main entry point of the application."""
+    load_dotenv()
     check_venv()
     print("Starting Sophia's kernel...")
     kernel = Kernel()

@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, insert, select
@@ -21,8 +23,13 @@ class SQLiteMemory(BasePlugin):
 
     def setup(self, config: dict) -> None:
         """Initializes the database connection and creates the table if it doesn't exist."""
-        db_path = config.get("db_path", "sophia_memory.db")
-        self.engine = create_engine(f"sqlite:///{db_path}")
+        db_path_str = config.get("db_path", "data/memory/sophia_memory.db")
+
+        # Ensure the directory for the database exists
+        db_path = Path(db_path_str)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self.engine = create_engine(f"sqlite:///{db_path_str}")
         self.metadata = MetaData()
         self.history_table = Table(
             "conversation_history",

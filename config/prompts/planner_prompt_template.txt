@@ -14,5 +14,3 @@ Example JSON Response:
     }}
   }}
 ]
-
-User Request: {user_input}
