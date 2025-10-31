@@ -21,13 +21,18 @@ class ColoredFormatter(logging.Formatter):
     """A custom formatter to add colors to log messages."""
 
     def format(self, record):
+        # Ensure 'plugin_name' always exists to prevent crashes from external loggers
+        if not hasattr(record, "plugin_name"):
+            record.plugin_name = "external"
+
         levelname = record.levelname
         if levelname in COLORS:
-            # Color the plugin name part of the log format
-            record.plugin_name_colored = f"{COLORS[levelname]}{record.plugin_name}{COLORS['ENDC']}"
+            record.plugin_name_colored = (
+                f"{COLORS[levelname]}{getattr(record, 'plugin_name', 'external')}{COLORS['ENDC']}"
+            )
             record.levelname_colored = f"{COLORS[levelname]}{levelname}{COLORS['ENDC']}"
         else:
-            record.plugin_name_colored = record.plugin_name
+            record.plugin_name_colored = getattr(record, "plugin_name", "external")
             record.levelname_colored = levelname
 
         # Standard formatting call
