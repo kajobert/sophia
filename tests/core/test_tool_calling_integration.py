@@ -1,107 +1,95 @@
 import asyncio
 import logging
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from core.kernel import Kernel
-from core.context import SharedContext
-from plugins.base_plugin import BasePlugin, PluginType
-from plugins.tool_file_system import FileSystemTool
+from plugins.base_plugin import PluginType
 
-# Define the content of the prompt files
-JSON_REPAIR_PROMPT = "ROLE: You are an expert JSON repair agent... {e}"
-PLANNER_PROMPT = "Create a plan. Tools:\n{tool_list}"
-SOPHIA_DNA = "You are Sophia, an Artificial Mindful Intelligence."
-
-mock_file_map = {
-    "config/prompts/json_repair_prompt.txt": JSON_REPAIR_PROMPT,
-    "config/prompts/planner_prompt_template.txt": PLANNER_PROMPT,
-    "config/prompts/sophia_dna.txt": SOPHIA_DNA,
-    "config/settings.yaml": 'llm:\n  model: "mock-model"',
-}
-
-def open_side_effect(path, *args, **kwargs):
-    content = mock_file_map.get(path, "")
-    return mock_open(read_data=content).return_value
+# Configure logging for tests
+logger = logging.getLogger(__name__)
 
 
-@patch("core.logging_config.setup_logging")
-@patch("builtins.open", side_effect=open_side_effect)
-@patch("core.plugin_manager.PluginManager.load_plugins", MagicMock(return_value=None))
 @pytest.mark.asyncio
-async def test_end_to_end_tool_call_with_repair_loop(
-    mock_setup_logging, mock_open, caplog
-):
+async def test_kernel_dynamic_replanning_on_failure():
     """
-    Tests the Kernel's validation and repair loop. This test patches
-    `core.logging_config.setup_logging` to prevent the Kernel's
-    logging setup from interfering with pytest's `caplog` fixture.
+    Integration test to verify the Dynamic Cognitive Engine's replanning loop.
+    This test simulates a multi-step plan where the first step fails, and
+    verifies that the Kernel discards the old plan and invokes the planner
+    to create a new one.
     """
-    caplog.set_level(logging.INFO)
-    test_logger = logging.getLogger("test_logger")
+    # --- Mocks and Fixtures ---
+    mock_planner = MagicMock(name="CognitivePlanner")
+    mock_failing_tool = MagicMock(name="FailingTool")
+    mock_successful_tool = MagicMock(name="SuccessfulTool")
 
-    # --- 1. Mocks & Real Instances Setup ---
-    mock_interface = AsyncMock(spec=BasePlugin)
-    mock_interface.name = "mock_interface"
-    mock_interface.plugin_type = PluginType.INTERFACE
-    input_context = SharedContext("test", "LISTENING", test_logger, user_input="list files in /")
-    mock_interface.execute.return_value = input_context
+    # --- Plan Definitions ---
+    initial_failing_plan = [
+        {"tool_name": "failing_tool", "method_name": "doomed_to_fail", "arguments": {"arg": "value"}},
+        {"tool_name": "successful_tool", "method_name": "should_not_be_called", "arguments": {}},
+    ]
+    corrected_successful_plan = [
+        {"tool_name": "successful_tool", "method_name": "run_successfully", "arguments": {"arg": "corrected"}},
+    ]
 
-    mock_llm_tool_for_repair = AsyncMock(spec=BasePlugin)
-    mock_llm_tool_for_repair.name = "tool_llm"
-    mock_llm_tool_for_repair.plugin_type = PluginType.TOOL
-    repaired_args_str = '{"path": "/"}'
-
-    async def llm_repair_side_effect(context, *args, **kwargs):
-        if "ROLE: You are an expert JSON repair agent" in context.user_input:
-            return SharedContext("test", "EXECUTING", context.logger, payload={"llm_response": repaired_args_str})
-        pytest.fail("The repair LLM mock was called for a non-repair task.")
-    mock_llm_tool_for_repair.execute.side_effect = llm_repair_side_effect
-
-    mock_planner = AsyncMock(spec=BasePlugin)
+    # --- Mock Behaviors ---
+    # The planner's execute method is async, so it needs to be an AsyncMock
+    mock_planner.execute = AsyncMock(
+        side_effect=[
+            MagicMock(payload={"plan": initial_failing_plan}),
+            MagicMock(payload={"plan": corrected_successful_plan}),
+        ]
+    )
     mock_planner.name = "cognitive_planner"
-    mock_planner.plugin_type = PluginType.COGNITIVE
-    faulty_plan = [{"tool_name": "tool_file_system", "method_name": "list_directory", "arguments": {"path": 123}}]
 
-    async def mock_planner_execute(context: SharedContext):
-        context.payload["plan"] = faulty_plan
-        context.logger.info(f"Raw LLM response received in planner: {faulty_plan}")
-        return context
-    mock_planner.execute.side_effect = mock_planner_execute
+    failing_method = AsyncMock(side_effect=ValueError("This was designed to fail"))
+    mock_failing_tool.name = "failing_tool"
+    mock_failing_tool.doomed_to_fail = failing_method
+    mock_failing_tool.get_tool_definitions.return_value = [{"function": {"name": "doomed_to_fail", "parameters": {"properties": {"arg": {"type": "string"}}}}}]
 
-    fs_tool = FileSystemTool()
-    fs_tool.setup({"sandbox_dir": "test_sandbox"})
-    fs_tool.list_directory = MagicMock(return_value=["file1.txt", "other.txt"])
+    successful_method = AsyncMock(return_value="Success")
+    mock_successful_tool.name = "successful_tool"
+    mock_successful_tool.run_successfully = successful_method
+    mock_successful_tool.get_tool_definitions.return_value = [{"function": {"name": "run_successfully", "parameters": {"properties": {"arg": {"type": "string"}}}}}]
 
-    # --- 2. Kernel and PluginManager Setup ---
-    kernel = Kernel()
-    kernel.logger = test_logger
-    mock_plugin_manager = MagicMock()
-    all_plugins = [mock_interface, mock_planner, mock_llm_tool_for_repair, fs_tool]
-    mock_plugin_manager.get_plugins_by_type.side_effect = lambda p_type: [p for p in all_plugins if p.plugin_type == p_type]
-    kernel.plugin_manager = mock_plugin_manager
-    await kernel.initialize()
+    # --- Test Setup ---
+    with patch("core.kernel.PluginManager") as mock_plugin_manager_constructor:
+        mock_plugin_manager = mock_plugin_manager_constructor.return_value
+        # Configure the mock to return specific plugins for the CORE type, and none for others.
+        def get_plugins_by_type_side_effect(plugin_type):
+            if plugin_type == PluginType.CORE:
+                return [mock_planner, mock_failing_tool, mock_successful_tool]
+            return []
+        mock_plugin_manager.get_plugins_by_type.side_effect = get_plugins_by_type_side_effect
 
-    # --- 3. Run a single iteration of the consciousness loop ---
-    async def single_run_loop():
-        original_wait = asyncio.wait
-        async def single_wait(tasks, **kwargs):
-            done, pending = await original_wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-            kernel.is_running = False
-            return done, pending
-        with patch("asyncio.wait", single_wait):
-            await kernel.consciousness_loop()
+        kernel = Kernel()
+        await kernel.initialize()
 
-    try:
-        await asyncio.wait_for(single_run_loop(), timeout=5)
-    except asyncio.TimeoutError:
-        pytest.fail("The test timed out, suggesting the loop did not exit as expected.")
+        # --- Test Execution ---
+        # Run the consciousness loop as a background task
+        loop_task = asyncio.create_task(kernel.consciousness_loop(single_run_input="start"))
 
-    # --- 4. Assertions ---
-    assert any("Raw LLM response received in planner" in r.message for r in caplog.records)
-    assert any("Validation failed for step 1" in r.message for r in caplog.records)
-    repair_call = mock_llm_tool_for_repair.execute.call_args
-    assert repair_call is not None
-    assert "ROLE: You are an expert JSON repair agent" in repair_call.args[0].user_input
-    assert any("SECOND-PHASE LOG: Validated plan step 1" in r.message and "'path': '/'" in r.message for r in caplog.records)
-    fs_tool.list_directory.assert_called_once_with(path="/")
+        # Give the loop time to run through the failure and replanning cycle.
+        await asyncio.sleep(1.0)
+
+        # --- Assertions ---
+        # 1. Assert that the planner was called twice.
+        assert mock_planner.execute.call_count == 2, "Planner should be called once for the initial plan, and a second time after failure."
+
+        # 2. Assert that the failing tool's method was attempted.
+        failing_method.assert_awaited_once()
+
+        # 3. Assert that the method from the corrected plan was attempted.
+        successful_method.assert_awaited_once()
+
+        # 4. Assert that the second step of the initial failing plan was never attempted.
+        assert mock_successful_tool.should_not_be_called.call_count == 0, "The second step of a failing plan should be discarded."
+
+        logger.info("Test successful: Kernel correctly initiated replanning.")
+
+        # Clean up the background task
+        loop_task.cancel()
+        try:
+            await loop_task
+        except asyncio.CancelledError:
+            pass
