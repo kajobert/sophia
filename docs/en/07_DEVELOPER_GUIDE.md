@@ -117,6 +117,15 @@ These checks will run automatically on every commit. You can also run them manua
 pre-commit run --all-files
 ```
 
+### 3.4. The 8-Step Programming Benchmark
+This benchmark tests the agent's ability to perform a complete, small-scale programming task, including writing code, writing tests, running tests, and cleaning up.
+
+**Running the Benchmark:**
+Execute the following command from the project root:
+```bash
+python run.py --test "Create a new file named 'math_operations.py'. Write a Python function in this file called 'add' that takes two arguments, 'a' and 'b', and returns their sum. Write a second function in the same file called 'subtract' that takes two arguments, 'a' and 'b', and returns their difference. Create a new file named 'test_math_operations.py'. Write a pytest test function in this new file called 'test_add' that imports the 'add' function and asserts that 'add(2, 3) == 5'. Write a second pytest test function in the same file called 'test_subtract' that imports the 'subtract' function and asserts that 'subtract(5, 2) == 3'. Run the tests using pytest. Delete both 'math_operations.py' and 'test_math_operations.py'."
+```
+
 ## 5. Creating a New Plugin
 
 The architecture is designed to be extensible through plugins.
