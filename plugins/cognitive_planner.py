@@ -1,5 +1,6 @@
 import logging
 import json
+import re
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
@@ -56,7 +57,9 @@ class Planner(BasePlugin):
                         available_tools.append(tool_string)
 
         tool_list_str = "\n".join(available_tools)
-        tool_description = self.prompt_template.format(tool_list=tool_list_str)
+        tool_description = self.prompt_template.format(
+            tool_list=tool_list_str, user_input=context.user_input
+        )
 
         planner_tool = [
             {
@@ -96,59 +99,26 @@ class Planner(BasePlugin):
             history=[{"role": "user", "content": prompt}],
         )
 
-        planned_context = await self.llm_tool.execute(
-            planning_context, tools=planner_tool, tool_choice="auto"  # Use auto for flexibility
-        )
+        planning_context.payload["tools"] = planner_tool
+        planning_context.payload["tool_choice"] = "auto"
+
+        planned_context = await self.llm_tool.execute(context=planning_context)
         llm_message = planned_context.payload.get("llm_response")
         logger.info(f"Raw LLM response received in planner: {llm_message}")
 
         try:
-            # Gracefully handle cases where there's no response or no tool calls
-            if (
-                not llm_message
-                or not hasattr(llm_message, "tool_calls")
-                or not llm_message.tool_calls
-            ):
-                logger.warning("No tool calls received from LLM, creating empty plan.")
+            # --- Robust JSON Extraction ---
+            # Extract JSON array from the response, even if it's embedded in text
+            json_match = re.search(r'\[.*\]', str(llm_message.content), re.DOTALL)
+            if not json_match:
+                logger.warning("No JSON array found in LLM response, creating empty plan.")
                 context.payload["plan"] = []
                 return context
 
-            tool_calls = llm_message.tool_calls
-            plan = []
+            plan_str = json_match.group(0)
+            plan_data = json.loads(plan_str)
 
-            # Scenario 1: Smart model returned a direct list of tool calls
-            if len(tool_calls) > 1 or tool_calls[0].function.name != "create_plan":
-                logger.info("Parsing direct tool calls from a smart model.")
-                for call in tool_calls:
-                    tool_name, method_name = call.function.name.split(".", 1)
-                    # Handle cases where arguments might be an empty string or None
-                    arguments_str = call.function.arguments or "{}"
-                    try:
-                        arguments = json.loads(arguments_str)
-                    except json.JSONDecodeError:
-                        logger.warning(
-                            f"Could not decode arguments for {call.function.name}: {arguments_str}"
-                        )
-                        arguments = {}  # Default to empty dict on error
-
-                    plan.append(
-                        {
-                            "tool_name": tool_name,
-                            "method_name": method_name,
-                            "arguments": arguments,
-                        }
-                    )
-                logger.info(f"Generated plan with {len(plan)} steps directly from tool calls.")
-
-            # Scenario 2: Older model returned everything wrapped in 'create_plan'
-            elif tool_calls[0].function.name == "create_plan":
-                logger.info("Parsing 'create_plan' function call from a legacy model.")
-                plan_str = tool_calls[0].function.arguments
-                plan_data = json.loads(plan_str)
-                plan = plan_data.get("plan", [])
-                logger.info(f"Generated plan with {len(plan)} steps via function call.")
-
-            context.payload["plan"] = plan
+            context.payload["plan"] = plan_data
 
         except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
             logger.error(

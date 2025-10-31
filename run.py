@@ -20,8 +20,8 @@ def check_venv():
 
 async def main():
     """The main entry point of the application."""
-    load_dotenv()
     check_venv()
+    load_dotenv()
     print("Starting Sophia's kernel...")
     kernel = Kernel()
     await kernel.initialize()
