@@ -210,8 +210,6 @@ async def test_planner_handles_malformed_json_in_arguments(planner):
     result_context = await planner.execute(context)
 
     # Assert
-    # The planner should still create a step, but the arguments will be empty
-    expected_plan = [
-        {"tool_name": "tool_file_system", "method_name": "write_file", "arguments": {}}
-    ]
+    # With the new robust parsing, malformed JSON should result in an empty plan.
+    expected_plan = []
     assert result_context.payload["plan"] == expected_plan
