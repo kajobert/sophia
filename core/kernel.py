@@ -479,7 +479,7 @@ class Kernel:
                                 "No plan generated, attempting direct LLM response.",
                                 extra={"plugin_name": "Kernel"},
                             )
-                            context = await llm_tool.execute(context)
+                            context = await llm_tool.execute(context=context)
                             execution_summary = context.payload.get(
                                 "llm_response", "Input received, no plan formed."
                             )
