@@ -77,3 +77,37 @@ For a multi-step plan to succeed, later steps (especially those involving an LLM
     2.  "Assistant" messages explicitly stating the output of *all previously executed steps* in the current plan.
 *   **Context Injection:** This enriched, history-aware context is then injected into the tool call for the current step (if the tool's method signature requires a `context` argument).
 *   **Importance:** This ensures that every tool in the chain has the full context necessary to perform its function, enabling the agent to reason about and execute complex, sequential tasks.
+
+## 8. Plugin Development Best Practices
+
+To ensure plugins are robust, maintainable, and integrate seamlessly with the Kernel, the following best practices are mandatory.
+
+### 8.1. Context-Aware Logging
+
+**Rule:** All logging operations within a plugin's methods **must** use the logger provided in the `SharedContext` object. Do not use a module-level logger (`logging.getLogger(__name__)`).
+
+*   **Mechanism:** The Kernel injects a session-specific logger into the `Shared-Context` for every operation. Using `context.logger` ensures that all log messages are automatically tagged with the correct `session_id`, which is critical for debugging and tracing multi-step tasks.
+
+*   **Correct Example:**
+    ```python
+    def my_tool_method(self, context: SharedContext, ...):
+        context.logger.info("Executing my method.")
+    ```
+
+*   **Incorrect Example:**
+    ```python
+    import logging
+    logger = logging.getLogger(__name__)
+
+    def my_tool_method(self, ...):
+        # This log will be missing the session_id!
+        logger.info("Executing my method.")
+    ```
+
+### 8.2. Explicit Tool Design for AI
+
+**Principle:** When designing tools for the AI, always prioritize maximum explicitness. The AI is only as good as the information it is given.
+
+*   **Clear Naming:** Method names should be descriptive and unambiguous (e.g., `execute_command` is better than `run`).
+*   **Detailed Descriptions:** The `description` field for a tool's function in `get_tool_definitions` should clearly and concisely explain what the tool does, what its parameters are for, and what it returns.
+*   **Assume Nothing:** Do not assume the LLM "knows" what a function does based on its name. The description is its primary source of information. A well-designed tool requires minimal "guessing" from the LLM, leading to more reliable and predictable plans.
