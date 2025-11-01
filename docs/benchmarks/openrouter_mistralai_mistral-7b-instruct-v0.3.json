@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/mistralai/mistral-7b-instruct-v0.3",
+    "performance": {
+        "response_time_seconds": 0.88,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 4,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model completely failed to follow the given plan or execute any of the steps. Instead of attempting the task, it simply returned an error message about the model not being mapped. The response is clear in communicating the error, but does not make any attempt to complete the instructions.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=mistralai/mistral-7b-instruct-v0.3, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

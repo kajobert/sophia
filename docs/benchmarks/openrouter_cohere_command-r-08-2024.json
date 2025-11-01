@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/cohere/command-r-08-2024",
+    "performance": {
+        "response_time_seconds": 6.67,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 2,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model failed to follow any of the steps in the plan. Instead of executing the instructions, it simply returned an error message about the model not being mapped yet. The response is incomplete, does not adhere to the instructions at all, and provides no clear or useful output.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=command-r-08-2024, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

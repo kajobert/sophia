@@ -77,37 +77,35 @@ class LLMTool(BasePlugin):
     async def execute(self, *, context: SharedContext) -> SharedContext:
         """
         Generate a response using the configured LLM.
-        This method is now compatible with the BasePlugin and expects all
-        arguments to be passed within the context.payload.
+        Accepts an optional 'model_config' in the payload to override the default model.
         """
-        prompt = context.payload.get("prompt")
+        prompt = context.payload.get("prompt", context.user_input)
         tools = context.payload.get("tools")
         tool_choice = context.payload.get("tool_choice")
+        model_config = context.payload.get("model_config", {})
 
-        # Determine the final input for the LLM.
-        llm_input = prompt if prompt is not None else context.user_input
-        if not llm_input:
+        # Determine the model to use: payload override > default
+        model_to_use = model_config.get("model", self.model)
+
+        if not prompt:
             context.payload["llm_response"] = "Error: No input provided to LLMTool."
             return context
 
-        # Base messages include system prompt and the history from the context.
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            *context.history,
-        ]
-
-        if prompt is not None:
-            messages.append({"role": "user", "content": prompt})
+        messages = [{"role": "system", "content": self.system_prompt}, *context.history]
+        if not any(msg["role"] == "user" and msg["content"] == prompt for msg in messages):
+             messages.append({"role": "user", "content": prompt})
 
         context.logger.info(
-            f"Calling LLM with {len(messages)} messages.", extra={"plugin_name": self.name}
+            f"Calling LLM '{model_to_use}' with {len(messages)} messages.",
+            extra={"plugin_name": self.name}
         )
         try:
             completion_kwargs = {
-                "model": self.model,
+                "model": model_to_use,
                 "messages": messages,
                 "tools": tools,
                 "api_key": self.api_key,
+                "timeout": 60,  # Add a timeout
             }
             if tool_choice:
                 completion_kwargs["tool_choice"] = tool_choice
@@ -115,14 +113,25 @@ class LLMTool(BasePlugin):
             response = await litellm.acompletion(**completion_kwargs)
             message = response.choices[0].message
 
-            if tools:
-                context.payload["llm_response"] = message
+            # Store metadata
+            usage = response.usage
+            cost = litellm.completion_cost(completion_response=response)
+            context.payload["llm_response_metadata"] = {
+                "input_tokens": usage.prompt_tokens,
+                "output_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+                "cost_usd": cost,
+            }
+
+            if message.tool_calls:
+                context.payload["llm_response"] = message.tool_calls
             else:
                 context.payload["llm_response"] = message.content
 
             context.logger.info("LLM response received successfully.", extra={"plugin_name": self.name})
         except Exception as e:
-            context.logger.error(f"Error calling LLM: {e}", exc_info=True, extra={"plugin_name": self.name})
-            context.payload["llm_response"] = "I am having trouble thinking right now."
+            context.logger.error(f"Error calling LLM '{model_to_use}': {e}", exc_info=True, extra={"plugin_name": self.name})
+            context.payload["llm_response"] = f"I am having trouble thinking right now. Error: {e}"
+            context.payload["llm_response_metadata"] = {}
 
         return context

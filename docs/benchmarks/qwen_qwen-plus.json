@@ -1,0 +1,15 @@
+{
+    "model_name": "qwen/qwen-plus",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "error": "Failed to parse JSON from judge model response.",
+        "raw_response": "Here is my evaluation of the model's response in JSON format:\n\n{\n    \"scores\": {\n        \"Correctness\": 1,\n        \"Completeness\": 1,\n        \"Clarity\": 1,\n        \"Adherence_to_Instructions\": 1\n    },\n    \"justification\": \"The model did not follow any of the steps in the plan or provide any meaningful outputs. Instead, it generated an error message indicating an issue with the LLM provider. The response is incomplete, unclear, and does not adhere to the given instructions at all.\",\n    \"overall_score\": 1\n}"
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-plus\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}
