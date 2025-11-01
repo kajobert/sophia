@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/mistralai/mixtral-8x7b-instruct",
+    "performance": {
+        "response_time_seconds": 4.87,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the steps in the plan. Instead of executing the instructions, it returned an error message about the model not being mapped yet. The response is incomplete, does not adhere to the instructions at all, and provides no clear or relevant output.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=mistralai/mixtral-8x7b-instruct, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

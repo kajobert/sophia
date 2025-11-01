@@ -1,0 +1,21 @@
+{
+    "model_name": "mistralai/mistral-large",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 2,
+            "Adherence_to_Instructions": 2
+        },
+        "justification": "The model failed to execute any of the requested steps in the plan. Instead of following the instructions, it returned an error message about a bad LLM provider request. The response is incomplete, does not adhere to the plan at all, and the error message, while related to the task, does not provide a clear explanation for the failure.",
+        "overall_score": 1.5
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-large\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}
