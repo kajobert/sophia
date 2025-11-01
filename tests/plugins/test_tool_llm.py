@@ -62,6 +62,5 @@ async def test_llm_tool_execute_with_config(temp_config_file):
                 {"role": "user", "content": "Hello"},
             ],
             tools=None,
-            api_key=test_api_key,
         )
         assert result_context.payload["llm_response"] == "Hi there!"
