@@ -1,5 +1,39 @@
 # IDEAS
 
+## Architecture: Strategic Model Orchestrator
+
+**Vision:**
+To give Sophia the ability to dynamically and intelligently select the best LLM model for a given task, optimizing for both cost and performance. This moves beyond a static model choice towards a self-optimizing system.
+
+**Technical procedure:**
+
+1.  **Model Strategy Configuration:** Create a `config/model_strategy.yaml` file that defines which models to use for different types of tasks (e.g., simple summarization, code analysis, creative writing).
+2.  **Cognitive Task Router:** Implement a new cognitive plugin (`cognitive_task_router.py`) that runs before the `CognitivePlanner`. Its sole responsibility is to classify the user's request into a task type and select the appropriate model from the strategy configuration.
+3.  **Self-Optimization Loop (During "Sleep"):**
+    *   Sophia will periodically analyze data from the `Model Evaluator` benchmark database.
+    *   Her goal will be to identify more optimal models (better price/performance) for specific task types.
+    *   Based on this analysis, she will be able to propose and automatically update the `config/model_strategy.yaml` file, thus improving her own efficiency over time.
+4.  **Feedback Integration:** The system will log failed LLM responses. During self-optimization, Sophia will analyze these failures to identify underperforming models for certain tasks and adjust the strategy accordingly.
+
+---
+
+## Tool: Model Evaluator
+
+**Vision:**
+To create a systematic, data-driven way to benchmark and evaluate LLM models available via OpenRouter. This tool will provide the objective data needed for the `Strategic Model Orchestrator` to make intelligent decisions.
+
+**Technical procedure:**
+
+1.  **Implement `tool_model_evaluator.py`:** A new tool plugin with methods for evaluating models.
+2.  **`evaluate_model` Function:** This core function will:
+    *   Accept a `model_name`, `prompt`, and `evaluation_criteria`.
+    *   **Measure Performance:** Record response time, token usage, and calculate the exact cost using OpenRouter's API.
+    *   **Evaluate Quality:** Use a powerful "judge" model (e.g., Claude 3 Opus) to score the test model's response against the given criteria on a scale of 1-10.
+    *   **Return Structured JSON:** Output a detailed JSON object containing all performance metrics and quality scores, ready for storage and analysis.
+3.  **Benchmark Suite:** The tool will be used to run comprehensive benchmarks (like our 8-step test) across a range of models, creating a rich database of results in `docs/benchmarks/`.
+
+---
+
 ## Robust Tool-Calling using "Validation & Repair Loop" instead of Finetuning
 
 **Problem:**
