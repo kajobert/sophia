@@ -29,7 +29,7 @@ class GitTool(BasePlugin):
         """Initializes the Git repository object."""
         try:
             # Assumes the script is run from the root of the repository
-            self.repo = Repo(".")
+            self.repo = Repo(".", search_parent_directories=True)
             import logging
             logging.info("Git tool initialized for the current repository.")
         except Exception as e:
@@ -56,11 +56,17 @@ class GitTool(BasePlugin):
         return self.repo.git.diff()
 
     def get_current_branch(self, context: SharedContext) -> str:
-        """Returns the name of the active branch."""
-        context.logger.info("Getting current git branch.")
+        """
+        Returns the name of the active branch or the commit hash if in a detached HEAD state.
+        """
+        context.logger.info("Getting current git branch or commit hash.")
         if not self.repo:
             return "Error: Git repository not initialized."
-        return self.repo.active_branch.name
+        try:
+            return self.repo.active_branch.name
+        except TypeError:
+            # This occurs in a detached HEAD state
+            return self.repo.head.commit.hexsha
 
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         """Gets the definitions of the tools provided by this plugin."""
@@ -85,7 +91,7 @@ class GitTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "get_current_branch",
-                    "description": "Returns the name of the active branch.",
+                    "description": "Returns the name of the active branch or the commit hash if in a detached HEAD state.",
                     "parameters": {"type": "object", "properties": {}},
                 },
             },
