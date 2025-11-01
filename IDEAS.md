@@ -32,6 +32,21 @@ To create a systematic, data-driven way to benchmark and evaluate LLM models ava
     *   **Return Structured JSON:** Output a detailed JSON object containing all performance metrics and quality scores, ready for storage and analysis.
 3.  **Benchmark Suite:** The tool will be used to run comprehensive benchmarks (like our 8-step test) across a range of models, creating a rich database of results in `docs/benchmarks/`.
 
+**Initial Implementation Roadmap:**
+
+1.  **Phase 1: Tool Implementation & Data Gathering:**
+    *   Implement the `tool_model_evaluator.py` plugin as specified above.
+    *   Create a helper script to query the OpenRouter API for a list of all available models and their pricing.
+2.  **Phase 2: Initial Benchmark Execution:**
+    *   **Model Selection:**
+        *   Select the **20 most promising models** with a price under **$0.50 / 1M tokens**.
+        *   Select **3 high-performance reference models** with a price under **$2.00 / 1M tokens**.
+    *   **Execution:** Run the standard 8-step project benchmark on all selected models.
+    *   **Budget Control:** The total cost for this initial benchmark must not exceed **$3.00**. Cost estimates must be performed after the first few runs to ensure compliance.
+3.  **Phase 3: Analysis and Reporting:**
+    *   Process the structured JSON outputs from the benchmark.
+    *   Create a summary report in `docs/benchmarks/` with leaderboards for models in different price categories ($0.1, $0.2, $0.3, $0.4, $0.5), focusing on the price/performance ratio.
+
 ---
 
 ## Robust Tool-Calling using "Validation & Repair Loop" instead of Finetuning
