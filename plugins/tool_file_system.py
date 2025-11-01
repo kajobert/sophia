@@ -43,6 +43,15 @@ class WriteFileArgs(BaseModel):
     content: str = Field(..., description="The content to write to the file.")
 
 
+class AppendToFileArgs(BaseModel):
+    """Pydantic model for arguments of the append_to_file tool."""
+
+    path: str = Field(
+        ..., description="The path to the file to append to, relative to the sandbox root."
+    )
+    content: str = Field(..., description="The content to append to the file.")
+
+
 class DeleteFileArgs(BaseModel):
     """Pydantic model for arguments of the delete_file tool."""
 
@@ -169,6 +178,25 @@ class FileSystemTool(BasePlugin):
         safe_path.write_text(content, encoding="utf-8")
         return f"Successfully wrote {len(content)} bytes to {path}"
 
+    def append_to_file(self, context: SharedContext, path: str, content: str) -> str:
+        """
+        Appends content to a file within the sandbox.
+
+        Args:
+            context: The shared context for the session, providing the logger.
+            path: The path to the file to append to, relative to the sandbox root.
+            content: The content to append to the file.
+
+        Returns:
+            A success message.
+        """
+        safe_path = self._get_safe_path(path)
+        context.logger.info("Appending to file: %s", safe_path)
+        safe_path.parent.mkdir(parents=True, exist_ok=True)
+        with safe_path.open("a", encoding="utf-8") as f:
+            f.write(content)
+        return f"Successfully appended {len(content)} bytes to {path}"
+
     def delete_file(self, context: SharedContext, path: str) -> str:
         """
         Deletes a file within the sandbox.
@@ -236,8 +264,16 @@ class FileSystemTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "write_file",
-                    "description": "Writes content to a file within the sandbox.",
+                    "description": "Writes content to a file within the sandbox, overwriting it if it exists.",
                     "parameters": WriteFileArgs.model_json_schema(),
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "append_to_file",
+                    "description": "Appends content to the end of a file within the sandbox.",
+                    "parameters": AppendToFileArgs.model_json_schema(),
                 },
             },
             {
