@@ -1,26 +1,21 @@
+import asyncio
 import logging
 import logging.handlers
 import sys
-import asyncio
+
 from pythonjsonlogger import jsonlogger
 
-
-class SessionIdFilter(logging.Filter):
-    """A filter to inject the session_id into log records."""
-
-    def __init__(self, session_id):
-        super().__init__()
-        self.session_id = session_id
-
-    def filter(self, record):
-        record.session_id = self.session_id
-        return True
+from core.logging_filter import SessionIdFilter
 
 
 def setup_logging(log_queue: "asyncio.Queue"):
     """Configures the root logger for the application."""
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
+
+    # Add the global filter to all handlers
+    session_id_filter = SessionIdFilter()
+    root_logger.addFilter(session_id_filter)
 
     # Console handler (for human readability)
     console_handler = logging.StreamHandler(sys.stdout)

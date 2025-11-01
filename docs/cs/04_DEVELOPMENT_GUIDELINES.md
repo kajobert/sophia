@@ -77,3 +77,37 @@ Aby byl vícekrokový plán úspěšný, musí mít pozdější kroky (zejména 
     2.  Zprávy od "asistenta", které explicitně uvádějí výstup *všech předchozích provedených kroků* v aktuálním plánu.
 *   **Vkládání kontextu:** Tento obohacený kontext s historií je poté vložen do volání nástroje pro aktuální krok (pokud signatura metody nástroje vyžaduje argument `context`).
 *   **Důležitost:** Tím je zajištěno, že každý nástroj v řetězci má plný kontext nezbytný k provedení své funkce, což umožňuje agentovi uvažovat o a provádět komplexní, sekvenční úkoly.
+
+## 8. Osvědčené postupy pro vývoj pluginů
+
+Aby bylo zajištěno, že pluginy jsou robustní, udržovatelné a bezproblémově se integrují s Kernelem, jsou následující osvědčené postupy povinné.
+
+### 8.1. Logování s ohledem na kontext
+
+**Pravidlo:** Všechny logovací operace v rámci metod pluginu **musí** používat logger poskytovaný v objektu `SharedContext`. Nepoužívejte logger na úrovni modulu (`logging.getLogger(__name__)`).
+
+*   **Mechanismus:** Kernel vkládá do `SharedContext` pro každou operaci logger specifický pro danou relaci. Použití `context.logger` zajišťuje, že všechny logovací zprávy jsou automaticky označeny správným `session_id`, což je klíčové pro ladění a sledování vícekrokových úkolů.
+
+*   **Správný příklad:**
+    ```python
+    def my_tool_method(self, context: SharedContext, ...):
+        context.logger.info("Provádím svou metodu.")
+    ```
+
+*   **Nesprávný příklad:**
+    ```python
+    import logging
+    logger = logging.getLogger(__name__)
+
+    def my_tool_method(self, ...):
+        # Tomuto logu bude chybět session_id!
+        logger.info("Provádím svou metodu.")
+    ```
+
+### 8.2. Explicitní návrh nástrojů pro AI
+
+**Princip:** Při navrhování nástrojů pro AI vždy upřednostňujte maximální explicitnost. AI je jen tak dobrá, jaké informace dostane.
+
+*   **Jasné pojmenování:** Názvy metod by měly být popisné a jednoznačné (např. `execute_command` je lepší než `run`).
+*   **Detailní popisy:** Pole `description` pro funkci nástroje v `get_tool_definitions` by mělo jasně a stručně vysvětlovat, co nástroj dělá, k čemu slouží jeho parametry a co vrací.
+*   **Nic nepředpokládejte:** Nepředpokládejte, že LLM "ví", co funkce dělá, jen na základě jejího názvu. Popis je jeho primárním zdrojem informací. Dobře navržený nástroj vyžaduje od LLM minimální "hádání", což vede ke spolehlivějším a předvídatelnějším plánům.

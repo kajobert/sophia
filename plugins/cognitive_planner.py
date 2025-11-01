@@ -47,16 +47,23 @@ class Planner(BasePlugin):
             return context
 
         # --- Dynamically discover available tools ---
-        available_tools = []
+        tool_definitions = {}
         for plugin in self.plugins.values():
             if hasattr(plugin, "get_tool_definitions"):
                 for tool_def in plugin.get_tool_definitions():
                     func = tool_def.get("function", {})
                     if "name" in func and "description" in func:
-                        tool_string = f"- {plugin.name}.{func['name']}: {func['description']}"
-                        available_tools.append(tool_string)
+                        if plugin.name not in tool_definitions:
+                            tool_definitions[plugin.name] = []
+                        tool_definitions[plugin.name].append(
+                            f"  - Method: {func['name']}\n    Description: {func['description']}"
+                        )
 
-        tool_list_str = "\n".join(available_tools)
+        tool_list_str = ""
+        for tool_name, methods in tool_definitions.items():
+            tool_list_str += f"- Tool: {tool_name}\n"
+            tool_list_str += "\n".join(methods)
+            tool_list_str += "\n"
         tool_description = self.prompt_template.format(
             tool_list=tool_list_str, user_input=context.user_input
         )

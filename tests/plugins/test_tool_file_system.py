@@ -4,11 +4,24 @@
 import pytest
 import os
 import shutil
+import logging
+from unittest.mock import MagicMock
 from plugins.tool_file_system import FileSystemTool
+from core.context import SharedContext
 
 
 @pytest.fixture
-def fs_tool():
+def mock_context():
+    context = SharedContext(
+        session_id="test_session",
+        current_state="TESTING",
+        logger=MagicMock(spec=logging.Logger)
+    )
+    return context
+
+
+@pytest.fixture
+def fs_tool(mock_context):
     """Pytest fixture to set up and tear down a test sandbox."""
     sandbox_dir = "test_sandbox"
     # Ensure the directory is clean before the test
@@ -22,49 +35,49 @@ def fs_tool():
         shutil.rmtree(sandbox_dir)
 
 
-def test_fs_tool_write_and_read(fs_tool: FileSystemTool):
+def test_fs_tool_write_and_read(fs_tool: FileSystemTool, mock_context):
     """Tests writing to a file and then reading from it."""
     file_path = "test_dir/my_file.txt"
     content = "Hello, Sophia!"
-    write_status = fs_tool.write_file(file_path, content)
+    write_status = fs_tool.write_file(mock_context, file_path, content)
     assert "Successfully wrote" in write_status
-    read_content = fs_tool.read_file(file_path)
+    read_content = fs_tool.read_file(mock_context, file_path)
     assert read_content == content
 
 
-def test_fs_tool_list_directory(fs_tool: FileSystemTool):
+def test_fs_tool_list_directory(fs_tool: FileSystemTool, mock_context):
     """Tests listing the contents of a directory."""
-    fs_tool.write_file("file1.txt", "a")
-    fs_tool.write_file("subdir/file2.txt", "b")
-    root_contents = fs_tool.list_directory(".")
+    fs_tool.write_file(mock_context, "file1.txt", "a")
+    fs_tool.write_file(mock_context, "subdir/file2.txt", "b")
+    root_contents = fs_tool.list_directory(mock_context, ".")
     assert "file1.txt" in root_contents
     assert "subdir" in root_contents
-    subdir_contents = fs_tool.list_directory("subdir")
+    subdir_contents = fs_tool.list_directory(mock_context, "subdir")
     assert "file2.txt" in subdir_contents
 
 
-def test_fs_tool_sandbox_security(fs_tool: FileSystemTool):
+def test_fs_tool_sandbox_security(fs_tool: FileSystemTool, mock_context):
     """Tests that the tool prevents path traversal attacks."""
     # Attempt to write outside the sandbox
     with pytest.raises(PermissionError):
-        fs_tool.write_file("../outside.txt", "malicious content")
+        fs_tool.write_file(mock_context, "../outside.txt", "malicious content")
 
     # Attempt to read outside the sandbox
     with pytest.raises(PermissionError):
-        fs_tool.read_file("../../some_system_file")
+        fs_tool.read_file(mock_context, "../../some_system_file")
 
 
-def test_fs_tool_read_nonexistent_file(fs_tool: FileSystemTool):
+def test_fs_tool_read_nonexistent_file(fs_tool: FileSystemTool, mock_context):
     """Tests that reading a nonexistent file raises an error."""
     with pytest.raises(FileNotFoundError):
-        fs_tool.read_file("nonexistent.txt")
+        fs_tool.read_file(mock_context, "nonexistent.txt")
 
 
-def test_fs_tool_list_nondirectory(fs_tool: FileSystemTool):
+def test_fs_tool_list_nondirectory(fs_tool: FileSystemTool, mock_context):
     """Tests that listing a non-directory raises an error."""
-    fs_tool.write_file("a_file.txt", "content")
+    fs_tool.write_file(mock_context, "a_file.txt", "content")
     with pytest.raises(NotADirectoryError):
-        fs_tool.list_directory("a_file.txt")
+        fs_tool.list_directory(mock_context, "a_file.txt")
 
 
 def test_get_tool_definitions(fs_tool: FileSystemTool):
