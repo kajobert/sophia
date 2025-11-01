@@ -1,0 +1,21 @@
+{
+    "model_name": "microsoft/phi-3-mini-128k-instruct",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 3,
+            "Adherence_to_Instructions": 2
+        },
+        "justification": "The model did not follow any of the 8 steps in the plan. Instead, it returned an error message indicating an issue with the LLM provider. The response is incomplete as none of the requested outputs were provided. The error message has some technical jargon but is somewhat clear about the nature of the problem. However, the model did not adhere to the instructions of executing the plan step-by-step.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=microsoft/phi-3-mini-128k-instruct\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}

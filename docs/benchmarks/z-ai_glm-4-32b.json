@@ -1,0 +1,21 @@
+{
+    "model_name": "z-ai/glm-4-32b",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the steps in the plan. Instead, it returned an error message indicating a problem with the LLM provider. It did not make any attempt to complete the task as instructed.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=z-ai/glm-4-32b\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}

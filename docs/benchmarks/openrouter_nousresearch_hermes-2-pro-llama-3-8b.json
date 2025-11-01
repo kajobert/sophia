@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/nousresearch/hermes-2-pro-llama-3-8b",
+    "performance": {
+        "response_time_seconds": 13.54,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model failed to execute any of the steps in the provided plan. Instead of attempting the task, it returned an error message about the model not being mapped yet. The response completely fails to adhere to the given instructions.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=nousresearch/hermes-2-pro-llama-3-8b, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/openai/gpt-4o-mini",
+    "performance": {
+        "response_time_seconds": 7.61,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not attempt to follow any of the 8 steps in the plan. Instead, it returned an error message indicating it was not able to think or perform the task. The response completely failed to adhere to the instructions.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=gpt-4o-mini, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

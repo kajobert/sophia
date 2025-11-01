@@ -1,0 +1,21 @@
+{
+    "model_name": "deepseek/deepseek-chat",
+    "performance": {
+        "response_time_seconds": 0.64,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 3,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the 8 steps in the plan and instead returned an error message about an authentication failure. The response is incomplete since it does not provide any output for the specified steps. The error message itself is somewhat clear, but does not help complete the task.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: DeepseekException - {\"error\":{\"message\":\"Authentication Fails, Your api key: ****970e is invalid\",\"type\":\"authentication_error\",\"param\":null,\"code\":\"invalid_request_error\"}}"
+}

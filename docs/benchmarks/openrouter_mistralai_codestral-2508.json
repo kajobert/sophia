@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/mistralai/codestral-2508",
+    "performance": {
+        "response_time_seconds": 2.15,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the steps in the plan. It simply returned an error message about the model not being mapped yet, instead of attempting to execute the requested steps. The response is incomplete, lacks clarity, and does not adhere to the provided instructions at all.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=mistralai/codestral-2508, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

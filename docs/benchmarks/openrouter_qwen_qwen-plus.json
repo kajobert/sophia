@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/qwen/qwen-plus",
+    "performance": {
+        "response_time_seconds": 3.87,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 3,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model failed to follow any of the steps outlined in the plan. Instead of executing the instructions, it simply returned an error message about the model not being mapped yet. The response is incomplete, does not adhere to the instructions at all, and provides no useful output.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=qwen/qwen-plus, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

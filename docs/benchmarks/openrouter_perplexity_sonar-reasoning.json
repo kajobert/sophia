@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/perplexity/sonar-reasoning",
+    "performance": {
+        "response_time_seconds": 27.75,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 1,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the steps in the plan. Instead, it returned an error message indicating that it was unable to generate a response due to a mapping issue. The model failed to provide any meaningful output relevant to the task.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=perplexity/sonar-reasoning, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

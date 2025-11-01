@@ -1,0 +1,21 @@
+{
+    "model_name": "mistralai/mixtral-8x7b-instruct",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 2,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model failed to follow any of the steps in the plan. Instead of executing the instructions, it returned an error message about a missing LLM provider. The response is incomplete, does not adhere to the instructions at all, and the error message is somewhat unclear.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mixtral-8x7b-instruct\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}
