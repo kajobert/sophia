@@ -20,10 +20,9 @@ async def test_bash_tool_success(mock_context):
     """Tests a successful command execution."""
     tool = BashTool()
     tool.setup({})
-    return_code, stdout, stderr = await tool.execute_command(mock_context, "echo 'hello'")
-    assert return_code == 0
-    assert stdout == "hello"
-    assert stderr == ""
+    output = await tool.execute_command(mock_context, "echo 'hello'")
+    assert "STDOUT:\nhello" in output
+    assert "STDERR:" in output
     mock_context.logger.info.assert_called()
 
 
@@ -33,10 +32,8 @@ async def test_bash_tool_error(mock_context):
     tool = BashTool()
     tool.setup({})
     # 'ls' on a non-existent file should produce an error
-    return_code, stdout, stderr = await tool.execute_command(mock_context, "ls non_existent_file")
-    assert return_code != 0
-    assert stdout == ""
-    assert "No such file or directory" in stderr
+    output = await tool.execute_command(mock_context, "ls non_existent_file")
+    assert "No such file or directory" in output
     mock_context.logger.warning.assert_called()
 
 
@@ -45,8 +42,6 @@ async def test_bash_tool_timeout(mock_context):
     """Tests the timeout functionality."""
     tool = BashTool()
     tool.setup({"timeout": 1})  # Set a short timeout
-    return_code, stdout, stderr = await tool.execute_command(mock_context, "sleep 2")
-    assert return_code == -1
-    assert stdout == ""
-    assert "TimeoutError" in stderr
+    output = await tool.execute_command(mock_context, "sleep 2")
+    assert "TimeoutError" in output
     mock_context.logger.error.assert_called()

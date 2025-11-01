@@ -1,7 +1,8 @@
 import logging
 import pytest
 from unittest.mock import patch
-from core.logging_config import setup_logging, SessionIdFilter
+from core.logging_config import setup_logging
+from core.logging_filter import SessionIdFilter
 import asyncio
 
 
@@ -30,11 +31,9 @@ class TestLoggingConfig:
             "logs/sophia.log", maxBytes=10 * 1024 * 1024, backupCount=5
         )
 
-    def test_session_id_filter(self):
-        """Test that the SessionIdFilter correctly adds the session_id to log records."""
-        session_id = "test-session-123"
-        filter = SessionIdFilter(session_id)
-
+    def test_session_id_filter_adds_global_if_missing(self):
+        """Test that the SessionIdFilter adds a default 'global' session_id if it's missing."""
+        filter = SessionIdFilter()
         record = logging.LogRecord(
             name="test_logger",
             level=logging.INFO,
@@ -44,9 +43,24 @@ class TestLoggingConfig:
             args=(),
             exc_info=None,
         )
-
         result = filter.filter(record)
-
         assert result is True
         assert hasattr(record, "session_id")
-        assert record.session_id == session_id
+        assert record.session_id == "global"
+
+    def test_session_id_filter_preserves_existing_id(self):
+        """Test that the SessionIdFilter does not overwrite an existing session_id."""
+        filter = SessionIdFilter()
+        record = logging.LogRecord(
+            name="test_logger",
+            level=logging.INFO,
+            pathname="test.py",
+            lineno=10,
+            msg="Test message",
+            args=(),
+            exc_info=None,
+        )
+        record.session_id = "existing-session-123"
+        result = filter.filter(record)
+        assert result is True
+        assert record.session_id == "existing-session-123"
