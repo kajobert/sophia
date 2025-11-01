@@ -1,12 +1,9 @@
-import logging
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from git import Repo
 
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
-
-logger = logging.getLogger(__name__)
 
 
 class GitTool(BasePlugin):
@@ -33,29 +30,63 @@ class GitTool(BasePlugin):
         try:
             # Assumes the script is run from the root of the repository
             self.repo = Repo(".")
-            logger.info("Git tool initialized for the current repository.")
+            import logging
+            logging.info("Git tool initialized for the current repository.")
         except Exception as e:
-            logger.error(f"Failed to initialize Git repository: {e}", exc_info=True)
+            import logging
+            logging.error(f"Failed to initialize Git repository: {e}", exc_info=True)
             self.repo = None
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """This tool is not directly executed in the main loop."""
         return context
 
-    def get_status(self) -> str:
+    def get_status(self, context: SharedContext) -> str:
         """Returns the output of `git status`."""
+        context.logger.info("Getting git status.")
         if not self.repo:
             return "Error: Git repository not initialized."
         return self.repo.git.status()
 
-    def get_diff(self) -> str:
+    def get_diff(self, context: SharedContext) -> str:
         """Returns the output of `git diff` for staged and unstaged changes."""
+        context.logger.info("Getting git diff.")
         if not self.repo:
             return "Error: Git repository not initialized."
         return self.repo.git.diff()
 
-    def get_current_branch(self) -> str:
+    def get_current_branch(self, context: SharedContext) -> str:
         """Returns the name of the active branch."""
+        context.logger.info("Getting current git branch.")
         if not self.repo:
             return "Error: Git repository not initialized."
         return self.repo.active_branch.name
+
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        """Gets the definitions of the tools provided by this plugin."""
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_status",
+                    "description": "Returns the output of `git status`.",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_diff",
+                    "description": "Returns the output of `git diff` for staged and unstaged changes.",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_current_branch",
+                    "description": "Returns the name of the active branch.",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            },
+        ]
