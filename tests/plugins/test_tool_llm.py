@@ -49,10 +49,19 @@ async def test_llm_tool_execute_with_config(temp_config_file):
         assert llm_tool.model == "test-model"
         assert llm_tool.system_prompt == sophia_dna_prompt
 
-        mock_response = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message = MagicMock()
         mock_response.choices[0].message.content = "Hi there!"
+        mock_response.choices[0].message.tool_calls = None
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 20
+        mock_response.usage.total_tokens = 30
+        mock_response.model = "test-model"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_acompletion:
+        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_acompletion, \
+             patch("litellm.completion_cost", return_value=0.0001) as mock_completion_cost:
             result_context = await llm_tool.execute(context=context)
 
         mock_acompletion.assert_called_once_with(
@@ -62,5 +71,7 @@ async def test_llm_tool_execute_with_config(temp_config_file):
                 {"role": "user", "content": "Hello"},
             ],
             tools=None,
+            api_key=test_api_key,
+            timeout=60,
         )
         assert result_context.payload["llm_response"] == "Hi there!"
