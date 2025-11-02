@@ -13,10 +13,20 @@ Tento dokument popisuje technický návrh systému AGI Sophia se zaměřením na
 
 *   **Odpovědnost:** Orchestruje hlavní smyčku aplikace, spravuje pluginy a řídí tok dat.
 *   **Klíčové moduly:**
-    *   `main.py`: Vstupní bod aplikace.
-    *   `plugin_manager.py`: Objevuje, načítá, ověřuje a spouští pluginy.
+    *   `run.py`: Vstupní bod aplikace.
+    *   `kernel.py`: Orchestruje hlavní smyčku aplikace (`Smyčka vědomí`), spravuje stav a řídí tok dat.
+    *   `plugin_manager.py`: Objevuje, načítá a ověřuje pluginy.
     *   `context.py`: Definuje datovou strukturu `SharedContext`.
     *   `logging.py`: Konfiguruje centrální systém protokolování.
+
+#### 2.1.1. Pokročilé funkce jádra
+
+Jádro obsahuje několik pokročilých funkcí, které umožňují komplexní, více-krokové operace:
+
+*   **Validační a opravná smyčka:** Před spuštěním nástroje jádro ověří argumenty poskytnuté AI proti schématu Pydantic. Pokud ověření selže, automaticky spustí "opravnou smyčku", která použije specializovaný LLM prompt k opravě chybných argumentů.
+*   **Vkládání kontextu:** Jádro inteligentně prozkoumá signaturu metody nástroje. Pokud detekuje parametr `context`, automaticky vloží aktuální objekt `SharedContext`, čímž nástroji poskytne přístup k loggeru, ID sezení a historii konverzace.
+*   **Propagace historie:** Pro každý krok ve více-krokovém plánu jádro vytvoří nový `SharedContext` s vědomím historie. Tento kontext zahrnuje původní požadavek uživatele plus výsledky všech předchozích kroků, což zajišťuje, že AI má úplné porozumění postupu úkolu.
+*   **Strategický orchestrátor modelů:** Pro optimalizaci nákladů a výkonu používá jádro dvoufázový kognitivní proces. Před zavoláním hlavního `CognitivePlanner` analyzuje lehký `CognitiveTaskRouter` plugin požadavek uživatele. Používá rychlý a levný model k klasifikaci úkolu do předdefinované kategorie (např. `simple_query`, `plan_generation`). Na základě této klasifikace vybere nejvhodnější (např. nejlevnější nebo nejvýkonnější) model pro daný úkol ze strategie definované v `config/model_strategy.yaml`. Tím je zajištěno, že drahé, vysoce výkonné modely jsou použity pouze v případě nutnosti.
 
 ### 2.2. Pluginy (`plugins/`)
 
