@@ -135,6 +135,60 @@ Všechny pluginy musí dědit z `plugins.base_plugin.BasePlugin` a implementovat
 - `history`: Historie konverzace.
 - `payload`: Slovník, do kterého mohou pluginy ukládat a načítat data.
 
+## 6. Kognitivní Pluginy (Cognitive Plugins)
+
+Kognitivní pluginy jsou "mozkem" agenta, zodpovědné za interpretaci uživatelských požadavků a rozhodování.
+
+### 6.1. Cognitive Task Router (`cognitive_task_router`)
+- **Účel:** Fungovat jako strategický orchestrátor, který vybírá nejvhodnější LLM pro daný úkol na základě jeho složitosti. Tím se optimalizují náklady i výkon.
+- **Pracovní postup:**
+  1.  Přijme počáteční vstup od uživatele z Kernelu.
+  2.  Použije rychlý a levný LLM k zařazení vstupu do předdefinované kategorie (např. "jednoducha_otazka", "komplexni_uvazovani").
+  3.  Vyhledá nejlepší model pro danou kategorii v konfiguračním souboru strategie.
+  4.  Vloží název vybraného modelu do `payload` objektu `SharedContext`.
+- **Konfigurace (`config/model_strategy.yaml`):**
+  Chování routeru je definováno v YAML souboru. To umožňuje aktualizovat strategie bez změny kódu pluginu.
+  ```yaml
+  # Definuje model použitý pro samotný krok klasifikace
+  classification_model: "openrouter/anthropic/claude-3-haiku"
+
+  # Model, který se použije, pokud klasifikace z jakéhokoli důvodu selže
+  default_model: "openrouter/anthropic/claude-3-sonnet"
+
+  # Seznam různých strategií
+  task_strategies:
+    - name: "jednoducha_otazka"
+      description: "Pro rychlé a jednoduché otázky a odpovědi."
+      # Použijte levný a rychlý model pro jednoduché úkoly
+      model: "openrouter/anthropic/claude-3-haiku"
+    - name: "komplexni_uvazovani"
+      description: "Pro složité plánování a volání nástrojů, které vyžaduje vysoce kvalitní uvažování."
+      # Použijte výkonný model pro složité úkoly
+      model: "openrouter/anthropic/claude-3-sonnet"
+  ```
+- **Následné použití:** Plugin `LLMTool` je navržen tak, aby kontroloval `SharedContext`, zda v `payload` existuje klíč `selected_model`. Pokud ano, použije tento model pro své API volání a přepíše tak celosystémové výchozí nastavení.
+
+### 6.2. Cognitive Planner (`cognitive_planner`)
+- **Účel:** Analyzuje požadavek uživatele a dostupné nástroje k vytvoření podrobného plánu, který může Kernel vykonat.
+- **Poznámka:** Tento plugin běží *po* `CognitiveTaskRouter`, takže bude těžit z výběru modelu, který router provedl.
+
+## 7. Dostupné Nástrojové Pluginy (Tool Plugins)
+
+Tato sekce poskytuje přehled dostupných `TOOL` pluginů, které mohou kognitivní pluginy používat.
+
+### 7.1. File System Tool (`tool_file_system`)
+
+-   **Účel:** Poskytuje bezpečný, izolovaný přístup k lokálnímu souborovému systému.
+-   **Konfigurace (`config/settings.yaml`):**
+    ```yaml
+    tool_file_system:
+      sandbox_dir: "sandbox"
+    ```
+-   **Metody:**
+    -   `read_file(path: str) -> str`: Čte obsah souboru v sandboxu.
+    -   `write_file(path: str, content: str) -> str`: Zapisuje obsah do souboru v sandboxu.
+    -   `list_directory(path: str) -> List[str]`: Vypíše obsah adresáře v sandboxu.
+
 ### 5.3. Zpřístupnění funkcí jako nástrojů pro AI
 Jakýkoli plugin (bez ohledu na jeho `PluginType`) může zpřístupnit své metody, aby je AI mohla volat. Toho je dosaženo pomocí konvence "duck typing". Kernel automaticky objeví jakýkoli plugin, který implementuje metodu `get_tool_definitions`.
 
