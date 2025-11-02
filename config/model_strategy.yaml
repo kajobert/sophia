@@ -1,0 +1,11 @@
+# config/model_strategy.yaml
+task_strategies:
+  - task_type: "jednoduchy_dotaz"
+    description: "Pro rychlé, jednoduché otázky a odpovědi."
+    model: "openrouter/anthropic/claude-3-haiku"
+  - task_type: "sumarizace_textu"
+    description: "Pro sumarizaci delších textů, kde je důležitá přesnost."
+    model: "openrouter/mistralai/mistral-small"
+  - task_type: "generovani_planu"
+    description: "Pro komplexní plánování a tool-calling, vyžaduje nejvyšší kvalitu."
+    model: "openrouter/anthropic/claude-3.5-sonnet"
