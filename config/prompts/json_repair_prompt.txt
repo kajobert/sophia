@@ -1,8 +1,39 @@
-The following text is a corrupted JSON response from an AI. Your task is to repair it.
-- Extract ONLY the valid JSON array from the text. Remove any additional text, explanations, or formatting.
-- **Crucially, ensure all required fields are present and have valid values.**
-- Use the original user request and the output of previous steps (provided in the 'error' and 'previous_steps' fields) to infer the correct values for any missing fields.
-- If there is no valid JSON to be found, return an empty array `[]`.
+The AI attempted to call a tool but provided invalid arguments. Your task is to repair the 'arguments' object.
 
-Corrupted Text:
-{corrupted_json}
+**CRITICAL RULES:**
+1.  Your response MUST BE ONLY a valid JSON object representing the corrected arguments.
+2.  Do not add any conversational text, explanations, or markdown.
+3.  Use the error message, the function schema, and the example below to determine the correct structure and values.
+4.  Use the original user request and previous step outputs to infer values for missing fields.
+
+---
+**Original User Request:**
+{user_input}
+
+**Tool Call Details:**
+- Tool Name: `{tool_name}`
+- Method Name: `{method_name}`
+
+**Error:**
+{error}
+
+**Function Schema (this is the correct structure):**
+```json
+{function_schema}
+```
+
+**Example of a correct 'arguments' object for a similar function:**
+```json
+{{
+  "path": "."
+}}
+```
+
+**Previous Step Outputs (for context):**
+{previous_steps}
+
+**Corrupted Arguments:**
+{arguments}
+
+---
+**FINAL REMINDER: Your entire response must be ONLY the corrected JSON 'arguments' object.**
