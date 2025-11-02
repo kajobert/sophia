@@ -40,9 +40,9 @@ class CognitiveTaskRouter(BasePlugin):
             with open(strategy_path, "r", encoding="utf-8") as f:
                 strategy_config = yaml.safe_load(f)
             self.strategies = strategy_config.get("task_strategies", [])
-            # Set the default strategy to the one for 'generovani_planu'
+            # Set the default strategy to the one for 'plan_generation'
             for strategy in self.strategies:
-                if strategy.get("task_type") == "generovani_planu":
+                if strategy.get("task_type") == "plan_generation":
                     self.default_strategy = strategy
                     break
             if not self.default_strategy and self.strategies:
@@ -60,7 +60,7 @@ class CognitiveTaskRouter(BasePlugin):
                 extra={"plugin_name": self.name},
             )
 
-    async def execute(self, *args: Any, **kwargs: Any) -> SharedContext:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """
         Analyzes the user input and selects the best LLM for the task.
 
@@ -69,16 +69,11 @@ class CognitiveTaskRouter(BasePlugin):
         the chosen model configuration.
 
         Args:
-            *args: Positional arguments (not used).
-            **kwargs: Keyword arguments, expects 'context'.
+            context: The shared context containing the user input.
 
         Returns:
             The updated SharedContext with the selected model config.
         """
-        context = kwargs.get("context")
-        if not isinstance(context, SharedContext):
-            # This case should ideally not be reached if called from the kernel
-            raise TypeError("A valid SharedContext instance is required.")
 
         if not context.user_input:
             context.logger.warning(
