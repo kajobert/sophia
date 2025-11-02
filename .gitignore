@@ -37,3 +37,4 @@ package-lock.json
 # Sandbox directories
 sandbox/
 test_sandbox/
+backup.tar.gz
