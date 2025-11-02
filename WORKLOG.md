@@ -1,4 +1,3 @@
----
 **Mission:** #8: Implement Strategic Model Orchestrator
 **Agent:** Jules v1.2
 **Date:** 2025-11-01
