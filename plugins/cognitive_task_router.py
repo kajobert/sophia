@@ -156,3 +156,16 @@ class CognitiveTaskRouter(BasePlugin):
             [f"- {s['task_type']}: {s['description']}" for s in self.strategies]
         )
         return prompt_template.format(strategies=strategy_descriptions, user_input=user_input)
+
+    def get_model_for_task(self, task_type: str) -> str:
+        """Gets the model for a given task type."""
+        selected_strategy = next(
+            (s for s in self.strategies if s["task_type"] == task_type),
+            None,
+        )
+        if selected_strategy:
+            return selected_strategy["model"]
+        elif self.default_strategy:
+            return self.default_strategy["model"]
+        else:
+            return "openrouter/anthropic/claude-3-haiku"

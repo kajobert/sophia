@@ -65,3 +65,11 @@ Tento dokument obsahuje zásobník nápadů, požadavků na funkce a cílů pro 
 *   **Cíl:** Zlepšit schopnost systému zotavit se z chybně zformátovaných plánů generovaných LLM.
 *   **Úkoly:**
     *   **Strukturální Oprava JSON:** Rozvinout současný mechanismus opravy JSON na pokročilejší systém "Opravy Plánu". Tento systém by nejen opravoval syntaktické chyby, ale také se pokoušel opravit strukturální problémy v logice plánu (např. převedení zploštělého seznamu volání nástrojů zpět na vnořenou strukturu) opětovným dotázáním LLM s konkrétními instrukcemi pro opravu.
+
+### 4.3. Vícefázová oprava s eskalací modelu
+*   **Cíl:** Implementovat sofistikovanější opravnou smyčku, která používá různé modely na základě složitosti chyby.
+*   **Úkoly:**
+    *   Refaktorovat `Validation & Repair Loop` v `core/kernel.py` tak, aby podporovala vícefázový proces opravy.
+    *   **Pokus 1:** Použít rychlý a cenově výhodný model (např. `claude-3-haiku`) pro první pokus o opravu. To umožňuje sběr dat o schopnostech menších modelů.
+    *   **Pokus 2+:** Pokud první pokus selže, eskalovat na výkonnější, vysoce kvalitní model (např. `claude-3.5-sonnet`) pro následné pokusy, aby se maximalizovala šance na úspěšnou opravu.
+    *   Tento stupňovitý přístup optimalizuje jak náklady, tak úspěšnost, a zároveň poskytuje cenná data pro optimalizaci promptů a strategie modelů.

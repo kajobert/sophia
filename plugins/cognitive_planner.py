@@ -102,6 +102,7 @@ class Planner(BasePlugin):
             logger=context.logger,
             user_input=prompt,
             history=[{"role": "user", "content": prompt}],
+            payload=context.payload.copy(),  # Propagate payload
         )
 
         planning_context.payload["tools"] = planner_tool
@@ -112,21 +113,27 @@ class Planner(BasePlugin):
         logger.info(f"Raw LLM response received in planner: {llm_message}")
 
         try:
-            # --- Robust JSON Extraction ---
-            # The LLM response might be a raw string or an object with a .content attribute (e.g., in tests).
-            response_text = str(llm_message.content) if hasattr(llm_message, 'content') else str(llm_message)
+            # --- Robust Plan Extraction (Handles multiple response formats) ---
+            plan_data = []
+            if isinstance(llm_message, list) and hasattr(llm_message[0], 'function'):
+                # Handle direct tool_calls format (e.g., from claude-3.5-sonnet)
+                tool_call = llm_message[0]
+                if tool_call.function.name == 'create_plan':
+                    plan_str = tool_call.function.arguments
+                    plan_data = json.loads(plan_str).get("plan", [])
+            else:
+                # Handle raw string or object with .content
+                response_text = str(llm_message.content) if hasattr(llm_message, 'content') else str(llm_message)
+                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                if json_match:
+                    plan_str = json_match.group(0)
+                    plan_data = json.loads(plan_str)
 
-            # Extract JSON array from the response, even if it's embedded in text
-            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
-            if not json_match:
-                logger.warning("No JSON array found in LLM response, creating empty plan.")
+            if not plan_data:
+                logger.warning("No valid plan found in LLM response, creating empty plan.")
                 context.payload["plan"] = []
-                return context
-
-            plan_str = json_match.group(0)
-            plan_data = json.loads(plan_str)
-
-            context.payload["plan"] = plan_data
+            else:
+                context.payload["plan"] = plan_data
 
         except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
             logger.error(
