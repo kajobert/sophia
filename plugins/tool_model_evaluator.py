@@ -11,10 +11,15 @@ from plugins.tool_llm import LLMTool
 
 class EvaluateModelArgs(BaseModel):
     """Pydantic model for arguments of the evaluate_model tool."""
+
     model_name: str = Field(..., description="The name of the model to evaluate.")
     prompt: str = Field(..., description="The prompt to use for the evaluation.")
-    evaluation_criteria: List[str] = Field(..., description="A list of criteria for the judge model to evaluate the response.")
-    judge_model_name: str = Field("openrouter/anthropic/claude-3-opus", description="The name of the judge model.")
+    evaluation_criteria: List[str] = Field(
+        ..., description="A list of criteria for the judge model to evaluate the response."
+    )
+    judge_model_name: str = Field(
+        "openrouter/anthropic/claude-3-opus", description="The name of the judge model."
+    )
 
 
 class ModelEvaluatorTool(BasePlugin):
@@ -47,7 +52,14 @@ class ModelEvaluatorTool(BasePlugin):
         """This tool is not directly executed in the main loop."""
         return context
 
-    async def evaluate_model(self, context: SharedContext, model_name: str, prompt: str, evaluation_criteria: List[str], judge_model_name: str) -> Dict[str, Any]:
+    async def evaluate_model(
+        self,
+        context: SharedContext,
+        model_name: str,
+        prompt: str,
+        evaluation_criteria: List[str],
+        judge_model_name: str,
+    ) -> Dict[str, Any]:
         """
         Evaluates a given LLM model based on performance and quality metrics.
         """
@@ -66,18 +78,22 @@ class ModelEvaluatorTool(BasePlugin):
                 logger=context.logger,
                 user_input=prompt,
                 payload={"model_config": {"model": model_name}},
-                history=[]
+                history=[],
             )
             eval_context = await self.llm_tool.execute(context=llm_context)
             response_content = eval_context.payload.get("llm_response")
             response_metadata = eval_context.payload.get("llm_response_metadata", {})
         except Exception as e:
             context.logger.error(f"Error getting response from '{model_name}': {e}", exc_info=True)
-            return {"error": f"Failed to get response from model '{model_name}'.", "details": str(e)}
+            return {
+                "error": f"Failed to get response from model '{model_name}'.",
+                "details": str(e),
+            }
         end_time = time.time()
 
         # 2. Prepare for quality evaluation
-        judge_prompt = self._create_judge_prompt(prompt, response_content, evaluation_criteria)
+        response_str = str(response_content) if response_content is not None else ""
+        judge_prompt = self._create_judge_prompt(prompt, response_str, evaluation_criteria)
 
         # 3. Get evaluation from the judge model
         try:
@@ -87,14 +103,25 @@ class ModelEvaluatorTool(BasePlugin):
                 logger=context.logger,
                 user_input=judge_prompt,
                 payload={"model_config": {"model": judge_model_name}},
-                history=[]
+                history=[],
             )
             judge_context = await self.llm_tool.execute(context=judge_context)
             quality_assessment_str = judge_context.payload.get("llm_response")
-            quality_assessment = self._parse_json_from_text(quality_assessment_str)
+            if isinstance(quality_assessment_str, str):
+                quality_assessment = self._parse_json_from_text(quality_assessment_str)
+            else:
+                quality_assessment = {
+                    "error": "Judge model did not return a valid string response.",
+                    "raw_response": quality_assessment_str,
+                }
         except Exception as e:
-            context.logger.error(f"Error getting evaluation from judge model '{judge_model_name}': {e}", exc_info=True)
-            quality_assessment = {"error": "Failed to get a valid JSON response from the judge model."}
+            context.logger.error(
+                f"Error getting evaluation from judge model '{judge_model_name}': {e}",
+                exc_info=True,
+            )
+            quality_assessment = {
+                "error": "Failed to get a valid JSON response from the judge model."
+            }
 
         # 4. Compile results
         result = {
@@ -107,13 +134,15 @@ class ModelEvaluatorTool(BasePlugin):
                 "cost_usd": response_metadata.get("cost_usd", 0.0),
             },
             "quality": quality_assessment,
-            "response": response_content
+            "response": response_content,
         }
 
         context.logger.info(f"Finished evaluation for model: '{model_name}'")
         return result
 
-    def _create_judge_prompt(self, original_prompt: str, response: str, criteria: List[str]) -> str:
+    def _create_judge_prompt(
+        self, original_prompt: str, response: str, criteria: List[str]
+    ) -> str:
         criteria_str = "\n".join(f"- {c}" for c in criteria)
         return f"""
             You are a fair and impartial AI model evaluator. Your task is to assess the quality of a response generated by another AI model.
@@ -133,7 +162,9 @@ class ModelEvaluatorTool(BasePlugin):
             {criteria_str}
 
             **Instructions:**
-            Provide your evaluation in a JSON format. The JSON should contain a 'scores' object where each key is a criterion and the value is an integer score from 1 to 10. It should also include a 'justification' string field with a brief explanation of your reasoning. Finally, include an 'overall_score' from 1 to 10.
+            # fmt: off
+            Provide your evaluation in a JSON format. The JSON should contain a 'scores' object where each key is a criterion and the value is an integer score from 1 to 10. It should also include a 'justification' string field with a brief explanation of your reasoning. Finally, include an 'overall_score' from 1 to 10.  # noqa: E501
+            # fmt: on
 
             Example JSON output:
             {{
@@ -155,7 +186,10 @@ class ModelEvaluatorTool(BasePlugin):
                 text = text.split("```json")[1].split("```")[0]
             return json.loads(text.strip())
         except (json.JSONDecodeError, IndexError) as e:
-            return {"error": "Failed to parse JSON from judge model response.", "raw_response": text}
+            return {
+                "error": f"Failed to parse JSON from judge model response: {e}",
+                "raw_response": text,
+            }
 
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         """Gets the definitions of the tools provided by this plugin."""
@@ -164,7 +198,10 @@ class ModelEvaluatorTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "evaluate_model",
+                    # fmt: off
                     "description": "Evaluates a given LLM model based on performance and quality metrics.",
+                    # noqa: E501
+                    # fmt: on
                     "parameters": EvaluateModelArgs.model_json_schema(),
                 },
             }

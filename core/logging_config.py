@@ -1,40 +1,118 @@
-import asyncio
+# core/logging_config.py
 import logging
-import logging.handlers
 import sys
+from logging import Formatter, LogRecord
+from typing import Literal
 
-from pythonjsonlogger import jsonlogger
-
-from core.logging_filter import SessionIdFilter
+import colorlog
 
 
-def setup_logging(log_queue: "asyncio.Queue"):
-    """Configures the root logger for the application."""
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+class SafeFormatter(Formatter):
+    """A custom formatter that ensures 'session_id' is present in the log record."""
 
-    # Add the global filter to all handlers
-    session_id_filter = SessionIdFilter()
-    root_logger.addFilter(session_id_filter)
+    def format(self, record: LogRecord) -> str:
+        if not hasattr(record, "session_id"):
+            record.session_id = "N/A"
+        return super().format(record)
 
-    # Console handler (for human readability)
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_formatter = logging.Formatter(
-        "%(asctime)s - [%(levelname)s] - [%(session_id)s] - %(name)s: %(message)s"
-    )
-    console_handler.setFormatter(console_formatter)
 
-    # File handler (JSON format for machine readability)
-    file_handler = logging.handlers.RotatingFileHandler(
-        "logs/sophia.log", maxBytes=10 * 1024 * 1024, backupCount=5
-    )
-    file_formatter = jsonlogger.JsonFormatter(
-        "%(asctime)s %(name)s %(levelname)s %(session_id)s %(message)s"
-    )
-    file_handler.setFormatter(file_formatter)
+class SafeColorFormatter(colorlog.ColoredFormatter):
+    """A custom color formatter that ensures 'session_id' is present."""
 
-    # Queue handler (for real-time streaming)
-    # The implementation for this will be part of a future `interface_logstream` plugin.
+    def format(self, record: LogRecord) -> str:
+        if not hasattr(record, "session_id"):
+            record.session_id = "N/A"
+        return super().format(record)
 
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(file_handler)
+
+def get_logging_config(
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO",
+    log_file: str = "logs/app.log",
+) -> dict:
+    """
+    Get the logging configuration dictionary.
+
+    Args:
+        log_level: The logging level to set for the application.
+        log_file: The file path to save the logs.
+
+    Returns:
+        A dictionary with the logging configuration.
+    """
+    # Ensure log level is a valid string
+    numeric_level = getattr(logging, log_level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Invalid log level: {log_level}")
+
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "standard": {
+                "()": SafeFormatter,
+                "format": (
+                    "%(asctime)s - %(levelname)s - [%(session_id)s] - " "%(name)s - %(message)s"
+                ),
+            },
+            "colored": {
+                "()": SafeColorFormatter,
+                "format": (
+                    "%(log_color)s%(asctime)s - %(levelname)s - [%(session_id)s] - "
+                    "%(name)s - %(message)s"
+                ),
+                "log_colors": {
+                    "DEBUG": "cyan",
+                    "INFO": "green",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "bold_red",
+                },
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": log_level,
+                "formatter": "colored",
+                "stream": sys.stdout,
+            },
+            "file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "level": log_level,
+                "formatter": "standard",
+                "filename": log_file,
+                "maxBytes": 10485760,  # 10MB
+                "backupCount": 5,
+                "encoding": "utf8",
+            },
+        },
+        "root": {"handlers": ["console", "file"], "level": log_level},
+    }
+
+
+def setup_logging(
+    default_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO",
+    log_file: str = "logs/app.log",
+) -> None:
+    """
+    Set up the logging for the application.
+
+    Args:
+        default_level: The default logging level.
+        log_file: The path to the log file.
+    """
+    import logging.config
+    import os
+
+    try:
+        # Ensure the logs directory exists
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        config = get_logging_config(log_level=default_level, log_file=log_file)
+        logging.config.dictConfig(config)
+        logging.info("Logging configured successfully.")
+    except Exception as e:
+        # Fallback to basic logging if configuration fails
+        logging.basicConfig(level=logging.INFO)
+        logging.error(f"Error setting up logging from config: {e}", exc_info=True)

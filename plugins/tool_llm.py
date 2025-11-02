@@ -85,7 +85,7 @@ class LLMTool(BasePlugin):
             }
         ]
 
-    async def execute(self, *, context: SharedContext) -> SharedContext:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """
         Generate a response using the configured LLM.
         Accepts an optional 'model_config' in the payload to override the default model.
@@ -104,11 +104,11 @@ class LLMTool(BasePlugin):
 
         messages = [{"role": "system", "content": self.system_prompt}, *context.history]
         if not any(msg["role"] == "user" and msg["content"] == prompt for msg in messages):
-             messages.append({"role": "user", "content": prompt})
+            messages.append({"role": "user", "content": prompt})
 
         context.logger.info(
             f"Calling LLM '{model_to_use}' with {len(messages)} messages.",
-            extra={"plugin_name": self.name}
+            extra={"plugin_name": self.name},
         )
         try:
             completion_kwargs = {
@@ -139,9 +139,15 @@ class LLMTool(BasePlugin):
             else:
                 context.payload["llm_response"] = message.content
 
-            context.logger.info("LLM response received successfully.", extra={"plugin_name": self.name})
+            context.logger.info(
+                "LLM response received successfully.", extra={"plugin_name": self.name}
+            )
         except Exception as e:
-            context.logger.error(f"Error calling LLM '{model_to_use}': {e}", exc_info=True, extra={"plugin_name": self.name})
+            context.logger.error(
+                f"Error calling LLM '{model_to_use}': {e}",
+                exc_info=True,
+                extra={"plugin_name": self.name},
+            )
             context.payload["llm_response"] = f"I am having trouble thinking right now. Error: {e}"
             context.payload["llm_response_metadata"] = {}
 

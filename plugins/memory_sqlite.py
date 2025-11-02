@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext

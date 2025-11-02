@@ -264,7 +264,10 @@ class FileSystemTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "write_file",
-                    "description": "Writes content to a file within the sandbox, overwriting it if it exists.",
+                    "description": (
+                        "Writes content to a file within the sandbox, "
+                        "overwriting it if it exists."
+                    ),
                     "parameters": WriteFileArgs.model_json_schema(),
                 },
             },

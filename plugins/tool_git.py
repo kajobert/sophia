@@ -31,9 +31,11 @@ class GitTool(BasePlugin):
             # Assumes the script is run from the root of the repository
             self.repo = Repo(".", search_parent_directories=True)
             import logging
+
             logging.info("Git tool initialized for the current repository.")
         except Exception as e:
             import logging
+
             logging.error(f"Failed to initialize Git repository: {e}", exc_info=True)
             self.repo = None
 
@@ -94,7 +96,9 @@ class GitTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "get_diff",
-                    "description": "Returns the output of `git diff` for staged and unstaged changes.",
+                    "description": (
+                        "Returns the output of `git diff` for staged and " "unstaged changes."
+                    ),
                     "parameters": {"type": "object", "properties": {}},
                 },
             },
@@ -102,7 +106,10 @@ class GitTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "get_current_branch",
-                    "description": "Returns the name of the active branch or the commit hash if in a detached HEAD state.",
+                    "description": (
+                        "Returns the name of the active branch or the commit hash if "
+                        "in a detached HEAD state."
+                    ),
                     "parameters": {"type": "object", "properties": {}},
                 },
             },

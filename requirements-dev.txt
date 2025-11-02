@@ -76,6 +76,8 @@ click==8.3.0
     #   uvicorn
 coloredlogs==15.0.1
     # via onnxruntime
+colorlog==6.10.1
+    # via -r requirements-dev.in
 distlib==0.4.0
     # via
     #   -r requirements-dev.in
@@ -398,6 +400,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
     # via
     #   -r requirements-dev.in
+    #   -r requirements.in
     #   litellm
     #   uvicorn
 python-json-logger==4.0.0
@@ -494,6 +497,8 @@ typer==0.20.0
     # via chromadb
 types-pyyaml==6.0.12.20250915
     # via -r requirements-dev.in
+types-requests==2.32.4.20250913
+    # via -r requirements-dev.in
 typing-extensions==4.15.0
     # via
     #   -r requirements-dev.in
@@ -531,6 +536,7 @@ urllib3==2.5.0
     #   -r requirements-dev.in
     #   kubernetes
     #   requests
+    #   types-requests
 uvicorn==0.38.0
     # via
     #   -r requirements.in

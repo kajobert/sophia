@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import yaml
@@ -33,9 +32,9 @@ async def test_llm_tool_execute_with_config(temp_config_file):
             return mock_open(read_data=sophia_dna_prompt).return_value
         return mock_open(read_data="").return_value
 
-    with patch("builtins.open", side_effect=open_side_effect), \
-         patch.dict(os.environ, {"OPENROUTER_API_KEY": test_api_key}):
-
+    with patch("builtins.open", side_effect=open_side_effect), patch.dict(
+        os.environ, {"OPENROUTER_API_KEY": test_api_key}
+    ):
         llm_tool = LLMTool()
 
         context = SharedContext(
@@ -60,8 +59,9 @@ async def test_llm_tool_execute_with_config(temp_config_file):
         mock_response.usage.total_tokens = 30
         mock_response.model = "test-model"
 
-        with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response) as mock_acompletion, \
-             patch("litellm.completion_cost", return_value=0.0001) as mock_completion_cost:
+        with patch(
+            "litellm.acompletion", new_callable=AsyncMock, return_value=mock_response
+        ) as mock_acompletion, patch("litellm.completion_cost", return_value=0.0001):
             result_context = await llm_tool.execute(context=context)
 
         mock_acompletion.assert_called_once_with(

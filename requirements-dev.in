@@ -8,6 +8,8 @@ pytest
 pytest-asyncio
 ruff
 types-PyYAML
+types-requests
+colorlog
 
 # Dependencies for running tests and verification scripts
 aiofiles

@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 
+
 def fetch_openrouter_models() -> Optional[List[Dict[str, Any]]]:
     """Fetches the list of models and their pricing from the OpenRouter API."""
     try:
@@ -13,6 +14,7 @@ def fetch_openrouter_models() -> Optional[List[Dict[str, Any]]]:
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from OpenRouter API: {e}")
         return None
+
 
 def format_as_markdown(models_data: List[Dict[str, Any]]) -> str:
     """Formats the model data into a Markdown table."""
@@ -24,22 +26,23 @@ def format_as_markdown(models_data: List[Dict[str, Any]]) -> str:
 
     # Select and rename columns for clarity
     df = df[["id", "name", "pricing", "context_length"]]
-    df["cost_prompt_usd_per_1m"] = df["pricing"].apply(lambda x: float(x.get("prompt", 0)) * 1_000_000)
-    df["cost_completion_usd_per_1m"] = df["pricing"].apply(lambda x: float(x.get("completion", 0)) * 1_000_000)
+    df["cost_prompt_usd_per_1m"] = df["pricing"].apply(
+        lambda x: float(x.get("prompt", 0)) * 1_000_000
+    )
+    df["cost_completion_usd_per_1m"] = df["pricing"].apply(
+        lambda x: float(x.get("completion", 0)) * 1_000_000
+    )
 
     # Select final columns for the report
-    df_report = df[[
-        "id",
-        "name",
-        "context_length",
-        "cost_prompt_usd_per_1m",
-        "cost_completion_usd_per_1m"
-    ]]
+    # fmt: off
+    df_report = df[["id", "name", "context_length", "cost_prompt_usd_per_1m", "cost_completion_usd_per_1m"]]  # noqa: E501
+    # fmt: on
 
     # Sort by prompt cost
     df_report = df_report.sort_values(by="cost_prompt_usd_per_1m", ascending=True)
 
     return df_report.to_markdown(index=False)
+
 
 def main():
     """Main function to fetch, format, and save the model list."""
@@ -61,9 +64,12 @@ def main():
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w") as f:
             f.write("# OpenRouter Model Pricing\n\n")
-            f.write("A list of all available models on OpenRouter and their pricing, sorted by prompt cost.\n\n")
+            f.write(
+                "A list of all available models on OpenRouter and their pricing, sorted by prompt cost.\n\n"
+            )
             f.write(markdown_table)
         print("Successfully created the model list.")
+
 
 if __name__ == "__main__":
     main()

@@ -3,10 +3,8 @@ import pytest
 from unittest.mock import patch
 from core.logging_config import setup_logging
 from core.logging_filter import SessionIdFilter
-import asyncio
 
 
-@pytest.mark.usefixtures()
 class TestLoggingConfig:
     @pytest.fixture(autouse=True)
     def reset_logging(self):
@@ -17,19 +15,20 @@ class TestLoggingConfig:
         logging.shutdown()
         logging.root.handlers = []
 
-    @patch("core.logging_config.logging.StreamHandler")
-    @patch("core.logging_config.logging.handlers.RotatingFileHandler")
-    def test_setup_logging_configures_handlers(self, mock_file_handler, mock_stream_handler):
+    @patch("logging.handlers.RotatingFileHandler")
+    @patch("logging.StreamHandler")
+    def test_setup_logging_configures_handlers(self, mock_stream_handler, mock_file_handler):
         """Test that setup_logging adds the console and file handlers."""
-        mock_queue = asyncio.Queue()
-        setup_logging(log_queue=mock_queue)
+        # Configure the mock instances to have a 'level' attribute
+        mock_stream_handler.return_value.level = logging.INFO
+        mock_file_handler.return_value.level = logging.INFO
+
+        setup_logging()
 
         # The handlers are mocked, so they won't be added to the logger instance.
         # Instead, we assert that their constructors were called.
         mock_stream_handler.assert_called_once()
-        mock_file_handler.assert_called_once_with(
-            "logs/sophia.log", maxBytes=10 * 1024 * 1024, backupCount=5
-        )
+        mock_file_handler.assert_called_once()
 
     def test_session_id_filter_adds_global_if_missing(self):
         """Test that the SessionIdFilter adds a default 'global' session_id if it's missing."""

@@ -1,6 +1,6 @@
 import asyncio
 import sys
-from typing import Tuple, List, Dict, Any
+from typing import List, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,7 @@ from core.context import SharedContext
 
 class ExecuteCommandArgs(BaseModel):
     """Pydantic model for arguments of the execute_command tool."""
+
     command: str = Field(..., description="The shell command to execute.")
 
 
@@ -36,6 +37,7 @@ class BashTool(BasePlugin):
         """Configures the command execution parameters."""
         self.timeout = config.get("timeout", 30)
         import logging
+
         logging.info(f"Bash tool initialized with a timeout of {self.timeout} seconds.")
 
     async def execute(self, context: SharedContext) -> SharedContext:
@@ -57,7 +59,7 @@ class BashTool(BasePlugin):
 
         # Ensure the command runs within the correct virtual environment
         # sys.executable points to the python interpreter of the current venv
-        full_command = f'{sys.executable} -m {command}' if 'pytest' in command else command
+        full_command = f"{sys.executable} -m {command}" if "pytest" in command else command
 
         try:
             proc = await asyncio.create_subprocess_shell(
@@ -82,7 +84,9 @@ class BashTool(BasePlugin):
             return combined_output
 
         except asyncio.TimeoutError:
-            error_msg = f"TimeoutError: Command '{command}' timed out after {self.timeout} seconds."
+            error_msg = (
+                f"TimeoutError: Command '{command}' timed out after {self.timeout} seconds."
+            )
             context.logger.error(error_msg)
             return error_msg
         except Exception as e:
@@ -97,7 +101,10 @@ class BashTool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "execute_command",
-                    "description": "Executes a shell command (e.g., 'pytest', 'ls -l'). For python scripts like pytest, use 'pytest' as the command.",
+                    "description": (
+                        "Executes a shell command (e.g., 'pytest', 'ls -l'). "
+                        "For python scripts like pytest, use 'pytest' as the command."
+                    ),
                     "parameters": ExecuteCommandArgs.model_json_schema(),
                 },
             }

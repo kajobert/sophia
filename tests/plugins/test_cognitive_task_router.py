@@ -101,7 +101,10 @@ async def test_routing_fallback_on_invalid_classification(mock_file, router):
     assert "model_config" in updated_context.payload
     assert updated_context.payload["model_config"]["model"] == default_model
     context.logger.warning.assert_called_with(
-        "Could not classify task. Defaulting to high-quality model. LLM response: 'invalid_task_type'",
+        (
+            "Could not classify task. Defaulting to high-quality model. "
+            "LLM response: 'invalid_task_type'"
+        ),
         extra={"plugin_name": router.name},
     )
 

@@ -3,8 +3,15 @@ line-length = 99
 
 [tool.ruff]
 line-length = 99
+extend-ignore = ["E501"]
 
 [tool.mypy]
 [[tool.mypy.overrides]]
 module = "yaml"
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = "requests.*"
+ignore_missing_imports = true
+[[tool.mypy.overrides]]
+module = "pandas.*"
 ignore_missing_imports = true

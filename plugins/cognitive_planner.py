@@ -115,16 +115,20 @@ class Planner(BasePlugin):
         try:
             # --- Robust Plan Extraction (Handles multiple response formats) ---
             plan_data = []
-            if isinstance(llm_message, list) and hasattr(llm_message[0], 'function'):
+            if isinstance(llm_message, list) and hasattr(llm_message[0], "function"):
                 # Handle direct tool_calls format (e.g., from claude-3.5-sonnet)
                 tool_call = llm_message[0]
-                if tool_call.function.name == 'create_plan':
+                if tool_call.function.name == "create_plan":
                     plan_str = tool_call.function.arguments
                     plan_data = json.loads(plan_str).get("plan", [])
             else:
                 # Handle raw string or object with .content
-                response_text = str(llm_message.content) if hasattr(llm_message, 'content') else str(llm_message)
-                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                response_text = (
+                    str(llm_message.content)
+                    if hasattr(llm_message, "content")
+                    else str(llm_message)
+                )
+                json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
                 if json_match:
                     plan_str = json_match.group(0)
                     plan_data = json.loads(plan_str)
