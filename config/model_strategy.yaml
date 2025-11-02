@@ -9,3 +9,6 @@ task_strategies:
   - task_type: "plan_generation"
     description: "For complex planning and tool-calling, requires the highest quality."
     model: "openrouter/anthropic/claude-3.5-sonnet"
+  - task_type: "json_repair"
+    description: "For repairing corrupted JSON objects, requires high accuracy."
+    model: "openrouter/anthropic/claude-3.5-sonnet"
