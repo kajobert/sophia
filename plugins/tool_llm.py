@@ -1,7 +1,9 @@
 import os
 import yaml
+import logging
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
+from core.logging_filter import SessionIdFilter
 import litellm
 
 
@@ -38,6 +40,15 @@ class LLMTool(BasePlugin):
         except Exception as e:
             # Handle other potential errors like parsing errors
             print(f"Error loading config: {e}")
+
+        # --- Logging fix for litellm ---
+        # litellm uses the root logger, which can cause issues with structured
+        # logging if it's not configured with the session_id.
+        # This fix injects the SessionIdFilter into the root logger.
+        root_logger = logging.getLogger()
+        # Add filter only if it's not already there to prevent duplicates
+        if not any(isinstance(f, SessionIdFilter) for f in root_logger.filters):
+            root_logger.addFilter(SessionIdFilter())
 
         try:
             with open("config/prompts/sophia_dna.txt", "r") as f:
