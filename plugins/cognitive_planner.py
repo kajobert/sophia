@@ -113,8 +113,11 @@ class Planner(BasePlugin):
 
         try:
             # --- Robust JSON Extraction ---
+            # The LLM response might be a raw string or an object with a .content attribute (e.g., in tests).
+            response_text = str(llm_message.content) if hasattr(llm_message, 'content') else str(llm_message)
+
             # Extract JSON array from the response, even if it's embedded in text
-            json_match = re.search(r'\[.*\]', str(llm_message.content), re.DOTALL)
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
             if not json_match:
                 logger.warning("No JSON array found in LLM response, creating empty plan.")
                 context.payload["plan"] = []
