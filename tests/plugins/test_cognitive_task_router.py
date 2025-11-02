@@ -14,17 +14,17 @@ def mock_strategy_file():
     strategy_config = {
         "task_strategies": [
             {
-                "task_type": "jednoduchy_dotaz",
+                "task_type": "simple_query",
                 "description": "...",
                 "model": "openrouter/anthropic/claude-3-haiku",
             },
             {
-                "task_type": "sumarizace_textu",
+                "task_type": "text_summarization",
                 "description": "...",
                 "model": "openrouter/mistralai/mistral-small",
             },
             {
-                "task_type": "generovani_planu",
+                "task_type": "plan_generation",
                 "description": "...",
                 "model": "openrouter/anthropic/claude-3.5-sonnet",
             },
@@ -64,9 +64,9 @@ def create_test_context(user_input: str) -> SharedContext:
 @pytest.mark.parametrize(
     "task_type, expected_model",
     [
-        ("jednoduchy_dotaz", "openrouter/anthropic/claude-3-haiku"),
-        ("sumarizace_textu", "openrouter/mistralai/mistral-small"),
-        ("generovani_planu", "openrouter/anthropic/claude-3.5-sonnet"),
+        ("simple_query", "openrouter/anthropic/claude-3-haiku"),
+        ("text_summarization", "openrouter/mistralai/mistral-small"),
+        ("plan_generation", "openrouter/anthropic/claude-3.5-sonnet"),
     ],
 )
 async def test_successful_classification_and_routing(mock_file, router, task_type, expected_model):
@@ -123,5 +123,5 @@ async def test_routing_fallback_on_llm_error(mock_file, router):
         "Error during task routing: LLM API Error. "
         "Defaulting to high-quality model.",
         extra={"plugin_name": router.name},
-    )
+    ) # noqa: E501
     # fmt: on

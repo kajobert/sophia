@@ -6,9 +6,9 @@ import logging
 @dataclass
 class SharedContext:
     """
-    Datova sbernice a "krevni obeh" systemu.
-    Instance teto tridy se predava vsem pluginum.
-    Obsahuje veskery stav pro aktualni cyklus.
+    The data bus and "lifeblood" of the system.
+    An instance of this class is passed to all plugins.
+    It contains the entire state for the current cycle.
     """
 
     session_id: str

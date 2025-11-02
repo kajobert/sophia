@@ -26,6 +26,7 @@ The `Kernel` includes several advanced features to enable complex, multi-step op
 *   **Validation & Repair Loop:** Before executing a tool, the Kernel validates the arguments provided by the AI against a Pydantic schema. If validation fails, it automatically triggers a "repair loop," using a specialized LLM prompt to correct the faulty arguments.
 *   **Context Injection:** The Kernel intelligently inspects the signature of a tool's method. If it detects a `context` parameter, it automatically injects the current `SharedContext` object, giving the tool access to the logger, session ID, and conversation history.
 *   **History Propagation:** For each step in a multi-step plan, the Kernel creates a new, history-aware `SharedContext`. This context includes the original user request plus the results of all previous steps, ensuring the AI has a complete understanding of the task's progress.
+*   **Strategic Model Orchestrator:** To optimize for cost and performance, the Kernel uses a two-stage cognitive process. Before the main `CognitivePlanner` is called, a lightweight `CognitiveTaskRouter` plugin analyzes the user's request. It uses a fast, inexpensive model to classify the task into a predefined category (e.g., `simple_query`, `plan_generation`). Based on this classification, it selects the most appropriate (e.g., cheapest or most powerful) model for the task from a strategy defined in `config/model_strategy.yaml`. This ensures that expensive, high-performance models are used only when necessary.
 
 ### 2.2. `Plugins` (`plugins/`)
 
