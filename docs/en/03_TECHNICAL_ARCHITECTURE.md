@@ -12,9 +12,16 @@ This document outlines the technical design of the Sophia AGI system, focusing o
 ### 2.1. The `Core` (`core/`)
 
 *   **Responsibility:** Orchestrates the main application loop, manages plugins, and handles the flow of data.
+*   **The Consciousness Loop:** The `kernel.py` module contains the core logic cycle, which proceeds in a defined order:
+    1.  **Listening Phase:** An `INTERFACE` plugin waits for and receives user input.
+    2.  **Routing Phase (New):** The `CognitiveTaskRouter` plugin analyzes the input to select the most appropriate LLM model for the task.
+    3.  **Planning Phase:** A `COGNITIVE` plugin (like the `CognitivePlanner`) receives the user input and creates a step-by-step plan for a `TOOL` plugin to execute.
+    4.  **Executing Phase:** The Kernel executes the plan, calling the necessary tools and chaining their results.
+    5.  **Responding Phase:** An `INTERFACE` plugin delivers the final result back to the user.
+    6.  **Memorizing Phase:** A `MEMORY` plugin saves the interaction to long-term storage.
 *   **Key Modules:**
     *   `run.py`: The application entry point.
-    *   `kernel.py`: Orchestrates the main application loop (`Consciousness Loop`), manages state, and handles the flow of data.
+    *   `kernel.py`: Implements the `Consciousness Loop` and orchestrates the phases.
     *   `plugin_manager.py`: Discovers, loads, and validates plugins.
     *   `context.py`: Defines the `SharedContext` data structure.
     *   `logging_config.py`: Configures the central logging system.
@@ -26,7 +33,6 @@ The `Kernel` includes several advanced features to enable complex, multi-step op
 *   **Validation & Repair Loop:** Before executing a tool, the Kernel validates the arguments provided by the AI against a Pydantic schema. If validation fails, it automatically triggers a "repair loop," using a specialized LLM prompt to correct the faulty arguments.
 *   **Context Injection:** The Kernel intelligently inspects the signature of a tool's method. If it detects a `context` parameter, it automatically injects the current `SharedContext` object, giving the tool access to the logger, session ID, and conversation history.
 *   **History Propagation:** For each step in a multi-step plan, the Kernel creates a new, history-aware `SharedContext`. This context includes the original user request plus the results of all previous steps, ensuring the AI has a complete understanding of the task's progress.
-*   **Strategic Model Orchestrator:** To optimize for cost and performance, the Kernel uses a two-stage cognitive process. Before the main `CognitivePlanner` is called, a lightweight `CognitiveTaskRouter` plugin analyzes the user's request. It uses a fast, inexpensive model to classify the task into a predefined category (e.g., `simple_query`, `plan_generation`). Based on this classification, it selects the most appropriate (e.g., cheapest or most powerful) model for the task from a strategy defined in `config/model_strategy.yaml`. This ensures that expensive, high-performance models are used only when necessary.
 
 ### 2.2. `Plugins` (`plugins/`)
 
@@ -42,6 +48,13 @@ The `Kernel` includes several advanced features to enable complex, multi-step op
 *   **`BashTool`:** Allows the agent to execute shell commands within a secure, isolated environment. This is useful for running scripts, managing processes, or interacting with the operating system in a controlled manner.
 *   **`GitTool`:** Enables the agent to interact with its own source code repository. It can check the status, view diffs of changes, and get the current branch name, providing a basic level of self-awareness of its own code.
 *   **`WebSearchTool`:** Gives the agent the ability to perform Google searches to access real-time information from the internet. This is a crucial tool for research and staying up-to-date.
+
+#### 2.2.2. Cognitive Plugins
+
+Cognitive plugins are responsible for the "thinking" processes of the agent. They interpret user input, create plans, and make decisions.
+
+*   **`CognitivePlanner`:** This is the default cognitive plugin. It analyzes the user's request and the available tools to generate a step-by-step plan that the Kernel can execute.
+*   **`CognitiveTaskRouter` (Strategic Model Orchestrator):** This plugin acts as a strategic layer *before* the planner. It analyzes the user's input and classifies the task's complexity (e.g., "simple question," "complex analysis," "code generation"). Based on this classification, it dynamically selects the most appropriate and cost-effective LLM model for the job. This allows the system to use smaller, faster models for simple tasks and reserve the more powerful, expensive models for complex reasoning, optimizing both performance and operational cost.
 
 ### 2.3. `SharedContext` (`core/context.py`)
 

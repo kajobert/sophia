@@ -57,9 +57,13 @@ Tyto komponenty tvoří stabilní a neměnné jádro.
 
 ### 3.1. `Kernel` (`core/kernel.py`)
 *   **Zodpovědnost:** Hlavní orchestrátor.
-    1.  **Inicializace:** Vytvoří `PluginManager` a `SharedContext`.
-    2.  **Spuštění:** Spustí `ConsciousnessLoop`.
-    3.  **Životní Cyklus (`ConsciousnessLoop`):** Nekonečná smyčka, která řídí stavy systému (např. `LISTENING`, `THINKING`, `ACTING`). V každém kroku se dotazuje `PluginManageru` na relevantní pluginy pro daný stav a spouští je s aktuálním `SharedContext`.
+*   **Životní Cyklus (`ConsciousnessLoop`):** Modul `kernel.py` obsahuje hlavní logickou smyčku, která probíhá v definovaném pořadí:
+    1.  **Fáze Naslouchání (Listening):** `INTERFACE` plugin čeká na vstup od uživatele a přijímá ho.
+    2.  **Fáze Směrování (Routing - Nové):** Plugin `CognitiveTaskRouter` analyzuje vstup a vybírá nejvhodnější LLM model pro daný úkol.
+    3.  **Fáze Plánování (Planning):** `COGNITIVE` plugin (jako `CognitivePlanner`) přijme uživatelský vstup a vytvoří podrobný plán pro `TOOL` plugin.
+    4.  **Fáze Vykonávání (Executing):** Kernel provede plán, volá potřebné nástroje a řetězí jejich výsledky.
+    5.  **Fáze Odpovídání (Responding):** `INTERFACE` plugin doručí finální výsledek zpět uživateli.
+    6.  **Fáze Ukládání do Paměti (Memorizing):** `MEMORY` plugin uloží interakci do dlouhodobé paměti.
 
 #### 3.1.1. Pokročilé funkce Kernelu
 
@@ -106,5 +110,13 @@ Kernel obsahuje několik pokročilých funkcí, které umožňují komplexní, v
 *   **`FileSystemTool`:** Poskytuje agentovi bezpečné, izolované prostředí (sandbox) pro čtení, zápis a výpis souborů. Všechny operace jsou omezeny na určený adresář `sandbox/`, aby se zabránilo neúmyslnému přístupu k systému.
 *   **`BashTool`:** Umožňuje agentovi spouštět shellové příkazy v bezpečném, izolovaném prostředí. To je užitečné pro spouštění skriptů, správu procesů nebo kontrolovanou interakci s operačním systémem.
 *   **`GitTool`:** Umožňuje agentovi interagovat s jeho vlastním repozitářem zdrojového kódu. Může kontrolovat stav, prohlížet změny (diffs) a zjišťovat název aktuální větve, což mu dává základní úroveň povědomí o vlastním kódu.
+*   **`WebSearchTool`:** Dává agentovi schopnost provádět vyhledávání na Googlu pro přístup k informacím z internetu v reálném čase. Jedná se o klíčový nástroj pro výzkum a udržování aktuálnosti.
+
+#### 4.1.2. Kognitivní Pluginy (Cognitive Plugins)
+
+Kognitivní pluginy jsou zodpovědné za "myšlenkové" procesy agenta. Interpretují vstup uživatele, vytvářejí plány a činí rozhodnutí.
+
+*   **`CognitivePlanner`:** Toto je výchozí kognitivní plugin. Analyzuje požadavek uživatele a dostupné nástroje k vytvoření podrobného plánu, který může Kernel vykonat.
+*   **`CognitiveTaskRouter` (Strategický Orchestrátor Modelů):** Tento plugin funguje jako strategická vrstva *před* plánovačem. Analyzuje vstup uživatele a klasifikuje složitost úkolu (např. "jednoduchá otázka", "komplexní analýza", "generování kódu"). Na základě této klasifikace dynamicky vybírá nejvhodnější a nákladově nejefektivnější LLM model pro danou práci. To systému umožňuje používat menší a rychlejší modely pro jednoduché úkoly a rezervovat výkonnější a dražší modely pro složité uvažování, čímž optimalizuje jak výkon, tak provozní náklady.
 
 Tato architektura zajišťuje, že systém může růst a získávat nové schopnosti pouhým přidáním nových souborů do adresáře `plugins/`, aniž by bylo nutné zasahovat do jeho stabilního a chráněného jádra.

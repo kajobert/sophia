@@ -186,11 +186,48 @@ class FileSystemTool(BasePlugin):
 ```
 By following this convention, the Kernel's planner and execution engine will automatically be able to see, validate, and call your plugin's methods.
 
-## 6. Available Tool Plugins
+## 6. Cognitive Plugins
+
+Cognitive plugins are the "brain" of the agent, responsible for interpreting user requests and making decisions.
+
+### 6.1. Cognitive Task Router (`cognitive_task_router`)
+- **Purpose:** To act as a strategic orchestrator that selects the most appropriate LLM for a given task based on its complexity. This optimizes for both cost and performance.
+- **Workflow:**
+  1.  Receives the initial user input from the Kernel.
+  2.  Uses a fast, inexpensive LLM to classify the input into a predefined category (e.g., "simple_question", "complex_reasoning").
+  3.  Looks up the best model for that category in the strategy configuration file.
+  4.  Injects the chosen model's name into the `SharedContext` payload.
+- **Configuration (`config/model_strategy.yaml`):**
+  The router's behavior is defined in a YAML file. This allows strategies to be updated without changing the plugin's code.
+  ```yaml
+  # Defines the model used for the classification step itself
+  classification_model: "openrouter/anthropic/claude-3-haiku"
+
+  # The model to use if classification fails for any reason
+  default_model: "openrouter/anthropic/claude-3-sonnet"
+
+  # A list of different strategies
+  task_strategies:
+    - name: "simple_query"
+      description: "For fast, simple questions and answers."
+      # Use a cheap, fast model for simple tasks
+      model: "openrouter/anthropic/claude-3-haiku"
+    - name: "complex_reasoning"
+      description: "For complex planning and tool-calling that requires high-quality reasoning."
+      # Use a powerful model for complex tasks
+      model: "openrouter/anthropic/claude-3-sonnet"
+  ```
+- **Downstream Usage:** The `LLMTool` plugin is designed to check the `SharedContext` for a `selected_model` key in the payload. If present, it will use that model for its API call, overriding the system-wide default.
+
+### 6.2. Cognitive Planner (`cognitive_planner`)
+- **Purpose:** Analyzes the user's request and the available tools to generate a step-by-step plan for the Kernel to execute.
+- **Note:** This plugin runs *after* the `CognitiveTaskRouter`, so it will benefit from the model selection made by the router.
+
+## 7. Available Tool Plugins
 
 This section provides an overview of the available `TOOL` plugins that can be used by cognitive plugins.
 
-### 6.1. File System Tool (`tool_file_system`)
+### 7.1. File System Tool (`tool_file_system`)
 
 -   **Purpose:** Provides safe, sandboxed access to the local file system.
 -   **Configuration (`config/settings.yaml`):**
