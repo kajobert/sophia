@@ -12,8 +12,6 @@ from core.context import SharedContext
 from core.logging_config import SessionIdFilter, setup_logging
 from core.plugin_manager import PluginManager
 from plugins.base_plugin import PluginType
-from core.logging_config import setup_logging, SessionIdFilter
-import asyncio # ensure asyncio is imported
 
 # Get the root logger
 logger = logging.getLogger(__name__)
@@ -181,6 +179,22 @@ class Kernel:
 
                     # 2. PLANNING PHASE
                     context.current_state = "PLANNING"
+
+                    # --- Cognitive Task Routing ---
+                    router = self.all_plugins_map.get("cognitive_task_router")
+                    if router:
+                        try:
+                            context = await router.execute(context=context)
+                            context.logger.info(
+                                "Cognitive Task Router executed successfully.",
+                                extra={"plugin_name": "Kernel"},
+                            )
+                        except Exception as e:
+                            context.logger.error(
+                                f"Error executing Cognitive Task Router: {e}",
+                                extra={"plugin_name": "Kernel"},
+                            )
+
                     planner = self.all_plugins_map.get("cognitive_planner")
                     plan = []
                     if planner:

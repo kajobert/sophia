@@ -11,6 +11,9 @@ plugins:
   memory_sqlite:
     db_path: "data/sophia.db"
 
+  cognitive_task_router:
+    enabled: true
+
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
 # programmatically or they use default values.
