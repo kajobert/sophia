@@ -42,6 +42,13 @@ Jádro obsahuje několik pokročilých funkcí, které umožňují komplexní, v
 *   **`BashTool`:** Umožňuje agentovi spouštět příkazy shellu v bezpečném, izolovaném prostředí. To je užitečné pro spouštění skriptů, správu procesů nebo interakci s operačním systémem kontrolovaným způsobem.
 *   **`GitTool`:** Umožňuje agentovi interagovat s vlastním repozitářem zdrojového kódu. Může kontrolovat stav, zobrazovat rozdíly změn a získat název aktuální větve, což poskytuje základní úroveň sebeuvědomění o vlastním kódu.
 *   **`WebSearchTool`:** Dává agentovi schopnost provádět vyhledávání Google pro přístup k informacím v reálném čase z internetu. Jedná se o klíčový nástroj pro výzkum a udržování aktuálních informací.
+*   **`JulesAPITool`:** Integrace s Jules API od Google pro AI-asistované programování. Funkce zahrnují:
+    *   Vytváření a správu coding sessions
+    *   Výpis dostupných GitHub repozitářů
+    *   Monitorování průběhu sessions a aktivit
+    *   Posílání dalších instrukcí do aktivních sessions
+    *   Plná Pydantic v2 validace dat pro type safety
+    *   Bezpečná správa API klíčů přes proměnné prostředí
 
 ### 2.3. `SharedContext` (`core/context.py`)
 

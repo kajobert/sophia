@@ -48,6 +48,13 @@ The `Kernel` includes several advanced features to enable complex, multi-step op
 *   **`BashTool`:** Allows the agent to execute shell commands within a secure, isolated environment. This is useful for running scripts, managing processes, or interacting with the operating system in a controlled manner.
 *   **`GitTool`:** Enables the agent to interact with its own source code repository. It can check the status, view diffs of changes, and get the current branch name, providing a basic level of self-awareness of its own code.
 *   **`WebSearchTool`:** Gives the agent the ability to perform Google searches to access real-time information from the internet. This is a crucial tool for research and staying up-to-date.
+*   **`JulesAPITool`:** Integrates with Google's Jules API to enable AI-powered coding assistance. Features include:
+    *   Creating and managing coding sessions
+    *   Listing available GitHub repositories
+    *   Monitoring session progress and activities
+    *   Sending follow-up instructions to active sessions
+    *   Full Pydantic v2 data validation for type safety
+    *   Secure API key management via environment variables
 
 #### 2.2.2. Cognitive Plugins
 

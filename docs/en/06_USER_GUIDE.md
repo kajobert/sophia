@@ -67,6 +67,15 @@ The application requires an API key for the LLM service.
 
     The application is pre-configured to use the `openrouter/mistralai/mistral-7b-instruct` model, which is a free model available on OpenRouter.
 
+3.  **Optional: Configure Jules API (for AI-assisted coding):**
+    If you want to use the Jules API integration for AI coding assistance, you'll need a Jules API key:
+    - Create a `.env` file in the project root (this file is in `.gitignore` and won't be committed):
+      ```bash
+      echo "JULES_API_KEY=your-jules-api-key-here" >> .env
+      ```
+    - The plugin will automatically load this key from the environment.
+    - See `docs/JULES_API_SETUP.md` for detailed setup instructions.
+
 ## 3. Running the Application
 
 Sophia V2 can be run in two modes: with a terminal interface or a web-based UI.
