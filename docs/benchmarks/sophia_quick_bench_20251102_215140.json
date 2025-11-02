@@ -1,0 +1,156 @@
+{
+  "metadata": {
+    "timestamp": "2025-11-02T21:51:40.941767",
+    "model": "openrouter/deepseek/deepseek-chat",
+    "total_tests": 15,
+    "success_rate": 0.0,
+    "avg_response_time": 2.658514133333333
+  },
+  "results": {
+    "Simple Calculation": [
+      {
+        "success": false,
+        "response": null,
+        "response_time": 4.022239,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 4.91456,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 1.460156,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      }
+    ],
+    "Code Analysis": [
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.267695,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 6.094165,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.547514,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      }
+    ],
+    "Self-Awareness": [
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.500372,
+        "keyword_matches": 0,
+        "total_keywords": 4,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 1.755655,
+        "keyword_matches": 0,
+        "total_keywords": 4,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 1.233203,
+        "keyword_matches": 0,
+        "total_keywords": 4,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      }
+    ],
+    "Ethical Reasoning": [
+      {
+        "success": false,
+        "response": null,
+        "response_time": 1.282719,
+        "keyword_matches": 0,
+        "total_keywords": 5,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 3.588841,
+        "keyword_matches": 0,
+        "total_keywords": 5,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 0.635678,
+        "keyword_matches": 0,
+        "total_keywords": 5,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      }
+    ],
+    "Multi-step Problem": [
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.803177,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.095649,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      },
+      {
+        "success": false,
+        "response": null,
+        "response_time": 2.676089,
+        "keyword_matches": 0,
+        "total_keywords": 2,
+        "response_length": 0,
+        "error": "'SharedContext' object has no attribute 'ai_response'"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/mistralai/mistral-nemo",
+    "performance": {
+        "response_time_seconds": 11.2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 2,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the 8 steps in the plan, and instead returned an error message about not being mapped yet. It did not provide any of the requested outputs and completely failed to adhere to the instructions.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=mistralai/mistral-nemo, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

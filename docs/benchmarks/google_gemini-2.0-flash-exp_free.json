@@ -1,0 +1,15 @@
+{
+    "model_name": "google/gemini-2.0-flash-exp:free",
+    "performance": {
+        "response_time_seconds": 0.01,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "error": "Failed to parse JSON from judge model response.",
+        "raw_response": "Here is my evaluation of the model's response in JSON format:\n\n{\n    \"scores\": {\n        \"Correctness\": 1, \n        \"Completeness\": 1,\n        \"Clarity\": 2,\n        \"Adherence_to_Instructions\": 1\n    },\n    \"justification\": \"The model did not follow any of the steps in the plan and simply returned an error message. It appears the model requires a specific LLM provider to be passed in, which was not provided. The response is incomplete, does not adhere to the instructions at all, and while the error message is somewhat clear, it does not constitute a valid attempt at the task.\",\n    \"overall_score\": 1\n}"
+    },
+    "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemini-2.0-flash-exp:free\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+}

@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/meta-llama/llama-3.2-3b-instruct",
+    "performance": {
+        "response_time_seconds": 6.47,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 5,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the steps in the plan, and instead output an error message about the model not being mapped yet. It failed to execute the task and did not adhere to the instructions at all.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=meta-llama/llama-3.2-3b-instruct, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

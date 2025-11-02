@@ -1,21 +1,15 @@
 {
     "model_name": "openrouter/google/gemma-2-9b-it",
     "performance": {
-        "response_time_seconds": 3.79,
+        "response_time_seconds": 3.23,
         "input_tokens": 0,
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0
     },
     "quality": {
-        "scores": {
-            "Correctness": 1,
-            "Completeness": 1,
-            "Clarity": 2,
-            "Adherence_to_Instructions": 1
-        },
-        "justification": "The model failed to follow any of the steps in the plan. Instead of executing the instructions, it simply returned an error message about the model not being mapped. The response is incomplete, does not adhere to the instructions at all, and provides no useful information for the task.",
-        "overall_score": 1
+        "error": "Failed to parse JSON from judge model response.",
+        "raw_response": "Here is my evaluation of the model's response in JSON format:\n\n{\n    \"scores\": {\n        \"Correctness\": 1,\n        \"Completeness\": 1,  \n        \"Clarity\": 3,\n        \"Adherence_to_Instructions\": 3\n    },\n    \"justification\": \"The model did not follow any of the 8 steps in the plan. It simply output an error message about the model not being mapped yet. The response was incomplete, did not adhere to the instructions at all, and failed to provide the requested step-by-step output.\",\n    \"overall_score\": 1\n}"
     },
     "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=google/gemma-2-9b-it, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
 }

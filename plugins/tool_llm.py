@@ -49,6 +49,18 @@ class LLMTool(BasePlugin):
         # Add filter only if it's not already there to prevent duplicates
         if not any(isinstance(f, SessionIdFilter) for f in root_logger.filters):
             root_logger.addFilter(SessionIdFilter())
+        
+        # Configure litellm logger separately with a simple formatter to avoid session_id KeyError
+        litellm_logger = logging.getLogger("LiteLLM")
+        litellm_logger.setLevel(logging.WARNING)  # Reduce noise, only show warnings/errors
+        # Remove any handlers that might have the problematic formatter
+        litellm_logger.handlers.clear()
+        litellm_logger.propagate = False  # Don't propagate to root logger
+        # Add a simple console handler with no session_id requirement
+        console_handler = logging.StreamHandler()
+        simple_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        console_handler.setFormatter(simple_formatter)
+        litellm_logger.addHandler(console_handler)
 
         try:
             with open("config/prompts/sophia_dna.txt", "r") as f:

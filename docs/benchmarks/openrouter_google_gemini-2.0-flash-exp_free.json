@@ -1,0 +1,21 @@
+{
+    "model_name": "openrouter/google/gemini-2.0-flash-exp:free",
+    "performance": {
+        "response_time_seconds": 1.09,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0
+    },
+    "quality": {
+        "scores": {
+            "Correctness": 1,
+            "Completeness": 1,
+            "Clarity": 4,
+            "Adherence_to_Instructions": 1
+        },
+        "justification": "The model did not follow any of the 8 steps outlined in the plan. Instead of executing the instructions, it returned an error message about the model not being mapped yet. The response is incomplete as it does not provide the requested output for each step. While the error message itself is somewhat clear, it is not relevant to the task at hand.",
+        "overall_score": 1
+    },
+    "response": "I am having trouble thinking right now. Error: This model isn't mapped yet. model=google/gemini-2.0-flash-exp:free, custom_llm_provider=openrouter. Add it here - https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json."
+}

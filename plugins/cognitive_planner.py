@@ -29,13 +29,19 @@ class Planner(BasePlugin):
             with open("config/prompts/planner_prompt_template.txt", "r") as f:
                 self.prompt_template = f.read()
         except FileNotFoundError:
-            logger.error("Planner prompt template not found. The planner will not be effective.")
+            logger.error(
+                "Planner prompt template not found. The planner will not be effective.",
+                extra={"plugin_name": "cognitive_planner"}
+            )
             self.prompt_template = "Create a plan. Available tools: {tool_list}"
 
         self.plugins = config.get("plugins", {})
         self.llm_tool = self.plugins.get("tool_llm")
         if not self.llm_tool:
-            logger.error("Planner plugin requires 'tool_llm' to be available.")
+            logger.error(
+                "Planner plugin requires 'tool_llm' to be available.",
+                extra={"plugin_name": "cognitive_planner"}
+            )
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """
@@ -110,7 +116,7 @@ class Planner(BasePlugin):
 
         planned_context = await self.llm_tool.execute(context=planning_context)
         llm_message = planned_context.payload.get("llm_response")
-        logger.info(f"Raw LLM response received in planner: {llm_message}")
+        context.logger.info(f"Raw LLM response received in planner: {llm_message}", extra={"plugin_name": "cognitive_planner"})
 
         try:
             # --- Robust Plan Extraction (Handles multiple response formats) ---
@@ -130,17 +136,18 @@ class Planner(BasePlugin):
                     plan_data = json.loads(plan_str)
 
             if not plan_data:
-                logger.warning("No valid plan found in LLM response, creating empty plan.")
+                context.logger.warning("No valid plan found in LLM response, creating empty plan.", extra={"plugin_name": "cognitive_planner"})
                 context.payload["plan"] = []
             else:
                 context.payload["plan"] = plan_data
 
         except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
-            logger.error(
+            context.logger.error(
                 "Failed to decode or process plan from LLM response: %s\nResponse was: %s",
                 e,
                 llm_message,
                 exc_info=True,
+                extra={"plugin_name": "cognitive_planner"}
             )
             context.payload["plan"] = []
 

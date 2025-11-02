@@ -2,7 +2,7 @@
 
 llm:
   provider: "litellm"
-  model: "openrouter/anthropic/claude-3-haiku"
+  model: "openrouter/deepseek/deepseek-chat"  # Changed from claude-3-haiku - 44% cheaper, same 10/10 quality!
   temperature: 0.1
   max_tokens: 4096
 
@@ -13,6 +13,11 @@ plugins:
 
   cognitive_task_router:
     enabled: true
+
+  # Configuration for the Jules API plugin
+  tool_jules:
+    jules_api_key: "${JULES_API_KEY}"  # API key loaded from .env file
+    # Note: Jules API is currently in alpha. Request access at jules.google.com
 
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
