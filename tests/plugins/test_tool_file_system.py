@@ -84,10 +84,10 @@ def test_get_tool_definitions(fs_tool: FileSystemTool):
     """Tests that the tool definitions are correctly structured."""
     defs = fs_tool.get_tool_definitions()
     assert isinstance(defs, list)
-    assert len(defs) == 4
+    assert len(defs) == 5
 
     func_names = {d["function"]["name"] for d in defs}
-    assert func_names == {"list_directory", "read_file", "write_file", "delete_file"}
+    assert func_names == {"list_directory", "read_file", "write_file", "delete_file", "append_to_file"}
 
     for d in defs:
         assert d["type"] == "function"

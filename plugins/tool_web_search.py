@@ -49,24 +49,25 @@ class WebSearchTool(BasePlugin):
         """This tool is not directly executed in the main loop."""
         return context
 
-    def search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
+    def search(self, *, context: SharedContext, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
         """
         Performs a web search and returns a list of results.
 
         Args:
+            context: The shared context, providing access to the logger.
             query: The search query.
             num_results: The number of results to return.
 
         Returns:
             A list of dictionaries, where each dictionary represents a search result
-            containing 'title', 'link', and 'snippet'.
+            containing 'title', 'link', 'snippet'.
         """
         if not self.service:
-            logger.error("Web search tool is not configured.")
+            context.logger.error("Web search tool is not configured.")
             return [{"error": "Web search is not configured."}]
 
         try:
-            logger.info(f"Performing web search for: '{query}'")
+            context.logger.info(f"Performing web search for: '{query}'")
             result = self.service.cse().list(q=query, cx=self.cse_id, num=num_results).execute()
             items = result.get("items", [])
             return [
@@ -78,5 +79,5 @@ class WebSearchTool(BasePlugin):
                 for item in items
             ]
         except Exception as e:
-            logger.error(f"An error occurred during web search: {e}", exc_info=True)
+            context.logger.error(f"An error occurred during web search: {e}", exc_info=True)
             return [{"error": str(e)}]

@@ -40,7 +40,7 @@ def test_web_search_success(web_search_tool, mock_context):
     }
     # Configure the mock service to return our mock results
     web_search_tool.service.cse().list().execute.return_value = mock_results
-    results = web_search_tool.search(mock_context, "test query")
+    results = web_search_tool.search(context=mock_context, query="test query")
     assert len(results) == 1
     assert results[0]["title"] == "Test Title"
     web_search_tool.service.cse().list.assert_called_with(q="test query", cx="test_cse_id", num=5)
@@ -51,7 +51,7 @@ def test_web_search_not_configured(mock_context):
     """Tests that the tool handles being called without proper configuration."""
     tool = WebSearchTool()
     tool.setup({})  # No API key or CSE ID
-    results = tool.search(mock_context, "test query")
+    results = tool.search(context=mock_context, query="test query")
     assert len(results) == 1
     assert "not configured" in results[0].get("error", "")
     mock_context.logger.error.assert_called_with("Web search tool is not configured.")
@@ -61,7 +61,7 @@ def test_web_search_api_error(web_search_tool, mock_context):
     """Tests how the tool handles an error from the Google API."""
     # Configure the mock service to raise an exception
     web_search_tool.service.cse().list().execute.side_effect = Exception("API Error")
-    results = web_search_tool.search(mock_context, "test query")
+    results = web_search_tool.search(context=mock_context, query="test query")
     assert len(results) == 1
     assert "API Error" in results[0].get("error", "")
     mock_context.logger.error.assert_called_with("An error occurred during web search: API Error", exc_info=True)
