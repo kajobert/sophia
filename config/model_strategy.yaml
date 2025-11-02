@@ -2,10 +2,10 @@
 task_strategies:
   - task_type: "simple_query"
     description: "For fast, simple questions and answers."
-    model: "openrouter/anthropic/claude-3-haiku"
+    model: "openrouter/anthropic/claude-3.5-sonnet"
   - task_type: "text_summarization"
     description: "For summarizing longer texts where accuracy is important."
-    model: "openrouter/mistralai/mistral-small"
+    model: "openrouter/anthropic/claude-3.5-sonnet"
   - task_type: "plan_generation"
     description: "For complex planning and tool-calling, requires the highest quality."
     model: "openrouter/anthropic/claude-3.5-sonnet"

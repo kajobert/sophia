@@ -49,11 +49,22 @@ class GitTool(BasePlugin):
         return self.repo.git.status()
 
     def get_diff(self, context: SharedContext) -> str:
-        """Returns the output of `git diff` for staged and unstaged changes."""
+        """Returns the output of `git diff` for unstaged changes."""
         context.logger.info("Getting git diff.")
         if not self.repo:
             return "Error: Git repository not initialized."
-        return self.repo.git.diff()
+        # Passing None gets the diff of the working directory vs the index
+        return self.repo.git.diff(None)
+
+    def commit(self, context: SharedContext, message: str) -> str:
+        """Commits staged changes with the given message."""
+        context.logger.info(f"Committing with message: {message}")
+        if not self.repo:
+            return "Error: Git repository not initialized."
+        try:
+            return self.repo.git.commit(m=message)
+        except Exception as e:
+            return f"Error committing changes: {e}"
 
     def get_current_branch(self, context: SharedContext) -> str:
         """
@@ -93,6 +104,23 @@ class GitTool(BasePlugin):
                     "name": "get_current_branch",
                     "description": "Returns the name of the active branch or the commit hash if in a detached HEAD state.",
                     "parameters": {"type": "object", "properties": {}},
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "commit",
+                    "description": "Commits staged changes with the given message.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The commit message.",
+                            }
+                        },
+                        "required": ["message"],
+                    },
                 },
             },
         ]

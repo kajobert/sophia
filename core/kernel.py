@@ -370,11 +370,6 @@ class Kernel:
                                         corrupted_json=json.dumps(corrupted_json_data, indent=2)
                                     )
 
-                                    router = self.all_plugins_map.get("cognitive_task_router")
-                                    repair_model = "openrouter/anthropic/claude-3.5-sonnet" # Fallback
-                                    if router:
-                                        repair_model = router.get_model_for_task("json_repair")
-
                                     repair_context = await llm_tool.execute(
                                         context=SharedContext(
                                             session_id=context.session_id,
@@ -382,7 +377,6 @@ class Kernel:
                                             logger=context.logger,
                                             user_input=repair_prompt,
                                             history=[{"role": "user", "content": repair_prompt}],
-                                            payload={"model_config": {"model": repair_model}},
                                         )
                                     )
 
