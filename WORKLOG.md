@@ -1,3 +1,4 @@
+---
 **Mission:** #8: Implement Strategic Model Orchestrator
 **Agent:** Jules v1.2
 **Date:** 2025-11-01
@@ -17,6 +18,7 @@
 *   Refactored the `Kernel`'s `consciousness_loop` in `core/kernel.py` to execute the `CognitiveTaskRouter` before the `CognitivePlanner`. This ensures the selected model is available in the context before the planner begins its work.
 *   Created a comprehensive test suite in `tests/plugins/test_cognitive_task_router.py`. After an extensive debugging process that involved fixing issues with `BasePlugin` adherence, `SharedContext` usage, and `pytest` conventions, the tests now fully validate the router's logic, including its fallback mechanisms.
 *   Resolved numerous pre-commit failures from `black`, `ruff`, and `mypy`, ensuring the new code adheres to all project quality standards.
+*   **Post-Submission Refinements:** Addressed user feedback by translating all Czech strings in the configuration to English, updating the technical architecture documentation in both English and Czech, and ensuring the plugin's method signatures strictly adhere to the `BasePlugin` contract.
 
 **3. Outcome:**
 *   The mission was completed successfully. The architecture now includes a Strategic Model Orchestrator that dynamically selects the most cost-effective LLM for a given task. This is a critical step towards building a self-optimizing system and significantly improves the project's operational efficiency. The system is stable, fully tested, and documented.
