@@ -1,6 +1,14 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 04 Development Guidelines](04_DEVELOPMENT_GUIDELINES.md) | **05** → [06 User Guide](06_USER_GUIDE.md)
+
+---
+
 # Document 5: Project Governance, Automation, and Workflow
 
+**Decision-Making** | Roles & Responsibilities | Workflow Automation
+
 This document defines the processes, tools, and automation that ensure the quality, efficiency, and clarity of the Sophia V2 project development.
+
+> 🔄 **Sophia 2.0 Update:** Introduction of `master-sophia` autonomous branch for Sophia's self-directed work. See [`config/autonomy.yaml`](../../config/autonomy.yaml) for autonomous operation boundaries.
 
 ## 1. GitHub Workflow & Branching Strategy
 
@@ -62,3 +70,26 @@ To facilitate a rapid and unstructured flow of ideas from the project lead, the 
     3.  For any viable and actionable ideas, formulate a concrete, step-by-step implementation plan.
     4.  Present this plan for review and approval.
 *   **Goal:** This "human-in-the-loop" process ensures that valuable, spontaneous ideas are captured and can be systematically integrated into the formal project backlog and documentation.
+
+---
+
+## Related Documentation
+
+- 🔧 **[Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)** - Code quality standards and pre-commit hooks
+- 🧑‍💻 **[Developer Guide](07_DEVELOPER_GUIDE.md)** - Practical development workflow
+- 🎯 **[Vision & DNA](01_VISION_AND_DNA.md)** - Immutable principles guiding governance
+- ⚙️ **[Autonomy Configuration](../../config/autonomy.yaml)** - Autonomous branch strategy and HITL boundaries
+
+**Sophia 2.0 Governance:**
+- **Autonomous Branch:** `master-sophia` for Sophia's self-directed work
+- **Human Approval Required:** Core modifications, DNS changes, budget > $1/day
+- **Emergency Stop:** Manual intervention protocol defined in autonomy.yaml
+- **Audit Trail:** All autonomous actions logged in [`WORKLOG.md`](../../WORKLOG.md)
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: Development Guidelines](04_DEVELOPMENT_GUIDELINES.md) | [➡️ Next: User Guide](06_USER_GUIDE.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | Sophia 2.0 Autonomous Governance Active*

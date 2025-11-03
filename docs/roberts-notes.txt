@@ -6,6 +6,7 @@
 
 **Zobrazit stav jádra**
 * zobrazovat aktuální "stav" jádra a jeho "činnost" v "informačním řádku" jak v bash, tak ve WEB UI
+**Priorita číslo 1 po dokončení fáze contunualni smyčky s asynchronním background systémem!** stavový řádek v terminálu interaktivně jako je například v UV nebo DOCKER aby byl moderní a zobrazoval stavy a postupy, procesy atd... požítadlo spotřeby tokenů a celkové náklady, počet úkolů atd...
 
 LLM debug režim - review každého plánu / kroku
 
@@ -25,3 +26,9 @@ integrace playwright
 Zvážit možnosti integrace Jules CLI (jules.google.com)
 
 Sophia musí mít vlastní sub-větev do které bude přispívat aby nepoškodila master větev na githubu, je to z důvodu bezpečnosti. Merge do master větve musí prozatím vždy schvalovat uživatel.
+
+pro přirozenou komunikaci je potřeba co nejdříve vytořit plugin na live S2S integraci. Priorita č 2 po dokončení fáze contunualni smyčky s asynchronním background systémem
+
+
+######## **OTAZKA:** ########
+lze implementovat pokrocilejsi UI pomoci nejakych python knihoven? Mam na svem githubu rozpacovany vizualizacni skript...

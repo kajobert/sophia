@@ -1,6 +1,14 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 03 Technical Architecture](03_TECHNICAL_ARCHITECTURE.md) | **04** → [05 Project Governance](05_PROJECT_GOVERNANCE.md)
+
+---
+
 # Document 4: Development Guidelines
 
+**Mandatory Standards** | Code Quality | Contribution Workflow
+
 These guidelines are mandatory for all development to ensure code quality, consistency, and maintainability.
+
+> 🔧 **Tools:** black, ruff, mypy, pytest, pre-commit hooks (configured in `.pre-commit-config.yaml`)
 
 ## 1. Coding Style & Quality
 
@@ -111,3 +119,25 @@ To ensure plugins are robust, maintainable, and integrate seamlessly with the Ke
 *   **Clear Naming:** Method names should be descriptive and unambiguous (e.g., `execute_command` is better than `run`).
 *   **Detailed Descriptions:** The `description` field for a tool's function in `get_tool_definitions` should clearly and concisely explain what the tool does, what its parameters are for, and what it returns.
 *   **Assume Nothing:** Do not assume the LLM "knows" what a function does based on its name. The description is its primary source of information. A well-designed tool requires minimal "guessing" from the LLM, leading to more reliable and predictable plans.
+
+---
+
+## Related Documentation
+
+- ⚙️ **[Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)** - System structure and plugin model
+- 🧑‍💻 **[Developer Guide](07_DEVELOPER_GUIDE.md)** - Practical plugin development tutorial
+- 🏛️ **[Project Governance](05_PROJECT_GOVERNANCE.md)** - Decision-making and workflow
+- 🎯 **[Vision & DNA](01_VISION_AND_DNA.md)** - Philosophical principles for code
+
+**Configuration Files:**
+- [`.pre-commit-config.yaml`](../../.pre-commit-config.yaml) - Pre-commit hooks
+- [`pyproject.toml`](../../pyproject.toml) - Black, Ruff, Mypy configuration
+- [`pytest.ini`](../../pytest.ini) - Test configuration
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: Technical Architecture](03_TECHNICAL_ARCHITECTURE.md) | [➡️ Next: Governance](05_PROJECT_GOVERNANCE.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | Enforced via Pre-commit*

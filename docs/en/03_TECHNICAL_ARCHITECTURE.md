@@ -1,6 +1,14 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 02 Cognitive Architecture](02_COGNITIVE_ARCHITECTURE.md) | **03** → [04 Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)
+
+---
+
 # Document 3: Technical Architecture
 
+**Core-Plugin System** | Implementation Guide | For Developers
+
 This document outlines the technical design of the Sophia AGI system, focusing on the Core-Plugin model.
+
+> ⚙️ **Current Status:** 27 active plugins (2 interfaces, 15 tools, 7 cognitive, 2 memory, 1 core), event-driven refactor planned for Sophia 2.0
 
 ## 1. Core Philosophy: Stability and Extensibility
 
@@ -83,3 +91,33 @@ Cognitive plugins are responsible for the "thinking" processes of the agent. The
     *   `history: list`: A short-term history of the current conversation.
     *   `payload: dict`: A "cargo space" for data passed between plugins.
     *   `logger: logging.Logger`: A configured logger that automatically injects the `session_id` into all records, ensuring clear, contextual logging across all plugins.
+
+---
+
+## Related Documentation
+
+- 🧠 **[Cognitive Architecture](02_COGNITIVE_ARCHITECTURE.md)** - Theoretical foundation of this implementation
+- 🧑‍💻 **[Developer Guide](07_DEVELOPER_GUIDE.md)** - How to create plugins using this architecture
+- 📋 **[Autonomous Operations Roadmap](roadmap/04_AUTONOMOUS_OPERATIONS.md)** - Future architectural evolution
+- 🎯 **[Vision & DNA](01_VISION_AND_DNA.md)** - Why this architecture was chosen
+
+**Key Implementation Files:**
+- [`core/kernel.py`](../../core/kernel.py) - Consciousness loop (690 lines)
+- [`core/plugin_manager.py`](../../core/plugin_manager.py) - Dynamic plugin loading
+- [`core/context.py`](../../core/context.py) - SharedContext data structure
+- [`plugins/base_plugin.py`](../../plugins/base_plugin.py) - Plugin contract
+
+**Current Plugin Inventory (27 total):**
+- **Interfaces (2):** Terminal, Web UI
+- **Tools (15):** LLM, File System, Bash, Git, GitHub, Jules (API+CLI), Web Search, Tavily, Langfuse, etc.
+- **Cognitive (7):** Planner, Task Router, Historian, Doc Reader, Code Reader, Dependency Analyzer, Jules Autonomy
+- **Memory (2):** SQLite, ChromaDB
+- **Core (1):** Logging Manager
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: Cognitive](02_COGNITIVE_ARCHITECTURE.md) | [➡️ Next: Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | Sophia 2.0 Active*

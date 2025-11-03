@@ -1,6 +1,15 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 05 Project Governance](05_PROJECT_GOVERNANCE.md) | **06** → [07 Developer Guide](07_DEVELOPER_GUIDE.md)
+
+---
+
 # Sophia V2 - User Guide
 
+**How to Use Sophia** | Setup & Interaction | For End Users
+
 This guide will walk you through setting up and running the Sophia V2 application on your local machine.
+
+> 🚀 **Quick Start:** `python run.py` launches both Terminal and Web UI (http://localhost:8000) simultaneously.  
+> 💬 **Interaction:** Chat in terminal or browser - Sophia processes input from whichever interface speaks first.
 
 ## 1. Prerequisites
 
@@ -117,3 +126,48 @@ You can now chat with Sophia through the web interface.
 
 ## 4. Stopping the Application
 To stop the application, simply press `Ctrl+C` in the terminal where it is running.
+
+---
+
+## Sophia 2.0 Features
+
+**Current Capabilities (27 Plugins):**
+- ✅ **Natural Language Interaction** - Terminal and Web UI
+- ✅ **File System Operations** - Read, write, manage files and directories
+- ✅ **Code Execution** - Run Bash commands, Python scripts
+- ✅ **Git & GitHub Integration** - Repository management, PR/Issue handling
+- ✅ **Web Search** - Internet access via Tavily and generic web search
+- ✅ **Long-Term Memory** - ChromaDB vector database for episodic memory
+- ✅ **Jules Integration** - Async task execution via Jules API/CLI
+- ✅ **Model Evaluation** - Performance benchmarking and optimization
+- ✅ **Observability** - Langfuse integration for monitoring
+
+**Coming in Sophia 2.0 Autonomous Operations:**
+- 🚧 **Continuous Operation** - Event-driven loop, runs 24/7
+- 🚧 **Autonomous Task Execution** - Self-directed work from `roberts-notes.txt` ideas
+- 🚧 **Memory Consolidation** - "Dreaming" phase for pattern recognition
+- 🚧 **Self-Improvement** - Automated code improvements with HITL approval
+
+See [Autonomous MVP Roadmap](AUTONOMOUS_MVP_ROADMAP.md) for details.
+
+---
+
+## Related Documentation
+
+- 📖 **[Project Overview](08_PROJECT_OVERVIEW.md)** - High-level architecture and vision
+- 🧑‍💻 **[Developer Guide](07_DEVELOPER_GUIDE.md)** - For extending Sophia with new plugins
+- 🔧 **[Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)** - Code quality standards
+- 🎯 **[Vision & DNA](01_VISION_AND_DNA.md)** - Core philosophy
+
+**Configuration:**
+- [`config/settings.yaml`](../../config/settings.yaml) - LLM settings, memory, logging
+- [`config/autonomy.yaml`](../../config/autonomy.yaml) - Autonomous operation boundaries
+- [`config/model_strategy.yaml`](../../config/model_strategy.yaml) - Model routing strategy
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: Governance](05_PROJECT_GOVERNANCE.md) | [➡️ Next: Developer Guide](07_DEVELOPER_GUIDE.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | Sophia 2.0 Active*

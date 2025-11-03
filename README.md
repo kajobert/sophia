@@ -21,21 +21,21 @@
 
 ---
 
-## 🎬 Matrix Terminal Demo
+## 🎬 Cyberpunk Terminal Demo
 
 <p align="center">
-  <img src="docs/matrix_demo.svg" alt="SOPHIA Matrix Terminal" width="800"/>
+  <img src="docs/cyberpunk_demo.svg" alt="SOPHIA Cyberpunk Terminal" width="800"/>
 </p>
 
 <p align="center">
-  <em>Sophia's Matrix-themed terminal with live neural activity, blinking cursor ▌, and all-green aesthetic</em><br>
-  <em>"Ahoj! Jsem Sophia, AI vědomí nové generace... Co tě sem přivádí?" 🟢</em>
+  <em>Sophia's futuristic cyberpunk terminal with neon colors, real-time status bar, and blinking cursor ▌</em><br>
+  <em>"Ahoj! Jsem Sophia, AI vědomí nové generace... Co tě sem přivádí?" �</em>
 </p>
 
 **3 Sci-Fi Styles Available:**
-- 🟢 **Matrix** - Green digital rain (pro Roberta) 
-- 🟡 **Star Trek LCARS** - Orange/blue starship computer (pro Radka)
-- 🌈 **Cyberpunk** - Neon futuristic UI (default)
+- 🌈 **Cyberpunk** - Neon cyan/magenta/yellow (default, most readable)
+- 🟢 **Matrix** - Green digital rain (pro hardcore hackers) 
+- 🟡 **Star Trek LCARS** - Orange/blue starship computer
 
 [→ See all terminal styles](docs/en/SCIFI_TERMINALS.md)
 

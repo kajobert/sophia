@@ -1,0 +1,52 @@
+# Example Configuration for Local LLM
+
+# Add this to your config/settings.yaml
+
+plugins:
+  # ... existing plugins ...
+  
+  # Local LLM Plugin (Cost-free, private AI)
+  tool_local_llm:
+    enabled: true
+    local_llm:
+      # Runtime: ollama (recommended), lmstudio, llamafile
+      runtime: "ollama"
+      
+      # Base URL for local runtime
+      base_url: "http://localhost:11434"  # Ollama default
+      # base_url: "http://localhost:1234"  # LM Studio default
+      # base_url: "http://localhost:8080"  # llamafile default
+      
+      # Model to use
+      # Ollama models:
+      model: "gemma2:2b"      # Fast, 1.6GB (recommended for dev)
+      # model: "llama3.2:3b"  # Balanced, 2GB
+      # model: "phi3:mini"    # Coding, 2.3GB (Microsoft)
+      # model: "llama3.1:8b"  # Quality, 4.7GB
+      # model: "mistral:7b"   # Coding, 4.1GB
+      
+      # Generation parameters
+      timeout: 120            # Request timeout (seconds)
+      max_tokens: 2048        # Maximum output length
+      temperature: 0.7        # Randomness (0.0 = deterministic, 1.0 = creative)
+
+# Task routing strategy (optional)
+# Automatically route tasks to appropriate LLM based on complexity
+
+llm_optimization:
+  prefer_cheap_models: true
+  use_local_when_possible: true
+  
+  task_routing:
+    # Simple tasks → Local (Gemma 2 2B) - $0
+    simple_tasks: "local"
+    
+    # Medium tasks → Cheap cloud (DeepSeek) - $0.14/1M tokens
+    medium_tasks: "cheap_cloud"
+    
+    # Complex tasks → Premium (Claude Sonnet) - $3/1M tokens
+    complex_tasks: "premium_cloud"
+
+# Cost tracking
+track_all_calls: true
+log_cost_per_task: true

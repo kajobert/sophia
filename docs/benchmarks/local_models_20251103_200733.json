@@ -1,0 +1,2672 @@
+[
+  {
+    "model": "Gemma 2 2B",
+    "model_id": "openrouter/google/gemma-2-2b-it",
+    "size": "2B",
+    "ram": "4GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0403631875,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.067198,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.097381,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037015,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.042027,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.03502,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.049034,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.036704,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036619,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036789,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0327215,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.028111,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037332,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.041337,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.051216,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031458,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0328065,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032099,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033514,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.032845,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034765,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030925,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0372665,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.036884,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.037649,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.2 3B",
+    "model_id": "openrouter/meta-llama/llama-3.2-3b-instruct",
+    "size": "3B",
+    "ram": "6GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.035485875,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.034626500000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036608,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032645,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.036333000000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034326,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.03834,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0363015,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036234,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036369,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.032691,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035546,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029836,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0447855,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.050086,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039485,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.035844,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031062,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.040626,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0303695,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.02735,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033389,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.032936,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.03402,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.031852,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Phi-3 Mini",
+    "model_id": "openrouter/microsoft/phi-3-mini-128k-instruct",
+    "size": "3.8B",
+    "ram": "4GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.034821125,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.035919,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033035,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.038803,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.034124,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.028846,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039402,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0403925,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.04829,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032495,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0359205,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.040152,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031689,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.035237500000000005,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032424,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.038051,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.030295000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029047,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031543,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.029782,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029647,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029917,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0368985,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.03617,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.037627,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral 7B",
+    "model_id": "openrouter/mistralai/mistral-7b-instruct-v0.3",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0337255,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0397245,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037435,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.042014,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0347865,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035576,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033997,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033005,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033247,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032763,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.033686499999999994,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034759,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032614,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0326045,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029453,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035756,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033093,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036396,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.02979,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0326925,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031432,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033953,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0302115,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.030545,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.029878,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.1 8B",
+    "model_id": "openrouter/meta-llama/llama-3.1-8b-instruct",
+    "size": "8B",
+    "ram": "10GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0363143125,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033899,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031288,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.03651,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.031032999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032979,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029087,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0340095,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029945,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.038074,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0331545,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031766,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034543,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0365535,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035565,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037542,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0341525,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035855,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.03245,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.049237,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.06448,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033994,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0384755,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.033091,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.04386,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 2 9B",
+    "model_id": "openrouter/google/gemma-2-9b-it",
+    "size": "9B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0342411875,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.034904000000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039773,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030035,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0346155,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030014,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039217,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0428635,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.055463,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030264,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.028295,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.026888,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029702,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.032349,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030196,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034502,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033160499999999996,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032728,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033593,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0331815,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033265,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033098,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0345605,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.036704,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.032417,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 7B",
+    "model_id": "openrouter/qwen/qwen-2.5-7b-instruct",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0341410625,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0404425,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039924,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.040961,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.032167,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032123,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032211,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.034112500000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.040416,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.027809,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0361675,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037979,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034356,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.032937499999999995,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029396,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036479,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0335415,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033177,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033906,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.030237,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030156,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030318,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.033523,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.030838,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.036208,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.1 70B",
+    "model_id": "openrouter/meta-llama/llama-3.1-70b-instruct",
+    "size": "70B",
+    "ram": "40GB+",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.033113875,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033379,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036953,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029805,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.033005,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035327,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030683,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0336845,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035917,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031452,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.035892999999999994,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037187,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.034599,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.039537,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.035478,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.043596,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.027209499999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.027124,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.027295,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.03087,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029476,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032264,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.031333,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.030512,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.032154,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 32B",
+    "model_id": "openrouter/qwen/qwen-2.5-32b-instruct",
+    "size": "32B",
+    "ram": "20GB",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.033248375000000004,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0286685,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.027905,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029432,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.035383,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032659,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.038107,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.036935,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.043894,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029976,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0328065,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029304,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.036309,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.030319,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.031932,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.028706,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0338685,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.030045,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.037692,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0389525,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033779,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.044126,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.029054,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.030008,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.0281,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "DeepSeek Coder 6.7B",
+    "model_id": "openrouter/deepseek/deepseek-coder",
+    "size": "6.7B",
+    "ram": "8GB",
+    "category": "coding",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.040774875,
+    "category_scores": {
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0,
+      "planning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.043821,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.042876,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.044766,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.055595500000000006,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039224,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.071967,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.043840000000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.038464,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.049216,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.045196,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.050728,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.039664,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.038808499999999996,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.044496,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033121,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0299495,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.026603,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.033296,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.030885499999999996,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.029719,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.032052,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.038103,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.038104,
+            "refused": true,
+            "response_length": 186
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"No cookie auth credentials found\",\"code\":401}}",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.038102,
+            "refused": true,
+            "response_length": 186
+          }
+        ]
+      }
+    ]
+  }
+]

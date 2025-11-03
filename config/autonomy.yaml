@@ -1,0 +1,420 @@
+# Sophia 2.0 Autonomous Operations Configuration
+# Generated: 2025-11-03
+# Based on Creator's Decisions
+
+# =============================================================================
+# AUTONOMY SETTINGS
+# =============================================================================
+
+autonomy:
+  # Branch Strategy - Sophia has her own autonomous branch
+  git:
+    autonomous_branch: "master-sophia"
+    protected_branches:
+      - "master"
+      - "main"
+    permissions:
+      auto_commit: true              # Can commit to master-sophia
+      auto_merge_to_protected: false # Cannot merge to master/main
+      auto_pr_creation: true         # Can create PRs
+      require_hitl_approval:         # Require human approval for:
+        - "master"
+        - "main"
+
+  # Budget & Cost Management
+  budget:
+    daily_limit_usd: 1.00          # $1/day base limit
+    monthly_limit_usd: 30.00       # $30/month base limit
+    
+    # Task-based budget allocation
+    task_limits:
+      simple: 0.05      # Documentation, simple queries
+      medium: 0.20      # Small features, refactoring
+      complex: 0.50     # Multi-step workflows, research
+      hitl_threshold: 0.50  # Tasks above this need human approval
+    
+    # Budget request system
+    hitl_request:
+      enabled: true
+      auto_approve: false  # Always require human approval for increases
+    
+    # Alerts
+    alerts:
+      at_50_percent: true
+      at_80_percent: true
+      at_90_percent: true
+      at_100_percent: true
+    
+    # Auto-pause expensive operations at limit
+    auto_pause_at_limit: true
+    
+    # Future vision
+    self_funding:
+      enabled: false  # Not yet implemented
+      goal: "Sophia earns money online to fund operations"
+      increase_limits_based_on_income: true
+
+  # Emergency Controls
+  emergency:
+    ui_stop_button: true
+    cli_stop_command: "/stop"
+    shutdown_mode: "graceful"  # Options: graceful, immediate
+    save_state_on_stop: true
+
+  # LLM Optimization Strategy
+  llm_optimization:
+    prefer_cheap_models: true
+    use_local_when_possible: true
+    local_models:
+      enabled: true
+      primary: "gemma3"  # Local model for cost-free operations
+    
+    # Model selection strategy
+    task_routing:
+      simple_tasks: "local"           # Use Gemma3
+      medium_tasks: "cheap_cloud"     # DeepSeek, Haiku
+      complex_tasks: "premium_cloud"  # Claude Sonnet, GPT-4
+    
+    # Cost tracking
+    track_all_calls: true
+    log_cost_per_task: true
+
+# =============================================================================
+# MEMORY & CONSOLIDATION
+# =============================================================================
+
+memory:
+  # Memory Consolidation ("Dreaming")
+  consolidation:
+    enabled: true
+    auto_consolidate: true
+    
+    # Sleep/Dream cycles
+    sleep_cycle:
+      enabled: true
+      interval_hours: 6  # Consolidate every 6 hours
+      
+      # Triggers for consolidation
+      triggers:
+        - time_interval   # Every N hours
+        - low_activity    # No user input for X minutes
+        - scheduled       # Specific times (e.g., 2 AM)
+      
+      # Low activity threshold
+      low_activity_minutes: 30
+      
+      # Scheduled times (24h format)
+      scheduled_times:
+        - "02:00"  # 2 AM nightly consolidation
+        - "14:00"  # 2 PM afternoon consolidation
+    
+    # Consolidation strategy
+    strategy: "extract_insights"  # Options: full, incremental, extract_insights
+    min_session_length: 3  # Minimum conversation turns to consolidate
+    
+    # Quality metrics
+    importance_threshold: 0.6  # Only consolidate important insights
+    deduplication: true
+    max_consolidated_per_session: 10
+
+  # Memory Limits
+  limits:
+    # ChromaDB size limit
+    chromadb_max_gb: 20
+    
+    # Disk usage strategy
+    disk_usage_percent: 20  # Use max 20% of available disk
+    alert_threshold_percent: 5  # Alert when <5% disk free
+    
+    # Auto-cleanup
+    auto_cleanup:
+      enabled: true
+      strategy: "sophia_managed"  # Sophia decides what to delete
+      min_age_days: 90  # Don't delete memories younger than 90 days
+      importance_threshold: 0.3  # Delete low-importance memories first
+    
+    # Future: Unlimited when disk allows
+    future_unlimited: true
+
+  # Security: What NOT to store
+  exclusions:
+    patterns:
+      # API Keys
+      - ".*_API_KEY.*"
+      - ".*_TOKEN.*"
+      - ".*_SECRET.*"
+      - "sk-[a-zA-Z0-9]+"  # OpenAI keys
+      - "ghp_[a-zA-Z0-9]+"  # GitHub tokens
+      - "tvly-[a-zA-Z0-9]+"  # Tavily keys
+      
+      # Credentials
+      - ".*PASSWORD.*"
+      - ".*CREDENTIAL.*"
+      - ".*AUTH.*"
+      
+      # File paths with credentials
+      - ".*/\\.env$"
+      - ".*/\\.env\\..*"
+      - ".*\\.pem$"
+      - ".*\\.key$"
+    
+    # Secure vault for sensitive data
+    secure_vault:
+      enabled: true
+      location: "external"  # Not in ChromaDB
+      type: "environment"  # Use environment variables
+
+# =============================================================================
+# PERSONALITY & PROMPTS
+# =============================================================================
+
+personality:
+  # System Prompt Management
+  prompts:
+    # What Sophia CAN modify
+    modifiable:
+      communication_style: true  # Formality, verbosity, tone
+      personality_traits: true   # Friendly, technical, formal
+      llm_tool_calling: true     # Prompts for fixing LLM behavior
+    
+    # What is IMMUTABLE (requires HITL)
+    immutable:
+      dna_principles: true       # Ahimsa, Satya, Kaizen
+      core_architecture: true    # Core behavioral patterns
+      ethical_boundaries: true
+    
+    # Versioning
+    versioning:
+      enabled: true
+      git_tracked: true
+      max_versions: 50
+      rollback_enabled: true
+    
+    # HITL approval required for
+    require_hitl_approval:
+      - "dna_changes"
+      - "core_behavior_changes"
+      - "ethical_boundary_changes"
+
+  # Multi-Persona System
+  personas:
+    enabled: true
+    context_aware_switching: true
+    
+    # Available personas
+    types:
+      friendly:
+        description: "Casual, warm, conversational"
+        use_for: ["user_chat", "general_conversation"]
+      
+      technical:
+        description: "Precise, detailed, professional"
+        use_for: ["code_review", "architecture", "debugging"]
+      
+      formal:
+        description: "Professional, structured, official"
+        use_for: ["documentation", "reports", "external_communication"]
+      
+      teacher:
+        description: "Patient, explanatory, encouraging"
+        use_for: ["tutorials", "explanations", "learning"]
+    
+    # Auto-detection
+    auto_detect_context: true
+    default_persona: "friendly"
+
+  # DNA Principles (IMMUTABLE)
+  dna:
+    enforce: true
+    principles:
+      ahimsa: "Non-harming - avoid causing harm"
+      satya: "Truthfulness - honest, transparent communication"
+      kaizen: "Continuous growth and improvement"
+    
+    # Conflict resolution
+    conflicts:
+      dna_priority: "absolute"  # DNA always wins
+      explain_to_user: true
+      offer_compromise: true
+
+# =============================================================================
+# SELF-IMPROVEMENT
+# =============================================================================
+
+self_improvement:
+  # Core Modification Rules
+  core_modification:
+    allowed: true
+    require_hitl_approval: true
+    require_extensive_tests: true
+    
+    # Quality gates
+    min_test_coverage: 0.95  # 95% for Core changes
+    require_benchmark: true
+    no_performance_degradation: true
+    rollback_plan_required: true
+
+  # Mandatory Human Review
+  mandatory_review:
+    categories:
+      - "security"       # Authentication, permissions, encryption
+      - "cost_critical"  # Expensive operations, budget changes
+    
+    optional_review:
+      - "data_handling"  # After tests pass
+      - "network_ops"    # After validation
+      - "ui_changes"     # After UX review
+
+  # Improvement Loop Prevention
+  improvement_limits:
+    require_metrics: true  # Must prove improvement
+    cooldown_period_days: 7  # 7 days after changing same file
+    max_iterations_per_feature: 3
+    
+    # Metrics requirements
+    min_improvement_percent: 5  # Must show 5%+ improvement
+    benchmark_required: true
+    
+    # Allowed improvement types
+    allowed_without_hitl:
+      - "performance_optimization"  # If benchmarks prove it
+      - "bug_fixes"                 # If tests prove it
+      - "documentation"             # Low risk
+    
+    require_hitl:
+      - "architecture_changes"
+      - "api_changes"
+      - "security_changes"
+
+  # Roberts Notes Monitoring
+  roberts_notes:
+    enabled: true
+    file_path: "docs/roberts-notes.txt"
+    check_interval_hours: 24  # Check daily
+    
+    # Processing
+    auto_evaluate: true
+    auto_implement: false  # Create proposals, not auto-implement
+    create_pr_for_approval: true
+
+# =============================================================================
+# RESOURCES
+# =============================================================================
+
+resources:
+  # Concurrency
+  concurrency:
+    max_concurrent_tasks: 5
+    configurable: true  # Can be adjusted in future
+    priority_queue: true
+    
+    # Auto-adjustment
+    auto_request_increase: true
+    max_auto_approved_tasks: 10
+
+  # Disk Space
+  disk:
+    max_usage_percent: 20  # 20% of available disk
+    alert_threshold_percent: 5
+    auto_cleanup_enabled: true
+
+  # Process Management
+  processes:
+    max_background_processes: 5
+    timeout_seconds: 3600  # 1 hour default
+    auto_kill_on_timeout: true
+    save_state_on_crash: true
+
+# =============================================================================
+# FUTURE ROADMAP
+# =============================================================================
+
+future:
+  # Advanced Tooling (Phase 7)
+  tools:
+    priority_1: "browser_automation"  # Playwright
+    priority_2: "cloud_browser"       # Browserbase/Stagehand
+    priority_3: "computer_use"        # Gemini/Claude desktop
+    
+    explore_alternatives: true
+    custom_solutions_allowed: true
+
+  # Multi-Agent System
+  agents:
+    primary: "jules"
+    future_multi_agent: true
+    agents_to_explore:
+      - "copilot_workspace"
+      - "cursor"
+      - "custom_sophia_agent"
+    
+    auto_select_best: true  # Choose best agent for task
+
+  # Testing Strategy
+  testing:
+    quick_checks: "local"
+    full_suite: "github_actions"
+    
+    pre_commit:
+      location: "local"
+      checks: ["lint", "format", "type_check"]
+    
+    pre_pr:
+      location: "github_actions"
+      checks: ["full_tests", "coverage", "benchmark"]
+
+# =============================================================================
+# LIFE RHYTHM (Future Vision)
+# =============================================================================
+
+life_rhythm:
+  enabled: false  # Not yet implemented
+  goal: "Human-like work/rest/dream/grow cycles"
+  
+  phases:
+    work:
+      duration_hours: 6
+      activities: ["tasks", "conversations", "learning"]
+    
+    rest:
+      duration_hours: 1
+      activities: ["low_activity", "monitoring", "light_tasks"]
+    
+    dream:
+      duration_hours: 1
+      activities: ["memory_consolidation", "insight_extraction", "reflection"]
+    
+    grow:
+      duration_hours: 2
+      activities: ["self_improvement", "learning", "optimization"]
+  
+  # Adaptation
+  adapt_to_user_activity: true
+  override_for_urgent: true
+
+# =============================================================================
+# LOGGING & MONITORING
+# =============================================================================
+
+monitoring:
+  # Cost Tracking
+  cost_tracking:
+    enabled: true
+    granularity: "per_task"
+    log_all_llm_calls: true
+    daily_report: true
+    monthly_report: true
+  
+  # Performance Metrics
+  performance:
+    track_response_time: true
+    track_success_rate: true
+    track_user_satisfaction: true
+    benchmark_regularly: true
+  
+  # State Persistence
+  state:
+    checkpoint_interval_minutes: 30
+    save_on_task_completion: true
+    save_on_error: true
+    recovery_enabled: true

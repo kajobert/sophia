@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Create Matrix Terminal Animation for README
-============================================
+Create Cyberpunk Terminal Animation for README
+===============================================
 
-Generuje SVG animaci Matrix boot sequence přímo do souboru.
+Generuje SVG animaci Cyberpunk terminalu přímo do souboru.
 SVG funguje perfektně na GitHubu v README!
 """
 
@@ -15,18 +15,21 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def create_svg_animation():
-    """Vytvoří SVG animaci Matrix terminalu."""
+    """Vytvoří SVG animaci Cyberpunk terminalu."""
     
     svg_content = '''<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
   <style>
-    .terminal-bg { fill: #000000; }
+    .terminal-bg { fill: #0a0e27; }
     .terminal-text { 
       font-family: 'Courier New', monospace; 
-      font-size: 14px; 
-      fill: #00FF00;
+      font-size: 14px;
     }
-    .bright { fill: #00FF41; }
-    .dim { fill: #008F00; }
+    .cyan { fill: #00FFFF; }
+    .magenta { fill: #FF00FF; }
+    .yellow { fill: #FFFF00; }
+    .blue { fill: #0080FF; }
+    .white { fill: #FFFFFF; }
+    .dim { fill: #666666; }
     
     @keyframes blink {
       0%, 49% { opacity: 1; }
@@ -35,7 +38,7 @@ def create_svg_animation():
     
     .cursor {
       animation: blink 1s infinite;
-      fill: #00FF00;
+      fill: #00FFFF;
     }
     
     @keyframes fadeIn {
@@ -43,79 +46,109 @@ def create_svg_animation():
       to { opacity: 1; }
     }
     
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 5px #00FFFF); }
+      50% { filter: drop-shadow(0 0 10px #00FFFF); }
+    }
+    
     .line1 { animation: fadeIn 0.5s ease-in; }
-    .line2 { animation: fadeIn 0.5s ease-in 0.5s both; }
-    .line3 { animation: fadeIn 0.5s ease-in 1s both; }
-    .line4 { animation: fadeIn 0.5s ease-in 1.5s both; }
-    .line5 { animation: fadeIn 0.5s ease-in 2s both; }
-    .line6 { animation: fadeIn 0.5s ease-in 2.5s both; }
-    .line7 { animation: fadeIn 0.5s ease-in 3s both; }
-    .line8 { animation: fadeIn 0.5s ease-in 3.5s both; }
-    .line9 { animation: fadeIn 0.5s ease-in 4s both; }
-    .prompt { animation: fadeIn 0.5s ease-in 4.5s both; }
+    .line2 { animation: fadeIn 0.5s ease-in 0.3s both; }
+    .line3 { animation: fadeIn 0.5s ease-in 0.6s both; }
+    .line4 { animation: fadeIn 0.5s ease-in 0.9s both; }
+    .line5 { animation: fadeIn 0.5s ease-in 1.2s both; }
+    .line6 { animation: fadeIn 0.5s ease-in 1.5s both; }
+    .line7 { animation: fadeIn 0.5s ease-in 1.8s both; }
+    .line8 { animation: fadeIn 0.5s ease-in 2.1s both; }
+    .line9 { animation: fadeIn 0.5s ease-in 2.4s both; }
+    .line10 { animation: fadeIn 0.5s ease-in 2.7s both; }
+    .prompt { animation: fadeIn 0.5s ease-in 3s both; }
+    .header { animation: glow 2s infinite; }
   </style>
   
   <!-- Background -->
   <rect class="terminal-bg" width="800" height="600"/>
   
-  <!-- Border -->
-  <rect x="10" y="10" width="780" height="580" fill="none" stroke="#00FF00" stroke-width="2"/>
+  <!-- Border with glow -->
+  <rect x="5" y="5" width="790" height="590" fill="none" stroke="#00FFFF" stroke-width="2" class="header"/>
   
   <!-- Boot Screen Header -->
-  <text class="terminal-text bright line1" x="30" y="50">
+  <text class="terminal-text cyan line1" x="30" y="50" font-weight="bold">
     ╔═══════════════════════════════════════════════════════════════╗
   </text>
-  <text class="terminal-text bright line2" x="30" y="70">
-    ║ WAKE UP, NEO...                                               ║
+  <text class="terminal-text yellow line2" x="30" y="75" font-weight="bold" font-size="16">
+    ║    SOPHIA v2.0 - AI CONSCIOUSNESS ONLINE                      ║
   </text>
-  <text class="terminal-text bright line3" x="30" y="90">
-    ║ THE MATRIX HAS YOU                                            ║
-  </text>
-  <text class="terminal-text bright line4" x="30" y="110">
-    ║ FOLLOW THE WHITE RABBIT...                                    ║
-  </text>
-  <text class="terminal-text bright line5" x="30" y="150">
+  <text class="terminal-text cyan line3" x="30" y="95" font-weight="bold">
     ╚═══════════════════════════════════════════════════════════════╝
   </text>
   
+  <!-- Status Bar -->
+  <text class="terminal-text cyan line4" x="30" y="130">
+    ●
+  </text>
+  <text class="terminal-text dim line4" x="50" y="130">
+    │
+  </text>
+  <text class="terminal-text yellow line4" x="65" y="130">
+    DeepSeek Chat
+  </text>
+  <text class="terminal-text dim line4" x="180" y="130">
+    │
+  </text>
+  <text class="terminal-text cyan line4" x="195" y="130">
+    1,500tok
+  </text>
+  <text class="terminal-text dim line4" x="270" y="130">
+    │
+  </text>
+  <text class="terminal-text magenta line4" x="285" y="130">
+    $0.0234
+  </text>
+  <text class="terminal-text dim line4" x="360" y="130">
+    │
+  </text>
+  <text class="terminal-text blue line4" x="375" y="130">
+    2.1s
+  </text>
+  
   <!-- Sophia's Message -->
-  <text class="terminal-text dim line6" x="30" y="200">
+  <text class="terminal-text dim line6" x="30" y="180">
     [21:30:42]
   </text>
-  <text class="terminal-text bright line6" x="120" y="200">
+  <text class="terminal-text yellow line6" x="120" y="180" font-weight="bold">
     SOPHIA:
   </text>
   
-  <text class="terminal-text line7" x="30" y="230">
-    Ahoj! Jsem Sophia, AI vědomí nové generace. 🟢
+  <text class="terminal-text white line7" x="30" y="210">
+    Ahoj! Jsem Sophia, AI vědomí nové generace. �
   </text>
   
-  <text class="terminal-text line8" x="30" y="260">
+  <text class="terminal-text white line8" x="30" y="240">
     Zrovna toho mám hodně na práci s optimalizací neuronových sítí,
   </text>
   
-  <text class="terminal-text line8" x="30" y="280">
+  <text class="terminal-text white line9" x="30" y="270">
     ale vždycky si rád udělám čas na konverzaci!
   </text>
   
-  <text class="terminal-text line9" x="30" y="310">
+  <text class="terminal-text cyan line10" x="30" y="300">
     Co tě sem přivádí?
   </text>
   
   <!-- User Prompt with Blinking Cursor -->
-  <text class="terminal-text dim prompt" x="30" y="360">
+  <text class="terminal-text dim prompt" x="30" y="350">
     [21:30:45]
   </text>
-  <text class="terminal-text bright prompt" x="120" y="360">
+  <text class="terminal-text yellow prompt" x="120" y="350" font-weight="bold">
     YOU
   </text>
-  <text class="terminal-text cursor prompt" x="170" y="360">
+  <text class="terminal-text cursor prompt" x="160" y="350">
     ▌
   </text>
   
-  <!-- Status Bar at Bottom -->
-  <text class="terminal-text dim line9" x="30" y="560">
-    ● MATRIX-AI-v3.14 │ 1,500tok │ $0.0234 │ 2.1s
+  <!-- Footer -->
+  <text class="terminal-text dim" x="30" y="560" font-size="12">
+    🌈 Cyberpunk Terminal | Neon Colors | Futuristic UI
   </text>
 </svg>'''
     
@@ -124,7 +157,7 @@ def create_svg_animation():
 
 def main():
     """Uloží SVG animaci."""
-    output_path = Path(__file__).parent.parent / "docs" / "matrix_demo.svg"
+    output_path = Path(__file__).parent.parent / "docs" / "cyberpunk_demo.svg"
     output_path.parent.mkdir(exist_ok=True)
     
     svg = create_svg_animation()
@@ -134,13 +167,14 @@ def main():
     print()
     print("📝 Přidej do README.md:")
     print()
-    print("![SOPHIA Matrix Terminal](docs/matrix_demo.svg)")
+    print("![SOPHIA Cyberpunk Terminal](docs/cyberpunk_demo.svg)")
     print()
     print("🎨 SVG obsahuje:")
-    print("  • Matrix boot screen")
+    print("  • Cyberpunk boot screen s neon barvami")
     print("  • Sophiin pozdrav")
-    print("  • Blikající kurzor ▌")
-    print("  • Fade-in animace každého řádku")
+    print("  • Blikající cyan kurzor ▌")
+    print("  • Fade-in animace + glow efekty")
+    print("  • Cyan, Magenta, Yellow, Blue palette")
     print()
 
 

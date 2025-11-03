@@ -1,6 +1,15 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 06 User Guide](06_USER_GUIDE.md) | **07** → [08 Project Overview](08_PROJECT_OVERVIEW.md)
+
+---
+
 # Sophia V2 - Developer Guide
 
+**Plugin Development** | Best Practices | For Contributors
+
 This guide provides instructions and best practices for developers contributing to the Sophia V2 project.
+
+> 🔌 **Plugin System:** Everything is a plugin - 27 active plugins show the power of this architecture.  
+> 📦 **See Examples:** All plugins in [`plugins/`](../../plugins/) directory follow the same pattern.
 
 ## 1. Getting Started
 
@@ -247,3 +256,44 @@ This section provides an overview of the available `TOOL` plugins that can be us
 3.  **Update documentation:** Make sure any changes to the codebase are reflected in the relevant documentation files.
 4.  **Create a Pull Request:** Push your feature branch to the remote repository and open a pull request against the `develop` branch.
 5.  **Code Review:** Your pull request will be reviewed by another developer. Address any feedback before it is merged.
+
+---
+
+## Related Documentation
+
+- ⚙️ **[Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)** - Core-Plugin system deep-dive
+- 🔧 **[Development Guidelines](04_DEVELOPMENT_GUIDELINES.md)** - Code quality standards
+- 🏛️ **[Project Governance](05_PROJECT_GOVERNANCE.md)** - Workflow and branching strategy
+- 🧠 **[Cognitive Architecture](02_COGNITIVE_ARCHITECTURE.md)** - Understanding Sophia's thought process
+
+**Key Files for Plugin Development:**
+- [`plugins/base_plugin.py`](../../plugins/base_plugin.py) - Abstract base class (start here!)
+- [`core/context.py`](../../core/context.py) - SharedContext structure
+- [`core/plugin_manager.py`](../../core/plugin_manager.py) - How plugins are loaded
+- [`core/kernel.py`](../../core/kernel.py) - How consciousness loop calls plugins
+
+**Plugin Examples by Category:**
+- **Interface:** `interface_terminal.py`, `interface_webui.py`
+- **Tool:** `tool_file_system.py`, `tool_bash.py`, `tool_llm.py`, `tool_jules.py`
+- **Cognitive:** `cognitive_planner.py`, `cognitive_task_router.py`, `cognitive_historian.py`
+- **Memory:** `memory_sqlite.py`, `memory_chroma.py`
+
+**Testing Your Plugin:**
+```bash
+# Run all tests
+PYTHONPATH=. .venv/bin/python -m pytest
+
+# Run specific test file
+PYTHONPATH=. .venv/bin/python -m pytest tests/test_your_plugin.py
+
+# Run with coverage
+PYTHONPATH=. .venv/bin/python -m pytest --cov=plugins --cov-report=html
+```
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: User Guide](06_USER_GUIDE.md) | [➡️ Next: Project Overview](08_PROJECT_OVERVIEW.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | 27 Plugin Examples Available*

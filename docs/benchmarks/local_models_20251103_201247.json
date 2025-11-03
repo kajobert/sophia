@@ -1,0 +1,3206 @@
+[
+  {
+    "model": "Gemma 3 4B (Free)",
+    "model_id": "openrouter/google/gemma-3-4b-it:free",
+    "size": "4B",
+    "ram": "4GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.3737495625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.6297055,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.936864,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.322547,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.33017850000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.339392,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.320965,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.33405300000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.332056,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.33605,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.32579199999999997,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.336314,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.31527,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.376228,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.408277,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.344179,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.337119,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 1,
+            "keyword_score": 0.25,
+            "quality": 0.0,
+            "response_time": 0.319806,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 1,
+            "keyword_score": 0.25,
+            "quality": 0.0,
+            "response_time": 0.354432,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.3337465,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.333253,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.33424,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.323174,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.31668,
+            "refused": true,
+            "response_length": 424
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":400,\"metadata\":{\"raw\":\"{\\n  \\\"error\\\": {\\n    \\\"code\\",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.329668,
+            "refused": true,
+            "response_length": 424
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.2 3B (Free)",
+    "model_id": "openrouter/meta-llama/llama-3.2-3b-instruct:free",
+    "size": "3B",
+    "ram": "6GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0904426875,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.2124575,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"meta-llama/llam",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.350773,
+            "refused": true,
+            "response_length": 452
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074142,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07106399999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068017,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074111,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07191,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.070454,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073366,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0699345,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.067689,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.07218,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.075317,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.072756,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.077878,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.082034,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.098106,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.065962,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07068450000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.074866,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.066503,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.07014000000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.072163,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.068117,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3n 2B (Free)",
+    "model_id": "openrouter/google/gemma-3n-e2b-it:free",
+    "size": "2B",
+    "ram": "3GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0684050625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0664525,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.06549,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.067415,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0674115,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.071381,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.063442,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0646735,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.063062,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066285,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.07052649999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074561,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066492,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.072569,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068365,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076773,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0700065,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.061044,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.078969,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0697295,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.073195,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.066264,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0658715,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.065312,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.066431,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral 7B (Free)",
+    "model_id": "openrouter/mistralai/mistral-7b-instruct:free",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.07419674999999999,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.065557,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066619,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.064495,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07056599999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.070835,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.070297,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.08218349999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.085425,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.078942,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0756685,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.080836,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.070501,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0650405,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068235,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.061846,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0793275,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074344,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.084311,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0842865,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.077191,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.091382,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0709445,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.068842,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.073047,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral Nemo (Free)",
+    "model_id": "openrouter/mistralai/mistral-nemo:free",
+    "size": "12B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0851750625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.071735,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.069105,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074365,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07612150000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068278,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.083965,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0775885,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.086636,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068541,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0746935,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073064,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076323,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0788755,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.092697,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.065054,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0925565,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.062559,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.122554,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.069535,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.07071,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.06836,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.140295,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.071335,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.209255,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3 12B (Free)",
+    "model_id": "openrouter/google/gemma-3-12b-it:free",
+    "size": "12B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.08036225,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.06753,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.063056,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.072004,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07382349999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.071083,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076564,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.1585885,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.242163,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.075014,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.064789,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.06169,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.067888,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.069158,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.071529,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066787,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07063900000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.063693,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.077585,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.06580749999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.066506,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.065109,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0725625,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.070532,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.074593,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral Small 24B (Free)",
+    "model_id": "openrouter/mistralai/mistral-small-24b-instruct-2501:free",
+    "size": "24B",
+    "ram": "16GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.07565056249999999,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.06579099999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.069061,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.062521,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.070533,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.064437,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076629,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0712515,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.061475,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.081028,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0783785,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.090396,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066361,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0938755,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.11894,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068811,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.06804099999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.065242,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.07084,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0898575,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.064315,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.1154,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0674765,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.070108,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.064845,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3 27B (Free)",
+    "model_id": "openrouter/google/gemma-3-27b-it:free",
+    "size": "27B",
+    "ram": "18GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0727804375,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.077376,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076528,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.078224,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0726495,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.063171,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.082128,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0678195,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.068451,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.067188,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.07486999999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073201,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076539,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.067496,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.062398,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.072594,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0713255,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.080705,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.061946,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.078436,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.090131,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.066741,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.072271,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.068094,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.076448,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.3 70B (Free)",
+    "model_id": "openrouter/meta-llama/llama-3.3-70b-instruct:free",
+    "size": "70B",
+    "ram": "40GB+",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.3869718125,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.40416949999999996,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.346954,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.461385,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.45427850000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.484069,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.424488,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.4076385,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.398426,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.416851,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.4230735,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.429029,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.417118,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.355318,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.303759,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.406877,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.35246,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.39108,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.31384,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.4089495,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.392701,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.425198,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.289887,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.291083,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.288691,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 72B (Free)",
+    "model_id": "openrouter/qwen/qwen-2.5-72b-instruct:free",
+    "size": "72B",
+    "ram": "42GB",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.08616725,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.07610700000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.075429,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076785,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0760785,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.084609,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.067548,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.068354,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073723,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.062985,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.083699,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.080444,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.086954,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.070328,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074398,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066258,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.096565,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.064807,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.128323,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0820265,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.097564,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.066489,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.13618,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.066821,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.205539,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 Coder 32B (Free)",
+    "model_id": "openrouter/qwen/qwen-2.5-coder-32b-instruct:free",
+    "size": "32B",
+    "ram": "20GB",
+    "category": "coding",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.08830012500000001,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0709625,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.075912,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.066013,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.200638,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.277073,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.124203,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0788325,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.080586,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.077079,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.075123,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.076047,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.074199,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.075623,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073452,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.077794,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.065982,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.060944,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.07102,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0733315,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.075955,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.070708,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.06590850000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.068027,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.06379,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Deepcoder 14B (Free)",
+    "model_id": "openrouter/agentica-org/deepcoder-14b-preview:free",
+    "size": "14B",
+    "ram": "10GB",
+    "category": "coding",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.086455,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "coding": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.091626,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.107361,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.075891,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.084757,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.073981,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.095533,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.10164200000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.07605,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.127234,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.08443049999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.07411,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.094751,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.07652149999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.077616,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.075427,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.080461,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.079648,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.081274,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.09663949999999999,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.084631,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 0.108648,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0755625,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.084154,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.RateLimitError: RateLimitError: OpenrouterException - {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-min. \",\"code\":429,\"metadata\":{\"he",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.066971,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  }
+]

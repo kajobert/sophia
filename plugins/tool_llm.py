@@ -138,7 +138,14 @@ class LLMTool(BasePlugin):
 
             # Store metadata
             usage = response.usage
-            cost = litellm.completion_cost(completion_response=response)
+            
+            # Try to calculate cost, but don't fail if model isn't in price database
+            try:
+                cost = litellm.completion_cost(completion_response=response)
+            except Exception as cost_error:
+                context.logger.warning(f"Could not calculate cost for model '{model_to_use}': {cost_error}", extra={"plugin_name": self.name})
+                cost = 0.0  # Unknown cost
+            
             context.payload["llm_response_metadata"] = {
                 "input_tokens": usage.prompt_tokens,
                 "output_tokens": usage.completion_tokens,

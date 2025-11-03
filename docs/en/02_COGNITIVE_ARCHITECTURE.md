@@ -1,6 +1,14 @@
+[📚 Documentation Index](INDEX.md) | [⬅️ 01 Vision & DNA](01_VISION_AND_DNA.md) | **02** → [03 Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)
+
+---
+
 # Document 2: Hierarchical Cognitive Architecture
 
+**How Sophia "Thinks"** | Cognitive Model | Consciousness Loop
+
 This document provides a conceptual description of the Hierarchical Cognitive Architecture (HCA), which serves as the theoretical foundation for Sophia. The goal of this architecture is to create a system that approximates human thought processes, integrates various levels of abstraction, and enables true self-reflection and autonomous growth.
+
+> 🧠 **Note:** This architecture is implemented in [`core/kernel.py`](../../core/kernel.py) through the **5-phase consciousness loop**: LISTENING → PLANNING → EXECUTING → RESPONDING → MEMORIZING
 
 ---
 
@@ -80,3 +88,25 @@ The highest cognitive layer responsible for strategic thinking, creativity, plan
 ### Long-Term Memory:
 - **Purpose:** A persistent store for all past experiences, knowledge, and relationships. It is used for learning and growth over time. It is the source for the Subconscious.
 - **Analogy:** Human long-term memory—memories, learned skills, facts.
+
+---
+
+## Related Documentation
+
+- 🎯 **[Vision & DNA](01_VISION_AND_DNA.md)** - Philosophical foundation of this architecture
+- ⚙️ **[Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)** - Implementation of this cognitive model
+- 🧑‍💻 **[Developer Guide](07_DEVELOPER_GUIDE.md)** - How to extend cognitive capabilities
+- 📋 **[Autonomous Operations Roadmap](roadmap/04_AUTONOMOUS_OPERATIONS.md)** - Evolution to event-driven consciousness
+
+**Key Implementation Files:**
+- [`core/kernel.py`](../../core/kernel.py) - Consciousness loop orchestration
+- [`plugins/cognitive_*.py`](../../plugins/) - 7 cognitive plugins (planner, historian, task router, etc.)
+- [`plugins/memory_*.py`](../../plugins/) - SQLite (working memory) + ChromaDB (long-term)
+
+---
+
+**Navigation:** [📚 Index](INDEX.md) | [🏠 Home](../../README.md) | [⬅️ Previous: Vision](01_VISION_AND_DNA.md) | [➡️ Next: Technical Architecture](03_TECHNICAL_ARCHITECTURE.md)
+
+---
+
+*Last Updated: November 3, 2025 | Status: ✅ Current | Implemented in Sophia 2.0*

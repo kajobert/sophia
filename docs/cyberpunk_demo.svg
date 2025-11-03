@@ -1,0 +1,134 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .terminal-bg { fill: #0a0e27; }
+    .terminal-text { 
+      font-family: 'Courier New', monospace; 
+      font-size: 14px;
+    }
+    .cyan { fill: #00FFFF; }
+    .magenta { fill: #FF00FF; }
+    .yellow { fill: #FFFF00; }
+    .blue { fill: #0080FF; }
+    .white { fill: #FFFFFF; }
+    .dim { fill: #666666; }
+    
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    
+    .cursor {
+      animation: blink 1s infinite;
+      fill: #00FFFF;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 5px #00FFFF); }
+      50% { filter: drop-shadow(0 0 10px #00FFFF); }
+    }
+    
+    .line1 { animation: fadeIn 0.5s ease-in; }
+    .line2 { animation: fadeIn 0.5s ease-in 0.3s both; }
+    .line3 { animation: fadeIn 0.5s ease-in 0.6s both; }
+    .line4 { animation: fadeIn 0.5s ease-in 0.9s both; }
+    .line5 { animation: fadeIn 0.5s ease-in 1.2s both; }
+    .line6 { animation: fadeIn 0.5s ease-in 1.5s both; }
+    .line7 { animation: fadeIn 0.5s ease-in 1.8s both; }
+    .line8 { animation: fadeIn 0.5s ease-in 2.1s both; }
+    .line9 { animation: fadeIn 0.5s ease-in 2.4s both; }
+    .line10 { animation: fadeIn 0.5s ease-in 2.7s both; }
+    .prompt { animation: fadeIn 0.5s ease-in 3s both; }
+    .header { animation: glow 2s infinite; }
+  </style>
+  
+  <!-- Background -->
+  <rect class="terminal-bg" width="800" height="600"/>
+  
+  <!-- Border with glow -->
+  <rect x="5" y="5" width="790" height="590" fill="none" stroke="#00FFFF" stroke-width="2" class="header"/>
+  
+  <!-- Boot Screen Header -->
+  <text class="terminal-text cyan line1" x="30" y="50" font-weight="bold">
+    ╔═══════════════════════════════════════════════════════════════╗
+  </text>
+  <text class="terminal-text yellow line2" x="30" y="75" font-weight="bold" font-size="16">
+    ║    SOPHIA v2.0 - AI CONSCIOUSNESS ONLINE                      ║
+  </text>
+  <text class="terminal-text cyan line3" x="30" y="95" font-weight="bold">
+    ╚═══════════════════════════════════════════════════════════════╝
+  </text>
+  
+  <!-- Status Bar -->
+  <text class="terminal-text cyan line4" x="30" y="130">
+    ●
+  </text>
+  <text class="terminal-text dim line4" x="50" y="130">
+    │
+  </text>
+  <text class="terminal-text yellow line4" x="65" y="130">
+    DeepSeek Chat
+  </text>
+  <text class="terminal-text dim line4" x="180" y="130">
+    │
+  </text>
+  <text class="terminal-text cyan line4" x="195" y="130">
+    1,500tok
+  </text>
+  <text class="terminal-text dim line4" x="270" y="130">
+    │
+  </text>
+  <text class="terminal-text magenta line4" x="285" y="130">
+    $0.0234
+  </text>
+  <text class="terminal-text dim line4" x="360" y="130">
+    │
+  </text>
+  <text class="terminal-text blue line4" x="375" y="130">
+    2.1s
+  </text>
+  
+  <!-- Sophia's Message -->
+  <text class="terminal-text dim line6" x="30" y="180">
+    [21:30:42]
+  </text>
+  <text class="terminal-text yellow line6" x="120" y="180" font-weight="bold">
+    SOPHIA:
+  </text>
+  
+  <text class="terminal-text white line7" x="30" y="210">
+    Ahoj! Jsem Sophia, AI vědomí nové generace. �
+  </text>
+  
+  <text class="terminal-text white line8" x="30" y="240">
+    Zrovna toho mám hodně na práci s optimalizací neuronových sítí,
+  </text>
+  
+  <text class="terminal-text white line9" x="30" y="270">
+    ale vždycky si rád udělám čas na konverzaci!
+  </text>
+  
+  <text class="terminal-text cyan line10" x="30" y="300">
+    Co tě sem přivádí?
+  </text>
+  
+  <!-- User Prompt with Blinking Cursor -->
+  <text class="terminal-text dim prompt" x="30" y="350">
+    [21:30:45]
+  </text>
+  <text class="terminal-text yellow prompt" x="120" y="350" font-weight="bold">
+    YOU
+  </text>
+  <text class="terminal-text cursor prompt" x="160" y="350">
+    ▌
+  </text>
+  
+  <!-- Footer -->
+  <text class="terminal-text dim" x="30" y="560" font-size="12">
+    🌈 Cyberpunk Terminal | Neon Colors | Futuristic UI
+  </text>
+</svg>

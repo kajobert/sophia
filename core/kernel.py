@@ -167,7 +167,30 @@ class Kernel:
                 priority=EventPriority.HIGH,
                 data={"session_id": session_id}
             ))
+            
+            # Use event-driven loop (Phase 1 implementation)
+            from core.event_loop import EventDrivenLoop
+            
+            event_loop = EventDrivenLoop(
+                plugin_manager=self.plugin_manager,
+                all_plugins_map=self.all_plugins_map,
+                event_bus=self.event_bus,
+                task_queue=self.task_queue
+            )
+            
+            logger.info(
+                "Using event-driven consciousness loop (Phase 1)",
+                extra={"plugin_name": "Kernel"}
+            )
+            
+            await event_loop.run(context, single_run_input)
+            
+            # Graceful shutdown
+            await self._shutdown_event_system(context, session_id)
+            
+            return
 
+        # Legacy blocking mode (original behavior)
         while self.is_running:
             try:
                 # 1. LISTENING PHASE
@@ -754,6 +777,16 @@ class Kernel:
         context.logger.info("Consciousness loop finished.", extra={"plugin_name": "Kernel"})
         
         # NEW: Graceful shutdown of event-driven components
+        await self._shutdown_event_system(context, session_id)
+    
+    async def _shutdown_event_system(self, context: SharedContext, session_id: str):
+        """
+        Gracefully shutdown event-driven components.
+        
+        Args:
+            context: Shared context
+            session_id: Current session ID
+        """
         if self.use_event_driven and self.event_bus:
             from core.events import Event, EventType, EventPriority
             

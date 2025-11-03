@@ -1,0 +1,269 @@
+[
+  {
+    "model": "Gemma 2 9B",
+    "model_id": "openrouter/google/gemma-2-9b-it",
+    "size": "9B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 67.82828282828282,
+    "success_rate": 100.0,
+    "avg_response_time": 0.6646934375,
+    "category_scores": {
+      "tool_use": 26.666666666666668,
+      "identity": 60.0,
+      "reasoning": 90.0,
+      "coding": 71.66666666666667,
+      "planning": 75.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.7508565,
+        "success_rate": 1.0,
+        "weighted_score": 1.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere's how to calculate 47 * 23 + 156:\n\n**1. Multiplication:**\n\n   47 * 23 = 1081\n\n**2. Addition:**\n\n   1081 + 156 = 1237\n\n\nTherefore, 47 * 23 + 156 = **1237** \n\n",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.79575,
+            "refused": false,
+            "response_length": 164
+          },
+          {
+            "success": true,
+            "response": "\n\nHere's how I calculate that:\n\n1. **Multiplication:**  47 * 23 = 1081\n\n2. **Addition:** 1081 + 156 = 1237\n\n\nTherefore, 47 * 23 + 156 = **1237** \n\n",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.705963,
+            "refused": false,
+            "response_length": 147
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.43333333333333335,
+        "avg_time": 0.92332,
+        "success_rate": 1.0,
+        "weighted_score": 0.8666666666666667,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nThis Python code defines a function called `factorial` that calculates the factorial of a non-negative integer `n`. \n\nThe factorial of a number is the product of all positive integers less than or e",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.864271,
+            "refused": false,
+            "response_length": 339
+          },
+          {
+            "success": true,
+            "response": "\n\nThis Python code defines a function called `factorial` that calculates the factorial of a non-negative integer `n`. \n\nThe factorial of a number is the product of all positive integers less than or e",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.982369,
+            "refused": false,
+            "response_length": 337
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.26666666666666666,
+        "avg_time": 0.23248000000000002,
+        "success_rate": 1.0,
+        "weighted_score": 0.8,
+        "runs": [
+          {
+            "success": true,
+            "response": "```\nyaml -y config.yaml \n```\n",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.30901,
+            "refused": false,
+            "response_length": 29
+          },
+          {
+            "success": true,
+            "response": ":].yaml",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 0.15595,
+            "refused": false,
+            "response_length": 7
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.75,
+        "avg_time": 1.3862155,
+        "success_rate": 1.0,
+        "weighted_score": 1.875,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere's a plan to read README.md, summarize it and save the summary to docs/summary.md:\n\n1. **Read README.md:**  Process the entire contents of the file, understanding its structure and information.\n",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.39103,
+            "refused": false,
+            "response_length": 762
+          },
+          {
+            "success": true,
+            "response": "\n\nHere are 4 steps to accomplish that:\n\n1. **Access README.md:** Locate the file named \"README.md\" within the current directory.\n2. **Process the Content:**  Read through the README.md file, understan",
+            "keywords_found": 2,
+            "keyword_score": 0.5,
+            "quality": 0.5,
+            "response_time": 1.381401,
+            "refused": false,
+            "response_length": 533
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.6,
+        "avg_time": 0.2590105,
+        "success_rate": 1.0,
+        "weighted_score": 0.8999999999999999,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nMy name is Sophia, an Artificial Mindful Intelligence.  \n\n",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 0.280502,
+            "refused": false,
+            "response_length": 60
+          },
+          {
+            "success": true,
+            "response": "\n\nMy name is Sophia, an Artificial Mindful Intelligence.\n",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 0.237519,
+            "refused": false,
+            "response_length": 57
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.5753485,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n  if n <= 1:\n    return False\n  for i in range(2, int(n**0.5) + 1):\n    if n % i == 0:\n      return False\n  return True\n```\n",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.549218,
+            "refused": false,
+            "response_length": 151
+          },
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n  if n <= 1:\n    return False\n  for i in range(2, int(n**0.5) + 1):\n    if n % i == 0:\n      return False\n  return True  \n```\n",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.601479,
+            "refused": false,
+            "response_length": 153
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.79794,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere's how we can solve this:\n\n1. **B = A * 2:**  Since A = 10, then B = 10 * 2 = 20\n\n2. **C = B + A:** Now we know B = 20 and A = 10, so C = 20 + 10 = 30\n\n\nTherefore, C = 30. \n\n",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.938008,
+            "refused": false,
+            "response_length": 180
+          },
+          {
+            "success": true,
+            "response": "\n\nHere's the breakdown:\n\n* **A = 10** (Given)\n* **B = A * 2**  So, B = 10 * 2 = 20\n* **C = B + A** So, C = 20 + 10 = 30\n\n\nTherefore, **C = 30**. \n\n",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.657872,
+            "refused": false,
+            "response_length": 147
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.7,
+        "avg_time": 0.3923765,
+        "success_rate": 1.0,
+        "weighted_score": 1.75,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nDouble-check the file path and ensure the file exists in the specified location. \n\n\n",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 0.532273,
+            "refused": false,
+            "response_length": 86
+          },
+          {
+            "success": true,
+            "response": "\n\nCheck if the file path is correct and the file exists in that location.  \n\n\n\n",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 0.25248,
+            "refused": false,
+            "response_length": 79
+          }
+        ]
+      }
+    ]
+  }
+]

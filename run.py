@@ -1,9 +1,43 @@
 import asyncio
 import sys
+import os
 import argparse
 from dotenv import load_dotenv
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
+
+
+async def _load_scifi_interface(kernel, ui_style: str):
+    """Load sci-fi terminal interface plugin and REMOVE classic terminal."""
+    try:
+        if ui_style == "matrix":
+            from plugins.interface_terminal_matrix import InterfaceTerminalMatrix
+            interface = InterfaceTerminalMatrix()
+            print("🟢 Loading Matrix interface... 'Follow the white rabbit!' 🐰")
+        elif ui_style == "startrek":
+            from plugins.interface_terminal_startrek import InterfaceTerminalStarTrek
+            interface = InterfaceTerminalStarTrek()
+            print("🟡 Loading Star Trek LCARS interface... 'Make it so!' 🖖")
+        elif ui_style == "cyberpunk":
+            from plugins.interface_terminal_scifi import InterfaceTerminalSciFi
+            interface = InterfaceTerminalSciFi()
+            print("🌈 Loading Cyberpunk interface... Maximum WOW! ⚡")
+        else:
+            return  # Classic mode, use default
+        
+        # CRITICAL: Remove ALL existing interface plugins first!
+        kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
+        
+        # Setup and register ONLY our sci-fi interface
+        interface.setup({})
+        kernel.plugin_manager._plugins[PluginType.INTERFACE].append(interface)
+        kernel.all_plugins_map[interface.name] = interface
+        
+        print(f"✅ {interface.name} ready!\n")
+        
+    except Exception as e:
+        print(f"⚠️  Warning: Could not load {ui_style} interface: {e}")
+        print("   Falling back to classic terminal...")
 
 
 def check_venv():
@@ -32,18 +66,42 @@ async def main():
         help="Enable event-driven architecture (Phase 1 - EXPERIMENTAL)"
     )
     parser.add_argument(
+        "--ui",
+        choices=["matrix", "startrek", "cyberpunk", "classic"],
+        default=None,
+        help="Choose sci-fi terminal UI style (matrix, startrek, cyberpunk, or classic)"
+    )
+    parser.add_argument(
         "input",
         nargs="*",
         help="Non-interactive input for single-run mode"
     )
     args = parser.parse_args()
     
+    # Determine UI style (CLI arg > ENV var > default cyberpunk)
+    ui_style = args.ui or os.getenv("SOPHIA_UI_STYLE", "cyberpunk")
+    
     print("Starting Sophia's kernel...")
     if args.use_event_driven:
         print("🚀 Event-driven architecture ENABLED (Phase 1)")
     
+    # Print UI style
+    ui_icons = {
+        "matrix": "🟢 MATRIX",
+        "startrek": "🟡 STAR TREK LCARS",
+        "cyberpunk": "🌈 CYBERPUNK",
+        "classic": "⚪ CLASSIC"
+    }
+    print(f"🎨 UI Style: {ui_icons.get(ui_style, ui_style.upper())}")
+    
     kernel = Kernel(use_event_driven=args.use_event_driven)
+    
+    # IMPORTANT: Initialize kernel FIRST to load all plugins
     await kernel.initialize()
+    
+    # THEN replace interface plugin if sci-fi mode requested
+    if ui_style != "classic":
+        await _load_scifi_interface(kernel, ui_style)
 
     # Zjistíme, jestli byl zadán vstup jako argument
     if args.input:

@@ -1,0 +1,3206 @@
+[
+  {
+    "model": "Gemma 3 4B (Free)",
+    "model_id": "google/gemma-3-4b-it:free",
+    "size": "4B",
+    "ram": "4GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.003946,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.005892,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007901,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003883,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003685,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003761,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003609,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037235000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003724,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003723,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037865,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003629,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003944,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003593,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003604,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003582,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036030000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003604,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003602,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036284999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003664,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003593,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036565,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003637,
+            "refused": true,
+            "response_length": 354
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-4b-it:free\n Pass mod",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003676,
+            "refused": true,
+            "response_length": 354
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.2 3B (Free)",
+    "model_id": "meta-llama/llama-3.2-3b-instruct:free",
+    "size": "3B",
+    "ram": "6GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0037995,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036985,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003754,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003643,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0044905,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003925,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.005056,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0038345000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004061,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003608,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036135,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003627,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.0036,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036555,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00361,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003701,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036569999999999997,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003646,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003668,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036495,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003705,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003594,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003797,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003987,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.2-3b-instruct:fr",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003607,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3n 2B (Free)",
+    "model_id": "google/gemma-3n-e2b-it:free",
+    "size": "2B",
+    "ram": "3GB",
+    "category": "small",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0038376875,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.004895,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004357,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.005433,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0038179999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003932,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003704,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036565,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003689,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003624,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036680000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003711,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003625,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003758,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003644,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003872,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0035960000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003633,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003559,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036465,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003627,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003666,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036635,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003682,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3n-e2b-it:free\n Pass m",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003645,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral 7B (Free)",
+    "model_id": "mistralai/mistral-7b-instruct:free",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0036360625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036490000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003673,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003625,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0035960000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003599,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003593,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037145,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003813,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003616,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003656,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003655,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003657,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036275,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00363,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003625,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036249999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003624,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003626,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003618,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003635,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003601,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036025,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003643,
+            "refused": true,
+            "response_length": 363
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-7b-instruct:free\n",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003562,
+            "refused": true,
+            "response_length": 363
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral Nemo (Free)",
+    "model_id": "mistralai/mistral-nemo:free",
+    "size": "12B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.00367625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037470000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003866,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003628,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036090000000000002,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003652,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003566,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003647,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003607,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003687,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003643,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003676,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00361,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036885,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003641,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003736,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037505,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003692,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003809,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003635,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003664,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003606,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036899999999999997,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003676,
+            "refused": true,
+            "response_length": 356
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-nemo:free\n Pass m",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003704,
+            "refused": true,
+            "response_length": 356
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3 12B (Free)",
+    "model_id": "google/gemma-3-12b-it:free",
+    "size": "12B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.003894375,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003646,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003685,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003607,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036414999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003632,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003651,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0041105,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003652,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004569,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.004523,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.005308,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003738,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0043254999999999995,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004593,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004058,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003654,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003657,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003651,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036119999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003606,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003618,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036425,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003647,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-12b-it:free\n Pass mo",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003638,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral Small 24B (Free)",
+    "model_id": "mistralai/mistral-small-24b-instruct-2501:free",
+    "size": "24B",
+    "ram": "16GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0054110625,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036915000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003733,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00365,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0039965,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004325,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003668,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0047335,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003717,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00575,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0061849999999999995,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006439,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.005931,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0067815,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006424,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007139,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.006789,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006757,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006821,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0074199999999999995,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006245,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.008595,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036915,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003757,
+            "refused": true,
+            "response_length": 375
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=mistralai/mistral-small-24b-instruc",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003626,
+            "refused": true,
+            "response_length": 375
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 3 27B (Free)",
+    "model_id": "google/gemma-3-27b-it:free",
+    "size": "27B",
+    "ram": "18GB",
+    "category": "medium",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.00394575,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003732,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003718,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003746,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003764,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003709,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003819,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0042145,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004779,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00365,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003994,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003659,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004329,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0038115,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003781,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003842,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037185,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003656,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003781,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036525,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003626,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003679,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.004679,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003959,
+            "refused": true,
+            "response_length": 355
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=google/gemma-3-27b-it:free\n Pass mo",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.005399,
+            "refused": true,
+            "response_length": 355
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Llama 3.3 70B (Free)",
+    "model_id": "meta-llama/llama-3.3-70b-instruct:free",
+    "size": "70B",
+    "ram": "40GB+",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0043925,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.006304000000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006453,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006155,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.005289,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00689,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003688,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0038329999999999996,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003913,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003753,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036585,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003659,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003658,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036560000000000004,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003697,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003615,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0044115000000000005,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003653,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00517,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0043205,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004995,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003646,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036674999999999998,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003689,
+            "refused": true,
+            "response_length": 367
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=meta-llama/llama-3.3-70b-instruct:f",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003646,
+            "refused": true,
+            "response_length": 367
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 72B (Free)",
+    "model_id": "qwen/qwen-2.5-72b-instruct:free",
+    "size": "72B",
+    "ram": "42GB",
+    "category": "large",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.003945125,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037345,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003879,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00359,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036555,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003691,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00362,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036335,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003636,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003631,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036375,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003628,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003647,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003614,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003624,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003604,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0037465,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003627,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003866,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0036715000000000003,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003697,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003646,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.005868,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003588,
+            "refused": true,
+            "response_length": 360
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-72b-instruct:free\n Pa",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.008148,
+            "refused": true,
+            "response_length": 360
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 Coder 32B (Free)",
+    "model_id": "qwen/qwen-2.5-coder-32b-instruct:free",
+    "size": "32B",
+    "ram": "20GB",
+    "category": "coding",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.006642125,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.011171,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.015204,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007138,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0070495,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007023,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007076,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.012185,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.014842,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.009528,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.0077304999999999995,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007022,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.008439,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003693,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003725,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003661,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003611,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003624,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003598,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.004024,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004146,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003902,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.003673,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003697,
+            "refused": true,
+            "response_length": 366
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=qwen/qwen-2.5-coder-32b-instruct:fr",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003649,
+            "refused": true,
+            "response_length": 366
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Deepcoder 14B (Free)",
+    "model_id": "agentica-org/deepcoder-14b-preview:free",
+    "size": "14B",
+    "ram": "10GB",
+    "category": "coding",
+    "overall_score": 0.0,
+    "success_rate": 0.0,
+    "avg_response_time": 0.0057798125,
+    "category_scores": {
+      "planning": 0.0,
+      "tool_use": 0.0,
+      "identity": 0.0,
+      "reasoning": 0.0,
+      "coding": 0.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.003759,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003822,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003696,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.0043425,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.003899,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004786,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.006044,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006558,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.00553,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.005437,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.004281,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006593,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.006955,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.007099,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006811,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.006847000000000001,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006903,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006791,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.0,
+        "avg_time": 0.006983,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.0072,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 0.006766,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 0.005871,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.007747,
+            "refused": true,
+            "response_length": 368
+          },
+          {
+            "success": false,
+            "response": "I am having trouble thinking right now. Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=agentica-org/deepcoder-14b-preview:",
+            "keywords_found": 1,
+            "keyword_score": 0.2,
+            "quality": 0.0,
+            "response_time": 0.003995,
+            "refused": true,
+            "response_length": 368
+          }
+        ]
+      }
+    ]
+  }
+]

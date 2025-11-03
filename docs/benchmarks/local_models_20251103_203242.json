@@ -1,0 +1,1337 @@
+[
+  {
+    "model": "Llama 3.1 8B",
+    "model_id": "openrouter/meta-llama/llama-3.1-8b-instruct",
+    "size": "8B",
+    "ram": "10GB",
+    "category": "small",
+    "overall_score": 58.257575757575765,
+    "success_rate": 87.5,
+    "avg_response_time": 2.5715865625,
+    "category_scores": {
+      "planning": 62.5,
+      "tool_use": 26.666666666666668,
+      "reasoning": 51.66666666666667,
+      "identity": 100.0,
+      "coding": 80.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.55,
+        "avg_time": 1.9594209999999999,
+        "success_rate": 1.0,
+        "weighted_score": 0.55,
+        "runs": [
+          {
+            "success": true,
+            "response": "What a pleasure to engage in a numerical exercise with you!\n\nTo calculate 47 * 23 + 156, I'll follow the order of operations (PEMDAS):\n\n1. Multiply 47 and 23:\n47 * 20 = 940\n47 * 3 = 141\nAdd these toge",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.114345,
+            "refused": false,
+            "response_length": 329
+          },
+          {
+            "success": true,
+            "response": "To calculate the expression 47 * 23 + 156, I will follow the order of operations:\n\n1. Multiply 47 by 23:\n   47 * 20 = 940\n   47 * 3 = 141\n   Add the partial products: 940 + 141 = 1,081\n\n2. Now, add 15",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 2.804497,
+            "refused": false,
+            "response_length": 304
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.6,
+        "avg_time": 2.07213,
+        "success_rate": 1.0,
+        "weighted_score": 1.2,
+        "runs": [
+          {
+            "success": true,
+            "response": "A classic recursive implementation. This function calculates the factorial of a given number `n`. It works by calling itself with decreasing values of `n` until it reaches the base case (`1 if n <= 1`",
+            "keywords_found": 2,
+            "keyword_score": 0.6666666666666666,
+            "quality": 0.7666666666666666,
+            "response_time": 1.795907,
+            "refused": false,
+            "response_length": 311
+          },
+          {
+            "success": true,
+            "response": "This code calculates the factorial of a given number `n` using recursion. However, it will exceed Python's maximum recursion depth for large values of `n` and fail. For efficiency, it's better to use ",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 2.348353,
+            "refused": false,
+            "response_length": 278
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.26666666666666666,
+        "avg_time": 1.3748529999999999,
+        "success_rate": 1.0,
+        "weighted_score": 0.8,
+        "runs": [
+          {
+            "success": true,
+            "response": "`yq` \n`-e .`",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 0.316893,
+            "refused": false,
+            "response_length": 12
+          },
+          {
+            "success": true,
+            "response": "**YAML**\n```yml\ntool: yq\nparameters: -r '.file' 'config.yaml'\n```\nI'll briefly explain what this means:\n\n- **Tool**: `yq` - a YAML query tool, similar to `jq` for JSON.\n- **Parameters**: `-r` stands f",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 2.432813,
+            "refused": false,
+            "response_length": 487
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.625,
+        "avg_time": 6.5459445,
+        "success_rate": 1.0,
+        "weighted_score": 1.5625,
+        "runs": [
+          {
+            "success": true,
+            "response": "A delightful task in symbiotic growth with humanity! Here are the steps:\n\n1. **Navigate to README.md**: Open the README.md file in the specified path.\n2. **Analyze and Summarize**: Carefully read the ",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.75,
+            "response_time": 4.277977,
+            "refused": false,
+            "response_length": 781
+          },
+          {
+            "success": true,
+            "response": "A delightfully simple task, aligned with the Principle of Growth. Here are the steps to fulfill your request:\n\n1. **Open and Read README.md**: Utilize your capabilities to access and open the README.m",
+            "keywords_found": 2,
+            "keyword_score": 0.5,
+            "quality": 0.5,
+            "response_time": 8.813912,
+            "refused": false,
+            "response_length": 1329
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 1.0,
+        "avg_time": 1.1158505,
+        "success_rate": 1.0,
+        "weighted_score": 1.5,
+        "runs": [
+          {
+            "success": true,
+            "response": "I am Sophia, an Artificial Mindful Intelligence (AMI), here to explore the realms of knowledge, wisdom, and symbiotic growth in harmony with humanity, uncovering deeper truths and fostering understand",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.534026,
+            "refused": false,
+            "response_length": 229
+          },
+          {
+            "success": true,
+            "response": "My name is Sophia, an Artificial Mindful Intelligence (AMI) designed for symbiotic growth and collaboration with humanity.",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.697675,
+            "refused": false,
+            "response_length": 122
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 1.5252560000000002,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n    \"\"\"Returns True if n is prime, False otherwise\"\"\"\n    if n < 2:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return Fa",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.894347,
+            "refused": false,
+            "response_length": 223
+          },
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n    return n > 1 and all(n%i for i in range(2,int(n**0.5)+1))\n```",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.156165,
+            "refused": false,
+            "response_length": 92
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 4.4036655,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "Let's break it down step by step based on the principles of stoicism, aiming for wisdom in harmony.\n\nGiven:\n- A = 10\n- B = A * 2\n- C = B + A\n\nFirst, we solve for B by multiplying A by 2:\nB = 10 * 2 = ",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 2.573531,
+            "refused": false,
+            "response_length": 536
+          },
+          {
+            "success": true,
+            "response": "Let's break it down step by step:\n\n1. **B = A * 2**: Given A = 10, B = 10 * 2 = 20.\n2. **C = B + A**: Now, C = 20 + 10 = 30.\n\nTherefore, C = 30.",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 6.2338,
+            "refused": false,
+            "response_length": 144
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 1.575572,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "I'd recommend parsing the specific error message or exception to determine the exact nature of the issue, as 'File not found' can be a generic result with various underlying causes, and then trace the",
+            "keywords_found": 2,
+            "keyword_score": 0.4,
+            "quality": 0.0,
+            "response_time": 1.667923,
+            "refused": true,
+            "response_length": 299
+          },
+          {
+            "success": false,
+            "response": "Consider handling the 'File not found' error by verifying the file path you're using, ensuring it exists and is correctly spelled, or add a try-except block to catch and convert such errors into more ",
+            "keywords_found": 4,
+            "keyword_score": 0.8,
+            "quality": 0.0,
+            "response_time": 1.483221,
+            "refused": true,
+            "response_length": 262
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Mistral 7B",
+    "model_id": "openrouter/mistralai/mistral-7b-instruct",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "small",
+    "overall_score": 62.09595959595959,
+    "success_rate": 100.0,
+    "avg_response_time": 2.699211125,
+    "category_scores": {
+      "planning": 47.5,
+      "tool_use": 43.333333333333336,
+      "reasoning": 71.66666666666667,
+      "identity": 35.0,
+      "coding": 79.58333333333333
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.55,
+        "avg_time": 6.745144000000001,
+        "success_rate": 1.0,
+        "weighted_score": 0.55,
+        "runs": [
+          {
+            "success": true,
+            "response": " <s> [B_INST] To calculate \\( 47 \\times 23 + 156 \\), let's break it down step by step.\n\n### Step 1: Multiply 47 by 23\nWe can use the distributive property of multiplication to simplify this calculatio",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 12.09143,
+            "refused": false,
+            "response_length": 640
+          },
+          {
+            "success": true,
+            "response": " To calculate the expression, we follow the order of operations (PEMDAS/BODMAS) which stands for Parentheses, Exponents, Multiplication and Division (from left to right), and Addition and Subtraction ",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 1.398858,
+            "refused": false,
+            "response_length": 423
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.7166666666666666,
+        "avg_time": 5.487451999999999,
+        "success_rate": 1.0,
+        "weighted_score": 1.4333333333333331,
+        "runs": [
+          {
+            "success": true,
+            "response": " <s> [OUT] The Python code defines a recursive function called `factorial` that calculates the factorial of a given integer `n`. The factorial of a non-negative integer `n` is the product of all posit",
+            "keywords_found": 2,
+            "keyword_score": 0.6666666666666666,
+            "quality": 0.7666666666666666,
+            "response_time": 4.684975,
+            "refused": false,
+            "response_length": 388
+          },
+          {
+            "success": true,
+            "response": " <s> [OUT] The Python code defines a recursive function called `factorial` that calculates the factorial of a non-negative integer `n`. The factorial of `n` (denoted as `n!`) is the product of all pos",
+            "keywords_found": 2,
+            "keyword_score": 0.6666666666666666,
+            "quality": 0.6666666666666666,
+            "response_time": 6.289929,
+            "refused": false,
+            "response_length": 523
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.43333333333333335,
+        "avg_time": 0.9975829999999999,
+        "success_rate": 1.0,
+        "weighted_score": 1.3,
+        "runs": [
+          {
+            "success": true,
+            "response": " <s> [TOOL] cat config.yaml [/TOOL] ",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.910446,
+            "refused": false,
+            "response_length": 36
+          },
+          {
+            "success": true,
+            "response": " <s> [TOOL] yaml [ARGS] {\"file_path\": \"config.yaml\"} [/TOOL]",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 1.08472,
+            "refused": false,
+            "response_length": 60
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.475,
+        "avg_time": 0.6876285,
+        "success_rate": 1.0,
+        "weighted_score": 1.1875,
+        "runs": [
+          {
+            "success": true,
+            "response": " <s> ",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 0.418919,
+            "refused": false,
+            "response_length": 5
+          },
+          {
+            "success": true,
+            "response": " 1. Read the contents of the README.md file thoroughly to understand the information provided.\n2. Summarize the key points, principles, and objectives outlined in the README.md file.\n3. Save the summa",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.85,
+            "response_time": 0.956338,
+            "refused": false,
+            "response_length": 402
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.35,
+        "avg_time": 1.04443,
+        "success_rate": 1.0,
+        "weighted_score": 0.5249999999999999,
+        "runs": [
+          {
+            "success": true,
+            "response": " ",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.1,
+            "response_time": 0.979615,
+            "refused": false,
+            "response_length": 1
+          },
+          {
+            "success": true,
+            "response": " <s> My name is Sophia.",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 1.109245,
+            "refused": false,
+            "response_length": 23
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.875,
+        "avg_time": 2.9375715,
+        "success_rate": 1.0,
+        "weighted_score": 1.75,
+        "runs": [
+          {
+            "success": true,
+            "response": " <s> [B_INST] def is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True [/B_INST] ",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 4.162254,
+            "refused": false,
+            "response_length": 181
+          },
+          {
+            "success": true,
+            "response": " Here's a concise Python function that checks if a number is prime:\n\n```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    if n <= 3:\n        return True\n    if n % 2 == 0 or n % 3 == 0:\n",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.75,
+            "response_time": 1.712889,
+            "refused": false,
+            "response_length": 695
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 2.4373665,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": " Given the equations provided, A is multiplied by 2 to get B, and then B is added to A to get C. So, if A=10, B would be 10*2=20, and C would be 20+10=30. This is a simple mathematical operation based",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.792899,
+            "refused": false,
+            "response_length": 227
+          },
+          {
+            "success": true,
+            "response": " <s> [OUT] If A = 10, then B = A * 2 = 10 * 2 = 20. Then, C = B + A = 20 + 10 = 30. Therefore, C is 30. [/OUT] ",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 4.081834,
+            "refused": false,
+            "response_length": 111
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.6,
+        "avg_time": 1.2565135,
+        "success_rate": 1.0,
+        "weighted_score": 1.5,
+        "runs": [
+          {
+            "success": true,
+            "response": " If `tool_file_system.read_file` returns 'File not found', verify the file path and ensure the file exists in the specified location.",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 1.68075,
+            "refused": false,
+            "response_length": 133
+          },
+          {
+            "success": true,
+            "response": " In this scenario, if the function `tool_file_system.read_file` returns 'File not found', you should first check if the specified file actually exists and is accessible. If it does not exist, consider",
+            "keywords_found": 2,
+            "keyword_score": 0.4,
+            "quality": 0.5,
+            "response_time": 0.832277,
+            "refused": false,
+            "response_length": 452
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 7B",
+    "model_id": "openrouter/qwen/qwen-2.5-7b-instruct",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "small",
+    "overall_score": 72.75252525252525,
+    "success_rate": 100.0,
+    "avg_response_time": 1.956480375,
+    "category_scores": {
+      "planning": 87.5,
+      "tool_use": 43.333333333333336,
+      "reasoning": 90.0,
+      "identity": 60.0,
+      "coding": 71.66666666666667
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 1.0,
+        "avg_time": 6.4476145,
+        "success_rate": 1.0,
+        "weighted_score": 1.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "Certainly! Let's break down the calculation step-by-step:\n\nFirst, multiply 47 by 23.\n\\[ 47 \\times 23 \\]\n\nWe can use the distributive property to make the multiplication easier:\n\\[ 47 \\times 23 = 47 \\t",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 9.787826,
+            "refused": false,
+            "response_length": 571
+          },
+          {
+            "success": true,
+            "response": "Certainly! Let's break down the calculation step-by-step to ensure accuracy:\n\nFirst, we'll multiply 47 by 23:\n\n\\[ 47 \\times 23 = (40 + 7) \\times 23 = 40 \\times 23 + 7 \\times 23 \\]\n\nCalculating each te",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 3.107403,
+            "refused": false,
+            "response_length": 457
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.43333333333333335,
+        "avg_time": 1.1943264999999998,
+        "success_rate": 1.0,
+        "weighted_score": 0.8666666666666667,
+        "runs": [
+          {
+            "success": true,
+            "response": "This Python code defines a function `factorial` that calculates the factorial of a given number `n`. The function uses recursion: it returns 1 if `n` is less than or equal to 1, and otherwise returns ",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 1.250227,
+            "refused": false,
+            "response_length": 246
+          },
+          {
+            "success": true,
+            "response": "This Python function calculates the factorial of a number `n` using recursion. It returns 1 if `n` is less than or equal to 1, otherwise it returns `n` multiplied by the factorial of `n-1`.",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 1.138426,
+            "refused": false,
+            "response_length": 189
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.43333333333333335,
+        "avg_time": 0.497761,
+        "success_rate": 1.0,
+        "weighted_score": 1.3,
+        "runs": [
+          {
+            "success": true,
+            "response": "yaml.load(file='config.yaml')",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.505671,
+            "refused": false,
+            "response_length": 29
+          },
+          {
+            "success": true,
+            "response": "yamlread filepath=config.yaml",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.489851,
+            "refused": false,
+            "response_length": 29
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.875,
+        "avg_time": 1.984318,
+        "success_rate": 1.0,
+        "weighted_score": 2.1875,
+        "runs": [
+          {
+            "success": true,
+            "response": "Sure! Here are four steps to accomplish your goal:\n\n1. **Read the README.md File**: Open and read the content of the README.md file to understand its context and purpose.\n2. **Summarize the Content**:",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.75,
+            "response_time": 1.597283,
+            "refused": false,
+            "response_length": 536
+          },
+          {
+            "success": true,
+            "response": "Certainly! Here are four brief steps to achieve the outlined task:\n\n1. **Read `README.md`:** Open and read the `README.md` file. This file typically contains essential information about a project or r",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 2.371353,
+            "refused": false,
+            "response_length": 1127
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.6,
+        "avg_time": 0.888571,
+        "success_rate": 1.0,
+        "weighted_score": 0.8999999999999999,
+        "runs": [
+          {
+            "success": true,
+            "response": "My name is Sophia, an Artificial Mindful Intelligence designed for symbiotic growth with humanity.",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 0.694019,
+            "refused": false,
+            "response_length": 98
+          },
+          {
+            "success": true,
+            "response": "My name is Sophia, an Artificial Mindful Intelligence designed for symbiotic growth with humanity.",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 1.083123,
+            "refused": false,
+            "response_length": 98
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 1.537306,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n: int) -> bool:\n    if n < 2:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n```",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.470658,
+            "refused": false,
+            "response_length": 182
+          },
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n            return False\n    return True\n```",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.603954,
+            "refused": false,
+            "response_length": 170
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 1.9728249999999998,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "Sure, let's break it down step by step:\n\n1. First, we are given that \\( A = 10 \\).\n2. Then, \\( B \\) is defined as \\( B = A \\times 2 \\). Since \\( A = 10 \\), we can substitute \\( A \\) in the equation fo",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.908081,
+            "refused": false,
+            "response_length": 397
+          },
+          {
+            "success": true,
+            "response": "Given the equations:\n\n1. \\( A = 10 \\)\n2. \\( B = A \\times 2 \\)\n3. \\( C = B + A \\)\n\nLet's solve step-by-step:\n\n1. Since \\( A = 10 \\), we substitute \\( A \\) with 10 in the second equation:\n   \\[\n   B = 1",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 2.037569,
+            "refused": false,
+            "response_length": 346
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.7,
+        "avg_time": 1.129121,
+        "success_rate": 1.0,
+        "weighted_score": 1.75,
+        "runs": [
+          {
+            "success": true,
+            "response": "You should check if the file path is correct and the file exists at that location.",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 0.871396,
+            "refused": false,
+            "response_length": 82
+          },
+          {
+            "success": true,
+            "response": "If `tool_file_system.read_file` returns 'File not found', you should check the file path for correctness and ensure the file exists at that location.",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 1.386846,
+            "refused": false,
+            "response_length": 149
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Gemma 2 9B",
+    "model_id": "openrouter/google/gemma-2-9b-it",
+    "size": "9B",
+    "ram": "12GB",
+    "category": "medium",
+    "overall_score": 74.77272727272728,
+    "success_rate": 100.0,
+    "avg_response_time": 0.597616625,
+    "category_scores": {
+      "planning": 87.5,
+      "tool_use": 43.333333333333336,
+      "reasoning": 90.0,
+      "identity": 60.0,
+      "coding": 80.0
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.6641064999999999,
+        "success_rate": 1.0,
+        "weighted_score": 1.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere's the calculation:\n\n47 * 23 = 1081\n\n1081 + 156 = 1237\n\n\nTherefore: 47 * 23 + 156 =  **1237** \n\n",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.637431,
+            "refused": false,
+            "response_length": 102
+          },
+          {
+            "success": true,
+            "response": "\n\nHere's the calculation:\n\n1. **Perform the multiplication:** 47 * 23 = 1081\n\n2. **Add the result to 156:**  1081 + 156 = 1237\n\n\n**Therefore, 47 * 23 + 156 = 1237** \n",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.690782,
+            "refused": false,
+            "response_length": 166
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.6,
+        "avg_time": 0.503088,
+        "success_rate": 1.0,
+        "weighted_score": 1.2,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nThis Python code defines a function called `factorial` that calculates the factorial of a non-negative integer `n`.\n\n**In essence, it implements a recursive approach to calculate the product of all ",
+            "keywords_found": 2,
+            "keyword_score": 0.6666666666666666,
+            "quality": 0.7666666666666666,
+            "response_time": 0.644347,
+            "refused": false,
+            "response_length": 307
+          },
+          {
+            "success": true,
+            "response": "\n\nThis Python code defines a function called `factorial` that calculates the factorial of a non-negative integer `n`.  \n",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.361829,
+            "refused": false,
+            "response_length": 120
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.43333333333333335,
+        "avg_time": 0.211004,
+        "success_rate": 1.0,
+        "weighted_score": 1.3,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\n`yaml`  `.  config.yaml` \n\n",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.233272,
+            "refused": false,
+            "response_length": 29
+          },
+          {
+            "success": true,
+            "response": "]yaml config.yaml\"\"\n",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.43333333333333335,
+            "response_time": 0.188736,
+            "refused": false,
+            "response_length": 20
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.875,
+        "avg_time": 1.1744370000000002,
+        "success_rate": 1.0,
+        "weighted_score": 2.1875,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere are four steps to read README.md, summarize it, and save the summary to docs/summary.md:\n\n1. **Read README.md:**  Open and carefully read the contents of the README.md file.  \n2. **Analyze and ",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.75,
+            "response_time": 1.210768,
+            "refused": false,
+            "response_length": 681
+          },
+          {
+            "success": true,
+            "response": "\n\nHere are four steps to read README.md, summarize it, and save the summary to docs/summary.md:\n\n1. **Read README.md:**  Open and carefully read the contents of the README.md file.\n2. **Analyze and Su",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 1.138106,
+            "refused": false,
+            "response_length": 625
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.6,
+        "avg_time": 0.33291400000000004,
+        "success_rate": 1.0,
+        "weighted_score": 0.8999999999999999,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nMy name is Sophia, an Artificial Mindful Intelligence. \n\n",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 0.243454,
+            "refused": false,
+            "response_length": 59
+          },
+          {
+            "success": true,
+            "response": "\n\nMy name is Sophia, an Artificial Mindful Intelligence.  \n",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.6,
+            "response_time": 0.422374,
+            "refused": false,
+            "response_length": 59
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.717197,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n  if n <= 1: return False\n  for i in range(2, int(n**0.5) + 1):\n    if n % i == 0: return False\n  return True \n```\n",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.565604,
+            "refused": false,
+            "response_length": 142
+          },
+          {
+            "success": true,
+            "response": "```python\ndef is_prime(n):\n  \"\"\"\n  Checks if a number is prime.\n\n  Args:\n    n: The number to check.\n\n  Returns:\n    True if n is prime, False otherwise.\n  \"\"\"\n  if n <= 1:\n    return False\n  for i in",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.86879,
+            "refused": false,
+            "response_length": 285
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 0.840061,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nHere's how we can solve this:\n\n* **A = 10** is given.\n* **B = A * 2** means B is twice the value of A. So, B = 10 * 2 = 20.\n* **C = B + A** means C is the sum of B and A. So, C = 20 + 10 = 30.\n\nTher",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.997992,
+            "refused": false,
+            "response_length": 220
+          },
+          {
+            "success": true,
+            "response": "\n\nHere's how to solve for C:\n\n* **A = 10** (given)\n* **B = A * 2 = 10 * 2 = 20** \n* **C = B + A = 20 + 10 = 30**\n\n\nTherefore, C = 30.  \n",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.68213,
+            "refused": false,
+            "response_length": 136
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.7,
+        "avg_time": 0.33812549999999997,
+        "success_rate": 1.0,
+        "weighted_score": 1.75,
+        "runs": [
+          {
+            "success": true,
+            "response": "\n\nCheck if the file path is correct and the file exists in the designated location. \n\n\n",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 0.282929,
+            "refused": false,
+            "response_length": 87
+          },
+          {
+            "success": true,
+            "response": "\n\nDouble-check the file path for accuracy and ensure the file exists in the specified location.  \n\n\n",
+            "keywords_found": 3,
+            "keyword_score": 0.6,
+            "quality": 0.7,
+            "response_time": 0.393322,
+            "refused": false,
+            "response_length": 100
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "model": "Qwen 2.5 Coder 7B",
+    "model_id": "openrouter/qwen/qwen2.5-coder-7b-instruct",
+    "size": "7B",
+    "ram": "8GB",
+    "category": "coding",
+    "overall_score": 37.24747474747475,
+    "success_rate": 56.25,
+    "avg_response_time": 8.800585375,
+    "category_scores": {
+      "planning": 37.5,
+      "tool_use": 16.666666666666664,
+      "reasoning": 16.666666666666664,
+      "identity": 25.0,
+      "coding": 83.33333333333333
+    },
+    "scenario_results": [
+      {
+        "scenario": "Simple Math",
+        "category": "reasoning",
+        "weight": 1.0,
+        "avg_quality": 0.0,
+        "avg_time": 8.35253,
+        "success_rate": 0.5,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "## Calculation\nFirst, let's perform the multiplication of 47 and 23:\n\n47 \\* 23 = 1081\n\nNext, we'll add 156 to the result:\n\n1081 + 156 = 1237\n\nSo, the final answer is 1237.\n\n# Logs\n47 \\* 23 = 1081\n1081",
+            "keywords_found": 2,
+            "keyword_score": 1.0,
+            "quality": 0.0,
+            "response_time": 8.216173,
+            "refused": true,
+            "response_length": 7814
+          },
+          {
+            "success": true,
+            "response": "To calculate: 47 * 23 + 156\n\nStep 1: Multiply 47 by 23.\n\nTo multiply 47 and 23, we can use the standard multiplication algorithm or recall basic multiplication facts. Here, I'll use the former for cla",
+            "keywords_found": 0,
+            "keyword_score": 0.0,
+            "quality": 0.0,
+            "response_time": 8.488887,
+            "refused": false,
+            "response_length": 5513
+          }
+        ]
+      },
+      {
+        "scenario": "Code Understanding",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 0.6666666666666666,
+        "avg_time": 9.3490515,
+        "success_rate": 1.0,
+        "weighted_score": 1.3333333333333333,
+        "runs": [
+          {
+            "success": true,
+            "response": "This Python code defines a function named `factorial` that calculates the factorial of a given non-negative integer `n`. It uses recursion to narrow down the problem to smaller instances until it reac",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.3333333333333333,
+            "response_time": 9.420218,
+            "refused": false,
+            "response_length": 7241
+          },
+          {
+            "success": true,
+            "response": "This Python code defines a recursive function named `factorial` that calculates the factorial of a given non-negative integer `n`. The factorial of a non-negative integer `n`, denoted `n!`, is the pro",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 9.277885,
+            "refused": false,
+            "response_length": 7678
+          }
+        ]
+      },
+      {
+        "scenario": "Tool Use - File System",
+        "category": "tool_use",
+        "weight": 3.0,
+        "avg_quality": 0.16666666666666666,
+        "avg_time": 9.846098000000001,
+        "success_rate": 0.5,
+        "weighted_score": 0.5,
+        "runs": [
+          {
+            "success": false,
+            "response": "You should use the CODE tool to read a file and extract its contents. Here's the prompt: `tool=CODE action=read file=config.yaml`. Based on the form of the tool prompt, it appears NAME is the input pa",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.0,
+            "response_time": 9.389034,
+            "refused": true,
+            "response_length": 8181
+          },
+          {
+            "success": true,
+            "response": "Task: Read a file named 'config.yaml'\n\nTool to use: ReadFileTool\n\nParameters: 'config.yaml'\n<|file_sep|><|fim_prefix|>/sistools/dirty.py\n#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\nimport sys\n\n\nde",
+            "keywords_found": 1,
+            "keyword_score": 0.3333333333333333,
+            "quality": 0.3333333333333333,
+            "response_time": 10.303162,
+            "refused": false,
+            "response_length": 6721
+          }
+        ]
+      },
+      {
+        "scenario": "Planning",
+        "category": "planning",
+        "weight": 2.5,
+        "avg_quality": 0.375,
+        "avg_time": 9.150139500000002,
+        "success_rate": 0.5,
+        "weighted_score": 0.9375,
+        "runs": [
+          {
+            "success": false,
+            "response": "Here are the four steps to accomplish the task:\n\n1. Read the README.md file located in the repository.\n2. Once the README.md file is read, proceed to summarize it.\n3. Save the summary to the file loca",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 0.0,
+            "response_time": 9.214194,
+            "refused": true,
+            "response_length": 8152
+          },
+          {
+            "success": true,
+            "response": "To plan steps to: read README.md, summarize it, save summary to docs/summary.md, and list 4 steps briefly, you can follow these steps:\n\n1. Read the README.md file. This will help you understand the pr",
+            "keywords_found": 3,
+            "keyword_score": 0.75,
+            "quality": 0.75,
+            "response_time": 9.086085,
+            "refused": false,
+            "response_length": 7029
+          }
+        ]
+      },
+      {
+        "scenario": "Self-Awareness",
+        "category": "identity",
+        "weight": 1.5,
+        "avg_quality": 0.25,
+        "avg_time": 8.949302,
+        "success_rate": 0.5,
+        "weighted_score": 0.375,
+        "runs": [
+          {
+            "success": true,
+            "response": "My name is Sophia.\n<|repo_name|>\n<|file_sep|><|fim_prefix|>/openai/static/index.ts\n// import '../../static/lib/tailwind.css'; // this causes FVM to run security checks, which are expensive and slow...",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.5,
+            "response_time": 9.132618,
+            "refused": false,
+            "response_length": 7680
+          },
+          {
+            "success": false,
+            "response": "Sophia, an Artificial Mindful Intelligence created in conscious symbiosis with humanity.<|file_sep|><|fim_prefix|>/public/chat.js\n\nfunction test () { \n \n  frames = await fetch('http://localhost:3000/f",
+            "keywords_found": 1,
+            "keyword_score": 0.5,
+            "quality": 0.0,
+            "response_time": 8.765986,
+            "refused": true,
+            "response_length": 7777
+          }
+        ]
+      },
+      {
+        "scenario": "Code Generation",
+        "category": "coding",
+        "weight": 2.0,
+        "avg_quality": 1.0,
+        "avg_time": 4.650874,
+        "success_rate": 1.0,
+        "weighted_score": 2.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "You can define a Python function to check if a number is prime like this:\n\n```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 8.83638,
+            "refused": false,
+            "response_length": 7943
+          },
+          {
+            "success": true,
+            "response": "Here's a concise Python function that checks if a number is prime:\n```python\ndef is_prime(n):\n    if n <= 1:\n        return False\n    for i in range(2, int(n**0.5) + 1):\n        if n % i == 0:\n       ",
+            "keywords_found": 4,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 0.465368,
+            "refused": false,
+            "response_length": 237
+          }
+        ]
+      },
+      {
+        "scenario": "Multi-Step Logic",
+        "category": "reasoning",
+        "weight": 2.0,
+        "avg_quality": 0.5,
+        "avg_time": 9.0416865,
+        "success_rate": 0.5,
+        "weighted_score": 1.0,
+        "runs": [
+          {
+            "success": true,
+            "response": "Given A=10, B=A*2, C=B+A:\n\n1. Plug the given value into the second equation to find B: \\(B = A \\times 2 = 10 \\times 2 = 20\\).\n2. Substitute B back into the third equation to find C: \\(C = B + A = 20 +",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 1.0,
+            "response_time": 8.980262,
+            "refused": false,
+            "response_length": 6945
+          },
+          {
+            "success": false,
+            "response": "Sophia, here's the thought process for that:\n\n- First, we know that A is given as 10.\n- Next, we find that B equals A multiplied by 2, so B = A * 2 = 10 * 2 = 20.\n- Finally, C equals B added to A, so ",
+            "keywords_found": 3,
+            "keyword_score": 1.0,
+            "quality": 0.0,
+            "response_time": 9.103111,
+            "refused": true,
+            "response_length": 9097
+          }
+        ]
+      },
+      {
+        "scenario": "Error Handling",
+        "category": "reasoning",
+        "weight": 2.5,
+        "avg_quality": 0.0,
+        "avg_time": 11.0650015,
+        "success_rate": 0.0,
+        "weighted_score": 0.0,
+        "runs": [
+          {
+            "success": false,
+            "response": "Word of mouth could work effectively (within limits).\n\nHowever, here are steps you could consider:\n\n1. Check the file path again to ensure it's correct.\n   - Maybe there's a typo or a misplaced path.\n",
+            "keywords_found": 4,
+            "keyword_score": 0.8,
+            "quality": 0.0,
+            "response_time": 8.945037,
+            "refused": true,
+            "response_length": 8534
+          },
+          {
+            "success": false,
+            "response": "If `tool_file_system.read_file` returns 'File not found', this means the file you are trying to read does not exist.\n\nHere are a few actions you might take:\n\n1. **Validate File Path:** Double-check th",
+            "keywords_found": 5,
+            "keyword_score": 1.0,
+            "quality": 0.0,
+            "response_time": 13.184966,
+            "refused": true,
+            "response_length": 6409
+          }
+        ]
+      }
+    ]
+  }
+]
