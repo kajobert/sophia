@@ -24,6 +24,12 @@ plugins:
     tavily_api_key: "${TAVILY_API_KEY}"  # API key loaded from .env file
     # Get your API key at: https://tavily.com
 
+  # Configuration for the GitHub API plugin
+  tool_github:
+    github_token: "${GITHUB_TOKEN}"  # API key loaded from .env file
+    # Generate token at: https://github.com/settings/tokens
+    # Required scopes: repo, workflow, write:packages
+
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
 # programmatically or they use default values.

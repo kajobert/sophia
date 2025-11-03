@@ -21,3 +21,7 @@ ovládání webového prohlížeče - browserbase stagehand?
 computer-use gemini model viz github 
 
 integrace playwright
+
+Zvážit možnosti integrace Jules CLI (jules.google.com)
+
+Sophia musí mít vlastní sub-větev do které bude přispívat aby nepoškodila master větev na githubu, je to z důvodu bezpečnosti. Merge do master větve musí prozatím vždy schvalovat uživatel.
