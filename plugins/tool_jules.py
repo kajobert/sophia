@@ -191,7 +191,7 @@ class JulesAPITool(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "create_session",
-                    "description": "Creates a new Jules coding session with specified parameters.",
+                    "description": "Creates a new Jules coding session. ⚠️ LIMIT: 100 sessions per day. Check usage with list_sessions() first!",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -361,6 +361,8 @@ class JulesAPITool(BasePlugin):
     ) -> JulesSession:
         """
         Creates a new Jules coding session with Pydantic validation.
+        
+        ⚠️ IMPORTANT: Daily limit of 100 sessions! Use list_sessions() to check usage first.
 
         Args:
             context: The shared context for the session
@@ -377,6 +379,11 @@ class JulesAPITool(BasePlugin):
             JulesValidationError: If input parameters are invalid
 
         Example:
+            >>> # Check daily usage first
+            >>> sessions = jules_tool.list_sessions(context)
+            >>> if len(sessions.sessions) >= 95:
+            ...     context.logger.warning("Approaching daily limit!")
+            >>> 
             >>> session = jules_tool.create_session(
             ...     context=context,
             ...     prompt="Add dark mode support",
@@ -398,6 +405,12 @@ class JulesAPITool(BasePlugin):
         except Exception as e:
             raise JulesValidationError(f"Invalid session parameters: {e}")
 
+        # Log warning about daily limits
+        context.logger.info(
+            "⚠️ Creating Jules session (Daily limit: 100 sessions). Consider checking usage with list_sessions() first.",
+            extra={"plugin_name": self.name}
+        )
+        
         data: Dict[str, Any] = {
             "prompt": request.prompt,
             "sourceContext": {
@@ -431,7 +444,7 @@ class JulesAPITool(BasePlugin):
 
         Args:
             context: The shared context for the session
-            session_id: The ID of the session to retrieve
+            session_id: The ID of the session to retrieve (can include 'sessions/' prefix)
 
         Returns:
             JulesSession with validated session data
@@ -441,7 +454,13 @@ class JulesAPITool(BasePlugin):
             >>> print(session.state)  # ACTIVE, COMPLETED, etc.
             >>> print(session.title)
         """
-        response = self._make_request(context, "GET", f"sessions/{session_id}")
+        # Handle both formats: "sessions/123" and "123"
+        if session_id.startswith("sessions/"):
+            endpoint = session_id
+        else:
+            endpoint = f"sessions/{session_id}"
+            
+        response = self._make_request(context, "GET", endpoint)
         try:
             return JulesSession(**response)
         except Exception as e:

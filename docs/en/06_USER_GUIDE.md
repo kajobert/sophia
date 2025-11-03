@@ -76,6 +76,16 @@ The application requires an API key for the LLM service.
     - The plugin will automatically load this key from the environment.
     - See `docs/JULES_API_SETUP.md` for detailed setup instructions.
 
+4.  **Optional: Configure Tavily API (for AI-optimized web search):**
+    If you want to use Tavily's AI-powered search capabilities, you'll need a Tavily API key:
+    - Get your free API key at [https://tavily.com](https://tavily.com)
+    - Add it to the `.env` file:
+      ```bash
+      echo "TAVILY_API_KEY=tvly-your-api-key-here" >> .env
+      ```
+    - The plugin will automatically load this key from the environment.
+    - See `docs/TAVILY_API_SETUP.md` for detailed setup instructions.
+
 ## 3. Running the Application
 
 Sophia V2 can be run in two modes: with a terminal interface or a web-based UI.

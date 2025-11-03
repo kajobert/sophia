@@ -1,0 +1,258 @@
+# Sophie's Guide to Jules Interaction
+
+## Overview
+Jules is Google's AI coding agent. You can delegate coding tasks to Jules and monitor their progress.
+
+## Complete Workflow
+
+### 1. Create Jules Session
+```json
+{
+  "tool_name": "tool_jules",
+  "method_name": "create_session",
+  "arguments": {
+    "source": "sources/github/ShotyCZ/sophia",
+    "branch": "master",
+    "prompt": "Detailed task description with all requirements"
+  }
+}
+```
+**Returns:** Session with `name` field (e.g., "sessions/1234567890")
+
+### 2. Monitor Until Completion (RECOMMENDED)
+```json
+{
+  "tool_name": "cognitive_jules_monitor",
+  "method_name": "monitor_until_completion",
+  "arguments": {
+    "session_id": "${step_1.name}",
+    "check_interval": 30,
+    "timeout": 3600
+  }
+}
+```
+**Returns:** Final status with completion details
+**Note:** This BLOCKS until Jules finishes or timeout
+
+### 3. Alternative: Async Monitoring
+If you want to continue other work while Jules works:
+
+a) Start monitoring:
+```json
+{
+  "tool_name": "cognitive_jules_monitor",
+  "method_name": "start_monitoring",
+  "arguments": {
+    "session_id": "${step_1.name}",
+    "check_interval": 60
+  }
+}
+```
+
+b) Later, check status:
+```json
+{
+  "tool_name": "cognitive_jules_monitor",
+  "method_name": "check_session_status",
+  "arguments": {
+    "session_id": "${step_1.name}"
+  }
+}
+```
+
+### 4. Get Results
+Once completed, read session details:
+```json
+{
+  "tool_name": "tool_jules",
+  "method_name": "get_session",
+  "arguments": {
+    "session_id": "${step_1.name}"
+  }
+}
+```
+
+## Jules Session States
+
+- **PLANNING** - Jules is planning the work
+- **RUNNING** - Jules is executing code changes
+- **COMPLETED** - Task finished successfully ✅
+- **FAILED** - Task failed ❌
+- **UNKNOWN** - Status unclear (check again)
+
+## Best Practices
+
+### For Simple Tasks (< 5 min expected)
+Use `monitor_until_completion` with short intervals:
+```json
+{
+  "tool_name": "cognitive_jules_monitor",
+  "method_name": "monitor_until_completion",
+  "arguments": {
+    "session_id": "${step_1.name}",
+    "check_interval": 15,
+    "timeout": 600
+  }
+}
+```
+
+### For Complex Tasks (> 5 min expected)
+Use async monitoring:
+1. `start_monitoring` - Begin tracking
+2. Do other work
+3. `check_session_status` - Check periodically
+4. `monitor_until_completion` - Final wait if needed
+
+### For Critical Tasks
+Always add error handling:
+```json
+[
+  {
+    "tool_name": "tool_jules",
+    "method_name": "create_session",
+    "arguments": {...}
+  },
+  {
+    "tool_name": "cognitive_jules_monitor",
+    "method_name": "monitor_until_completion",
+    "arguments": {
+      "session_id": "${step_1.name}",
+      "timeout": 3600
+    }
+  },
+  {
+    "tool_name": "tool_llm",
+    "method_name": "execute",
+    "arguments": {
+      "context": "Analyze Jules session result from step 2. Status: ${step_2.state}. Is completed: ${step_2.is_completed}. Error: ${step_2.error_message}. Create summary report."
+    }
+  }
+]
+```
+
+## Example: Complete Autonomous Workflow
+
+```json
+[
+  {
+    "tool_name": "tool_tavily",
+    "method_name": "search",
+    "arguments": {
+      "query": "Python best practices for plugin architecture"
+    }
+  },
+  {
+    "tool_name": "tool_code_workspace",
+    "method_name": "read_file",
+    "arguments": {
+      "path": "plugins/base_plugin.py"
+    }
+  },
+  {
+    "tool_name": "tool_jules",
+    "method_name": "create_session",
+    "arguments": {
+      "source": "sources/github/ShotyCZ/sophia",
+      "branch": "master",
+      "prompt": "Create new plugin tool_example.py following BasePlugin pattern from research: ${step_1.results}. Use structure from: ${step_2}"
+    }
+  },
+  {
+    "tool_name": "cognitive_jules_monitor",
+    "method_name": "monitor_until_completion",
+    "arguments": {
+      "session_id": "${step_3.name}",
+      "check_interval": 30,
+      "timeout": 1800
+    }
+  },
+  {
+    "tool_name": "tool_llm",
+    "method_name": "execute",
+    "arguments": {
+      "context": "Jules completed task. Session: ${step_3.name}. Status: ${step_4.state}. Result: ${step_4.completion_summary}. Create final report for user."
+    }
+  }
+]
+```
+
+## Monitoring Multiple Sessions
+
+You can track multiple Jules sessions:
+```json
+[
+  {
+    "tool_name": "tool_jules",
+    "method_name": "create_session",
+    "arguments": {"prompt": "Task A"}
+  },
+  {
+    "tool_name": "tool_jules",
+    "method_name": "create_session",
+    "arguments": {"prompt": "Task B"}
+  },
+  {
+    "tool_name": "cognitive_jules_monitor",
+    "method_name": "start_monitoring",
+    "arguments": {"session_id": "${step_1.name}"}
+  },
+  {
+    "tool_name": "cognitive_jules_monitor",
+    "method_name": "start_monitoring",
+    "arguments": {"session_id": "${step_2.name}"}
+  },
+  {
+    "tool_name": "cognitive_jules_monitor",
+    "method_name": "list_active_monitors"
+  }
+]
+```
+
+## URL Construction
+
+Jules session URL format:
+```
+https://jules.googleapis.com/v1alpha/${session_id}
+```
+
+Example with session_id "sessions/1234567890":
+```
+https://jules.googleapis.com/v1alpha/sessions/1234567890
+```
+
+## Common Patterns
+
+### Pattern 1: Research → Delegate → Monitor → Report
+Research topic → Create specification → Delegate to Jules → Wait for completion → Analyze results
+
+### Pattern 2: Parallel Delegation
+Create multiple sessions → Monitor all → Aggregate results
+
+### Pattern 3: Iterative Development
+Create session → Monitor → Review result → Create follow-up session
+
+### Pattern 4: Conditional Execution
+Create session → Monitor → If success: next step, If fail: retry or alternative approach
+
+## Error Handling
+
+If Jules fails:
+1. Check `error_message` field
+2. Analyze what went wrong
+3. Create new session with improved prompt
+4. Or report issue to user
+
+## Memory Integration
+
+Monitor automatically saves session progress to memory (if available).
+You can retrieve past sessions from memory for reference.
+
+## Tips for Effective Delegation
+
+1. **Be Specific**: Provide detailed requirements in prompt
+2. **Include Context**: Reference research, code examples, patterns
+3. **Set Expectations**: Mention expected output structure
+4. **Use Examples**: Show similar code from existing plugins
+5. **Monitor Progress**: Always use monitor to track completion
+6. **Handle Errors**: Check is_error field and respond appropriately
+7. **Save Results**: Store successful sessions for future reference

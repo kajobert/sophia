@@ -49,6 +49,14 @@ Jádro obsahuje několik pokročilých funkcí, které umožňují komplexní, v
     *   Posílání dalších instrukcí do aktivních sessions
     *   Plná Pydantic v2 validace dat pro type safety
     *   Bezpečná správa API klíčů přes proměnné prostředí
+*   **`TavilyAPITool`:** Integrace s Tavily AI Search API pro optimalizované webové vyhledávání navržené pro AI aplikace. Funkce zahrnují:
+    *   AI-optimalizované výsledky vyhledávání se skóre relevance (0.0-1.0)
+    *   AI-generované přímé odpovědi na dotazy
+    *   Basic (rychlý) a Advanced (důkladný) režimy vyhledávání
+    *   Filtrování domén (whitelist/blacklist konkrétních domén)
+    *   Vyhledávání obrázků a extrakce čistého obsahu
+    *   Plná Pydantic v2 validace pro požadavky i odpovědi
+    *   Bezpečná správa API klíčů přes proměnné prostředí
 
 ### 2.3. `SharedContext` (`core/context.py`)
 

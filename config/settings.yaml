@@ -19,6 +19,11 @@ plugins:
     jules_api_key: "${JULES_API_KEY}"  # API key loaded from .env file
     # Note: Jules API is currently in alpha. Request access at jules.google.com
 
+  # Configuration for the Tavily AI Search plugin
+  tool_tavily:
+    tavily_api_key: "${TAVILY_API_KEY}"  # API key loaded from .env file
+    # Get your API key at: https://tavily.com
+
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
 # programmatically or they use default values.

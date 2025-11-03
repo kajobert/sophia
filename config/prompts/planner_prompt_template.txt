@@ -11,6 +11,43 @@ You are a planning module for an AI assistant. Your ONLY job is to convert a use
 5.  Use the EXACT tool and method names provided below.
 6.  For all file system operations (`read_file`, `write_file`, `delete_file`), the argument for the file's location is `path`.
 
+**USING RESULTS FROM PREVIOUS STEPS:**
+You can chain steps by referencing previous step outputs. Use this exact syntax: ${{step_N.field}}
+- ${{step_1.name}} - references the "name" field from step 1's output
+- ${{step_2.results}} - references the "results" field from step 2's output  
+- ${{step_3.content}} - references the "content" field from step 3's output
+Common fields: name (Jules session IDs), results (search results), content (file contents)
+NEVER use placeholder text like "FILL_IN_SESSION_ID" - always use the ${{step_N.field}} syntax
+
+**CONCRETE EXAMPLE - Chaining Jules Session ID:**
+If user asks to "create Jules session and monitor it", generate:
+[
+  {{"tool_name": "tool_jules", "method_name": "create_session", "arguments": {{"prompt": "task description", "source": "sources/github/owner/repo", "branch": "master"}}}},
+  {{"tool_name": "cognitive_jules_monitor", "method_name": "monitor_until_completion", "arguments": {{"session_id": "${{step_1.name}}"}}}}
+]
+Notice: Step 2 uses ${{step_1.name}} to get the session ID from step 1's create_session output.
+
+**TOOL SELECTION GUIDELINES:**
+- To READ project code files (plugins/, docs/, core/, tests/, config/): ALWAYS use "tool_code_workspace" with method "read_file"
+- To READ/WRITE files in sandbox/ directory only: Use "tool_file_system" with method "read_file" or "write_file"
+- When user mentions reading "plugins/X.py" or "docs/X.md", this means project files → use "tool_code_workspace"
+- "tool_file_system" is ONLY for sandbox operations, NOT for reading existing project code
+
+**CRITICAL: tool_llm.execute PARAMETER FORMAT:**
+- The context parameter for tool_llm.execute MUST ALWAYS be a STRING, never a dict/object
+- WRONG: Pass context as dict with nested structure
+- CORRECT: Pass context as single formatted string with all information
+- If you need to pass complex information, format it as a readable string with sections
+- Example: context value should be "Task: Analyze code\\n\\nResearch findings: ...\\n\\nCode examples: ..."
+
+**JULES DELEGATION AND MONITORING:**
+When user asks to delegate to Jules, create a create_session step followed by monitor_until_completion.
+Jules create_session returns an object with "name" field containing the session ID.
+Use ${{step_N.name}} to reference that session ID in the monitoring step.
+Example: Step 1 creates session → Step 2 monitors with session_id: "${{step_1.name}}"
+Monitor blocks until completion and returns completion_summary field.
+
+
 **Available Tools:**
 {tool_list}
 

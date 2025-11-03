@@ -78,6 +78,32 @@ python run.py "Use Jules API to create a coding session for..."
 
 ---
 
+## ⚠️ API Limits & Important Notes
+
+### Daily Quotas:
+- **Session Creation Limit:** 100 sessions per day
+- **Counter Reset:** Midnight UTC
+- **Tracking:** Use `list_sessions()` to monitor usage
+
+### Best Practices:
+1. **Track Usage:** Check session count before creating new sessions
+2. **Batch Tasks:** Combine related work into single sessions when possible
+3. **Reuse Sessions:** Use `send_message()` instead of creating new sessions
+4. **Monitor Quota:** Implement session counting to avoid hitting limits
+
+### Session Counting Example:
+```python
+# Check current usage
+sessions = tool.list_sessions(context)
+today_count = len([s for s in sessions.sessions 
+                   if s.create_time.date() == date.today()])
+
+if today_count >= 95:
+    print("⚠️ WARNING: Approaching daily limit (95/100)")
+```
+
+---
+
 ## 🔒 Security
 
 ### ✅ Implemented:

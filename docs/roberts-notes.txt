@@ -16,3 +16,8 @@ vždy je potřeba mít detailní technickou dokumentaci a manuál jak postupovat
 **počítadlo tokenů**
 * zaznam v logu i externě pro celkové náklady provozu a testování sophie včetně přehledného třídění úkonů a nákladů na ně dle logických kategorií.
 
+ovládání webového prohlížeče - browserbase stagehand?
+
+computer-use gemini model viz github 
+
+integrace playwright

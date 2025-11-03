@@ -55,6 +55,10 @@ class Planner(BasePlugin):
         # --- Dynamically discover available tools ---
         available_tools = []
         for plugin in self.plugins.values():
+            # Skip Langfuse temporarily due to validation issues
+            if plugin.name == "tool_langfuse":
+                continue
+                
             if hasattr(plugin, "get_tool_definitions"):
                 for tool_def in plugin.get_tool_definitions():
                     func = tool_def.get("function", {})

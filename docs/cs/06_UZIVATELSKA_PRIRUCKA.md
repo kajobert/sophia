@@ -76,6 +76,16 @@ Aplikace vyžaduje API klíč pro službu LLM.
     - Plugin automaticky načte tento klíč z prostředí.
     - Detailní návod naleznete v `docs/JULES_API_SETUP.md`.
 
+4.  **Volitelné: Konfigurace Tavily API (pro AI-optimalizované webové vyhledávání):**
+    Pokud chcete používat AI-poháněné vyhledávání Tavily, budete potřebovat Tavily API klíč:
+    - Získejte bezplatný API klíč na [https://tavily.com](https://tavily.com)
+    - Přidejte jej do souboru `.env`:
+      ```bash
+      echo "TAVILY_API_KEY=tvly-your-api-key-here" >> .env
+      ```
+    - Plugin automaticky načte tento klíč z prostředí.
+    - Detailní návod naleznete v `docs/TAVILY_API_SETUP.md`.
+
 ## 3. Spuštění aplikace
 
 Sophia V2 může být spuštěna ve dvou režimech: s terminálovým rozhraním nebo s webovým uživatelským rozhraním.

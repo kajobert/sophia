@@ -15,6 +15,20 @@ Jules API is Google's AI-powered coding assistant API that can:
 - Work with GitHub repositories
 - Create pull requests automatically
 
+## ⚠️ API Limits & Quotas
+
+**IMPORTANT:** Jules API has strict usage limits:
+
+- **Daily Task Limit:** 100 sessions per day
+- **Counter:** Resets at midnight UTC
+- **Recommendation:** Track your usage carefully to avoid hitting limits
+- **Best Practice:** Batch related tasks when possible
+
+**Usage Tracking:**
+- Each `create()` call creates a new session and counts toward the limit
+- `get()` and `list()` calls do NOT count toward the limit
+- Monitor your daily usage to stay within quota
+
 ---
 
 ## 🔑 Authentication

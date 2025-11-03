@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
 
@@ -28,6 +29,7 @@ class Kernel:
         self.is_running = False
         self.json_repair_prompt_template = ""
         self.all_plugins_map = {}
+        self.memory = None  # Will be set during initialization
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
@@ -48,6 +50,20 @@ class Kernel:
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
         self.all_plugins_map = {p.name: p for p in all_plugins_list}
+        
+        # Get memory plugin for state persistence
+        memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
+        if memory_plugins:
+            self.memory = memory_plugins[0]  # Use first available memory plugin
+            logger.info(
+                f"Using memory plugin: {self.memory.name}",
+                extra={"plugin_name": "Kernel"},
+            )
+        else:
+            logger.warning(
+                "No memory plugin found - state persistence disabled",
+                extra={"plugin_name": "Kernel"},
+            )
 
         for plugin in all_plugins_list:
             config_path = Path("config/settings.yaml")
@@ -242,6 +258,7 @@ class Kernel:
                                     params_schema = function.get("parameters")
                                     if func_name and params_schema:
                                         fields = {}
+                                        required_fields = params_schema.get("required", [])
                                         for prop_name, prop_def in params_schema.get(
                                             "properties", {}
                                         ).items():
@@ -250,12 +267,22 @@ class Kernel:
                                                 "integer": int,
                                                 "number": float,
                                                 "boolean": bool,
+                                                "array": list,
                                             }.get(prop_def.get("type"), str)
                                             desc = prop_def.get("description")
-                                            fields[prop_name] = (
-                                                field_type,
-                                                Field(..., description=desc),
-                                            )
+                                            default_value = prop_def.get("default")
+                                            
+                                            # Use Field(...) for required, Field(default=...) for optional
+                                            if prop_name in required_fields:
+                                                fields[prop_name] = (
+                                                    field_type,
+                                                    Field(..., description=desc),
+                                                )
+                                            else:
+                                                fields[prop_name] = (
+                                                    field_type,
+                                                    Field(default=default_value, description=desc),
+                                                )
 
                                         validation_model = create_model(
                                             f"{func_name}ArgsModel", **fields
@@ -270,9 +297,51 @@ class Kernel:
                             method_name = step.get("method_name")
                             arguments = step.get("arguments", {})
 
-                            # --- Resolve chained results ---
+                            # --- Resolve chained results (supports both old and new syntax) ---
                             for arg_name, arg_value in list(arguments.items()):
-                                if isinstance(arg_value, str) and arg_value.startswith(
+                                # New syntax: ${step_N.field} or ${step_N}
+                                if isinstance(arg_value, str) and "${step_" in arg_value:
+                                    import re
+                                    # Match ${step_N.field} or ${step_N}
+                                    pattern = r'\$\{step_(\d+)(?:\.(\w+))?\}'
+                                    matches = re.findall(pattern, arg_value)
+                                    
+                                    replacement = arg_value
+                                    for match in matches:
+                                        source_step_index = int(match[0])
+                                        field_name = match[1] if match[1] else None
+                                        
+                                        if source_step_index in step_outputs:
+                                            output = step_outputs[source_step_index]
+                                            
+                                            # Extract specific field if requested
+                                            if field_name:
+                                                if hasattr(output, field_name):
+                                                    value = getattr(output, field_name)
+                                                elif isinstance(output, dict) and field_name in output:
+                                                    value = output[field_name]
+                                                else:
+                                                    context.logger.warning(
+                                                        f"Field '{field_name}' not found in step {source_step_index} output",
+                                                        extra={"plugin_name": "Kernel"},
+                                                    )
+                                                    value = str(output)
+                                            else:
+                                                value = str(output)
+                                            
+                                            # Replace in the argument value
+                                            placeholder = f"${{step_{source_step_index}" + (f".{field_name}" if field_name else "") + "}"
+                                            replacement = replacement.replace(placeholder, str(value))
+                                        else:
+                                            context.logger.error(
+                                                f"Could not find result for step {source_step_index}",
+                                                extra={"plugin_name": "Kernel"},
+                                            )
+                                    
+                                    arguments[arg_name] = replacement
+                                
+                                # Old syntax: $result.step_N (keep for backward compatibility)
+                                elif isinstance(arg_value, str) and arg_value.startswith(
                                     "$result.step_"
                                 ):
                                     try:
@@ -358,16 +427,36 @@ class Kernel:
                                         plan_failed = True
                                         break
 
+                                    # Convert step_outputs to JSON-serializable format
+                                    serializable_outputs = []
+                                    for output in step_outputs:
+                                        if hasattr(output, 'model_dump'):
+                                            serializable_outputs.append(output.model_dump())
+                                        elif isinstance(output, (str, int, float, bool, type(None))):
+                                            serializable_outputs.append(output)
+                                        else:
+                                            serializable_outputs.append(str(output))
+                                    
                                     corrupted_json_data = {
                                         "tool_name": tool_name,
                                         "method_name": method_name,
                                         "arguments": arguments,
                                         "error": str(e),
                                         "user_input": context.user_input,
-                                        "previous_steps": step_outputs,
+                                        "previous_steps": serializable_outputs,
                                     }
+                                    
+                                    # Get function schema for repair
+                                    function_schema = validation_model.model_json_schema() if hasattr(validation_model, 'model_json_schema') else {}
+                                    
                                     repair_prompt = self.json_repair_prompt_template.format(
-                                        corrupted_json=json.dumps(corrupted_json_data, indent=2)
+                                        user_input=context.user_input or "",
+                                        tool_name=tool_name,
+                                        method_name=method_name,
+                                        error=str(e),
+                                        function_schema=json.dumps(function_schema, indent=2),
+                                        previous_steps=json.dumps(serializable_outputs, indent=2),
+                                        arguments=json.dumps(arguments, indent=2)
                                     )
 
                                     repair_context = await llm_tool.execute(
@@ -447,6 +536,31 @@ class Kernel:
                                         step_results.append(str(step_result))
 
                                     step_outputs[step_index + 1] = output_for_chaining
+                                    
+                                    # Save step completion to memory for recovery
+                                    if self.memory:
+                                        try:
+                                            # Create a temporary context for memory storage
+                                            mem_context = SharedContext(
+                                                session_id=context.session_id,
+                                                current_state="EXECUTING",
+                                                logger=context.logger,
+                                                user_input=f"[STEP {step_index + 1}] {tool_name}.{method_name}",
+                                                history=context.history
+                                            )
+                                            mem_context.payload["llm_response"] = (
+                                                f"Step {step_index + 1} completed: {tool_name}.{method_name}\n"
+                                                f"Arguments: {validated_args}\n"
+                                                f"Result: {str(output_for_chaining)[:500]}\n"
+                                                f"Timestamp: {datetime.now().isoformat()}"
+                                            )
+                                            await self.memory.execute(mem_context)
+                                        except Exception as mem_err:
+                                            context.logger.warning(
+                                                f"Failed to save step to memory: {mem_err}",
+                                                extra={"plugin_name": "Kernel"}
+                                            )
+                                    
                                     context.logger.info(
                                         f"Step '{method_name}' executed. "
                                         f"Result: {step_result}",

@@ -55,6 +55,14 @@ The `Kernel` includes several advanced features to enable complex, multi-step op
     *   Sending follow-up instructions to active sessions
     *   Full Pydantic v2 data validation for type safety
     *   Secure API key management via environment variables
+*   **`TavilyAPITool`:** Integrates with Tavily AI Search API for optimized web search designed for AI applications. Features include:
+    *   AI-optimized search results with relevance scoring (0.0-1.0)
+    *   AI-generated direct answers to queries
+    *   Basic (fast) and Advanced (thorough) search modes
+    *   Domain filtering (whitelist/blacklist specific domains)
+    *   Image search and raw content extraction
+    *   Full Pydantic v2 validation for requests and responses
+    *   Secure API key management via environment variables
 
 #### 2.2.2. Cognitive Plugins
 
