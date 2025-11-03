@@ -168,9 +168,6 @@
   </text>
   <text class="text-cyan" x="30" y="280" style="animation: fadeIn 1s 3s forwards; opacity: 0;">╰─</text>
   
-  <!-- Blinking cursor -->
-  <rect class="cursor text-bright-white" x="680" y="250" width="8" height="15" style="animation-delay: 3s;"/>
-  
   <!-- User Message 2 -->
   <text class="text-cyan" x="30" y="320" style="animation: fadeIn 1s 4s forwards; opacity: 0;">╭─ [10:30:52]</text>
   <text class="text-yellow" x="150" y="320" style="animation: fadeIn 1s 4s forwards; opacity: 0;">👤 YOU</text>
@@ -187,6 +184,14 @@
   <text class="text-bright-white" x="30" y="490" style="animation: fadeIn 1s 7.5s forwards; opacity: 0;">│</text>
   <text class="text-bright-white" x="30" y="510" style="animation: fadeIn 1s 8s forwards; opacity: 0;">│ This isn't just a terminal - it's a collaborative AI workspace! 🚀</text>
   <text class="text-cyan" x="30" y="530" style="animation: fadeIn 1s 8.5s forwards; opacity: 0;">╰─</text>
+  
+  <!-- User input prompt with blinking cursor -->
+  <text class="text-cyan" x="30" y="570" style="animation: fadeIn 1s 9s forwards; opacity: 0;">╭─ [10:31:20]</text>
+  <text class="text-yellow" x="150" y="570" style="animation: fadeIn 1s 9s forwards; opacity: 0;">👤 YOU</text>
+  <text class="text-white" x="30" y="590" style="animation: fadeIn 1s 9s forwards; opacity: 0;">│</text>
+  
+  <!-- Blinking cursor at user input position -->
+  <rect class="cursor text-bright-white" x="45" y="578" width="8" height="15" style="animation-delay: 9.5s;"/>
   
   <!-- Metrics Panel (Right Sidebar) -->
   <rect class="border-yellow" x="960" y="80" width="430" height="220" rx="4"/>
