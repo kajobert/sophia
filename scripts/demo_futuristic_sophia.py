@@ -278,8 +278,69 @@ class FuturisticDemo:
             "model": model
         }
     
+    async def show_user_message(self, message: str, conversation_text: Text) -> Text:
+        """Přidá user message do konverzace."""
+        conversation_text.append("\n╭─ ", style="dim cyan")
+        conversation_text.append(f"[{datetime.now().strftime('%H:%M:%S')}] ", style="dim")
+        conversation_text.append("👤 YOU\n", style="bold yellow")
+        for line in message.split('\n'):
+            conversation_text.append(f"│ {line}\n", style="white")
+        conversation_text.append("╰─\n", style="dim cyan")
+        return conversation_text
+    
+    async def stream_sophia_response(self, response: str, conversation_text: Text) -> Text:
+        """Streamuje Sophia odpověď slovo po slově do konverzace."""
+        words = response.split()
+        
+        # Header
+        conversation_text.append("\n╭─ ", style="dim magenta")
+        conversation_text.append(f"[{datetime.now().strftime('%H:%M:%S')}] ", style="dim")
+        conversation_text.append("🤖 SOPHIA\n", style="bold cyan")
+        
+        current_line = ""
+        for i, word in enumerate(words):
+            current_line += word + " "
+            
+            # Wrap na 80 chars
+            if len(current_line) > 80 or '\n' in word:
+                for line in current_line.split('\n'):
+                    if line.strip():
+                        conversation_text.append(f"│ {line.strip()}\n", style="cyan")
+                current_line = ""
+            
+            # Update panel každých 5 slov (smooth ale ne příliš časté)
+            if i % 5 == 0 or i == len(words) - 1:
+                # Add typing indicator
+                temp_text = Text()
+                temp_text.append(str(conversation_text))
+                if current_line:
+                    temp_text.append(f"│ {current_line}", style="cyan")
+                if i < len(words) - 1:
+                    temp_text.append("▊", style="bold cyan blink")
+                
+                self.layout["main"].update(Panel(
+                    temp_text,
+                    title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                    border_style="bold cyan",
+                    box=box.ROUNDED,
+                    padding=(1, 2)
+                ))
+                
+                if self.live:
+                    self.live.refresh()
+                
+                # Typing speed
+                await asyncio.sleep(random.uniform(0.15, 0.25))
+        
+        # Final line
+        if current_line.strip():
+            conversation_text.append(f"│ {current_line.strip()}\n", style="cyan")
+        
+        conversation_text.append("╰─\n", style="dim magenta")
+        return conversation_text
+    
     async def run_conversation_demo(self):
-        """Hlavní konverzační demo s VŠEMI features."""
+        """Hlavní konverzační demo s PLNOU konverzací."""
         
         # Setup layoutu
         self.layout.split_column(
@@ -318,16 +379,12 @@ class FuturisticDemo:
             padding=(0, 1)
         ))
         
-        # User message
-        user_msg = Text()
-        user_msg.append("╭─ ", style="dim cyan")
-        user_msg.append(f"[{datetime.now().strftime('%H:%M:%S')}] ", style="dim")
-        user_msg.append("👤 YOU\n", style="bold yellow")
-        user_msg.append("│ Hello Sophia! Tell me about your capabilities and what makes you special.\n", style="white")
-        user_msg.append("╰─\n", style="dim cyan")
+        # Conversation text accumulator
+        conversation = Text()
         
+        # Initial empty panel
         self.layout["main"].update(Panel(
-            user_msg,
+            "[dim cyan]Awaiting neural input...[/dim cyan]",
             title="[bold magenta]💬 CONVERSATION[/bold magenta]",
             border_style="bold cyan",
             box=box.ROUNDED,
@@ -343,7 +400,23 @@ class FuturisticDemo:
         )
         
         with self.live:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
+            
+            # ==========================================
+            # CONVERSATION 1: Představení
+            # ==========================================
+            
+            user_msg1 = "Hello Sophia! Tell me about your capabilities and what makes you special."
+            conversation = await self.show_user_message(user_msg1, conversation)
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
+            self.live.refresh()
+            await asyncio.sleep(0.8)
             
             # Simuluj task classification
             log_text.append("  ⚙️ Classifying task...\n", style="cyan")
@@ -369,9 +442,9 @@ class FuturisticDemo:
                 transient=True
             ) as progress:
                 task = progress.add_task("", total=None)
-                await asyncio.sleep(2.0)
+                await asyncio.sleep(1.5)
             
-            await self.simulate_llm_call("gemini-2.5-pro", 1500)
+            await self.simulate_llm_call("gemini-2.5-pro", 1200)
             self.messages_count += 1
             self.layout["metrics"].update(self.create_metrics_panel())
             
@@ -379,26 +452,29 @@ class FuturisticDemo:
             self.layout["logs"].update(Panel(log_text, title="[bold cyan]⚙️ Activity Log[/bold cyan]", border_style="cyan", box=box.ROUNDED, padding=(0, 1)))
             self.live.refresh()
             
-            # Stream odpověď SLOVO PO SLOVĚ!
-            response = """Hello! I'm Sophia, an Autonomous Mind Interface representing a new paradigm in artificial intelligence. 
+            # Stream odpověď
+            response1 = """Hello! I'm Sophia, an Autonomous Mind Interface representing a new paradigm in AI.
 
-What makes me special:
+🧠 Multi-Agent Architecture: I orchestrate specialized cognitive modules working in parallel.
 
-🧠 Multi-Agent Architecture: I orchestrate specialized cognitive modules working in parallel, mimicking human neural networks.
+🤖 Jules Integration: I delegate complex tasks to Jules workers with Gemini 2.5 Pro access - 100 free sessions daily!
 
-🤖 Jules Integration: I can delegate complex tasks to Jules workers, each with access to Gemini 2.5 Pro - giving me 100 free sessions daily for heavy computation.
+💻 Hybrid Intelligence: I combine cloud models with local LLMs for privacy and cost optimization.
 
-💻 Hybrid Intelligence: I combine cloud models (GPT-4, Claude, Gemini) with local LLMs for privacy-sensitive tasks and cost optimization.
+⚡ Asynchronous Consciousness: While chatting with you, background workers handle code analysis, research, and data processing.
 
-⚡ Asynchronous Consciousness: While I chat with you, background workers handle long-running tasks like code analysis, web research, or data processing.
-
-🎯 Cost-Aware Routing: I intelligently choose models based on task complexity - simple queries use cheap models, complex ones leverage premium AI.
-
-🔒 Safety-First: All autonomous actions are logged, reviewed, and constrained by safety protocols. I never touch master branch without human approval.
-
-This conversation itself demonstrates my capabilities - I'm using cost-effective routing while Jules works on UI improvements in the background. True parallel intelligence!"""
+🎯 Cost-Aware Routing: Simple queries use cheap models, complex ones leverage premium AI intelligently."""
             
-            await self.stream_response(response, "main")
+            conversation = await self.stream_sophia_response(response1, conversation)
+            
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
+            self.live.refresh()
             
             log_text.append("  ⚙️ Saving to memory...\n", style="cyan")
             log_text.append("  ✓ Interaction logged\n", style="green")
@@ -407,11 +483,116 @@ This conversation itself demonstrates my capabilities - I'm using cost-effective
             
             await asyncio.sleep(2.0)
             
-            # Simuluj Jules completion
+            # ==========================================
+            # CONVERSATION 2: Jules status check
+            # ==========================================
+            
+            user_msg2 = "What's Jules working on right now?"
+            conversation = await self.show_user_message(user_msg2, conversation)
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
+            self.live.refresh()
+            await asyncio.sleep(0.8)
+            
+            log_text.append("  ⚙️ Checking Jules worker status...\n", style="magenta")
+            self.layout["logs"].update(Panel(log_text, title="[bold cyan]⚙️ Activity Log[/bold cyan]", border_style="cyan", box=box.ROUNDED, padding=(0, 1)))
+            self.live.refresh()
+            
+            await self.simulate_llm_call("gemini-2.0-flash", 400)
+            self.messages_count += 1
+            self.layout["metrics"].update(self.create_metrics_panel())
+            
+            response2 = """Jules is currently working on TUI improvements in branch nomad/tui-uv-style-fix.
+
+Task: Fix terminal UI flicker and implement UV/Docker style sticky panels.
+
+Status: Actually completed TWO fixes already! 🎉
+
+The fixes include:
+- Manual refresh mode (no auto-refresh flicker)
+- Stdout/stderr redirection to panels
+- Duplicate boot sequence elimination
+- Startup warning suppression
+
+Ready for review and merge! This is the power of asynchronous delegation."""
+            
+            conversation = await self.stream_sophia_response(response2, conversation)
+            
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
+            self.live.refresh()
+            
+            log_text.append("  ✓ Jules status retrieved\n", style="green")
+            self.layout["logs"].update(Panel(log_text, title="[bold cyan]⚙️ Activity Log[/bold cyan]", border_style="cyan", box=box.ROUNDED, padding=(0, 1)))
+            self.live.refresh()
+            
+            await asyncio.sleep(2.0)
+            
+            # ==========================================
+            # Jules completion event!
+            # ==========================================
+            
             log_text.append("\n  🤖 Jules task completed!\n", style="bold magenta")
-            log_text.append("  ✓ TUI fix ready for review\n", style="bold green")
+            log_text.append("  ✓ 2 PRs ready for review\n", style="bold green")
             self.layout["logs"].update(Panel(log_text, title="[bold cyan]⚙️ Activity Log[/bold cyan]", border_style="cyan", box=box.ROUNDED, padding=(0, 1)))
             self.layout["jules"].update(self.create_jules_monitor("COMPLETED"))
+            self.live.refresh()
+            
+            await asyncio.sleep(2.0)
+            
+            # ==========================================
+            # CONVERSATION 3: Future vision
+            # ==========================================
+            
+            user_msg3 = "Amazing! What's next for you?"
+            conversation = await self.show_user_message(user_msg3, conversation)
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
+            self.live.refresh()
+            await asyncio.sleep(0.6)
+            
+            await self.simulate_llm_call("gemini-2.5-pro", 600)
+            self.messages_count += 1
+            self.layout["metrics"].update(self.create_metrics_panel())
+            
+            response3 = """The future is exciting! Next steps:
+
+📦 Multiple Jules Workers: Specialized agents for web research, code analysis, and data science.
+
+🌐 Local LLM Integration: Privacy-first processing for sensitive tasks.
+
+🔄 Continuous Learning: Memory systems that grow smarter with each interaction.
+
+🎯 Full Autonomy Mode: Complete task delegation with human oversight.
+
+🚀 Computer Use API: Direct system interaction via Gemini's computer control.
+
+This demo you're watching? Tomorrow this becomes REALITY. First real boot incoming! 🌟"""
+            
+            conversation = await self.stream_sophia_response(response3, conversation)
+            
+            self.layout["main"].update(Panel(
+                conversation,
+                title="[bold magenta]💬 CONVERSATION[/bold magenta]",
+                border_style="bold cyan",
+                box=box.ROUNDED,
+                padding=(1, 2)
+            ))
             self.live.refresh()
             
             await asyncio.sleep(3.0)
@@ -424,8 +605,10 @@ This conversation itself demonstrates my capabilities - I'm using cost-effective
         console.print(f"  • Total Tokens: [bold yellow]{self.tokens_used:,}[/bold yellow]")
         console.print(f"  • Total Cost: [bold magenta]${self.total_cost:.6f}[/bold magenta]")
         console.print(f"  • Messages: [bold green]{self.messages_count}[/bold green]")
-        console.print(f"  • Jules Quota: [bold magenta]15/100[/bold magenta] sessions used today")
-        console.print(f"\n[dim]With this UX, your first REAL boot tomorrow will be LEGENDARY! 🚀[/dim]\n")
+        console.print(f"  • Jules Tasks: [bold magenta]2 COMPLETED![/bold magenta] ✅✅")
+        console.print(f"\n[bold yellow]🎉 Jules completed 2 PRs while we chatted![/bold yellow]")
+        console.print(f"[dim]This is asynchronous AI intelligence in action![/dim]")
+        console.print(f"\n[bold green]Tomorrow's first REAL boot will be LEGENDARY! 🚀[/bold green]\n")
 
 
 async def main():
