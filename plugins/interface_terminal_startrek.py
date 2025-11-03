@@ -92,19 +92,17 @@ class InterfaceTerminalStarTrek(BasePlugin):
         self._display_lcars_boot()
     
     def _display_lcars_boot(self):
-        """Display LCARS-style boot sequence."""
+        """Display LCARS-style boot sequence - simple text, no boxes!"""
         self.console.print()
-        self.console.print("[bold yellow]╔════════════════════════════════════════════════════╗[/]")
-        self.console.print("[bold yellow]║[/]  [bold bright_yellow]USS SOPHIA NCC-1701-AI[/]                        [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [yellow]LCARS v24.3 - MAIN COMPUTER[/]                   [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [dim yellow]STARDATE: 2025.11.03[/]                          [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]                                                  [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [bright_blue]▸[/] [blue]COMPUTER ONLINE[/]                            [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [bright_blue]▸[/] [blue]AI CORE INITIALIZED[/]                       [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [bright_blue]▸[/] [blue]ALL SYSTEMS NOMINAL[/]                       [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]                                                  [bold yellow]║[/]")
-        self.console.print("[bold yellow]║[/]  [dim blue]'Make it so.' - Captain Picard[/]              [bold yellow]║[/]")
-        self.console.print("[bold yellow]╚════════════════════════════════════════════════════╝[/]")
+        self.console.print("[bold bright_yellow]USS SOPHIA NCC-1701-AI[/]")
+        self.console.print("[yellow]LCARS v24.3 - MAIN COMPUTER[/]")
+        self.console.print("[dim yellow]STARDATE: 2025.11.03[/]")
+        self.console.print()
+        self.console.print("[bright_blue]▸[/] [blue]COMPUTER ONLINE[/]")
+        self.console.print("[bright_blue]▸[/] [blue]AI CORE INITIALIZED[/]")
+        self.console.print("[bright_blue]▸[/] [blue]ALL SYSTEMS NOMINAL[/]")
+        self.console.print()
+        self.console.print("[dim blue]'Make it so.' - Captain Picard[/]")
         self.console.print()
     
     def _get_stardate(self) -> str:

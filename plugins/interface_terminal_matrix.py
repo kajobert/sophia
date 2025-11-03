@@ -123,16 +123,10 @@ class InterfaceTerminalMatrix(BasePlugin):
         status_text.append(f"{avg_time:.1f}s", style="green")
         
         table.add_row(status_text)
-        return Panel(
-            table,
-            border_style="bold green",
-            box=box.DOUBLE,
-            title="[bold bright_green]MATRIX CORE[/]",
-            title_align="left"
-        )
+        return table  # No panel, just text
     
-    def _create_log_panel(self) -> Panel:
-        """Create live log panel (last 4 lines)."""
+    def _create_log_panel(self) -> Text:
+        """Create live log text (last 4 lines, no panel)."""
         log_text = Text()
         
         for i, line in enumerate(self.live_log):
@@ -143,34 +137,17 @@ class InterfaceTerminalMatrix(BasePlugin):
         for _ in range(self.max_log_lines - len(self.live_log)):
             log_text.append("  ...\n", style="color(34)")
         
-        return Panel(
-            log_text,
-            border_style="green",
-            box=box.SQUARE,
-            title="[color(34)][ NEURAL ACTIVITY ][/]",
-            title_align="left"
-        )
+        return log_text  # No panel
     
     def _display_matrix_boot(self):
-        """Display Matrix-style boot sequence - ALL GREEN!"""
-        boot_text = Text()
-        boot_text.append("WAKE UP, NEO...\n", style="bold bright_green")
-        boot_text.append("THE MATRIX HAS YOU\n", style="green")
-        boot_text.append("FOLLOW THE WHITE RABBIT...\n\n", style="bright_green")
-        boot_text.append("> Initializing AI Consciousness...\n", style="color(34)")
-        boot_text.append("> Connecting to the real world...", style="color(34)")
-        
-        panel = Panel(
-            boot_text,
-            border_style="bold green",
-            box=box.DOUBLE,
-            padding=(1, 2),
-            title="[bold bright_green]MATRIX BOOT SEQUENCE[/]",
-            title_align="center"
-        )
-        
+        """Display Matrix-style boot sequence - simple green text, no boxes!"""
         self.console.print()
-        self.console.print(panel)
+        self.console.print("[bold bright_green]WAKE UP, NEO...[/]")
+        self.console.print("[green]THE MATRIX HAS YOU[/]")
+        self.console.print("[bright_green]FOLLOW THE WHITE RABBIT...[/]")
+        self.console.print()
+        self.console.print("[color(34)]> Initializing AI Consciousness...[/]")
+        self.console.print("[color(34)]> Connecting to the real world...[/]")
         self.console.print()
     
     def display_live_system(self, duration: float = 5.0):

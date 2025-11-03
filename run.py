@@ -23,7 +23,7 @@ async def _load_scifi_interface(kernel, ui_style: str):
             interface = InterfaceTerminalSciFi()
             print("🌈 Loading Cyberpunk interface... Maximum WOW! ⚡")
         else:
-            return  # Classic mode, use default
+            return None  # Classic mode, use default
         
         # CRITICAL: Remove ALL existing interface plugins first!
         kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
@@ -35,9 +35,12 @@ async def _load_scifi_interface(kernel, ui_style: str):
         
         print(f"✅ {interface.name} ready!\n")
         
+        return interface  # Return interface for logging hookup
+        
     except Exception as e:
         print(f"⚠️  Warning: Could not load {ui_style} interface: {e}")
         print("   Falling back to classic terminal...")
+        return None
 
 
 def check_venv():
@@ -101,7 +104,13 @@ async def main():
     
     # THEN replace interface plugin if sci-fi mode requested
     if ui_style != "classic":
-        await _load_scifi_interface(kernel, ui_style)
+        scifi_interface = await _load_scifi_interface(kernel, ui_style)
+        
+        # Install sci-fi logging handler to redirect logs to colorful UI
+        if scifi_interface:
+            from core.scifi_logging import install_scifi_logging
+            install_scifi_logging(scifi_interface)
+            print(f"✨ Sci-fi logging enabled - all output now in {ui_style.upper()} style!")
 
     # Zjistíme, jestli byl zadán vstup jako argument
     if args.input:
