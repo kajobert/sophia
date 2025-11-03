@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import argparse
 from dotenv import load_dotenv
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
@@ -22,13 +23,31 @@ async def main():
     """The main entry point of the application."""
     check_venv()
     load_dotenv()
+    
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Sophia AI Assistant")
+    parser.add_argument(
+        "--use-event-driven",
+        action="store_true",
+        help="Enable event-driven architecture (Phase 1 - EXPERIMENTAL)"
+    )
+    parser.add_argument(
+        "input",
+        nargs="*",
+        help="Non-interactive input for single-run mode"
+    )
+    args = parser.parse_args()
+    
     print("Starting Sophia's kernel...")
-    kernel = Kernel()
+    if args.use_event_driven:
+        print("🚀 Event-driven architecture ENABLED (Phase 1)")
+    
+    kernel = Kernel(use_event_driven=args.use_event_driven)
     await kernel.initialize()
 
     # Zjistíme, jestli byl zadán vstup jako argument
-    if len(sys.argv) > 1:
-        user_input = " ".join(sys.argv[1:])
+    if args.input:
+        user_input = " ".join(args.input)
         print(f"Running in non-interactive mode with input: '{user_input}'")
         await kernel.consciousness_loop(single_run_input=user_input)
     else:

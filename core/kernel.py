@@ -4,7 +4,7 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import yaml
 from pydantic import ValidationError
@@ -24,12 +24,23 @@ class Kernel:
     plugin execution.
     """
 
-    def __init__(self):
+    def __init__(self, use_event_driven: bool = False):
+        """
+        Initialize Kernel.
+        
+        Args:
+            use_event_driven: If True, enable event-driven architecture (Phase 1)
+        """
         self.plugin_manager = PluginManager()
         self.is_running = False
         self.json_repair_prompt_template = ""
         self.all_plugins_map = {}
         self.memory = None  # Will be set during initialization
+        
+        # NEW: Event-driven components (Phase 1)
+        self.use_event_driven = use_event_driven
+        self.event_bus = None
+        self.task_queue = None
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
@@ -43,6 +54,27 @@ class Kernel:
                 extra={"plugin_name": "Kernel"},
             )
             self.json_repair_prompt_template = "The JSON is invalid. Errors: {e}. Please fix it."
+
+        # NEW: Initialize Event-Driven Architecture (if enabled)
+        if self.use_event_driven:
+            from core.event_bus import EventBus
+            from core.events import Event, EventType, EventPriority
+            
+            self.event_bus = EventBus()
+            await self.event_bus.start()
+            
+            logger.info(
+                "Event-driven architecture enabled - EventBus started",
+                extra={"plugin_name": "Kernel"}
+            )
+            
+            # Publish startup event
+            self.event_bus.publish(Event(
+                event_type=EventType.SYSTEM_STARTUP,
+                source="kernel",
+                priority=EventPriority.HIGH,
+                data={"use_event_driven": True}
+            ))
 
         # --- PLUGIN SETUP PHASE ---
         logger.info("Initializing plugin setup...", extra={"plugin_name": "Kernel"})
@@ -116,7 +148,21 @@ class Kernel:
             current_state="INITIALIZING",
             logger=session_logger,
             history=[],
+            # NEW: Add event-driven components to context
+            event_bus=self.event_bus,
+            task_queue=self.task_queue,
+            use_event_driven=self.use_event_driven,
         )
+        
+        # Publish SYSTEM_READY event if event-driven
+        if self.use_event_driven:
+            from core.events import Event, EventType, EventPriority
+            self.event_bus.publish(Event(
+                event_type=EventType.SYSTEM_READY,
+                source="kernel",
+                priority=EventPriority.HIGH,
+                data={"session_id": session_id}
+            ))
 
         while self.is_running:
             try:
@@ -192,6 +238,22 @@ class Kernel:
                         extra={"plugin_name": "Kernel"},
                     )
                     context.history.append({"role": "user", "content": context.user_input})
+                    
+                    # NEW: Publish USER_INPUT event if event-driven
+                    if self.use_event_driven:
+                        from core.events import Event, EventType, EventPriority
+                        self.event_bus.publish(Event(
+                            event_type=EventType.USER_INPUT,
+                            source="kernel",
+                            priority=EventPriority.HIGH,
+                            data={
+                                "input": context.user_input,
+                                "session_id": session_id
+                            },
+                            metadata={
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        ))
 
                     # 2. PLANNING PHASE
                     context.current_state = "PLANNING"
@@ -674,9 +736,40 @@ class Kernel:
                     exc_info=True,
                     extra={"plugin_name": "Kernel"},
                 )
+                # Publish SYSTEM_ERROR event if event-driven
+                if self.use_event_driven:
+                    from core.events import Event, EventType, EventPriority
+                    self.event_bus.publish(Event(
+                        event_type=EventType.SYSTEM_ERROR,
+                        source="kernel",
+                        priority=EventPriority.CRITICAL,
+                        data={"error": str(e), "session_id": session_id}
+                    ))
                 await asyncio.sleep(5)
 
         context.logger.info("Consciousness loop finished.", extra={"plugin_name": "Kernel"})
+        
+        # NEW: Graceful shutdown of event-driven components
+        if self.use_event_driven and self.event_bus:
+            from core.events import Event, EventType, EventPriority
+            
+            # Publish shutdown event
+            self.event_bus.publish(Event(
+                event_type=EventType.SYSTEM_SHUTDOWN,
+                source="kernel",
+                priority=EventPriority.CRITICAL,
+                data={"session_id": session_id}
+            ))
+            
+            # Wait briefly for events to process
+            await asyncio.sleep(0.5)
+            
+            # Stop event bus
+            await self.event_bus.stop()
+            context.logger.info(
+                "Event bus stopped gracefully",
+                extra={"plugin_name": "Kernel"}
+            )
 
     def start(self):
         """Starts the main consciousness loop."""
