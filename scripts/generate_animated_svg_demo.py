@@ -110,7 +110,7 @@ SVG_ANIMATED_TEMPLATE = '''<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/
     .typing-line {
       overflow: hidden;
       white-space: nowrap;
-      animation: typing 3s steps(60) 1s forwards, fadeIn 0.5s;
+      animation: typing 3s steps(60) 1s forwards, fadeIn 0.5s 1s forwards;
       opacity: 0;
     }
     

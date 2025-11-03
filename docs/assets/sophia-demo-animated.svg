@@ -99,7 +99,7 @@
     .typing-line {
       overflow: hidden;
       white-space: nowrap;
-      animation: typing 3s steps(60) 1s forwards, fadeIn 0.5s;
+      animation: typing 3s steps(60) 1s forwards, fadeIn 0.5s 1s forwards;
       opacity: 0;
     }
     
