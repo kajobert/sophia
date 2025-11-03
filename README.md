@@ -25,13 +25,14 @@
 
 <p align="center">
   <a href="https://github.com/ShotyCZ/sophia">
-    <img src="docs/assets/sophia-demo-screenshot.svg" alt="Sophia A.M.I. - Year 2030 Interface" width="100%"/>
+    <img src="docs/assets/sophia-demo-animated.svg" alt="Sophia A.M.I. - Year 2030 Animated Interface" width="100%"/>
   </a>
 </p>
 
 <p align="center">
   <strong>✨ UV/Docker-Style Sticky Panels • 🤖 Multi-Agent Jules Orchestration • 📊 Real-Time Metrics</strong><br>
-  <em>"This isn't just a terminal - it's a collaborative AI workspace!"</em>
+  <em>"This isn't just a terminal - it's a collaborative AI workspace!"</em><br>
+  <sub>⚡ Watch the typing animation • Pulsing LED indicators • Live progress bars</sub>
 </p>
 
 ### 🎯 **What Makes Sophia Special?**

@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+"""
+Generate ANIMATED SVG screenshot of Sophia ultra-futuristic demo.
+Creates a promotional animated terminal with:
+- Blinking cursor
+- Pulsing LED indicators
+- Typing animation
+- Progress bar animation
+- Live metric updates
+"""
+
+SVG_ANIMATED_TEMPLATE = '''<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    
+    @keyframes progress {
+      0% { width: 0%; }
+      100% { width: 18%; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .terminal-bg {
+      fill: #0d1117;
+    }
+    
+    .border-cyan {
+      stroke: #00d9ff;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    .border-white {
+      stroke: #ffffff;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    .border-yellow {
+      stroke: #ffd700;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    .border-green {
+      stroke: #00ff00;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    .border-blue {
+      stroke: #0099ff;
+      stroke-width: 2;
+      fill: none;
+    }
+    
+    .text-cyan { fill: #00d9ff; }
+    .text-bright-cyan { fill: #00ffff; }
+    .text-white { fill: #ffffff; }
+    .text-bright-white { fill: #f0f0f0; }
+    .text-yellow { fill: #ffd700; }
+    .text-bright-yellow { fill: #ffff00; }
+    .text-green { fill: #00ff00; }
+    .text-bright-green { fill: #00ff88; }
+    .text-magenta { fill: #ff00ff; }
+    .text-bright-magenta { fill: #ff88ff; }
+    .text-dim { fill: #666666; }
+    .text-red { fill: #ff0000; }
+    
+    .led-green {
+      fill: #00ff00;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .led-cyan {
+      fill: #00ffff;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    
+    .led-magenta {
+      fill: #ff00ff;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    
+    .led-blue {
+      fill: #0099ff;
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    
+    .cursor {
+      animation: blink 1s step-end infinite;
+    }
+    
+    .typing-line {
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typing 3s steps(60) 1s forwards, fadeIn 0.5s;
+      opacity: 0;
+    }
+    
+    .progress-bar {
+      animation: progress 4s ease-out forwards;
+    }
+    
+    text {
+      font-family: 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
+      font-size: 12px;
+    }
+    
+    .title-text {
+      font-size: 14px;
+      font-weight: bold;
+    }
+  </style>
+  
+  <!-- Background -->
+  <rect class="terminal-bg" width="1400" height="900" rx="8"/>
+  
+  <!-- Status Bar (Top) -->
+  <rect class="border-cyan" x="10" y="10" width="1380" height="60" rx="4"/>
+  <text class="text-bright-cyan title-text" x="650" y="30">⚡ SYSTEM STATUS</text>
+  
+  <!-- LED Indicators -->
+  <circle class="led-green" cx="100" cy="45" r="6"/>
+  <text class="text-bright-white" x="115" y="50">PWR</text>
+  
+  <circle class="led-cyan" cx="200" cy="45" r="6"/>
+  <text class="text-bright-white" x="215" y="50">CPU</text>
+  <text class="text-bright-cyan" x="250" y="50">12.3%</text>
+  
+  <circle class="led-magenta" cx="330" cy="45" r="6"/>
+  <text class="text-bright-white" x="345" y="50">MEM</text>
+  <text class="text-bright-magenta" x="385" y="50">58.7%</text>
+  
+  <circle class="led-blue" cx="480" cy="45" r="6"/>
+  <text class="text-bright-white" x="495" y="50">NET</text>
+  
+  <circle class="led-green" cx="580" cy="45" r="6"/>
+  <text class="text-bright-green" x="595" y="50">JULES:COMPLETED</text>
+  
+  <!-- Main Conversation Panel -->
+  <rect class="border-white" x="10" y="80" width="940" height="700" rx="4"/>
+  <text class="text-bright-white title-text" x="440" y="100">💬 CONVERSATION</text>
+  
+  <!-- User Message 1 -->
+  <text class="text-cyan" x="30" y="130">╭─ [10:30:45]</text>
+  <text class="text-yellow" x="150" y="130">👤 YOU</text>
+  <text class="text-white" x="30" y="150">│ Hello Sophia! Show me the Year 2030 A.M.I. interface.</text>
+  <text class="text-cyan" x="30" y="170">╰─</text>
+  
+  <!-- Sophia Response 1 (Animated typing) -->
+  <text class="text-cyan" x="30" y="200">╭─ [10:30:47]</text>
+  <text class="text-bright-cyan" x="150" y="200">🤖 SOPHIA</text>
+  
+  <text class="text-bright-white typing-line" x="30" y="220">
+    │ Welcome to the Autonomous Mind Interface v2.0! This is the future of AI
+  </text>
+  <text class="text-bright-white typing-line" x="30" y="240" style="animation-delay: 1s;">
+    │ collaboration - sticky panels, live metrics, Jules orchestration, and
+  </text>
+  <text class="text-bright-white typing-line" x="30" y="260" style="animation-delay: 2s;">
+    │ real-time system monitoring. Everything you need for Year 2030 AI work!
+  </text>
+  <text class="text-cyan" x="30" y="280" style="animation: fadeIn 1s 3s forwards; opacity: 0;">╰─</text>
+  
+  <!-- Blinking cursor -->
+  <rect class="cursor text-bright-white" x="680" y="250" width="8" height="15" style="animation-delay: 3s;"/>
+  
+  <!-- User Message 2 -->
+  <text class="text-cyan" x="30" y="320" style="animation: fadeIn 1s 4s forwards; opacity: 0;">╭─ [10:30:52]</text>
+  <text class="text-yellow" x="150" y="320" style="animation: fadeIn 1s 4s forwards; opacity: 0;">👤 YOU</text>
+  <text class="text-white" x="30" y="340" style="animation: fadeIn 1s 4s forwards; opacity: 0;">│ What makes this interface special?</text>
+  <text class="text-cyan" x="30" y="360" style="animation: fadeIn 1s 4s forwards; opacity: 0;">╰─</text>
+  
+  <!-- Sophia Response 2 -->
+  <text class="text-cyan" x="30" y="390" style="animation: fadeIn 1s 5s forwards; opacity: 0;">╭─ [10:30:54]</text>
+  <text class="text-bright-cyan" x="150" y="390" style="animation: fadeIn 1s 5s forwards; opacity: 0;">🤖 SOPHIA</text>
+  <text class="text-bright-white" x="30" y="410" style="animation: fadeIn 1s 5.5s forwards; opacity: 0;">│ Three groundbreaking features:</text>
+  <text class="text-bright-white" x="30" y="430" style="animation: fadeIn 1s 6s forwards; opacity: 0;">│ • UV/Docker-style sticky panels that NEVER flicker</text>
+  <text class="text-bright-white" x="30" y="450" style="animation: fadeIn 1s 6.5s forwards; opacity: 0;">│ • Multi-agent Jules orchestration (100 free sessions/day)</text>
+  <text class="text-bright-white" x="30" y="470" style="animation: fadeIn 1s 7s forwards; opacity: 0;">│ • Real-time metrics with color-coded priority indicators</text>
+  <text class="text-bright-white" x="30" y="490" style="animation: fadeIn 1s 7.5s forwards; opacity: 0;">│</text>
+  <text class="text-bright-white" x="30" y="510" style="animation: fadeIn 1s 8s forwards; opacity: 0;">│ This isn't just a terminal - it's a collaborative AI workspace! 🚀</text>
+  <text class="text-cyan" x="30" y="530" style="animation: fadeIn 1s 8.5s forwards; opacity: 0;">╰─</text>
+  
+  <!-- Metrics Panel (Right Sidebar) -->
+  <rect class="border-yellow" x="960" y="80" width="430" height="220" rx="4"/>
+  <text class="text-bright-yellow title-text" x="1130" y="100">📊 LIVE METRICS</text>
+  
+  <text class="text-dim" x="980" y="130">💎 Tokens:</text>
+  <text class="text-bright-white" x="1310" y="130">2,847</text>
+  
+  <text class="text-dim" x="980" y="155">💰 Cost:</text>
+  <text class="text-bright-white" x="1300" y="155">$0.0068</text>
+  
+  <text class="text-dim" x="980" y="180">💬 Messages:</text>
+  <text class="text-bright-white" x="1330" y="180">4</text>
+  
+  <line x1="980" y1="200" x2="1370" y2="200" stroke="#333" stroke-width="1"/>
+  
+  <text class="text-dim" x="980" y="230">🔥 CPU:</text>
+  <text class="text-bright-green" x="1305" y="230">12.3%</text>
+  
+  <text class="text-dim" x="980" y="255">🧠 Memory:</text>
+  <text class="text-bright-yellow" x="1305" y="255">58.7%</text>
+  
+  <!-- Jules Panel -->
+  <rect class="border-green" x="960" y="310" width="430" height="220" rx="4"/>
+  <text class="text-bright-green title-text" x="1120" y="330">🤖 JULES ASYNC</text>
+  
+  <circle class="led-green" cx="990" cy="360" r="6"/>
+  <text class="text-bright-green" x="1005" y="365">COMPLETED</text>
+  
+  <text class="text-cyan" x="980" y="390">ID: ...79433435</text>
+  <text class="text-magenta" x="980" y="410">Branch: nomad/tui-fix</text>
+  
+  <text class="text-bright-white" x="980" y="450">📊 Quota:</text>
+  <text class="text-bright-cyan" x="1055" y="450">18</text>
+  <text class="text-dim" x="1075" y="450">/100</text>
+  
+  <!-- Animated progress bar -->
+  <rect x="980" y="465" width="360" height="12" fill="#333" rx="2"/>
+  <rect class="progress-bar" x="980" y="465" width="0" height="12" fill="#00ffff" rx="2"/>
+  
+  <!-- Activity Stream Panel -->
+  <rect class="border-blue" x="960" y="540" width="430" height="240" rx="4"/>
+  <text class="text-bright-cyan title-text" x="1100" y="560">⚙️ ACTIVITY STREAM</text>
+  
+  <text class="text-cyan" x="980" y="590" style="animation: fadeIn 1s 1s forwards; opacity: 0;">⚙️ 10:30:45 User message received</text>
+  <text class="text-cyan" x="980" y="610" style="animation: fadeIn 1s 2s forwards; opacity: 0;">⚙️ 10:30:46 Generating response...</text>
+  <text class="text-cyan" x="980" y="630" style="animation: fadeIn 1s 3s forwards; opacity: 0;">⚙️ 10:30:49 Response completed</text>
+  <text class="text-cyan" x="980" y="650" style="animation: fadeIn 1s 4s forwards; opacity: 0;">⚙️ 10:30:52 User query received</text>
+  <text class="text-cyan" x="980" y="670" style="animation: fadeIn 1s 5s forwards; opacity: 0;">⚙️ 10:30:53 Analyzing features...</text>
+  <text class="text-bright-green" x="980" y="690" style="animation: fadeIn 1s 6s forwards; opacity: 0;">✓ 10:30:56 All systems optimal</text>
+  <text class="text-yellow" x="980" y="710" style="animation: fadeIn 1s 7s forwards; opacity: 0;">⚠️ 10:31:02 Jules worker active</text>
+  <text class="text-bright-green" x="980" y="730" style="animation: fadeIn 1s 8s forwards; opacity: 0;">✓ 10:31:15 Task completed!</text>
+  
+  <!-- Footer -->
+  <rect class="border-white" x="10" y="790" width="1380" height="60" rx="4" opacity="0.5"/>
+  <text class="text-cyan" x="550" y="825">🕐 2025-11-04 10:31:00</text>
+  <text class="text-dim" x="750" y="825">│</text>
+  <text class="text-dim" x="770" y="825">v2.0</text>
+  <text class="text-dim" x="820" y="825">│</text>
+  <text class="text-green" x="840" y="825">Uptime: 15m</text>
+  
+  <!-- Watermark -->
+  <text class="text-dim" x="1100" y="880" style="font-size: 10px;">SOPHIA A.M.I. - Year 2030 Autonomous Mind Interface</text>
+</svg>'''
+
+# Save animated SVG
+output_file = "docs/assets/sophia-demo-animated.svg"
+with open(output_file, "w") as f:
+    f.write(SVG_ANIMATED_TEMPLATE)
+
+print(f"✅ Animated SVG created: {output_file}")
+print(f"   Size: {len(SVG_ANIMATED_TEMPLATE)} bytes")
+print(f"   Animations:")
+print(f"   • Blinking cursor")
+print(f"   • Pulsing LED indicators")
+print(f"   • Typing animation (word by word)")
+print(f"   • Progress bar animation")
+print(f"   • Fade-in activity log entries")
+print(f"\n🎬 Perfect for GitHub README hero section!")
+print(f"   Opens in any modern browser with full animation support")

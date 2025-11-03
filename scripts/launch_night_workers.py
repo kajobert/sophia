@@ -124,7 +124,13 @@ async def main():
     print("   - No master/feature branch modifications")
     print("   - Research & documentation only")
     
-    input("\n👉 Press ENTER to launch all workers, or Ctrl+C to cancel...")
+    # Skip interactive input if running in background (no TTY)
+    import sys
+    if sys.stdin.isatty():
+        input("\n👉 Press ENTER to launch all workers, or Ctrl+C to cancel...")
+    else:
+        print("\n🤖 Running in background mode - auto-launching in 3 seconds...")
+        await asyncio.sleep(3)
     
     # Launch all workers in parallel
     results = []
