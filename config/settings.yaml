@@ -30,6 +30,13 @@ plugins:
     # Generate token at: https://github.com/settings/tokens
     # Required scopes: repo, workflow, write:packages
 
+  # Configuration for the Jules CLI plugin
+  tool_jules_cli:
+    enabled: true
+    # Note: Requires 'jules login' to be run once for authentication
+    # Install: npm install -g @google/jules
+    # Complements tool_jules (API) for hybrid workflow
+
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
 # programmatically or they use default values.

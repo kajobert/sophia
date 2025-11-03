@@ -93,6 +93,7 @@ class CognitiveJulesMonitor(BasePlugin):
         super().__init__()
         self.active_monitors: Dict[str, MonitoringTask] = {}
         self.jules_tool = None
+        self.jules_cli_tool = None  # For hybrid mode
     
     def setup(self, config: dict) -> None:
         """
@@ -106,6 +107,7 @@ class CognitiveJulesMonitor(BasePlugin):
         # Get reference to tool_jules from plugins map
         all_plugins = config.get("plugins", {})
         jules_tool = all_plugins.get("tool_jules")
+        jules_cli_tool = all_plugins.get("tool_jules_cli")
         
         if jules_tool:
             self.jules_tool = jules_tool
@@ -114,6 +116,16 @@ class CognitiveJulesMonitor(BasePlugin):
             logger.warning(
                 "tool_jules not found in plugin map. "
                 "Monitoring methods will fail until set_jules_tool() is called."
+            )
+        
+        # Inject Jules CLI tool for hybrid mode (optional)
+        if jules_cli_tool:
+            self.jules_cli_tool = jules_cli_tool
+            logger.info("✅ Jules CLI tool injected - HYBRID MODE enabled")
+        else:
+            logger.info(
+                "tool_jules_cli not found. Hybrid mode disabled. "
+                "Results auto-pull will not be available."
             )
     
     def set_jules_tool(self, jules_tool):
@@ -289,25 +301,34 @@ class CognitiveJulesMonitor(BasePlugin):
         context: SharedContext,
         session_id: str,
         check_interval: int = 30,
-        timeout: int = 3600
-    ) -> JulesSessionStatus:
+        timeout: int = 3600,
+        auto_pull: bool = False
+    ) -> Dict[str, Any]:
         """
         Monitors a Jules session until completion or timeout.
         
         BLOCKING OPERATION - polls until done.
+        HYBRID MODE: If auto_pull=True and CLI tool available, automatically pulls results.
         
         Args:
             context: Shared context
             session_id: Jules session ID to monitor
             check_interval: Seconds between checks (default: 30)
             timeout: Maximum wait time in seconds (default: 3600)
+            auto_pull: If True, automatically pull results via CLI when COMPLETED (hybrid mode)
             
         Returns:
-            Final JulesSessionStatus
+            Dict with status and optional results (if auto_pull=True)
             
         Example:
-            >>> status = monitor.monitor_until_completion(ctx, "sessions/123")
-            >>> print(status.state)  # COMPLETED
+            >>> # Standard API-only mode
+            >>> result = monitor.monitor_until_completion(ctx, "sessions/123")
+            >>> print(result["status"].state)  # COMPLETED
+            
+            >>> # HYBRID mode with auto-pull
+            >>> result = monitor.monitor_until_completion(ctx, "sessions/123", auto_pull=True)
+            >>> print(result["results_applied"])  # True
+            >>> print(result["changes"])  # Diff or success message
         """
         # Validate input
         try:
@@ -323,23 +344,75 @@ class CognitiveJulesMonitor(BasePlugin):
         start_time = datetime.now()
         max_time = start_time + timedelta(seconds=request.timeout)
         
+        mode = "HYBRID (auto-pull enabled)" if auto_pull and self.jules_cli_tool else "API-only"
         context.logger.info(
             f"Monitoring Jules session {request.session_id} until completion "
-            f"(timeout: {request.timeout}s, interval: {request.check_interval}s)"
+            f"(timeout: {request.timeout}s, interval: {request.check_interval}s, mode: {mode})"
         )
         
         while datetime.now() < max_time:
-            # Check current status
+            # Check current status via API
             status = self.check_session_status(context, request.session_id)
             
-            # Check if completed or failed
+            # Check if completed
             if status.is_completed:
                 context.logger.info(f"✅ Session completed: {status.completion_summary}")
-                return status
+                
+                # HYBRID MODE: Auto-pull results via CLI
+                if auto_pull and self.jules_cli_tool:
+                    context.logger.info("🔄 Auto-pulling results via Jules CLI (hybrid mode)...")
+                    
+                    try:
+                        pull_result = self.jules_cli_tool.pull_results(
+                            context,
+                            session_id=request.session_id,
+                            apply=True  # Apply changes to local repo
+                        )
+                        
+                        if pull_result["success"]:
+                            context.logger.info("✅ Results pulled and applied via CLI!")
+                            return {
+                                "status": status,
+                                "results_applied": True,
+                                "changes": pull_result.get("output", ""),
+                                "mode": "hybrid"
+                            }
+                        else:
+                            context.logger.warning(
+                                f"⚠️ Failed to pull results: {pull_result.get('error')}"
+                            )
+                            return {
+                                "status": status,
+                                "results_applied": False,
+                                "error": pull_result.get("error"),
+                                "mode": "hybrid"
+                            }
+                    
+                    except Exception as e:
+                        context.logger.error(f"❌ Failed to auto-pull results: {e}")
+                        return {
+                            "status": status,
+                            "results_applied": False,
+                            "error": str(e),
+                            "mode": "hybrid"
+                        }
+                
+                # API-only mode (no auto-pull)
+                return {
+                    "status": status,
+                    "results_applied": False,
+                    "mode": "api-only"
+                }
             
+            # Check if failed
             if status.is_error:
                 context.logger.error(f"❌ Session failed: {status.error_message}")
-                return status
+                return {
+                    "status": status,
+                    "results_applied": False,
+                    "error": status.error_message,
+                    "mode": "api-only"
+                }
             
             # Log current state
             elapsed = (datetime.now() - start_time).total_seconds()
@@ -358,7 +431,12 @@ class CognitiveJulesMonitor(BasePlugin):
         if request.session_id in self.active_monitors:
             self.active_monitors[request.session_id].status = "timeout"
         
-        return status
+        return {
+            "status": status,
+            "results_applied": False,
+            "timeout": True,
+            "mode": "api-only"
+        }
     
     def list_active_monitors(self, context: SharedContext) -> List[MonitoringTask]:
         """
@@ -512,7 +590,11 @@ class CognitiveJulesMonitor(BasePlugin):
                 "type": "function",
                 "function": {
                     "name": "monitor_until_completion",
-                    "description": "Monitor Jules session until completion or timeout (BLOCKING OPERATION - polls every check_interval seconds). Returns final session status.",
+                    "description": (
+                        "Monitor Jules session until completion or timeout (BLOCKING OPERATION). "
+                        "Supports HYBRID MODE: set auto_pull=True to automatically pull and apply results via CLI when completed. "
+                        "Polls every check_interval seconds using API, then optionally pulls results via CLI."
+                    ),
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -529,6 +611,14 @@ class CognitiveJulesMonitor(BasePlugin):
                                 "type": "integer",
                                 "description": "Maximum wait time in seconds before giving up (60-86400)",
                                 "default": 3600
+                            },
+                            "auto_pull": {
+                                "type": "boolean",
+                                "description": (
+                                    "HYBRID MODE: If True, automatically pull and apply results via Jules CLI when session completes. "
+                                    "Requires tool_jules_cli to be available. Changes will be applied to local repository."
+                                ),
+                                "default": False
                             }
                         },
                         "required": ["session_id"]
