@@ -37,6 +37,13 @@ plugins:
     # Install: npm install -g @google/jules
     # Complements tool_jules (API) for hybrid workflow
 
+  # Configuration for the Jules Autonomy plugin (HIGH-LEVEL)
+  cognitive_jules_autonomy:
+    enabled: true
+    # Provides autonomous workflow: delegate_task()
+    # Single command for: create → monitor → apply results
+    # Requires: tool_jules_cli + cognitive_jules_monitor
+
 # Other plugins like CoreLoggingManager, FileSystemTool, and PluginManager
 # do not require specific configurations in this file as their setup is handled
 # programmatically or they use default values.

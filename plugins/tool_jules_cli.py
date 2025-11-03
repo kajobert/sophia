@@ -528,18 +528,20 @@ class JulesCLIPlugin(BasePlugin):
                         "Create Jules coding session(s) via CLI. "
                         "Jules will work asynchronously in cloud VM to complete the task. "
                         "Supports parallel execution (1-5 sessions) for complex tasks. "
-                        "Use this when you want to delegate coding work to Jules AI agent."
+                        "Use this when you want to delegate coding work to Jules AI agent. "
+                        "IMPORTANT: Use parameter names 'repo' and 'task' (NOT 'source' or 'prompt'). "
+                        "Example: {\"repo\": \"ShotyCZ/sophia\", \"task\": \"Create test file\", \"parallel\": 1}"
                     ),
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "repo": {
                                 "type": "string",
-                                "description": "Repository in 'owner/repo' format (e.g., 'ShotyCZ/sophia')"
+                                "description": "Repository in 'owner/repo' format. REQUIRED parameter name is 'repo' (not 'source'). Example: 'ShotyCZ/sophia'"
                             },
                             "task": {
                                 "type": "string",
-                                "description": "Task description for Jules to work on (e.g., 'Fix authentication bug', 'Add unit tests for auth module')"
+                                "description": "Task description for Jules to work on. REQUIRED parameter name is 'task' (not 'prompt'). Example: 'Create file sandbox/test.txt with Hello World'"
                             },
                             "parallel": {
                                 "type": "integer",

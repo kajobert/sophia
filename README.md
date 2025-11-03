@@ -66,3 +66,5 @@ We welcome contributions! If you're interested in helping develop Sophia, please
 
 *   [**English Developer Guide**](./docs/en/07_DEVELOPER_GUIDE.md)
 *   [**Příručka pro vývojáře (CS)**](./docs/cs/07_PRIRUCKA_PRO_VYVOJARE.md)
+
+<!-- TODO: Test Jules CLI integration -->
