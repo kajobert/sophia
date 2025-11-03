@@ -32,3 +32,7 @@ pro přirozenou komunikaci je potřeba co nejdříve vytořit plugin na live S2S
 
 ######## **OTAZKA:** ########
 lze implementovat pokrocilejsi UI pomoci nejakych python knihoven? Mam na svem githubu rozpacovany vizualizacni skript...
+
+rozmyslet se jestli pouzit web ui nebo primo python pro komunikaci, python by totiz mohl primo ovladat PC a vlastni VS code
+
+sophia si muze vytvorit branche (například nomad/web-explorer) urcene pro julese a muze v  nich mit pro julese pripraveny codebase ktery bude mit za úkol že Sofia si pomocí jo rozhraní a voláním bude používat 1 task ve kterém může s džusem chatovat a používat jeho tokeny a jeho přístup k modelu jamy nine 2,5 pro. Nebo bude moci například využít jeho schopnosti vyhledávání a sumarizace na webu nebo tvorby a testování vlastních python skriptu pro jeho speciální využití. Vždycky je to málo teď si použití za denního limitu z dotazníků když využije pouze pár tasků tak bude mít k dispozici kontinuální čert s julesem kterému může například posílat robert-notes.txt a nechat buď zavolat sumarizace. Prostě budem moct díky volání jednotlivých džusů které si sama vytvoří používat mnohem víc výkonu umělé inteligence a mnohem víc tokenů v limitu 100 otázku denně zdarma což představuje obrovský nárůst schopností a využití limitů zdarma.

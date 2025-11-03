@@ -12,7 +12,12 @@ import asyncio
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+# Load .env BEFORE importing plugins
+from dotenv import load_dotenv
+load_dotenv(project_root / ".env")
 
 from plugins.tool_jules import JulesAPITool
 from core.context import SharedContext
@@ -30,7 +35,7 @@ async def launch_jules_tui_fix():
     
     # Initialize Jules tool
     jules = JulesAPITool()
-    jules.setup({})
+    jules.setup({"jules_api_key": "${JULES_API_KEY}"})  # Use env var syntax
     
     # Verify API key
     if not jules.api_key:
@@ -51,8 +56,8 @@ async def launch_jules_tui_fix():
             payload={}
         )
         
-        result = await jules.list_sessions(context=context)
-        sessions = result.get("sessions", [])
+        sessions_list = jules.list_sessions(context=context)  # Not async!
+        sessions = sessions_list.sessions if hasattr(sessions_list, 'sessions') else []
         print(f"   Current sessions today: {len(sessions)}/100")
         
         if len(sessions) >= 100:
@@ -63,7 +68,7 @@ async def launch_jules_tui_fix():
         print(f"⚠️  Could not check sessions: {e}")
     
     # Read task description
-    task_file = Path(__file__).parent / "docs" / "JULES_TASK_TUI_FIX.md"
+    task_file = project_root / "docs" / "JULES_TASK_TUI_FIX.md"
     
     if not task_file.exists():
         print(f"❌ ERROR: Task file not found: {task_file}")
@@ -79,7 +84,7 @@ async def launch_jules_tui_fix():
     print("   Repo: ShotyCZ/sophia")
     
     try:
-        session_result = await jules.create_session(
+        session_result = jules.create_session(  # Not async!
             context=context,
             prompt=task_description,
             source="sources/github/ShotyCZ/sophia",
@@ -88,8 +93,9 @@ async def launch_jules_tui_fix():
             auto_pr=True  # Auto-create PR when done
         )
         
-        session_id = session_result.get("session_id")
-        session_url = session_result.get("url", "N/A")
+        # session_result is JulesSession Pydantic model
+        session_id = session_result.name  # "sessions/{id}" format
+        session_url = f"https://jules.google.com/{session_id}"
         
         print("\n✅ Jules session created successfully!")
         print("=" * 60)
@@ -106,7 +112,7 @@ async def launch_jules_tui_fix():
         print("=" * 60)
         
         # Save session info
-        info_file = Path(__file__).parent / "docs" / "JULES_ACTIVE_SESSIONS.md"
+        info_file = project_root / "docs" / "JULES_ACTIVE_SESSIONS.md"
         with open(info_file, "a") as f:
             f.write(f"\n## Session: {session_id}\n")
             f.write(f"- **Created:** {asyncio.get_event_loop().time()}\n")
