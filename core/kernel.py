@@ -58,13 +58,17 @@ class Kernel:
         # NEW: Initialize Event-Driven Architecture (if enabled)
         if self.use_event_driven:
             from core.event_bus import EventBus
+            from core.task_queue import TaskQueue
             from core.events import Event, EventType, EventPriority
             
             self.event_bus = EventBus()
             await self.event_bus.start()
             
+            self.task_queue = TaskQueue(event_bus=self.event_bus, max_workers=5)
+            await self.task_queue.start()
+            
             logger.info(
-                "Event-driven architecture enabled - EventBus started",
+                "Event-driven architecture enabled - EventBus and TaskQueue started",
                 extra={"plugin_name": "Kernel"}
             )
             
@@ -73,7 +77,7 @@ class Kernel:
                 event_type=EventType.SYSTEM_STARTUP,
                 source="kernel",
                 priority=EventPriority.HIGH,
-                data={"use_event_driven": True}
+                data={"use_event_driven": True, "max_workers": 5}
             ))
 
         # --- PLUGIN SETUP PHASE ---
@@ -763,6 +767,14 @@ class Kernel:
             
             # Wait briefly for events to process
             await asyncio.sleep(0.5)
+            
+            # Stop task queue first
+            if self.task_queue:
+                await self.task_queue.stop()
+                context.logger.info(
+                    "Task queue stopped gracefully",
+                    extra={"plugin_name": "Kernel"}
+                )
             
             # Stop event bus
             await self.event_bus.stop()
