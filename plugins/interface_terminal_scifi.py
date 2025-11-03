@@ -176,15 +176,15 @@ class InterfaceTerminalSciFi(BasePlugin):
         # Register response callback to intercept kernel output
         if context.current_state == "LISTENING":
             context.payload["_response_callback"] = self._handle_response
-        
-        # In listening state, also display user message if available
-        if context.user_input:
-            self.display_message("user", context.user_input)
+            
+            # Display user message IN PANEL!
+            if context.user_input:
+                self.display_message("user", context.user_input)
         
         return context
     
     def _handle_response(self, response: str):
-        """Handle AI response from kernel (UV style - no blink!)"""
+        """Handle AI response from kernel - SHOW IN PANEL!"""
         self.display_message("assistant", response)
     
     def cleanup(self):

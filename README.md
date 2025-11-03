@@ -2,26 +2,49 @@
   <img src="SOPHIA-logo.png" alt="Sophia Logo" width="133"/>
 </p>
 
-<h1 align="center">Sophia V2</h1>
+<h1 align="center">Sophia V2 - A.M.I.</h1>
 
 <p align="center">
-  <strong>Autonomous AI Agent with Consciousness</strong>
+  <strong>Autonomous Mind Interface - Year 2030 AI Collaboration</strong>
   <br><br>
-  <em>An AGI project exploring true autonomy through ethical principles, self-awareness, and continuous evolution.</em>
+  <em>Experience the future of AI interaction with sticky panels, Jules orchestration, and real-time metrics</em>
 </p>
 
 <p align="center">
   <a href="https://github.com/ShotyCZ/sophia"><img src="https://img.shields.io/badge/Version-2.0--alpha-blue.svg" alt="Version"></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/Python-3.12%2B-blue.svg" alt="Python 3.12+"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-orange.svg" alt="Status"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Jules-Integrated-brightgreen.svg" alt="Jules"></a>
   <a href="docs/en/INDEX.md"><img src="https://img.shields.io/badge/Docs-English-blue.svg" alt="Docs EN"></a>
   <a href="docs/cs/INDEX.md"><img src="https://img.shields.io/badge/Dokumentace-Česky-red.svg" alt="Docs CS"></a>
 </p>
 
 ---
 
-## 🎬 Cyberpunk Terminal Demo
+## 🚀 **Year 2030 Ultra-Futuristic Interface**
+
+<p align="center">
+  <a href="https://github.com/ShotyCZ/sophia">
+    <img src="docs/assets/sophia-demo-screenshot.svg" alt="Sophia A.M.I. - Year 2030 Interface" width="100%"/>
+  </a>
+</p>
+
+<p align="center">
+  <strong>✨ UV/Docker-Style Sticky Panels • 🤖 Multi-Agent Jules Orchestration • 📊 Real-Time Metrics</strong><br>
+  <em>"This isn't just a terminal - it's a collaborative AI workspace!"</em>
+</p>
+
+### 🎯 **What Makes Sophia Special?**
+
+- **🎨 No More Flicker** - Production-grade sticky panels that stay put (UV/Docker style)
+- **🤖 100 Free Jules Sessions/Day** - Delegate complex tasks to autonomous AI workers
+- **📊 Live Metrics** - Token usage, cost tracking, CPU/memory monitoring with color-coded warnings
+- **💬 Intelligent UX** - Conversation design inspired by Claude, ChatGPT, and Cursor
+- **⚡ Year 2030 Design** - LED indicators, activity streams, progress bars, and futuristic aesthetics
+
+---
+
+## 🎬 Additional Terminal Styles
 
 <p align="center">
   <img src="docs/cyberpunk_demo.svg" alt="SOPHIA Cyberpunk Terminal" width="800"/>

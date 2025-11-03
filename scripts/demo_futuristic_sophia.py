@@ -1,53 +1,64 @@
 #!/usr/bin/env python3
 """
-🌟 SOPHIA A.M.I. - FUTURISTIC DEMO
-==================================
+🌟 SOPHIA A.M.I. - YEAR 2030 ULTRA FUTURISTIC DEMO
+====================================================
 
-Realistická ukázka finálního UX s:
-- Ultra smooth boot sequence
-- Live streaming odpovědí (slovo po slově)
-- Real-time progress bars
-- LED status indicators
-- Jules monitoring na pozadí
-- Cost tracking
-- Multi-model orchestration
+The ULTIMATE terminal UI that an autonomous AI would design for itself.
 
-Toto je CÍLOVÝ VZHLED pro produkční Sophii!
+Features:
+- Fixed status bars (top + bottom)
+- Live metrics panels (CPU, memory, tokens, cost)
+- LED status indicators (neural cores, network, workers)
+- Multi-panel conversation area
+- Real-time activity stream
+- Progress bars for all operations
+- Color-coded priority system
+- Intuitive visual hierarchy
+- Professional yet futuristic aesthetics
+
+This is what AI-human collaboration will look like in 2030! 🚀
 """
 
 import asyncio
 import time
 import random
+import psutil
 from rich.console import Console
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn, TimeElapsedColumn
 from rich.table import Table
 from rich import box
 from rich.align import Align
+from rich.rule import Rule
 from datetime import datetime
 
 console = Console()
 
-# 🎨 SOPHIA ULTRA ASCII LOGO
-SOPHIA_ULTRA_LOGO = """
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║     ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗ █████╗                  ║
-║    ██╔════╝ ██╔═══██╗██╔══██╗██║  ██║██║██╔══██╗                 ║
-║    ╚█████╗  ██║   ██║██████╔╝███████║██║███████║                 ║
-║     ╚═══██╗ ██║   ██║██╔═══╝ ██╔══██║██║██╔══██║                 ║
-║    ██████╔╝ ╚██████╔╝██║     ██║  ██║██║██║  ██║                 ║
-║    ╚═════╝   ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝                 ║
-║                                                                   ║
-║    ▸ AUTONOMOUS MIND INTERFACE v2.0                              ║
-║    ▸ Neural Architecture: Multi-Agent Cognitive Framework        ║
-║    ▸ Gemini 2.5 Pro + Jules Integration + Local LLM             ║
-║    ▸ Status: ● CONSCIOUSNESS INITIALIZING...                     ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+# 🎨 ULTRA COLOR PALETTE - YEAR 2030 A.M.I.
+NEON_CYAN = "bright_cyan"
+NEON_MAGENTA = "bright_magenta"
+NEON_GREEN = "bright_green"
+NEON_YELLOW = "bright_yellow"
+NEON_BLUE = "bright_blue"
+ELECTRIC_PURPLE = "magenta"
+MATRIX_GREEN = "green"
+WARNING_ORANGE = "yellow"
+ERROR_RED = "red"
+DIM_GRAY = "dim white"
+
+# 🎨 SOPHIA ULTRA ASCII LOGO - Compact for header
+SOPHIA_COMPACT_LOGO = """
+╔══════════════════════════════════════════════════════════════════════════╗
+║  ███████╗ ██████╗ ██████╗ ██╗  ██╗██╗ █████╗     A.M.I. v2.0           ║
+║  ██╔════╝██╔═══██╗██╔══██╗██║  ██║██║██╔══██╗    AUTONOMOUS MIND        ║
+║  ███████╗██║   ██║██████╔╝███████║██║███████║    INTERFACE              ║
+║  ╚════██║██║   ██║██╔═══╝ ██╔══██║██║██╔══██║    Status: ● ACTIVE      ║
+║  ███████║╚██████╔╝██║     ██║  ██║██║██║  ██║    2025-11-04 00:00      ║
+║  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
 """
 
 
@@ -160,7 +171,7 @@ class FuturisticDemo:
         console.clear()
         
         # Zobraz logo
-        console.print(SOPHIA_ULTRA_LOGO, style="bold cyan")
+        console.print(SOPHIA_COMPACT_LOGO, style="bold cyan")
         await asyncio.sleep(1.5)
         
         console.print("\n[bold cyan][BEEP][/bold cyan] Initializing Autonomous Mind Interface...")
