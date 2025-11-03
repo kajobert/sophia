@@ -199,6 +199,13 @@ class Kernel:
                 if single_run_input:
                     context.user_input = single_run_input
                     self.is_running = False  # End the loop after this run
+                    
+                    # IMPORTANT: Still call interface plugins to register callbacks!
+                    interface_plugins = self.plugin_manager.get_plugins_by_type(
+                        PluginType.INTERFACE
+                    )
+                    for plugin in interface_plugins:
+                        await plugin.execute(context=context)
                 else:
                     context.user_input = None
                     context.payload = {}
