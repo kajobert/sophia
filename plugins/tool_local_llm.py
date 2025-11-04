@@ -13,12 +13,15 @@ Supports models like:
 - Phi-3 (Microsoft)
 - Qwen (Alibaba)
 
-Version: 1.0.0
+Version: 1.1.0 - Function calling support added
 """
 
 import logging
 import httpx
+import requests  # Sync HTTP for Ollama (avoids httpx async lock issues in Sophia event loop)
+import json
 from typing import Dict, Any, List, Optional
+from types import SimpleNamespace
 from pydantic import BaseModel, Field
 
 from plugins.base_plugin import BasePlugin, PluginType
@@ -72,7 +75,17 @@ class LocalLLMTool(BasePlugin):
             config: Plugin configuration
         """
         self.config = LocalModelConfig(**config.get("local_llm", {}))
-        self.client = httpx.AsyncClient(timeout=self.config.timeout)
+        # Don't create shared client here - create fresh client per request to avoid connection issues
+        # self.client = httpx.AsyncClient(timeout=self.config.timeout)
+        
+        # Load system prompt from sophia_dna.txt
+        self.system_prompt = "You are Sophia, a helpful AI assistant."
+        try:
+            with open("config/prompts/sophia_dna.txt", "r", encoding="utf-8") as f:
+                self.system_prompt = f.read()
+                logger.info("System prompt loaded from sophia_dna.txt")
+        except FileNotFoundError:
+            logger.warning("sophia_dna.txt not found - using default system prompt")
 
         logger.info(
             f"Local LLM initialized: {self.config.runtime} @ {self.config.base_url}, "
@@ -81,14 +94,94 @@ class LocalLLMTool(BasePlugin):
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """
-        This is a tool plugin - execution happens via tool calls.
+        Generate a response using local LLM with function calling support.
+        Compatible with tool_llm interface for drop-in replacement.
 
         Args:
             context: Shared context object
 
         Returns:
-            Unchanged context
+            Updated context with llm_response in payload
         """
+        prompt = context.payload.get("prompt", context.user_input)
+        tools = context.payload.get("tools")  # Function calling tools (NOW SUPPORTED!)
+        tool_choice = context.payload.get("tool_choice")
+        
+        if not prompt:
+            context.payload["llm_response"] = {"content": "Error: No input provided to LocalLLMTool."}
+            return context
+        
+        # Build messages from history (keep as array!)
+        messages = []
+        if self.system_prompt:
+            messages.append({"role": "system", "content": self.system_prompt})
+        messages.extend(context.history)
+        
+        # Add current prompt if not in history
+        if not any(msg["role"] == "user" and msg["content"] == prompt for msg in messages):
+            messages.append({"role": "user", "content": prompt})
+        
+        context.logger.info(
+            f"Calling local LLM '{self.config.model}' with {len(messages)} messages"
+            + (f" and {len(tools)} tools" if tools else ""),
+            extra={"plugin_name": self.name},
+        )
+        
+        try:
+            # Use Ollama /api/chat with function calling support
+            if self.config.runtime == "ollama":
+                response_message = await self._generate_ollama(
+                    messages=messages,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens
+                )
+            else:
+                # Fallback for other runtimes (LM Studio, llamafile)
+                # They also support OpenAI-compatible /chat/completions
+                response_message = await self._generate_lmstudio_chat(
+                    messages=messages,
+                    tools=tools,
+                    tool_choice=tool_choice,
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens
+                )
+            
+            # Store response matching tool_llm format:
+            # - If tool_calls present, convert to LiteLLM-compatible objects
+            # - Otherwise store content string
+            if response_message.get("tool_calls"):
+                # Convert Ollama tool_calls (dict) to LiteLLM format (objects)
+                tool_calls = []
+                for tc in response_message["tool_calls"]:
+                    # Ollama format: {"function": {"name": "...", "arguments": {...}}}
+                    # LiteLLM format: object with .function.name and .function.arguments
+                    tool_call_obj = SimpleNamespace(
+                        function=SimpleNamespace(
+                            name=tc["function"]["name"],
+                            arguments=tc["function"]["arguments"]
+                        )
+                    )
+                    tool_calls.append(tool_call_obj)
+                
+                context.payload["llm_response"] = tool_calls
+                context.logger.info(
+                    f"LLM response with {len(tool_calls)} tool calls",
+                    extra={"plugin_name": self.name},
+                )
+            else:
+                context.payload["llm_response"] = response_message.get("content", "")
+                context.logger.info(
+                    "LLM response received successfully",
+                    extra={"plugin_name": self.name},
+                )
+            
+        except Exception as e:
+            error_msg = f"Error calling local LLM: {e}"
+            context.logger.error(error_msg, extra={"plugin_name": self.name})
+            context.payload["llm_response"] = {"content": f"Error: {error_msg}"}
+        
         return context
 
     async def generate(
@@ -99,7 +192,10 @@ class LocalLLMTool(BasePlugin):
         max_tokens: Optional[int] = None,
     ) -> str:
         """
-        Generate text using local LLM.
+        LEGACY METHOD: Generate text using local LLM (simple string-based interface).
+        
+        This is kept for backward compatibility with execute_tool() and direct calls.
+        For function calling support, use execute() instead.
 
         Args:
             prompt: User prompt
@@ -108,10 +204,25 @@ class LocalLLMTool(BasePlugin):
             max_tokens: Override default max tokens
 
         Returns:
-            Generated text
+            Generated text (string only, no tool calls)
         """
+        # Build messages for new API
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        # Call new _generate_ollama (without tools)
         if self.config.runtime == "ollama":
-            return await self._generate_ollama(prompt, system_prompt, temperature, max_tokens)
+            response_message = await self._generate_ollama(
+                messages=messages,
+                tools=None,  # No function calling in legacy mode
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            # Return just the text content
+            return response_message.get("content", "")
+        
         elif self.config.runtime == "lmstudio":
             return await self._generate_lmstudio(prompt, system_prompt, temperature, max_tokens)
         elif self.config.runtime == "llamafile":
@@ -121,49 +232,80 @@ class LocalLLMTool(BasePlugin):
 
     async def _generate_ollama(
         self,
-        prompt: str,
-        system_prompt: Optional[str],
-        temperature: Optional[float],
-        max_tokens: Optional[int],
-    ) -> str:
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict]] = None,
+        tool_choice: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> Dict[str, Any]:
         """
-        Generate using Ollama runtime.
+        Generate using Ollama runtime with function calling support.
 
-        Ollama API: POST /api/generate
+        Ollama API: POST /api/chat
+        
+        Args:
+            messages: List of message dicts with 'role' and 'content'
+            tools: Optional list of tool definitions (OpenAI format)
+            tool_choice: Optional tool choice strategy
+            temperature: Sampling temperature
+            max_tokens: Maximum output tokens
+            
+        Returns:
+            Full message object with content and/or tool_calls
         """
-        url = f"{self.config.base_url}/api/generate"
-
-        # Build messages
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
+        url = f"{self.config.base_url}/api/chat"
 
         # Build request
         request = {
             "model": self.config.model,
-            "prompt": prompt,
-            "system": system_prompt or "",
+            "messages": messages,
             "stream": False,
             "options": {
                 "temperature": temperature or self.config.temperature,
                 "num_predict": max_tokens or self.config.max_tokens,
             },
         }
+        
+        # Add tools if provided (function calling)
+        if tools:
+            request["tools"] = tools
 
         try:
-            logger.info(f"🤖 Calling Ollama: model={self.config.model}, prompt_len={len(prompt)}")
+            logger.info(
+                f"🤖 Calling Ollama /api/chat: model={self.config.model}, "
+                f"messages={len(messages)}"
+                + (f", tools={len(tools)}" if tools else "")
+            )
+            
+            # Debug: Log request size
+            request_json = json.dumps(request)
+            logger.debug(f"Request size: {len(request_json)} bytes")
+            logger.debug(f"Request preview: {request_json[:500]}")
 
-            response = await self.client.post(url, json=request)
+            # CRITICAL DEBUG: Log before HTTP call
+            logger.info(f"🔍 DEBUG: About to POST to {url}")
+            
+            # Use sync requests library instead of httpx (avoids async event loop conflicts)
+            response = requests.post(url, json=request, timeout=self.config.timeout)
+            logger.info(f"🔍 DEBUG: POST completed, status={response.status_code}")
             response.raise_for_status()
 
             result = response.json()
-            generated_text = result.get("response", "")
+            message = result.get("message", {})
+            
+            # Log response details
+            has_tool_calls = bool(message.get("tool_calls"))
+            content_len = len(message.get("content", ""))
+            logger.info(
+                f"✅ Ollama response: content={content_len} chars"
+                + (f", tool_calls={len(message.get('tool_calls', []))}" if has_tool_calls else "")
+            )
 
-            logger.info(f"✅ Ollama response: {len(generated_text)} chars")
+            return message
 
-            return generated_text
-
+        except httpx.TimeoutException as e:
+            logger.error(f"❌ Ollama TIMEOUT after {self.config.timeout}s: {e}")
+            raise
         except httpx.HTTPStatusError as e:
             logger.error(f"❌ Ollama HTTP error: {e.response.status_code} - {e.response.text}")
             raise
@@ -179,7 +321,8 @@ class LocalLLMTool(BasePlugin):
         max_tokens: Optional[int],
     ) -> str:
         """
-        Generate using LM Studio runtime.
+        LEGACY METHOD: Generate using LM Studio runtime (string-based).
+        For function calling, use _generate_lmstudio_chat() instead.
 
         LM Studio uses OpenAI-compatible API.
         """
@@ -201,15 +344,85 @@ class LocalLLMTool(BasePlugin):
         try:
             logger.info(f"🤖 Calling LM Studio: model={self.config.model}")
 
-            response = await self.client.post(url, json=request)
-            response.raise_for_status()
+            async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                response = await client.post(url, json=request)
+                response.raise_for_status()
 
-            result = response.json()
-            generated_text = result["choices"][0]["message"]["content"]
+                result = response.json()
+                generated_text = result["choices"][0]["message"]["content"]
 
-            logger.info(f"✅ LM Studio response: {len(generated_text)} chars")
+                logger.info(f"✅ LM Studio response: {len(generated_text)} chars")
 
-            return generated_text
+                return generated_text
+
+        except Exception as e:
+            logger.error(f"❌ LM Studio error: {e}", exc_info=True)
+            raise
+    
+    async def _generate_lmstudio_chat(
+        self,
+        messages: List[Dict[str, str]],
+        tools: Optional[List[Dict]] = None,
+        tool_choice: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Generate using LM Studio with function calling support.
+        
+        LM Studio uses OpenAI-compatible /v1/chat/completions API.
+        
+        Args:
+            messages: List of message dicts
+            tools: Optional tool definitions
+            tool_choice: Optional tool choice strategy
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens
+            
+        Returns:
+            Full message object with content and/or tool_calls
+        """
+        url = f"{self.config.base_url}/v1/chat/completions"
+
+        request = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": temperature or self.config.temperature,
+            "max_tokens": max_tokens or self.config.max_tokens,
+        }
+        
+        # Add tools if provided
+        if tools:
+            request["tools"] = tools
+        if tool_choice:
+            request["tool_choice"] = tool_choice
+
+        try:
+            logger.info(
+                f"🤖 Calling LM Studio /v1/chat/completions: model={self.config.model}, "
+                f"messages={len(messages)}"
+                + (f", tools={len(tools)}" if tools else "")
+            )
+
+            async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                response = await client.post(url, json=request)
+                response.raise_for_status()
+
+                result = response.json()
+                message = result["choices"][0]["message"]
+                
+                # Convert to dict if needed
+                if hasattr(message, "model_dump"):
+                    message = message.model_dump()
+                
+                has_tool_calls = bool(message.get("tool_calls"))
+                content_len = len(message.get("content", "") or "")
+                logger.info(
+                    f"✅ LM Studio response: content={content_len} chars"
+                    + (f", tool_calls={len(message.get('tool_calls', []))}" if has_tool_calls else "")
+                )
+
+                return message
 
         except Exception as e:
             logger.error(f"❌ LM Studio error: {e}", exc_info=True)
@@ -240,25 +453,27 @@ class LocalLLMTool(BasePlugin):
         try:
             if self.config.runtime == "ollama":
                 # Check Ollama /api/tags endpoint
-                response = await self.client.get(f"{self.config.base_url}/api/tags")
-                response.raise_for_status()
+                async with httpx.AsyncClient(timeout=30) as client:
+                    response = await client.get(f"{self.config.base_url}/api/tags")
+                    response.raise_for_status()
 
-                # Check if our model is available
-                models = response.json().get("models", [])
-                model_names = [m.get("name") for m in models]
+                    # Check if our model is available
+                    models = response.json().get("models", [])
+                    model_names = [m.get("name") for m in models]
 
-                if self.config.model not in model_names:
-                    logger.warning(
-                        f"Model {self.config.model} not found. Available: {model_names[:5]}"
-                    )
-                    return False
+                    if self.config.model not in model_names:
+                        logger.warning(
+                            f"Model {self.config.model} not found. Available: {model_names[:5]}"
+                        )
+                        return False
 
-                return True
+                    return True
 
             else:
                 # For LM Studio/llamafile, try a simple health check
-                response = await self.client.get(f"{self.config.base_url}/health")
-                return response.status_code == 200
+                async with httpx.AsyncClient(timeout=30) as client:
+                    response = await client.get(f"{self.config.base_url}/health")
+                    return response.status_code == 200
 
         except Exception as e:
             logger.warning(f"Local LLM not available: {e}")
@@ -273,11 +488,12 @@ class LocalLLMTool(BasePlugin):
         """
         try:
             if self.config.runtime == "ollama":
-                response = await self.client.get(f"{self.config.base_url}/api/tags")
-                response.raise_for_status()
+                async with httpx.AsyncClient(timeout=30) as client:
+                    response = await client.get(f"{self.config.base_url}/api/tags")
+                    response.raise_for_status()
 
-                models = response.json().get("models", [])
-                return [m.get("name") for m in models]
+                    models = response.json().get("models", [])
+                    return [m.get("name") for m in models]
 
             else:
                 # LM Studio/llamafile don't have model listing

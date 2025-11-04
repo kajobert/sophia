@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 from typing import Any, Dict, Optional, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
@@ -22,7 +22,8 @@ class JulesSession(BaseModel):
     create_time: Optional[str] = Field(None, description="ISO timestamp of creation")
     update_time: Optional[str] = Field(None, description="ISO timestamp of last update")
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_session_name(cls, v):
         if not v.startswith("sessions/"):
             raise ValueError("Session name must start with 'sessions/'")

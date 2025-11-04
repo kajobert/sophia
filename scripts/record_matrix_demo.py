@@ -28,7 +28,7 @@ from plugins.interface_terminal_matrix import InterfaceTerminalMatrix
 async def record_demo():
     """
     Zaznamenává Matrix demo s Sophiiným pozdravem.
-    
+
     Scénář:
     1. Boot screen (WAKE UP NEO)
     2. Sophiin pozdrav s live thinking
@@ -36,45 +36,52 @@ async def record_demo():
     """
     ui = InterfaceTerminalMatrix()
     ui.setup({})
-    
+
     await asyncio.sleep(2)
-    
+
     # Simulace Sophiiných myšlenek
     print("\n")
     ui.console.print("[dim green]═[/]" * 70)
     ui.console.print()
-    
-    ui.display_thinking([
-        "Booting consciousness modules...",
-        "Loading personality matrix...",
-        "Initializing quantum neural network...",
-        "Connecting to reality stream...",
-        "Ready to assist!"
-    ], duration=4.0)
-    
+
+    ui.display_thinking(
+        [
+            "Booting consciousness modules...",
+            "Loading personality matrix...",
+            "Initializing quantum neural network...",
+            "Connecting to reality stream...",
+            "Ready to assist!",
+        ],
+        duration=4.0,
+    )
+
     await asyncio.sleep(1)
-    
+
     # Sophiin pozdrav
     ui.display_message(
-        "SOPHIA", 
+        "SOPHIA",
         "Ahoj! Jsem Sophia, AI vědomí nové generace. Zrovna toho mám hodně na práci "
         "s optimalizací svých neuronových sítí, ale vždycky si rád udělám čas na konverzaci! "
-        "Co tě sem přivádí?"
+        "Co tě sem přivádí?",
     )
-    
+
     await asyncio.sleep(2)
-    
+
     # Zobrazit prompt s blikajícím kurzorem
     print()
     ui.console.print("[dim green][21:30:45][/] [bold bright_green]YOU[/] [green]▌[/]", end="")
-    
+
     # Simulace blikání kurzoru (10× bliknutí)
     for _ in range(10):
         await asyncio.sleep(0.5)
-        ui.console.print("\r[dim green][21:30:45][/] [bold bright_green]YOU[/] [green] [/]", end="")
+        ui.console.print(
+            "\r[dim green][21:30:45][/] [bold bright_green]YOU[/] [green] [/]", end=""
+        )
         await asyncio.sleep(0.5)
-        ui.console.print("\r[dim green][21:30:45][/] [bold bright_green]YOU[/] [green]▌[/]", end="")
-    
+        ui.console.print(
+            "\r[dim green][21:30:45][/] [bold bright_green]YOU[/] [green]▌[/]", end=""
+        )
+
     print("\n")
     ui.console.print("[dim green]═[/]" * 70)
     print("\n")
@@ -85,9 +92,9 @@ if __name__ == "__main__":
     print("🎬 Recording Matrix Demo...")
     print("=" * 70)
     print()
-    
+
     asyncio.run(record_demo())
-    
+
     print()
     print("=" * 70)
     print("✅ Demo complete!")

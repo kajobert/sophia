@@ -19,17 +19,17 @@ async def _load_scifi_interface(kernel, ui_style: str):
     """Load sci-fi terminal interface plugin and REMOVE classic terminal."""
     try:
         if ui_style == "matrix":
-            from plugins._demo_interface_matrix import InterfaceTerminalMatrix
+            from plugins.interface_terminal_matrix import InterfaceTerminalMatrix
 
             interface = InterfaceTerminalMatrix()
             print("🟢 Loading Matrix interface... 'Follow the white rabbit!' 🐰")
         elif ui_style == "startrek":
-            from plugins._demo_interface_startrek import InterfaceTerminalStarTrek
+            from plugins.interface_terminal_startrek import InterfaceTerminalStarTrek
 
             interface = InterfaceTerminalStarTrek()
             print("🟡 Loading Star Trek LCARS interface... 'Make it so!' 🖖")
         elif ui_style == "cyberpunk":
-            from plugins._demo_interface_scifi import InterfaceTerminalSciFi
+            from plugins.interface_terminal_scifi import InterfaceTerminalSciFi
 
             interface = InterfaceTerminalSciFi()
             print("🌈 Loading Cyberpunk interface... Maximum WOW! ⚡")
@@ -68,16 +68,7 @@ def check_venv():
 
 async def main():
     """The main entry point of the application."""
-    # Suppress warnings FIRST (before any imports that might warn)
-    import warnings
-
-    warnings.filterwarnings("ignore")
-    os.environ["LANGFUSE_ENABLED"] = "false"
-
-    check_venv()
-    # .env already loaded at module level (before imports)
-
-    # Parse command-line arguments
+    # Parse command-line arguments FIRST to check for debug flag
     parser = argparse.ArgumentParser(description="Sophia AI Assistant")
     parser.add_argument(
         "--use-event-driven",
@@ -96,10 +87,43 @@ async def main():
         help="Disable Web UI (terminal-only mode for faster startup and simple interaction)",
     )
     parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable verbose debug logging (shows all plugin initialization, API calls, etc.)",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Force offline mode (use local LLM only, no cloud fallback)",
+    )
+    parser.add_argument(
         "--once", type=str, help="Single-run mode: process one input and exit (fast, no UI)"
     )
     parser.add_argument("input", nargs="*", help="Non-interactive input for single-run mode")
     args = parser.parse_args()
+
+    # Configure logging level based on debug flag
+    if args.debug:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        print("🐛 DEBUG MODE ENABLED - Verbose logging active")
+    else:
+        # User-friendly mode: Only show warnings and errors in console
+        logging.basicConfig(
+            level=logging.WARNING,
+            format='%(levelname)s: %(message)s'
+        )
+    
+    # Suppress warnings AFTER logging is configured
+    import warnings
+
+    warnings.filterwarnings("ignore")
+    os.environ["LANGFUSE_ENABLED"] = "false"
+
+    check_venv()
+    # .env already loaded at module level (before imports)
 
     # Determine UI style (CLI arg > ENV var > default CLASSIC for stability)
     ui_style = args.ui or os.getenv("SOPHIA_UI_STYLE", "classic")
@@ -107,6 +131,8 @@ async def main():
     print("Starting Sophia's kernel...")
     if args.use_event_driven:
         print("🚀 Event-driven architecture ENABLED (Phase 1)")
+    if args.offline:
+        print("🔒 OFFLINE MODE ENABLED - Local LLM only (no cloud fallback)")
 
     # Print UI style
     ui_icons = {
@@ -117,7 +143,7 @@ async def main():
     }
     print(f"🎨 UI Style: {ui_icons.get(ui_style, ui_style.upper())}")
 
-    kernel = Kernel(use_event_driven=args.use_event_driven)
+    kernel = Kernel(use_event_driven=args.use_event_driven, offline_mode=args.offline)
 
     # IMPORTANT: Initialize kernel to load all plugins
     await kernel.initialize()
@@ -130,13 +156,14 @@ async def main():
         print(f"🎯 Single-run mode: {removed_count} interface plugins disabled for speed")
     # DISABLE WebUI if --no-webui flag is set
     elif args.no_webui:
-        # Remove WebUI and sci-fi interfaces, keep only basic terminal
+        # Remove only WebUI, keep terminal
+        webui_removed = False
         kernel.plugin_manager._plugins[PluginType.INTERFACE] = [
             p
             for p in kernel.plugin_manager._plugins[PluginType.INTERFACE]
-            if p.name == "interface_terminal"  # Keep only basic terminal
+            if p.name != "interface_webui"
         ]
-        print(f"🚫 Web UI disabled - terminal-only mode (basic interface)")
+        print("🚫 Web UI disabled - terminal-only mode")
     # THEN replace interface plugin if sci-fi mode requested (interactive only)
     elif ui_style != "classic":
         scifi_interface = await _load_scifi_interface(kernel, ui_style)
@@ -147,14 +174,6 @@ async def main():
 
             install_scifi_logging(scifi_interface)
             print(f"✨ Sci-fi logging enabled - all output now in {ui_style.upper()} style!")
-    else:
-        # Classic mode - remove sci-fi interfaces, keep basic terminal and webui
-        kernel.plugin_manager._plugins[PluginType.INTERFACE] = [
-            p
-            for p in kernel.plugin_manager._plugins[PluginType.INTERFACE]
-            if p.name in ["interface_terminal", "interface_webui"]
-        ]
-        print(f"⚪ Classic mode - using basic terminal interface")
 
     # SINGLE-RUN MODE: Fast processing without UI
     if args.once or args.input:
@@ -172,18 +191,20 @@ async def main():
             session_id=session_id,
             current_state="SINGLE_RUN",
             logger=session_logger,
+            offline_mode=args.offline,  # Pass offline mode flag
         )
 
         # Process single input with timeout
+        # Note: Offline mode needs MUCH more time (planning with 8B model can take 3-5 minutes)
         try:
             response = await asyncio.wait_for(
                 kernel.process_single_input(context),
-                timeout=30.0,  # Increased from 5s - Jules operations can take time
+                timeout=300.0,  # 5 minutes for offline planning + inference
             )
             print(f"\n✅ Sophia: {response}\n")
             sys.exit(0)
         except asyncio.TimeoutError:
-            print("\n❌ Error: Response timeout (>30s)\n")
+            print("\n❌ Error: Response timeout (>300s)\n")
             sys.exit(1)
         except Exception as e:
             print(f"\n❌ Error: {e}\n")

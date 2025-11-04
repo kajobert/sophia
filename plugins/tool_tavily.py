@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 from typing import Any, Dict, Optional, List
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
@@ -21,7 +21,8 @@ class TavilySearchResult(BaseModel):
     score: float = Field(..., description="Relevance score (0.0-1.0)")
     raw_content: Optional[str] = Field(None, description="Full raw content if requested")
 
-    @validator("score")
+    @field_validator("score")
+    @classmethod
     def validate_score(cls, v):
         if not 0.0 <= v <= 1.0:
             raise ValueError("Score must be between 0.0 and 1.0")

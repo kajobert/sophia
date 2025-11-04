@@ -1,116 +1,49 @@
 import asyncio
 import sys
-import os
 from typing import Optional
-from datetime import datetime
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
 
 class TerminalInterface(BasePlugin):
     """
-    Clean, simple terminal interface for Sophia.
-    
-    Version 2.0.0 - Enhanced with:
-    - Formatted conversation display
-    - Color-coded system activity
-    - Timestamps for all messages
-    - Clear visual separation
+    Simple terminal interface for interacting with Sophia.
+
+    UPGRADED: Now with cyberpunk sci-fi mode! 🚀
+    Use: sophia --scifi for holographic experience
     """
+
+
+import os
+from plugins.base_plugin import BasePlugin
+
+# Try to import sci-fi interface (graceful fallback)
+try:
+    from plugins.interface_terminal_scifi import InterfaceTerminalSciFi
+
+    SCIFI_AVAILABLE = True
+except ImportError:
+    SCIFI_AVAILABLE = False
+
+
+class TerminalInterface(BasePlugin):
 
     def __init__(self):
         super().__init__()
         self._input_queue: Optional[asyncio.Queue] = None
         self._input_task: Optional[asyncio.Task] = None
-        
-        # Conversation tracking
-        self._conversation_history = []
-        self._last_activity = None
-        
-        # Print welcome banner
-        self._print_welcome()
 
-    
-    def _print_welcome(self):
-        """Print welcome banner with instructions."""
-        print("\n" + "="*70)
-        print("🤖 SOPHIA AI - Interactive Terminal Interface")
-        print("="*70)
-        print("💬 Konverzace je připravena!")
-        print("📊 Uvidíš: Tvé zprávy | Sophia odpovědi | Systémová aktivita")
-        print("⌨️  Napiš zprávu a stiskni Enter")
-        print("🚪 Ukonči: Ctrl+C nebo 'exit'")
-        print("="*70 + "\n")
-    
-    def _log_activity(self, activity: str, type: str = "info"):
-        """Log system activity with timestamp."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        
-        # Color codes for different activity types
-        colors = {
-            "info": "\033[36m",      # Cyan
-            "thinking": "\033[33m",  # Yellow
-            "success": "\033[32m",   # Green
-            "error": "\033[31m",     # Red
-            "system": "\033[35m"     # Magenta
-        }
-        reset = "\033[0m"
-        
-        color = colors.get(type, colors["info"])
-        icon = {
-            "info": "ℹ️",
-            "thinking": "🤔",
-            "success": "✅",
-            "error": "❌",
-            "system": "⚙️"
-        }.get(type, "•")
-        
-        print(f"{color}[{timestamp}] {icon} {activity}{reset}")
-        self._last_activity = activity
-    
-    def _display_user_input(self, user_input: str):
-        """Display user's message in a clear format."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"\n{'─'*70}")
-        print(f"\033[1m👤 TY [{timestamp}]\033[0m")
-        print(f"   {user_input}")
-        print(f"{'─'*70}\n")
-        
-        # Track in conversation history
-        self._conversation_history.append({
-            "role": "user",
-            "content": user_input,
-            "timestamp": timestamp
-        })
-    
-    def _display_sophia_response(self, response: str):
-        """Display Sophia's response in a clear format."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        
-        # Extract plan status if present (technical indicator)
-        clean_response = response
-        if response.startswith("Plan executed successfully. Result: "):
-            # Log the success indicator separately
-            self._log_activity("Plán úspěšně vykonán", "success")
-            # Show only the actual response to user
-            clean_response = response[len("Plan executed successfully. Result: "):]
-        elif "Plan executed successfully." in response:
-            # Handle other variants
-            self._log_activity("Plán úspěšně vykonán", "success")
-            clean_response = response.replace("Plan executed successfully. Result: ", "").replace("Plan executed successfully.", "").strip()
-        
-        # Display clean response in cyan (visible but neutral, not green for success)
-        print(f"\n{'═'*70}")
-        print(f"\033[1m🤖 SOPHIA [{timestamp}]\033[0m")
-        print(f"\033[36m{clean_response}\033[0m")  # Cyan - clearly visible
-        print(f"{'═'*70}\n")
-        
-        # Track in conversation history
-        self._conversation_history.append({
-            "role": "assistant",
-            "content": clean_response,
-            "timestamp": timestamp
-        })
+        # 🚀 SCI-FI MODE DETECTION
+        self.scifi_mode = os.getenv("SOPHIA_SCIFI_MODE", "").lower() == "true"
+
+        if self.scifi_mode and SCIFI_AVAILABLE:
+            self.scifi_ui = InterfaceTerminalSciFi()
+            print("🚀 SCI-FI MODE ACTIVATED! 🌌")
+        else:
+            self.scifi_ui = None
+            if self.scifi_mode and not SCIFI_AVAILABLE:
+                print("⚠️  Sci-fi mode requested but dependencies missing.")
+                print("   Install: pip install rich textual")
 
     @property
     def name(self) -> str:
@@ -122,26 +55,23 @@ class TerminalInterface(BasePlugin):
 
     @property
     def version(self) -> str:
-        return "2.0.0"
+        return "1.0.1"
 
     def setup(self, config: dict) -> None:
         """Setup the terminal interface."""
-        pass  # No setup needed for basic terminal
+        pass
 
     def prompt(self):
         """Prints the user input prompt to the console."""
-        print("\n" + "─" * 70)
-        print("\033[1;36m💭 TY ▶\033[0m ", end="", flush=True)
+        print("<<< Uživatel: ", end="", flush=True)
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """
         Asynchronously waits for input from the terminal.
-        
-        Enhanced to show system activity and responses.
+
+        In event-driven mode, this is non-blocking and checks the input queue.
+        In legacy mode, this blocks until input is received.
         """
-        # ALWAYS register response callback (payload resets each loop iteration)
-        context.payload["_response_callback"] = self._display_sophia_response
-        
         if context.use_event_driven:
             # Non-blocking mode - check queue for input
             return await self._execute_nonblocking(context)
@@ -150,24 +80,10 @@ class TerminalInterface(BasePlugin):
             return await self._execute_blocking(context)
 
     async def _execute_blocking(self, context: SharedContext) -> SharedContext:
-        """Blocking input with formatted display."""
-        import sys
+        """Legacy blocking input (original behavior)."""
         loop = asyncio.get_running_loop()
-        
-        # Use sys.stdin.readline() - read directly from stdin
-        # The prompt is already displayed by the prompt() method in kernel
-        def read_input():
-            line = sys.stdin.readline()
-            return line.rstrip('\n\r') if line else ""
-        
-        user_input = await loop.run_in_executor(None, read_input)
-        
-        # Display formatted user input
-        if user_input:
-            self._display_user_input(user_input)
-            self._log_activity("Zpracovávám tvoji zprávu...", "thinking")
-        
-        context.user_input = user_input
+        user_input = await loop.run_in_executor(None, sys.stdin.readline)
+        context.user_input = user_input.strip()
         return context
 
     async def _execute_nonblocking(self, context: SharedContext) -> SharedContext:

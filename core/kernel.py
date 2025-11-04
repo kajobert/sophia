@@ -24,12 +24,13 @@ class Kernel:
     plugin execution.
     """
 
-    def __init__(self, use_event_driven: bool = False):
+    def __init__(self, use_event_driven: bool = False, offline_mode: bool = False):
         """
         Initialize Kernel.
 
         Args:
             use_event_driven: If True, enable event-driven architecture (Phase 1)
+            offline_mode: If True, force use of local LLM only (no cloud fallback)
         """
         self.plugin_manager = PluginManager()
         self.is_running = False
@@ -41,6 +42,9 @@ class Kernel:
         self.use_event_driven = use_event_driven
         self.event_bus = None
         self.task_queue = None
+        
+        # NEW: Offline mode (Phase 1 - Offline Dreaming)
+        self.offline_mode = offline_mode
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
@@ -125,6 +129,7 @@ class Kernel:
                 "plugin_manager": self.plugin_manager,
                 "all_plugins": self.all_plugins_map,  # Pass all plugins for dependency injection
                 "logger": plugin_logger,  # Inject logger per Development Guidelines
+                "offline_mode": self.offline_mode,  # Pass offline mode flag
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -187,6 +192,7 @@ class Kernel:
             event_bus=self.event_bus,
             task_queue=self.task_queue,
             use_event_driven=self.use_event_driven,
+            offline_mode=self.offline_mode,  # Pass offline mode to all plugins
         )
 
         # Publish SYSTEM_READY event if event-driven
@@ -224,11 +230,6 @@ class Kernel:
             return
 
         # Legacy blocking mode (original behavior)
-        # Show initial prompt before loop starts
-        terminal = self.all_plugins_map.get("interface_terminal")
-        if terminal and hasattr(terminal, "prompt") and not single_run_input:
-            terminal.prompt()
-        
         while self.is_running:
             try:
                 # 1. LISTENING PHASE
@@ -363,7 +364,28 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
-                    llm_tool = self.all_plugins_map.get("tool_llm")
+                    
+                    # Select LLM tool based on offline mode
+                    if self.offline_mode:
+                        # Force local LLM only (no cloud fallback)
+                        llm_tool = self.all_plugins_map.get("tool_local_llm")
+                        if not llm_tool:
+                            raise RuntimeError(
+                                "Offline mode enabled but tool_local_llm not available! "
+                                "Please install Ollama and configure local LLM."
+                            )
+                        context.logger.info(
+                            "🔒 OFFLINE MODE: Using local LLM only",
+                            extra={"plugin_name": "Kernel"}
+                        )
+                    else:
+                        # Cloud LLM (stable, tested)
+                        # TODO: Enable local LLM preference after benchmarking
+                        llm_tool = self.all_plugins_map.get("tool_llm")
+                        context.logger.debug(
+                            "☁️ ONLINE MODE: Using cloud LLM",
+                            extra={"plugin_name": "Kernel"}
+                        )
 
                     if plan:
                         context.logger.info(
@@ -745,34 +767,9 @@ class Kernel:
                                 break
 
                         if not execution_summary:
-                            # Clean step results: remove "Plan executed successfully. Result:" prefix if present
-                            # This prevents LLM from imitating the pattern in future responses
-                            cleaned_steps = []
-                            for step in step_results:
-                                step_str = str(step)
-                                # Remove the prefix if it exists (case-insensitive, handle multiple variants)
-                                if "plan executed successfully" in step_str.lower():
-                                    # Find the "Result:" part and take everything after it
-                                    if "result:" in step_str.lower():
-                                        parts = step_str.split(":", 2)  # Split on first 2 colons
-                                        if len(parts) >= 3:
-                                            step_str = parts[2].strip()
-                                        elif len(parts) == 2:
-                                            step_str = parts[1].strip()
-                                cleaned_steps.append(step_str)
-                            
-                            clean_result = " | ".join(cleaned_steps)
-                            execution_summary = "Plan executed successfully. Result: " + clean_result
-                        else:
-                            # For error cases, also clean the prefix
-                            clean_result = execution_summary
-                            if "plan executed successfully" in clean_result.lower():
-                                if "result:" in clean_result.lower():
-                                    parts = clean_result.split(":", 2)
-                                    if len(parts) >= 3:
-                                        clean_result = parts[2].strip()
-                                    elif len(parts) == 2:
-                                        clean_result = parts[1].strip()
+                            execution_summary = (
+                                "Plan executed successfully. Result: " + " | ".join(step_results)
+                            )
 
                     else:
                         if llm_tool:
@@ -784,12 +781,10 @@ class Kernel:
                             execution_summary = context.payload.get(
                                 "llm_response", "Input received, no plan formed."
                             )
-                            clean_result = execution_summary
                         else:
                             execution_summary = (
                                 "Input received, but no planner or LLM tool is configured."
                             )
-                            clean_result = execution_summary
                             context.logger.warning(
                                 "No plan and no LLM tool found for direct response.",
                                 extra={"plugin_name": "Kernel"},
@@ -802,9 +797,7 @@ class Kernel:
                         f"Final response: {execution_summary}",
                         extra={"plugin_name": "Kernel"},
                     )
-                    # Add CLEAN result to history (without "Plan executed successfully" prefix)
-                    # This prevents LLM from imitating the pattern in future responses
-                    context.history.append({"role": "assistant", "content": clean_result})
+                    context.history.append({"role": "assistant", "content": execution_summary})
 
                     response_callback = context.payload.get("_response_callback")
                     if response_callback:
@@ -819,10 +812,6 @@ class Kernel:
                                 exc_info=True,
                                 extra={"plugin_name": "Kernel"},
                             )
-                        # Re-display prompt after callback
-                        terminal = self.all_plugins_map.get("interface_terminal")
-                        if terminal and hasattr(terminal, "prompt"):
-                            terminal.prompt()
                     else:
                         print(f">>> Sophia: {execution_summary}")
                         # After printing to the console, re-display the user prompt.
@@ -920,7 +909,7 @@ class Kernel:
         Returns:
             Response string
         """
-        logger.info(f"🎯 [Kernel] ========== SINGLE INPUT MODE START ==========")
+        logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE START ==========")
         logger.info(f"🎯 [Kernel] Input: {context.user_input}")
         logger.info(f"🎯 [Kernel] Session: {context.session_id}")
 
@@ -928,30 +917,35 @@ class Kernel:
         # Go straight to: PLANNING → EXECUTING → RESPONDING
 
         # 1. PLANNING PHASE
-        logger.info(f"🎯 [Kernel] Phase 1: PLANNING")
+        logger.info("🎯 [Kernel] Phase 1: PLANNING")
         context.current_state = "PLANNING"
         context.history.append({"role": "user", "content": context.user_input})
 
         # --- Cognitive Task Routing ---
-        logger.info(f"🎯 [Kernel] Checking for task router...")
+        logger.info("🎯 [Kernel] Checking for task router...")
         router = self.all_plugins_map.get("cognitive_task_router")
-        if router:
+        # Skip router in offline mode for faster response (router also calls LLM)
+        if router and not context.offline_mode:
             try:
-                logger.info(f"🎯 [Kernel] Executing task router...")
+                logger.info("🎯 [Kernel] Executing task router...")
                 context = await router.execute(context=context)
                 logger.info("🎯 [Kernel] Task router completed")
             except Exception as e:
                 logger.error(f"❌ [Kernel] Task router error: {e}")
+        elif context.offline_mode:
+            logger.info("🔒 [Kernel] Task router skipped in offline mode")
 
         # --- Planning ---
-        logger.info(f"🎯 [Kernel] Checking for planner...")
+        logger.info("🎯 [Kernel] Checking for planner...")
         planner = self.all_plugins_map.get("cognitive_planner")
         plan = []
         if planner:
-            logger.info(f"🎯 [Kernel] Executing planner...")
+            logger.info("🎯 [Kernel] Executing planner...")
             context = await planner.execute(context)
             plan = context.payload.get("plan", [])
-            logger.info(f"🎯 [Kernel] Planner returned {len(plan) if isinstance(plan, list) else 0} steps")
+            logger.info(
+                f"🎯 [Kernel] Planner returned {len(plan) if isinstance(plan, list) else 0} steps"
+            )
             if not isinstance(plan, list):
                 logger.error(f"Planner returned invalid plan: {plan}. Defaulting to empty.")
                 plan = []
@@ -959,20 +953,35 @@ class Kernel:
             logger.warning("🎯 [Kernel] No planner found")
 
         # 2. EXECUTING PHASE
-        logger.info(f"🎯 [Kernel] Phase 2: EXECUTING")
+        logger.info("🎯 [Kernel] Phase 2: EXECUTING")
         context.current_state = "EXECUTING"
         execution_result = {"success": False, "output": ""}
 
         if plan:
             logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
-            # Execute plan steps (simplified - just get LLM response for now)
-            llm_tool = self.all_plugins_map.get("tool_llm")
+            
+            # Select LLM tool based on offline mode
+            if self.offline_mode:
+                # Force local LLM only (no cloud fallback)
+                llm_tool = self.all_plugins_map.get("tool_local_llm")
+                if not llm_tool:
+                    raise RuntimeError(
+                        "Offline mode enabled but tool_local_llm not available! "
+                        "Please install Ollama and configure local LLM."
+                    )
+                logger.info("🔒 OFFLINE MODE: Using local LLM only")
+            else:
+                # Cloud LLM (stable, tested)
+                # TODO: Enable local LLM preference after benchmarking
+                llm_tool = self.all_plugins_map.get("tool_llm")
+                logger.debug("☁️ ONLINE MODE: Using cloud LLM")
+            
             if llm_tool:
                 try:
-                    logger.info(f"🎯 [Kernel] Calling LLM tool...")
+                    logger.info("🎯 [Kernel] Calling LLM tool...")
                     # Get LLM to respond directly for simplicity
                     llm_context = await llm_tool.execute(context=context)
-                    logger.info(f"🎯 [Kernel] LLM call completed")
+                    logger.info("🎯 [Kernel] LLM call completed")
                     response_text = llm_context.payload.get(
                         "llm_response", "No response generated"
                     )
@@ -982,18 +991,18 @@ class Kernel:
                     logger.error(f"❌ [Kernel] LLM error: {e}")
                     execution_result = {"success": False, "error": str(e)}
             else:
-                logger.error(f"❌ [Kernel] No LLM tool found")
+                logger.error("❌ [Kernel] No LLM tool found")
                 execution_result = {"success": False, "error": "No LLM tool found"}
         else:
-            logger.warning(f"🎯 [Kernel] No plan, skipping execution")
+            logger.warning("🎯 [Kernel] No plan, skipping execution")
             execution_result = {"success": False, "error": "No plan generated"}
 
         # 3. RESPONDING
-        logger.info(f"🎯 [Kernel] Phase 3: RESPONDING")
+        logger.info("🎯 [Kernel] Phase 3: RESPONDING")
         context.current_state = "RESPONDING"
         response = self._generate_response(context, execution_result)
 
-        logger.info(f"🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
+        logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
         logger.info(f"🎯 [Kernel] Response ready: {response[:100]}...")
         return response
 

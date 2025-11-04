@@ -8,6 +8,40 @@ Tento guide je optimalizovaný pro **gaming laptopy** (Lenovo Legion, ASUS ROG, 
 
 ---
 
+## 🚀 **AUTOMATED INSTALL (Recommended)**
+
+**Fastest way - Single command installation!**
+
+```bash
+# In WSL2 Ubuntu terminal:
+curl -fsSL https://raw.githubusercontent.com/ShotyCZ/sophia/feature/year-2030-ami-complete/scripts/wsl_install.sh | bash
+```
+
+**What it does automatically:**
+- ✅ Installs Python 3.12, uv, Git
+- ✅ Clones Sophia repository
+- ✅ Sets up virtual environment
+- ✅ Installs all dependencies
+- ✅ (Optional) Installs Ollama + Llama 3.1 8B
+- ✅ Creates .env configuration
+
+**Time:** 5-15 minutes (depending on internet speed and Ollama choice)
+
+**After install:**
+```bash
+cd ~/sophia
+source .venv/bin/activate
+python run.py
+```
+
+---
+
+## 📖 **MANUAL INSTALL (For learning/troubleshooting)**
+
+If you prefer step-by-step control or the automated script fails, follow this guide.
+
+---
+
 ## 🎯 Proč WSL2?
 
 - **🚀 Nativní Linux rychlost** - Python běží 2-3x rychleji než ve Windows
@@ -133,6 +167,13 @@ code .
 **Jak poznat, že jsi v WSL:**
 - Dolní levý roh VS Code má zelené tlačítko: `><` s textem `WSL: Ubuntu`
 
+**💡 TIP: Změň default terminál na Bash**
+1. V VS Code otevři terminál (`Ctrl + ` `)
+2. Klikni na dropdown vedle `+` (nový terminál)
+3. Vyber "Select Default Profile"
+4. Zvol "bash" nebo "Ubuntu (WSL)"
+5. ✅ Nové terminály budou Bash místo PowerShell
+
 ---
 
 ## 🐍 Krok 3: Instalace Python Dependencies v WSL
@@ -146,6 +187,13 @@ sudo apt update && sudo apt upgrade -y
 
 ### 3.2 Instalace Python 3.12
 
+**Ubuntu 24.04 (Noble Numbat):**
+```bash
+# Python 3.12 je součástí Ubuntu 24.04!
+sudo apt install -y python3.12 python3.12-venv python3.12-dev python3-pip
+```
+
+**Ubuntu 22.04 nebo starší:**
 ```bash
 # Přidat deadsnakes PPA (pro nejnovější Python)
 sudo add-apt-repository ppa:deadsnakes/ppa -y

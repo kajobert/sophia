@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 def create_svg_animation():
     """Vytvoří SVG animaci Cyberpunk terminalu."""
-    
-    svg_content = '''<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+
+    svg_content = """<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
   <style>
     .terminal-bg { fill: #0a0e27; }
     .terminal-text { 
@@ -150,8 +150,8 @@ def create_svg_animation():
   <text class="terminal-text dim" x="30" y="560" font-size="12">
     🌈 Cyberpunk Terminal | Neon Colors | Futuristic UI
   </text>
-</svg>'''
-    
+</svg>"""
+
     return svg_content
 
 
@@ -159,10 +159,10 @@ def main():
     """Uloží SVG animaci."""
     output_path = Path(__file__).parent.parent / "docs" / "cyberpunk_demo.svg"
     output_path.parent.mkdir(exist_ok=True)
-    
+
     svg = create_svg_animation()
     output_path.write_text(svg, encoding="utf-8")
-    
+
     print(f"✅ SVG animation created: {output_path}")
     print()
     print("📝 Přidej do README.md:")

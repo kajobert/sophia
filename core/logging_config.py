@@ -30,8 +30,7 @@ def setup_logging(log_queue: "asyncio.Queue" = None):
     root_logger.addFilter(session_id_filter)
 
     # 5. Console handler (for human readability) - SIMPLE format without session_id
-    # Use stderr instead of stdout to avoid interfering with terminal interface prompts
-    console_handler = logging.StreamHandler(sys.stderr)
+    console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(name)s: %(message)s")
     console_handler.setFormatter(console_formatter)
 

@@ -2,37 +2,52 @@ import asyncio
 import json
 import os
 import logging
-from typing import List, Dict, Any
-import pandas as pd
+from typing import Dict
 
 # This script assumes it is run from the root of the project.
 # Add the project root to the python path to allow importing project modules.
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.context import SharedContext
 from plugins.tool_model_evaluator import ModelEvaluatorTool
 from plugins.tool_llm import LLMTool
 
 # --- Setup Logging ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # --- Configuration ---
 
 # The list of models to be benchmarked.
 MAIN_MODELS = [
-    "openrouter/google/gemma-2-9b-it", "openrouter/meta-llama/llama-3-8b-instruct", "openrouter/mistralai/mistral-7b-instruct-v0.3",
-    "openrouter/anthropic/claude-3-haiku", "openrouter/google/gemini-2.0-flash-001", "openrouter/microsoft/phi-3-mini-128k-instruct",
-    "openrouter/openai/gpt-4o-mini", "openrouter/cohere/command-r-08-2024", "openrouter/mistralai/mixtral-8x7b-instruct",
-    "openrouter/deepseek/deepseek-chat", "openrouter/qwen/qwen-plus", "openrouter/meta-llama/llama-3.1-70b-instruct",
-    "openrouter/mistralai/codestral-2508", "openrouter/google/gemini-2.5-flash", "openrouter/x-ai/grok-3-mini",
-    "openrouter/nousresearch/hermes-2-pro-llama-3-8b", "openrouter/microsoft/wizardlm-2-8x22b", "openrouter/perplexity/sonar-reasoning",
-    "openrouter/z-ai/glm-4-32b", "openrouter/mistralai/mistral-small"
+    "openrouter/google/gemma-2-9b-it",
+    "openrouter/meta-llama/llama-3-8b-instruct",
+    "openrouter/mistralai/mistral-7b-instruct-v0.3",
+    "openrouter/anthropic/claude-3-haiku",
+    "openrouter/google/gemini-2.0-flash-001",
+    "openrouter/microsoft/phi-3-mini-128k-instruct",
+    "openrouter/openai/gpt-4o-mini",
+    "openrouter/cohere/command-r-08-2024",
+    "openrouter/mistralai/mixtral-8x7b-instruct",
+    "openrouter/deepseek/deepseek-chat",
+    "openrouter/qwen/qwen-plus",
+    "openrouter/meta-llama/llama-3.1-70b-instruct",
+    "openrouter/mistralai/codestral-2508",
+    "openrouter/google/gemini-2.5-flash",
+    "openrouter/x-ai/grok-3-mini",
+    "openrouter/nousresearch/hermes-2-pro-llama-3-8b",
+    "openrouter/microsoft/wizardlm-2-8x22b",
+    "openrouter/perplexity/sonar-reasoning",
+    "openrouter/z-ai/glm-4-32b",
+    "openrouter/mistralai/mistral-small",
 ]
 
 REFERENCE_MODELS = [
-    "openrouter/google/gemini-2.5-pro", "openrouter/anthropic/claude-3.5-sonnet", "openrouter/mistralai/mistral-large"
+    "openrouter/google/gemini-2.5-pro",
+    "openrouter/anthropic/claude-3.5-sonnet",
+    "openrouter/mistralai/mistral-large",
 ]
 
 # The judge model for quality assessment.
@@ -61,7 +76,7 @@ EVALUATION_CRITERIA = [
     "Correctness: Did the model correctly follow all 8 steps of the plan?",
     "Completeness: Did the model provide a response for every step?",
     "Clarity: Was the output of each step clear and easy to understand?",
-    "Adherence_to_Instructions: Did the model strictly follow the instructions without adding extra conversational fluff?"
+    "Adherence_to_Instructions: Did the model strictly follow the instructions without adding extra conversational fluff?",
 ]
 
 # Output directory for benchmark results.
@@ -89,7 +104,9 @@ def load_pricing_data() -> Dict[str, Dict[str, float]]:
                     except (ValueError, IndexError):
                         continue
     except Exception as e:
-        print(f"Warning: Could not load pricing data from docs/openrouter_models.md. Cost calculation may be inaccurate. Error: {e}")
+        print(
+            f"Warning: Could not load pricing data from docs/openrouter_models.md. Cost calculation may be inaccurate. Error: {e}"
+        )
     return pricing_data
 
 
@@ -113,7 +130,7 @@ async def main():
         current_state="EXECUTING",
         logger=logger,
         user_input=BENCHMARK_PROMPT,
-        history=[]
+        history=[],
     )
 
     all_models = MAIN_MODELS + REFERENCE_MODELS
@@ -134,8 +151,12 @@ async def main():
                     model_pricing = pricing_data[model_name]
                     input_tokens = result.get("performance", {}).get("input_tokens", 0)
                     output_tokens = result.get("performance", {}).get("output_tokens", 0)
-                    cost = ((input_tokens / 1_000_000) * model_pricing.get("cost_prompt_usd_per_1m", 0)) + \
-                           ((output_tokens / 1_000_000) * model_pricing.get("cost_completion_usd_per_1m", 0))
+                    cost = (
+                        (input_tokens / 1_000_000) * model_pricing.get("cost_prompt_usd_per_1m", 0)
+                    ) + (
+                        (output_tokens / 1_000_000)
+                        * model_pricing.get("cost_completion_usd_per_1m", 0)
+                    )
                     result["performance"]["cost_usd"] = cost
             else:
                 cost = 0.0
@@ -146,7 +167,9 @@ async def main():
             with open(filepath, "w") as f:
                 json.dump(result, f, indent=4)
 
-            logger.info(f"Full benchmark result for {model_name}: \n{json.dumps(result, indent=2)}")
+            logger.info(
+                f"Full benchmark result for {model_name}: \n{json.dumps(result, indent=2)}"
+            )
 
             total_cost += cost
             print(f"Successfully evaluated. Cost for this run: ${cost:.6f}")
@@ -161,12 +184,14 @@ async def main():
                 json.dump({"error": str(e)}, f, indent=4)
 
         # Budget check
-        if i >= 2: # After the first 3 models
+        if i >= 2:  # After the first 3 models
             avg_cost = total_cost / (i + 1)
             projected_cost = avg_cost * len(all_models)
             print(f"Projected total cost after {i+1} runs: ${projected_cost:.4f}")
             if projected_cost > 3.00:
-                print("\\n*** BUDGET ALERT: Projected cost exceeds $3.00. Stopping the benchmark. ***")
+                print(
+                    "\\n*** BUDGET ALERT: Projected cost exceeds $3.00. Stopping the benchmark. ***"
+                )
                 break
 
     print("\\n--- Benchmark complete ---")
@@ -178,9 +203,12 @@ if __name__ == "__main__":
     # The llm_tool will load it from the environment.
     if "OPENROUTER_API_KEY" not in os.environ:
         from dotenv import load_dotenv
+
         load_dotenv()
         if "OPENROUTER_API_KEY" not in os.environ:
-             print("Error: OPENROUTER_API_KEY is not set. Please create a .env file or set the environment variable.")
-             sys.exit(1)
+            print(
+                "Error: OPENROUTER_API_KEY is not set. Please create a .env file or set the environment variable."
+            )
+            sys.exit(1)
 
     asyncio.run(main())
