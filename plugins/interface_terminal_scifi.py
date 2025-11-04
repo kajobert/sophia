@@ -148,12 +148,16 @@ class InterfaceTerminalSciFi(BasePlugin):
     
     def setup(self, config: dict) -> None:
         """Initialize the sci-fi terminal with Sophie's Layout + Live solution!"""
-        # Initial boot sequence (happens once before Live starts)
+        # Initial boot sequence (happens ONLY ONCE - first setup call)
         if not self._booted:
             self.console.clear()
             self._show_boot_sequence_simple()
+            self._booted = True  # Mark as booted to prevent re-runs
             
-        # Initialize layout with empty content
+        # Initialize layout with empty content (only if not already started)
+        if self._live is not None:
+            return  # Already initialized, skip
+            
         self._layout["main"].update(Panel(
             "[dim cyan]Awaiting neural input...[/dim cyan]",
             title="[bold magenta]💬 CONVERSATION[/bold magenta]",
@@ -171,7 +175,7 @@ class InterfaceTerminalSciFi(BasePlugin):
         # Start Live mode immediately! (works for both interactive and non-interactive)
         self._start_live_mode()
     
-    async def execute(self, *, context: SharedContext) -> SharedContext:
+    async def execute(self, context: SharedContext) -> SharedContext:
         """Execute interface actions (required by BasePlugin)."""
         # Register response callback to intercept kernel output
         if context.current_state == "LISTENING":

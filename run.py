@@ -58,6 +58,11 @@ def check_venv():
 
 async def main():
     """The main entry point of the application."""
+    # Suppress warnings FIRST (before any imports that might warn)
+    import warnings
+    warnings.filterwarnings("ignore")
+    os.environ["LANGFUSE_ENABLED"] = "false"
+    
     check_venv()
     load_dotenv()
     
@@ -129,11 +134,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Suppress warnings for clean UI
-    import warnings
-    warnings.filterwarnings("ignore")
-    
-    # Suppress langfuse startup messages
-    os.environ["LANGFUSE_ENABLED"] = "false"
-    
     asyncio.run(main())
