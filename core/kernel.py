@@ -137,6 +137,31 @@ class Kernel:
             f"All {len(all_plugins_list)} plugins have been configured.",
             extra={"plugin_name": "Kernel"},
         )
+        
+        # --- PHASE 3: MEMORY CONSOLIDATION INTEGRATION ---
+        if self.use_event_driven and self.event_bus:
+            # Find Phase 3 plugins
+            sleep_scheduler = self.all_plugins_map.get("core_sleep_scheduler")
+            consolidator = self.all_plugins_map.get("cognitive_memory_consolidator")
+            
+            if sleep_scheduler and consolidator:
+                # Wire dependencies
+                sleep_scheduler.set_event_bus(self.event_bus)
+                sleep_scheduler.set_consolidator(consolidator)
+                consolidator.event_bus = self.event_bus
+                
+                # Start sleep scheduler
+                await sleep_scheduler.start()
+                
+                logger.info(
+                    "Phase 3 Memory Consolidation enabled - sleep scheduler active",
+                    extra={"plugin_name": "Kernel"}
+                )
+            elif sleep_scheduler or consolidator:
+                logger.warning(
+                    f"Phase 3 partial: scheduler={bool(sleep_scheduler)}, consolidator={bool(consolidator)}",
+                    extra={"plugin_name": "Kernel"}
+                )
 
     async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
