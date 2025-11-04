@@ -27,5 +27,6 @@ class SharedContext:
     event_bus: Optional["EventBus"] = None
     task_queue: Optional["TaskQueue"] = None
 
-    # Feature flag to enable new architecture
+    # Feature flags
     use_event_driven: bool = False
+    offline_mode: bool = False  # Force local LLM only (no cloud fallback)

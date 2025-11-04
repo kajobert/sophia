@@ -89,13 +89,27 @@ class CognitiveTaskRouter(BasePlugin):
             )
             return context
 
-        llm_tool = self.plugins.get("tool_llm")
-        if not llm_tool:
-            context.logger.error(
-                "LLMTool plugin not found. Skipping routing.",
-                extra={"plugin_name": self.name},
+        # Select LLM based on offline mode
+        if context.offline_mode:
+            llm_tool = self.plugins.get("tool_local_llm")
+            if not llm_tool:
+                context.logger.error(
+                    "Offline mode enabled but tool_local_llm not available!",
+                    extra={"plugin_name": self.name}
+                )
+                return context
+            context.logger.info(
+                "🔒 Task router using local LLM (offline mode)",
+                extra={"plugin_name": self.name}
             )
-            return context
+        else:
+            llm_tool = self.plugins.get("tool_llm")
+            if not llm_tool:
+                context.logger.error(
+                    "LLMTool plugin not found. Skipping routing.",
+                    extra={"plugin_name": self.name},
+                )
+                return context
 
         try:
             # Dynamically build the prompt for the LLM

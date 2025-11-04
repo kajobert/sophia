@@ -1,21 +1,9 @@
 import asyncio
 import sys
+import os
 from typing import Optional
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
-
-
-class TerminalInterface(BasePlugin):
-    """
-    Simple terminal interface for interacting with Sophia.
-
-    UPGRADED: Now with cyberpunk sci-fi mode! 🚀
-    Use: sophia --scifi for holographic experience
-    """
-
-
-import os
-from plugins.base_plugin import BasePlugin
 
 # Try to import sci-fi interface (graceful fallback)
 try:
