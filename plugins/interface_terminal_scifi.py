@@ -97,6 +97,9 @@ class InterfaceTerminalSciFi(BasePlugin):
     - Holographic effects
     """
     
+    # CLASS VARIABLE - shared across all instances to prevent double boot
+    _booted_globally = False
+    
     def __init__(self):
         super().__init__()
         self.console = Console()
@@ -128,9 +131,6 @@ class InterfaceTerminalSciFi(BasePlugin):
             "disk": False
         }
         
-        # Boot state
-        self._booted = False
-        
         # Main content buffer
         self._main_content = Text()
         
@@ -148,11 +148,11 @@ class InterfaceTerminalSciFi(BasePlugin):
     
     def setup(self, config: dict) -> None:
         """Initialize the sci-fi terminal with Sophie's Layout + Live solution!"""
-        # Initial boot sequence (happens ONLY ONCE - first setup call)
-        if not self._booted:
+        # Initial boot sequence (happens ONLY ONCE - using CLASS variable)
+        if not InterfaceTerminalSciFi._booted_globally:
             self.console.clear()
             self._show_boot_sequence_simple()
-            self._booted = True  # Mark as booted to prevent re-runs
+            InterfaceTerminalSciFi._booted_globally = True  # Mark as booted globally
             
         # Initialize layout with empty content (only if not already started)
         if self._live is not None:

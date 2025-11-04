@@ -94,26 +94,32 @@ class CognitiveJulesMonitor(BasePlugin):
         self.active_monitors: Dict[str, MonitoringTask] = {}
         self.jules_tool = None
         self.jules_cli_tool = None  # For hybrid mode
+        self.logger = None  # Will be injected in setup()
     
     def setup(self, config: dict) -> None:
         """
         Sets up the Jules monitor plugin and injects Jules API tool dependency.
 
         Args:
-            config: Configuration dictionary containing 'plugins' map
+            config: Configuration dictionary containing 'all_plugins' map and 'logger'
         """
-        logger.info("Cognitive Jules Monitor initialized")
+        # Get logger from config (dependency injection)
+        self.logger = config.get("logger")
+        if not self.logger:
+            raise ValueError("Logger must be provided in config")
+            
+        self.logger.info("Cognitive Jules Monitor initialized")
         
         # Get reference to tool_jules from plugins map
-        all_plugins = config.get("plugins", {})
+        all_plugins = config.get("all_plugins", {})
         jules_tool = all_plugins.get("tool_jules")
         jules_cli_tool = all_plugins.get("tool_jules_cli")
         
         if jules_tool:
             self.jules_tool = jules_tool
-            logger.info("Jules API tool successfully injected into monitor")
+            self.logger.info("Jules API tool successfully injected into monitor")
         else:
-            logger.warning(
+            self.logger.warning(
                 "tool_jules not found in plugin map. "
                 "Monitoring methods will fail until set_jules_tool() is called."
             )
@@ -121,9 +127,9 @@ class CognitiveJulesMonitor(BasePlugin):
         # Inject Jules CLI tool for hybrid mode (optional)
         if jules_cli_tool:
             self.jules_cli_tool = jules_cli_tool
-            logger.info("✅ Jules CLI tool injected - HYBRID MODE enabled")
+            self.logger.info("✅ Jules CLI tool injected - HYBRID MODE enabled")
         else:
-            logger.info(
+            self.logger.info(
                 "tool_jules_cli not found. Hybrid mode disabled. "
                 "Results auto-pull will not be available."
             )
@@ -132,11 +138,17 @@ class CognitiveJulesMonitor(BasePlugin):
         """
         Inject Jules API tool dependency.
         
+        DEPRECATED: Use dependency injection via setup() config instead.
+        
         Args:
             jules_tool: Instance of JulesAPITool plugin
         """
         self.jules_tool = jules_tool
-        logger.info("Jules API tool injected into monitor")
+        if self.logger:
+            self.logger.warning(
+                "set_jules_tool() is deprecated. Use dependency injection via setup() config."
+            )
+            self.logger.info("Jules API tool injected into monitor")
     
     def start_monitoring(
         self,

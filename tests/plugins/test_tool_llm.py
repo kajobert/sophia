@@ -37,6 +37,9 @@ async def test_llm_tool_execute_with_config(temp_config_file):
          patch.dict(os.environ, {"OPENROUTER_API_KEY": test_api_key}):
 
         llm_tool = LLMTool()
+        
+        # Setup with logger (dependency injection)
+        llm_tool.setup({"logger": logging.getLogger("test")})
 
         context = SharedContext(
             session_id="test",

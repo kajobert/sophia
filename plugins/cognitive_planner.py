@@ -35,7 +35,7 @@ class Planner(BasePlugin):
             )
             self.prompt_template = "Create a plan. Available tools: {tool_list}"
 
-        self.plugins = config.get("plugins", {})
+        self.plugins = config.get("all_plugins", {})
         self.llm_tool = self.plugins.get("tool_llm")
         if not self.llm_tool:
             logger.error(

@@ -42,7 +42,7 @@ def router(mock_strategy_file):
     mock_llm_tool = MagicMock()
     mock_llm_tool.execute = AsyncMock()
 
-    config = {"plugins": {"tool_llm": mock_llm_tool}}
+    config = {"all_plugins": {"tool_llm": mock_llm_tool}}
     router_instance.setup(config)
 
     router_instance.mock_llm_tool = mock_llm_tool

@@ -44,9 +44,6 @@ class Kernel:
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
-        
-        # Logging is already set up in run.py - no need to call again
-        
         # --- PROMPT LOADING PHASE ---
         try:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
@@ -118,10 +115,14 @@ class Kernel:
             plugin_configs = main_config.get("plugins", {})
             specific_config = plugin_configs.get(plugin.name, {})
 
+            # Create plugin-specific logger
+            plugin_logger = logging.getLogger(f"plugin.{plugin.name}")
+
             full_plugin_config = {
                 **specific_config,
                 "plugin_manager": self.plugin_manager,
-                "plugins": self.all_plugins_map,
+                "all_plugins": self.all_plugins_map,  # Pass all plugins for dependency injection
+                "logger": plugin_logger,  # Inject logger per Development Guidelines
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -171,7 +172,7 @@ class Kernel:
         self.is_running = True
         session_id = str(uuid.uuid4())
 
-        # Logging is already set up in initialize() - just create session logger
+        setup_logging(log_queue=asyncio.Queue())  # Setup logging with queue
         session_logger = logging.getLogger(f"session-{session_id[:8]}")
         session_logger.addFilter(SessionIdFilter(session_id))
 
@@ -850,6 +851,82 @@ class Kernel:
                 "Event bus stopped gracefully",
                 extra={"plugin_name": "Kernel"}
             )
+
+    async def process_single_input(self, context: SharedContext) -> str:
+        """
+        Process single input without interface plugins.
+        Used for CLI/scripted interactions (--once mode).
+        
+        Args:
+            context: Context with user_input already set
+            
+        Returns:
+            Response string
+        """
+        logger.info(f"[Kernel] Processing single input: {context.user_input}")
+        
+        # Skip LISTENING phase (already have input)
+        # Go straight to: PLANNING → EXECUTING → RESPONDING
+        
+        # 1. PLANNING PHASE
+        context.current_state = "PLANNING"
+        context.history.append({"role": "user", "content": context.user_input})
+        
+        # --- Cognitive Task Routing ---
+        router = self.all_plugins_map.get("cognitive_task_router")
+        if router:
+            try:
+                context = await router.execute(context=context)
+                logger.info("Cognitive Task Router executed successfully.")
+            except Exception as e:
+                logger.error(f"Error executing Cognitive Task Router: {e}")
+        
+        # --- Planning ---
+        planner = self.all_plugins_map.get("cognitive_planner")
+        plan = []
+        if planner:
+            context = await planner.execute(context)
+            plan = context.payload.get("plan", [])
+            if not isinstance(plan, list):
+                logger.error(f"Planner returned invalid plan: {plan}. Defaulting to empty.")
+                plan = []
+        else:
+            logger.warning("Cognitive planner plugin not found.")
+        
+        # 2. EXECUTING PHASE
+        context.current_state = "EXECUTING"
+        execution_result = {"success": False, "output": ""}
+        
+        if plan:
+            logger.info(f"Executing plan with {len(plan)} steps")
+            # Execute plan steps (simplified - just get LLM response for now)
+            llm_tool = self.all_plugins_map.get("tool_llm")
+            if llm_tool:
+                try:
+                    # Get LLM to respond directly for simplicity
+                    llm_context = await llm_tool.execute(context=context)
+                    response_text = llm_context.payload.get("llm_response", "No response generated")
+                    execution_result = {"success": True, "output": response_text}
+                except Exception as e:
+                    execution_result = {"success": False, "error": str(e)}
+            else:
+                execution_result = {"success": False, "error": "No LLM tool found"}
+        else:
+            execution_result = {"success": False, "error": "No plan generated"}
+        
+        # 3. RESPONDING
+        context.current_state = "RESPONDING"
+        response = self._generate_response(context, execution_result)
+        
+        logger.info(f"[Kernel] Single input processed, response ready")
+        return response
+    
+    def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
+        """Generate user-facing response from execution result."""
+        if execution_result.get("success"):
+            return execution_result.get("output", "Task completed successfully.")
+        else:
+            return f"Error: {execution_result.get('error', 'Unknown error')}"
 
     def start(self):
         """Starts the main consciousness loop."""

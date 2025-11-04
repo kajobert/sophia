@@ -70,7 +70,7 @@ def planner():
         logging.getLogger("test"),
         payload={"llm_response": create_mock_llm_message([])},
     )
-    p.setup({"plugins": {"tool_llm": mock_llm_tool}})
+    p.setup({"all_plugins": {"tool_llm": mock_llm_tool}})
     # Avoid file read errors in tests
     p.prompt_template = "Test Prompt with tools: {tool_list}"
     return p

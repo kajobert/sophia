@@ -39,7 +39,8 @@ class JulesAutonomyPlugin(BasePlugin):
     
     def __init__(self):
         super().__init__()
-        self.jules_cli_tool = None
+        self.jules_api_tool = None  # API for session creation
+        self.jules_cli_tool = None  # CLI for pulling results
         self.jules_monitor = None
         self.logger = None
     
@@ -53,25 +54,41 @@ class JulesAutonomyPlugin(BasePlugin):
     
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "2.0.0-hybrid"  # HYBRID: API + CLI strategy
     
     def setup(self, config):
         """Inject required tools"""
         self.logger = config.get("logger")
+        
+        if not self.logger:
+            raise ValueError("Logger must be provided in config - dependency injection required")
+        
         all_plugins = config.get("all_plugins", {})
         
-        # Inject Jules CLI tool
+        # Inject Jules API tool (for session creation)
+        self.jules_api_tool = all_plugins.get("tool_jules")
+        if not self.jules_api_tool:
+            self.logger.warning("tool_jules (API) not found - session creation disabled")
+        
+        # Inject Jules CLI tool (for pulling results)
         self.jules_cli_tool = all_plugins.get("tool_jules_cli")
         if not self.jules_cli_tool:
-            self.logger.warning("tool_jules_cli not found - autonomy features disabled")
+            self.logger.warning("tool_jules_cli not found - local result pulling disabled")
         
         # Inject Jules monitor
         self.jules_monitor = all_plugins.get("cognitive_jules_monitor")
         if not self.jules_monitor:
             self.logger.warning("cognitive_jules_monitor not found - autonomy features disabled")
         
-        if self.jules_cli_tool and self.jules_monitor:
-            self.logger.info("✅ Jules Autonomy Plugin ready - full autonomous workflow enabled")
+        # Report status
+        if self.jules_api_tool and self.jules_cli_tool and self.jules_monitor:
+            self.logger.info(
+                "✅ Jules Autonomy Plugin ready - HYBRID MODE (API creation + CLI pull)"
+            )
+        elif self.jules_api_tool and self.jules_monitor:
+            self.logger.info(
+                "⚡ Jules Autonomy Plugin ready - API-ONLY MODE (no local pull)"
+            )
     
     async def delegate_task(
         self,
@@ -87,7 +104,7 @@ class JulesAutonomyPlugin(BasePlugin):
         Delegate a complete task to Jules with autonomous monitoring.
         
         This is a HIGH-LEVEL autonomous workflow that:
-        1. Creates Jules session via CLI
+        1. Creates Jules session via API (not CLI)
         2. Monitors progress via API until COMPLETED
         3. Automatically pulls and applies results (if auto_apply=True)
         
@@ -98,7 +115,7 @@ class JulesAutonomyPlugin(BasePlugin):
             context: Shared execution context
             repo: Repository in 'owner/repo' format (e.g., 'ShotyCZ/sophia')
             task: Task description for Jules (e.g., 'Create test file sandbox/test.txt')
-            parallel: Number of parallel sessions (1-5)
+            parallel: DEPRECATED (API doesn't support parallel sessions)
             auto_apply: If True, automatically apply results when completed
             timeout: Maximum wait time in seconds
             check_interval: Polling interval in seconds
@@ -107,7 +124,7 @@ class JulesAutonomyPlugin(BasePlugin):
             Dict with complete workflow results:
             {
                 "success": bool,
-                "session_ids": List[str],
+                "session_id": str,
                 "status": JulesSessionStatus,
                 "results_applied": bool,
                 "changes": str (if applied),
@@ -143,8 +160,8 @@ class JulesAutonomyPlugin(BasePlugin):
             }
         
         # Check if tools are available
-        if not self.jules_cli_tool or not self.jules_monitor:
-            error = "Jules CLI tool or monitor not available"
+        if not self.jules_api_tool or not self.jules_monitor:
+            error = "Jules API tool or monitor not available"
             context.logger.error(error)
             return {
                 "success": False,
@@ -160,36 +177,40 @@ class JulesAutonomyPlugin(BasePlugin):
             f"Auto-apply: {request.auto_apply}"
         )
         
-        # STEP 1: Create Jules session
-        context.logger.info("📝 STEP 1: Creating Jules session...")
+        # STEP 1: Create Jules session via API
+        context.logger.info("📝 STEP 1: Creating Jules session via API...")
         
-        create_result = await self.jules_cli_tool.create_session(
-            context,
-            repo=request.repo,
-            task=request.task,
-            parallel=request.parallel
-        )
+        # Convert repo format: "owner/repo" -> "sources/github/owner/repo"
+        source = f"sources/github/{request.repo}"
         
-        if not create_result["success"]:
-            context.logger.error(f"❌ Failed to create session: {create_result.get('error')}")
+        try:
+            create_result = await self.jules_api_tool.create_session(
+                prompt=request.task,
+                source=source,
+                branch="main",
+                auto_pr=False  # Don't auto-create PR, we'll handle results ourselves
+            )
+            
+            if not create_result.get("success"):
+                raise Exception(create_result.get("error", "Unknown error"))
+            
+            session_id = create_result["session_id"]
+            context.logger.info(f"✅ Created session: {session_id}")
+            
+        except Exception as e:
+            context.logger.error(f"❌ Failed to create session: {e}")
             return {
                 "success": False,
-                "error": create_result.get("error"),
+                "error": str(e),
                 "workflow": "autonomous"
             }
-        
-        session_ids = create_result["session_ids"]
-        context.logger.info(f"✅ Created {len(session_ids)} session(s): {session_ids}")
-        
-        # Use first session for monitoring (in parallel mode, all sessions work on same task)
-        session_id = session_ids[0]
         
         # STEP 2: Monitor until completion
         context.logger.info(
             f"👁️  STEP 2: Monitoring session {session_id} until completion..."
         )
         
-        monitor_result = self.jules_monitor.monitor_until_completion(
+        monitor_result = await self.jules_monitor.monitor_until_completion(
             context,
             session_id=session_id,
             check_interval=request.check_interval,
@@ -205,52 +226,116 @@ class JulesAutonomyPlugin(BasePlugin):
             return {
                 "success": False,
                 "error": error,
-                "session_ids": session_ids,
+                "session_id": session_id,  # Changed from session_ids (API returns single session)
                 "status": status,
                 "workflow": "autonomous"
             }
         
         # STEP 3: Results handling
         if request.auto_apply:
-            # Hybrid mode already pulled results
-            results_applied = monitor_result.get("results_applied", False)
-            changes = monitor_result.get("changes", "")
+            context.logger.info("📥 STEP 3: Pulling and applying results...")
             
-            if results_applied:
-                context.logger.info("✅ AUTONOMOUS WORKFLOW COMPLETED SUCCESSFULLY!")
-                context.logger.info(f"   Session: {session_id}")
-                context.logger.info(f"   Status: {status.state}")
-                context.logger.info(f"   Results: Applied to local repository")
-                
-                return {
-                    "success": True,
-                    "session_ids": session_ids,
-                    "status": status,
-                    "results_applied": True,
-                    "changes": changes,
-                    "workflow": "autonomous"
-                }
+            # HYBRID MODE: Use CLI for pulling results (API doesn't support this)
+            if self.jules_cli_tool:
+                context.logger.info("   Using CLI for `jules pull` (hybrid mode)")
+                try:
+                    pull_result = await self.jules_cli_tool.pull_results(
+                        context,
+                        session_id=session_id,
+                        apply=True  # Apply changes to local repository
+                    )
+                    
+                    if pull_result.get("success"):
+                        changes = pull_result.get("changes", "")
+                        context.logger.info("✅ AUTONOMOUS WORKFLOW COMPLETED SUCCESSFULLY!")
+                        context.logger.info(f"   Session: {session_id}")
+                        context.logger.info(f"   Status: {status.state}")
+                        context.logger.info(f"   Results: Applied to local repository via CLI")
+                        
+                        return {
+                            "success": True,
+                            "session_id": session_id,
+                            "status": status,
+                            "results_applied": True,
+                            "changes": changes,
+                            "method": "hybrid_cli_pull",
+                            "workflow": "autonomous"
+                        }
+                    else:
+                        error = pull_result.get("error", "Failed to pull results")
+                        context.logger.warning(f"⚠️ Session completed but CLI pull failed: {error}")
+                        return {
+                            "success": True,  # Session completed successfully
+                            "session_id": session_id,
+                            "status": status,
+                            "results_applied": False,
+                            "error": error,
+                            "workflow": "autonomous"
+                        }
+                except Exception as e:
+                    context.logger.error(f"❌ CLI pull error: {e}")
+                    return {
+                        "success": True,
+                        "session_id": session_id,
+                        "status": status,
+                        "results_applied": False,
+                        "error": str(e),
+                        "workflow": "autonomous"
+                    }
             else:
-                error = monitor_result.get("error", "Failed to apply results")
-                context.logger.warning(f"⚠️ Session completed but results not applied: {error}")
-                return {
-                    "success": True,  # Session completed successfully
-                    "session_ids": session_ids,
-                    "status": status,
-                    "results_applied": False,
-                    "error": error,
-                    "workflow": "autonomous"
-                }
+                # No CLI tool - fallback to monitor's auto_pull (if it exists)
+                results_applied = monitor_result.get("results_applied", False)
+                changes = monitor_result.get("changes", "")
+                
+                if results_applied:
+                    context.logger.info("✅ Results applied via monitor (API mode)")
+                    return {
+                        "success": True,
+                        "session_id": session_id,
+                        "status": status,
+                        "results_applied": True,
+                        "changes": changes,
+                        "method": "api_monitor",
+                        "workflow": "autonomous"
+                    }
+                else:
+                    context.logger.warning("⚠️ No CLI tool available and monitor didn't apply results")
+                    return {
+                        "success": True,
+                        "session_id": session_id,
+                        "status": status,
+                        "results_applied": False,
+                        "error": "No CLI tool for pulling results",
+                        "workflow": "autonomous"
+                    }
         else:
             # No auto-apply - just report completion
             context.logger.info("✅ Session completed (auto-apply disabled)")
             return {
                 "success": True,
-                "session_ids": session_ids,
+                "session_id": session_id,
                 "status": status,
                 "results_applied": False,
-                "message": "Use pull_results to retrieve changes",
+                "message": "Use jules_cli.pull_results() to retrieve changes",
                 "workflow": "autonomous"
+            }
+    
+    async def execute(self, context: SharedContext, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute tool call - route to delegate_task"""
+        if tool_name == "delegate_task":
+            return await self.delegate_task(
+                context=context,
+                repo=arguments["repo"],
+                task=arguments["task"],
+                parallel=arguments.get("parallel", 1),
+                auto_apply=arguments.get("auto_apply", True),
+                timeout=arguments.get("timeout", 3600),
+                check_interval=arguments.get("check_interval", 30)
+            )
+        else:
+            return {
+                "success": False,
+                "error": f"Unknown tool: {tool_name}"
             }
     
     def get_tool_definitions(self) -> List[Dict[str, Any]]:

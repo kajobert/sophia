@@ -80,18 +80,25 @@ class CoreSleepScheduler(BasePlugin):
         self.last_consolidation: Optional[datetime] = None
         self._scheduler_task: Optional[asyncio.Task] = None
         
+        # Guardrails for missing dependencies
         logger.info(
             f"Sleep Scheduler initialized (trigger={self.config.trigger_type.value}, "
             f"interval={self.config.interval_hours}h)"
         )
+        logger.info("⚠️  Note: Sleep scheduler requires event_bus and consolidator to function")
     
     def set_event_bus(self, event_bus: EventBus) -> None:
         """Inject EventBus dependency."""
         self.event_bus = event_bus
         
+        if not self.event_bus:
+            logger.warning("⚠️ SleepScheduler: No event_bus provided, using no-op")
+            return
+        
         # Subscribe to USER_INPUT to track activity
         from core.events import EventType
         self.event_bus.subscribe(EventType.USER_INPUT, self._on_user_activity)
+        logger.info("✅ Sleep Scheduler: EventBus connected")
     
     def set_consolidator(self, consolidator) -> None:
         """
@@ -101,6 +108,11 @@ class CoreSleepScheduler(BasePlugin):
             consolidator: CognitiveMemoryConsolidator instance
         """
         self.consolidator_plugin = consolidator
+        
+        if not self.consolidator_plugin:
+            logger.warning("⚠️ SleepScheduler: No consolidator provided, memory consolidation disabled")
+        else:
+            logger.info("✅ Sleep Scheduler: Consolidator connected")
     
     async def _on_user_activity(self, event) -> None:
         """
@@ -201,16 +213,19 @@ class CoreSleepScheduler(BasePlugin):
                 f"Idle consolidation ({self.config.idle_minutes}m idle)"
             )
     
-    async def _trigger_consolidation(self, reason: str) -> None:
+    async def _trigger_consolidation(self, reason: str) -> Dict[str, Any]:
         """
-        Trigger memory consolidation.
+        Trigger memory consolidation with guardrails.
         
         Args:
             reason: Why consolidation is being triggered
+            
+        Returns:
+            Result dict with status
         """
         if not self.consolidator_plugin:
-            logger.warning("Cannot trigger consolidation - no consolidator plugin")
-            return
+            logger.info("Sleep cycle skipped (no consolidator)")
+            return {"status": "skipped", "reason": "no_consolidator"}
         
         logger.info(f"💤 Triggering consolidation: {reason}")
         
@@ -222,9 +237,21 @@ class CoreSleepScheduler(BasePlugin):
                 f"✨ Consolidation complete: {metrics.memories_created} memories created "
                 f"in {metrics.duration_seconds:.1f}s"
             )
+            
+            # Publish event if event bus available
+            if self.event_bus:
+                from core.events import Event, EventType
+                await self.event_bus.publish(Event(
+                    event_type=EventType.SYSTEM_NOTIFICATION,
+                    source=self.name,
+                    data={"consolidation_metrics": metrics}
+                ))
+            
+            return {"status": "ok", "metrics": metrics}
         
         except Exception as e:
             logger.error(f"❌ Consolidation failed: {e}", exc_info=True)
+            return {"status": "error", "error": str(e)}
     
     async def execute(self, context: SharedContext) -> SharedContext:
         """

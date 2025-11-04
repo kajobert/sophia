@@ -9,27 +9,34 @@ from core.logging_filter import SessionIdFilter
 
 
 def setup_logging(log_queue: "asyncio.Queue" = None):
-    """Configures the root logger for the application."""
+    """
+    Configure logging system (IDEMPOTENT).
+    Safe to call multiple times - clears and rebuilds handlers.
+    """
+    # 1. Clear ALL existing handlers first
     root_logger = logging.getLogger()
+    for handler in root_logger.handlers[:]:
+        handler.close()
+        root_logger.removeHandler(handler)
     
-    # Skip if already configured (prevent duplicate handlers)
-    if root_logger.handlers:
-        return
+    # 2. Clear any existing filters
+    root_logger.filters.clear()
     
+    # 3. Reset logging level
     root_logger.setLevel(logging.INFO)
 
-    # Add the global filter to all handlers FIRST (before any plugins log)
+    # 4. Add the global SessionIdFilter
     session_id_filter = SessionIdFilter()
     root_logger.addFilter(session_id_filter)
 
-    # Console handler (for human readability) - SIMPLE format without session_id
+    # 5. Console handler (for human readability) - SIMPLE format without session_id
     console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = logging.Formatter(
         "%(asctime)s - [%(levelname)s] - %(name)s: %(message)s"
     )
     console_handler.setFormatter(console_formatter)
 
-    # File handler (JSON format for machine readability) - with session_id if available
+    # 6. File handler (JSON format for machine readability) - with session_id if available
     file_handler = logging.handlers.RotatingFileHandler(
         "logs/sophia.log", maxBytes=10 * 1024 * 1024, backupCount=5
     )
@@ -46,8 +53,15 @@ def setup_logging(log_queue: "asyncio.Queue" = None):
     )
     file_handler.setFormatter(file_formatter)
 
-    # Queue handler (for real-time streaming)
-    # The implementation for this will be part of a future `interface_logstream` plugin.
-
+    # 7. Attach handlers to root logger
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
+    
+    # 8. Handle queue if provided (for async logging)
+    if log_queue:
+        queue_handler = logging.handlers.QueueHandler(log_queue)
+        root_logger.addHandler(queue_handler)
+    
+    # 9. Log successful configuration
+    logger = logging.getLogger(__name__)
+    logger.info("✅ Logging configured (idempotent setup)")

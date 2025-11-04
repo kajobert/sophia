@@ -55,6 +55,20 @@ class CLIResponse(BaseModel):
 
 class JulesCLIPlugin(BasePlugin):
     """
+    ⚡ EXPERIMENTAL: Jules CLI Integration for Advanced Workflows
+    
+    This plugin provides CLI-based Jules integration for features not available in API:
+    - Local repository integration via `jules pull`
+    - Automatic change application to working directory
+    - Git branch management for Jules sessions
+    
+    **Strategy:** Use API for session creation/monitoring, CLI for pulling results.
+    
+    Complements tool_jules.py (API) for hybrid workflow:
+    1. tool_jules: Create session via API
+    2. cognitive_jules_monitor: Monitor via API
+    3. tool_jules_cli: Pull results via CLI (`jules pull`)
+    
     Jules CLI integration plugin for Sophie.
     
     Provides methods to:
@@ -76,24 +90,38 @@ class JulesCLIPlugin(BasePlugin):
     
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "2.0.0-hybrid"  # Updated for hybrid API+CLI strategy
     
     def __init__(self):
         super().__init__()
         self.bash_tool = None
+        self.enabled = True  # RE-ENABLED for hybrid strategy!
+        self.logger = None  # Will be injected in setup()
         
     def setup(self, config):
         """
         Initialize plugin with configuration.
         
         Args:
-            config: Plugin configuration dict containing other plugins
+            config: Plugin configuration dict containing logger and other plugins
         """
         super().setup(config)
         
+        # Get logger from config (dependency injection)
+        self.logger = config.get("logger")
+        if not self.logger:
+            raise ValueError("Logger must be provided in config")
+        
+        # Log strategy info
+        self.logger.info(
+            "⚡ Jules CLI plugin - HYBRID MODE: "
+            "Use for `jules pull` to apply changes locally. "
+            "Combine with tool_jules (API) for session creation."
+        )
+        
         # Get bash tool for command execution
-        plugins = config.get("plugins", {})
-        self.bash_tool = plugins.get("tool_bash")
+        all_plugins = config.get("all_plugins", {})
+        self.bash_tool = all_plugins.get("tool_bash")
         
         if not self.bash_tool:
             self.logger.warning(

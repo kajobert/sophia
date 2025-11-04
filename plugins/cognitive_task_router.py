@@ -34,7 +34,7 @@ class CognitiveTaskRouter(BasePlugin):
         Args:
             config: The configuration dictionary.
         """
-        self.plugins = config.get("plugins", {})
+        self.plugins = config.get("all_plugins", {})
         strategy_path = "config/model_strategy.yaml"
         try:
             with open(strategy_path, "r", encoding="utf-8") as f:

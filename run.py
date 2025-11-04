@@ -1,12 +1,14 @@
 import asyncio
 import sys
 import os
+import time
+import logging
 import argparse
-from dotenv import load_dotenv
 
-# --- CRITICAL: Setup logging BEFORE importing Kernel! ---
-from core.logging_config import setup_logging
-setup_logging()  # Setup logging before any imports that use logger
+# ⚡ CRITICAL: Load .env BEFORE any plugin imports!
+# This ensures JULES_API_KEY and other env vars are available when plugins initialize
+from dotenv import load_dotenv
+load_dotenv()
 
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
@@ -33,8 +35,7 @@ async def _load_scifi_interface(kernel, ui_style: str):
         # CRITICAL: Remove ALL existing interface plugins first!
         kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
         
-        # Setup and register ONLY our sci-fi interface
-        interface.setup({})
+        # Register ONLY our sci-fi interface (setup already called by kernel)
         kernel.plugin_manager._plugins[PluginType.INTERFACE].append(interface)
         kernel.all_plugins_map[interface.name] = interface
         
@@ -69,7 +70,7 @@ async def main():
     os.environ["LANGFUSE_ENABLED"] = "false"
     
     check_venv()
-    load_dotenv()
+    # .env already loaded at module level (before imports)
     
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Sophia AI Assistant")
@@ -85,14 +86,19 @@ async def main():
         help="Choose sci-fi terminal UI style (matrix, startrek, cyberpunk, or classic)"
     )
     parser.add_argument(
+        "--once",
+        type=str,
+        help="Single-run mode: process one input and exit (fast, no UI)"
+    )
+    parser.add_argument(
         "input",
         nargs="*",
         help="Non-interactive input for single-run mode"
     )
     args = parser.parse_args()
     
-    # Determine UI style (CLI arg > ENV var > default cyberpunk)
-    ui_style = args.ui or os.getenv("SOPHIA_UI_STYLE", "cyberpunk")
+    # Determine UI style (CLI arg > ENV var > default CLASSIC for stability)
+    ui_style = args.ui or os.getenv("SOPHIA_UI_STYLE", "classic")
     
     print("Starting Sophia's kernel...")
     if args.use_event_driven:
@@ -109,11 +115,17 @@ async def main():
     
     kernel = Kernel(use_event_driven=args.use_event_driven)
     
-    # IMPORTANT: Initialize kernel FIRST to load all plugins
+    # IMPORTANT: Initialize kernel to load all plugins
     await kernel.initialize()
     
-    # THEN replace interface plugin if sci-fi mode requested
-    if ui_style != "classic":
+    # ADAPTIVE UI: Remove interface plugins AFTER init in single-run mode (Gemini's optimization)
+    if args.once or args.input:
+        # Clear interfaces to avoid any UI overhead
+        removed_count = len(kernel.plugin_manager._plugins[PluginType.INTERFACE])
+        kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
+        print(f"🎯 Single-run mode: {removed_count} interface plugins disabled for speed")
+    # THEN replace interface plugin if sci-fi mode requested (interactive only)
+    elif ui_style != "classic":
         scifi_interface = await _load_scifi_interface(kernel, ui_style)
         
         # Install sci-fi logging handler to redirect logs to colorful UI
@@ -122,17 +134,44 @@ async def main():
             install_scifi_logging(scifi_interface)
             print(f"✨ Sci-fi logging enabled - all output now in {ui_style.upper()} style!")
 
-    # Zjistíme, jestli byl zadán vstup jako argument
-    if args.input:
-        user_input = " ".join(args.input)
-        print(f"Running in non-interactive mode with input: '{user_input}'")
-        await kernel.consciousness_loop(single_run_input=user_input)
+    # SINGLE-RUN MODE: Fast processing without UI
+    if args.once or args.input:
+        single_input = args.once if args.once else " ".join(args.input)
+        print(f"🎯 Single-run mode activated: '{single_input}'")
+        
+        from core.context import SharedContext
+        
+        # Create minimal logger for single-run
+        session_id = f"single-run-{int(time.time())}"
+        session_logger = logging.getLogger(f"sophia.{session_id}")
+        
+        context = SharedContext(
+            user_input=single_input,
+            session_id=session_id,
+            current_state="SINGLE_RUN",
+            logger=session_logger
+        )
+        
+        # Process single input with timeout
+        try:
+            response = await asyncio.wait_for(
+                kernel.process_single_input(context),
+                timeout=30.0  # Increased from 5s - Jules operations can take time
+            )
+            print(f"\n✅ Sophia: {response}\n")
+            sys.exit(0)
+        except asyncio.TimeoutError:
+            print("\n❌ Error: Response timeout (>30s)\n")
+            sys.exit(1)
+        except Exception as e:
+            print(f"\n❌ Error: {e}\n")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+    
+    # INTERACTIVE MODE: Normal operation with UI
     else:
-        # Spustíme normální interaktivní smyčku
-        terminal_plugins = kernel.plugin_manager.get_plugins_by_type(PluginType.INTERFACE)
-        for plugin in terminal_plugins:
-            if plugin.name == "interface_terminal" and hasattr(plugin, "prompt"):
-                plugin.prompt()
+        # Start normal interactive loop (no need to call prompt() - already handled)
         await kernel.consciousness_loop()
 
     print("Sophia's kernel has been terminated.")

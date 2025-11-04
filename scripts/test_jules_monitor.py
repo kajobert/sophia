@@ -77,7 +77,17 @@ print(f"✅ Plugin version: {monitor.version}")
 tool_defs = monitor.get_tool_definitions()
 print(f"✅ Tool definitions: {len(tool_defs)} tools")
 for tool in tool_defs:
-    print(f"   - {tool['name']}")
+    # Handle both dict with 'function' key and direct function dict
+    if isinstance(tool, dict):
+        if 'function' in tool:
+            print(f"   - {tool['function']['name']}")
+        elif 'name' in tool:
+            print(f"   - {tool['name']}")
+        else:
+            print(f"   - {tool}")
+    else:
+        print(f"   - {tool}")
+
 
 print("\n=== Testing Setup ===")
 

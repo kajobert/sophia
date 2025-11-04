@@ -11,10 +11,11 @@ class LLMTool(BasePlugin):
     """A tool plugin that uses an LLM to generate a response."""
 
     def __init__(self):
+        super().__init__()
         self.model = "mistralai/mistral-7b-instruct"  # A default fallback
         self.system_prompt = "You are a helpful assistant."
         self.api_key = None
-        self.setup(config={})
+        self.logger = None  # Will be injected in setup()
 
     @property
     def name(self) -> str:
@@ -30,16 +31,22 @@ class LLMTool(BasePlugin):
 
     def setup(self, config: dict) -> None:
         """Configure the LLM provider from a YAML file."""
+        # Get logger from config (dependency injection)
+        self.logger = config.get("logger")
+        if not self.logger:
+            raise ValueError("Logger must be provided in config")
+        
         try:
             with open("config/settings.yaml", "r") as f:
                 config_data = yaml.safe_load(f)
                 self.model = config_data.get("llm", {}).get("model", self.model)
+                self.logger.info(f"LLM model configured: {self.model}")
         except FileNotFoundError:
             # Keep default model if config file is not found
-            pass
+            self.logger.warning("config/settings.yaml not found - using default model")
         except Exception as e:
             # Handle other potential errors like parsing errors
-            print(f"Error loading config: {e}")
+            self.logger.error(f"Error loading config: {e}")
 
         # --- Logging fix for litellm ---
         # litellm uses the root logger, which can cause issues with structured
@@ -65,10 +72,14 @@ class LLMTool(BasePlugin):
         try:
             with open("config/prompts/sophia_dna.txt", "r") as f:
                 self.system_prompt = f.read()
+                self.logger.info("System prompt loaded from sophia_dna.txt")
         except FileNotFoundError:
             # Keep default system prompt if file not found
-            pass
+            self.logger.warning("sophia_dna.txt not found - using default system prompt")
+            
         self.api_key = os.getenv("OPENROUTER_API_KEY")
+        if not self.api_key:
+            self.logger.warning("OPENROUTER_API_KEY not set - LLM calls may fail")
 
     def get_tool_definitions(self) -> list[dict]:
         return [

@@ -1,15 +1,25 @@
 """
 Test suite for Jules CLI plugin
 
+⚡ HYBRID STRATEGY: Jules CLI is used for `jules pull` (applying changes locally)
+Combined with tool_jules.py (API) for session creation and monitoring.
+
 Tests the integration between Sophie and Jules CLI tool.
 
 Author: GitHub Copilot
 Date: 2025-11-03
+Updated: 2025-11-04 (Re-enabled for hybrid strategy)
+
+Note: Most tests require Jules CLI installed and authenticated.
+      Run: `npm install -g @google/jules && jules login`
 """
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from plugins.tool_jules_cli import JulesCLIPlugin, CreateSessionRequest, PullResultsRequest
+
+# Mark tests as integration tests (require Jules CLI)
+pytestmark = pytest.mark.integration
 
 
 class TestJulesCLIPlugin:

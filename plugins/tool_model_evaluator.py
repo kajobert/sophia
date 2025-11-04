@@ -38,7 +38,7 @@ class ModelEvaluatorTool(BasePlugin):
 
     def setup(self, config: dict) -> None:
         """Configures the tool and gets a reference to the LLMTool."""
-        all_plugins = config.get("plugins", {})
+        all_plugins = config.get("all_plugins", {})
         self.llm_tool = all_plugins.get("tool_llm")
         if not self.llm_tool:
             raise ValueError("LLMTool not found in the list of available plugins.")
