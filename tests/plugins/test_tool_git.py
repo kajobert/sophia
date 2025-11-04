@@ -8,9 +8,7 @@ from core.context import SharedContext
 @pytest.fixture
 def mock_context():
     context = SharedContext(
-        session_id="test_session",
-        current_state="TESTING",
-        logger=MagicMock(spec=logging.Logger)
+        session_id="test_session", current_state="TESTING", logger=MagicMock(spec=logging.Logger)
     )
     return context
 

@@ -49,7 +49,9 @@ class WebSearchTool(BasePlugin):
         """This tool is not directly executed in the main loop."""
         return context
 
-    def search(self, *, context: SharedContext, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
+    def search(
+        self, *, context: SharedContext, query: str, num_results: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         Performs a web search and returns a list of results.
 

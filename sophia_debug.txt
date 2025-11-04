@@ -1,0 +1,25 @@
+WARNING:plugins.tool_github:GitHub token is not configured. GitHub API will not be available. Set GITHUB_TOKEN or GITHUB_PAT environment variable.
+WARNING:plugins.tool_langfuse:Langfuse credentials not found. Plugin will be available but methods will fail until LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set.
+ERROR:core.kernel:Error setting up plugin 'tool_langfuse': Langfuse SDK not installed. Install with: pip install langfuse
+Traceback (most recent call last):
+  File "/mnt/c/SOPHIA/sophia/plugins/tool_langfuse.py", line 209, in setup
+    from langfuse import Langfuse
+ModuleNotFoundError: No module named 'langfuse'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/c/SOPHIA/sophia/core/kernel.py", line 130, in initialize
+    plugin.setup(full_plugin_config)
+  File "/mnt/c/SOPHIA/sophia/plugins/tool_langfuse.py", line 215, in setup
+    raise LangfuseError("Langfuse SDK not installed. Install with: pip install langfuse")
+plugins.tool_langfuse.LangfuseError: Langfuse SDK not installed. Install with: pip install langfuse
+WARNING:plugin.tool_weather:tool_weather API key not configured
+WARNING:plugins.tool_web_search:Google API key or CSE ID is not configured. Web search will not be available.
+Starting Sophia's kernel...
+🎨 UI Style: ⚪ CLASSIC
+🎯 Single-run mode: 2 interface plugins disabled for speed
+🎯 Single-run mode activated: 'Ahoj, funguje Sophia?'
+
+✅ Sophia: No response generated
+

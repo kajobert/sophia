@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 @pytest.fixture(autouse=True)
 def auto_mock_logger():
     """
@@ -20,5 +21,5 @@ def auto_mock_logger():
     """
     mock_logger = MagicMock()
     mock_logger.level = logging.INFO
-    with patch('logging.getLogger', return_value=mock_logger) as p:
+    with patch("logging.getLogger", return_value=mock_logger) as p:
         yield p

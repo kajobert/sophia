@@ -9,7 +9,7 @@ Creates a promotional animated terminal with:
 - Live metric updates
 """
 
-SVG_ANIMATED_TEMPLATE = '''<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+SVG_ANIMATED_TEMPLATE = """<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
   <style>
     @keyframes blink {
       0%, 49% { opacity: 1; }
@@ -266,7 +266,7 @@ SVG_ANIMATED_TEMPLATE = '''<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/
   
   <!-- Watermark -->
   <text class="text-dim" x="1100" y="880" style="font-size: 10px;">SOPHIA A.M.I. - Year 2030 Autonomous Mind Interface</text>
-</svg>'''
+</svg>"""
 
 # Save animated SVG
 output_file = "docs/assets/sophia-demo-animated.svg"
@@ -275,11 +275,11 @@ with open(output_file, "w") as f:
 
 print(f"✅ Animated SVG created: {output_file}")
 print(f"   Size: {len(SVG_ANIMATED_TEMPLATE)} bytes")
-print(f"   Animations:")
-print(f"   • Blinking cursor")
-print(f"   • Pulsing LED indicators")
-print(f"   • Typing animation (word by word)")
-print(f"   • Progress bar animation")
-print(f"   • Fade-in activity log entries")
-print(f"\n🎬 Perfect for GitHub README hero section!")
-print(f"   Opens in any modern browser with full animation support")
+print("   Animations:")
+print("   • Blinking cursor")
+print("   • Pulsing LED indicators")
+print("   • Typing animation (word by word)")
+print("   • Progress bar animation")
+print("   • Fade-in activity log entries")
+print("\n🎬 Perfect for GitHub README hero section!")
+print("   Opens in any modern browser with full animation support")

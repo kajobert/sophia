@@ -4,7 +4,7 @@ import logging
 import os
 import requests
 from typing import Any, Dict, Optional, List
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, field_validator
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
@@ -14,22 +14,25 @@ logger = logging.getLogger(__name__)
 # Pydantic models for Jules API data validation
 class JulesSession(BaseModel):
     """Model for a Jules coding session."""
+
     name: str = Field(..., description="Session ID in format 'sessions/{id}'")
     title: Optional[str] = Field(None, description="Session title")
     prompt: Optional[str] = Field(None, description="Initial task prompt")
     state: Optional[str] = Field(None, description="Session state (ACTIVE, COMPLETED, etc.)")
     create_time: Optional[str] = Field(None, description="ISO timestamp of creation")
     update_time: Optional[str] = Field(None, description="ISO timestamp of last update")
-    
-    @validator('name')
+
+    @field_validator("name")
+    @classmethod
     def validate_session_name(cls, v):
-        if not v.startswith('sessions/'):
+        if not v.startswith("sessions/"):
             raise ValueError("Session name must start with 'sessions/'")
         return v
 
 
 class JulesSource(BaseModel):
     """Model for a Jules source repository."""
+
     name: str = Field(..., description="Source ID in format 'sources/github/{owner}/{repo}'")
     display_name: Optional[str] = Field(None, description="Human-readable name")
     description: Optional[str] = Field(None, description="Repository description")
@@ -37,6 +40,7 @@ class JulesSource(BaseModel):
 
 class JulesActivity(BaseModel):
     """Model for a Jules activity within a session."""
+
     name: str = Field(..., description="Activity ID")
     type: Optional[str] = Field(None, description="Activity type")
     state: Optional[str] = Field(None, description="Activity state")
@@ -45,17 +49,20 @@ class JulesActivity(BaseModel):
 
 class JulesSessionList(BaseModel):
     """Model for list of sessions response."""
+
     sessions: List[JulesSession] = Field(default_factory=list)
     next_page_token: Optional[str] = None
 
 
 class JulesSourceList(BaseModel):
     """Model for list of sources response."""
+
     sources: List[JulesSource] = Field(default_factory=list)
 
 
 class CreateSessionRequest(BaseModel):
     """Model for create session request."""
+
     prompt: str = Field(..., min_length=1, description="Task description")
     source: str = Field(..., pattern=r"^sources/github/[\w-]+/[\w-]+$")
     branch: str = Field(default="main")
@@ -66,26 +73,29 @@ class CreateSessionRequest(BaseModel):
 # Exception classes
 class JulesAPIError(Exception):
     """Base exception for Jules API errors."""
+
     pass
 
 
 class JulesAuthenticationError(JulesAPIError):
     """Exception raised for authentication failures."""
+
     pass
 
 
 class JulesValidationError(JulesAPIError):
     """Exception raised for data validation failures."""
+
     pass
 
 
 class JulesAPITool(BasePlugin):
     """
     A tool plugin for interacting with Google's Jules API.
-    
+
     Jules is Google's AI-powered coding assistant API that can create
     complete applications, modify code, and work with GitHub repositories.
-    
+
     API Documentation: https://developers.google.com/jules/api
     Base URL: https://jules.googleapis.com/v1alpha
     """
@@ -123,7 +133,7 @@ class JulesAPITool(BasePlugin):
         """
         # Get API key from config (supports ${ENV_VAR} syntax)
         api_key_config = config.get("jules_api_key", "")
-        
+
         # If config contains ${ENV_VAR}, load from environment
         if api_key_config.startswith("${") and api_key_config.endswith("}"):
             env_var_name = api_key_config[2:-1]  # Extract variable name
@@ -134,19 +144,13 @@ class JulesAPITool(BasePlugin):
         if not self.api_key:
             logger.warning(
                 "Jules API key is not configured. Jules API will not be available.",
-                extra={"plugin_name": self.name}
+                extra={"plugin_name": self.name},
             )
             return
 
-        self.headers = {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": self.api_key
-        }
-        
-        logger.info(
-            "Jules API tool initialized successfully.",
-            extra={"plugin_name": self.name}
-        )
+        self.headers = {"Content-Type": "application/json", "X-Goog-Api-Key": self.api_key}
+
+        logger.info("Jules API tool initialized successfully.", extra={"plugin_name": self.name})
 
     async def execute(self, context: SharedContext) -> SharedContext:
         """
@@ -158,7 +162,7 @@ class JulesAPITool(BasePlugin):
     def get_tool_definitions(self) -> list[dict]:
         """
         Returns tool definitions for the planner to understand available methods.
-        
+
         Returns:
             List of tool definition dictionaries
         """
@@ -168,24 +172,16 @@ class JulesAPITool(BasePlugin):
                 "function": {
                     "name": "list_sessions",
                     "description": "Lists all Jules coding sessions for the authenticated user.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                }
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                },
             },
             {
                 "type": "function",
                 "function": {
                     "name": "list_sources",
                     "description": "Lists all available source repositories that can be used with Jules.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {},
-                        "required": []
-                    }
-                }
+                    "parameters": {"type": "object", "properties": {}, "required": []},
+                },
             },
             {
                 "type": "function",
@@ -197,30 +193,27 @@ class JulesAPITool(BasePlugin):
                         "properties": {
                             "prompt": {
                                 "type": "string",
-                                "description": "The task description for Jules (e.g., 'Create a Flask hello world app')"
+                                "description": "The task description for Jules (e.g., 'Create a Flask hello world app')",
                             },
                             "source": {
                                 "type": "string",
-                                "description": "Source repository in format 'sources/github/{owner}/{repo}'"
+                                "description": "Source repository in format 'sources/github/{owner}/{repo}'",
                             },
                             "branch": {
                                 "type": "string",
                                 "description": "Branch name (default: 'main')",
-                                "default": "main"
+                                "default": "main",
                             },
-                            "title": {
-                                "type": "string",
-                                "description": "Session title (optional)"
-                            },
+                            "title": {"type": "string", "description": "Session title (optional)"},
                             "auto_pr": {
                                 "type": "boolean",
                                 "description": "Whether to automatically create a pull request (default: false)",
-                                "default": False
-                            }
+                                "default": False,
+                            },
                         },
-                        "required": ["prompt", "source"]
-                    }
-                }
+                        "required": ["prompt", "source"],
+                    },
+                },
             },
             {
                 "type": "function",
@@ -232,12 +225,12 @@ class JulesAPITool(BasePlugin):
                         "properties": {
                             "session_id": {
                                 "type": "string",
-                                "description": "The ID of the session to retrieve"
+                                "description": "The ID of the session to retrieve",
                             }
                         },
-                        "required": ["session_id"]
-                    }
-                }
+                        "required": ["session_id"],
+                    },
+                },
             },
             {
                 "type": "function",
@@ -249,17 +242,17 @@ class JulesAPITool(BasePlugin):
                         "properties": {
                             "session_id": {
                                 "type": "string",
-                                "description": "The ID of the session"
+                                "description": "The ID of the session",
                             },
                             "prompt": {
                                 "type": "string",
-                                "description": "The follow-up instruction or question"
-                            }
+                                "description": "The follow-up instruction or question",
+                            },
                         },
-                        "required": ["session_id", "prompt"]
-                    }
-                }
-            }
+                        "required": ["session_id", "prompt"],
+                    },
+                },
+            },
         ]
 
     def _make_request(
@@ -267,7 +260,7 @@ class JulesAPITool(BasePlugin):
         context: SharedContext,
         method: str,
         endpoint: str,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Makes a request to the Jules API.
@@ -289,43 +282,39 @@ class JulesAPITool(BasePlugin):
             raise JulesAuthenticationError("Jules API key is not configured.")
 
         url = f"{self.BASE_URL}/{endpoint}"
-        
+
         try:
             context.logger.info(
                 f"Making {method} request to Jules API: {endpoint}",
-                extra={"plugin_name": self.name}
+                extra={"plugin_name": self.name},
             )
-            
+
             response = requests.request(
-                method=method,
-                url=url,
-                headers=self.headers,
-                json=data,
-                timeout=30
+                method=method, url=url, headers=self.headers, json=data, timeout=30
             )
-            
+
             # Handle authentication errors
             if response.status_code == 401:
                 raise JulesAuthenticationError("Invalid API key.")
             elif response.status_code == 403:
                 raise JulesAuthenticationError("Access forbidden. Check API permissions.")
-            
+
             # Handle other errors
             response.raise_for_status()
-            
+
             return response.json()
-            
+
         except requests.exceptions.Timeout:
             raise JulesAPIError(f"Request to {endpoint} timed out.")
         except requests.exceptions.ConnectionError as e:
             raise JulesAPIError(f"Connection error: {str(e)}")
-        except requests.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError:
             raise JulesAPIError(f"HTTP error {response.status_code}: {response.text}")
         except Exception as e:
             context.logger.error(
                 f"Unexpected error in Jules API request: {e}",
                 exc_info=True,
-                extra={"plugin_name": self.name}
+                extra={"plugin_name": self.name},
             )
             raise JulesAPIError(f"Unexpected error: {str(e)}")
 
@@ -357,11 +346,11 @@ class JulesAPITool(BasePlugin):
         source: str,
         branch: str = "main",
         title: str = "",
-        auto_pr: bool = False
+        auto_pr: bool = False,
     ) -> JulesSession:
         """
         Creates a new Jules coding session with Pydantic validation.
-        
+
         ⚠️ IMPORTANT: Daily limit of 100 sessions! Use list_sessions() to check usage first.
 
         Args:
@@ -383,7 +372,7 @@ class JulesAPITool(BasePlugin):
             >>> sessions = jules_tool.list_sessions(context)
             >>> if len(sessions.sessions) >= 95:
             ...     context.logger.warning("Approaching daily limit!")
-            >>> 
+            >>>
             >>> session = jules_tool.create_session(
             ...     context=context,
             ...     prompt="Add dark mode support",
@@ -396,11 +385,7 @@ class JulesAPITool(BasePlugin):
         # Validate input using Pydantic
         try:
             request = CreateSessionRequest(
-                prompt=prompt,
-                source=source,
-                branch=branch,
-                title=title,
-                auto_pr=auto_pr
+                prompt=prompt, source=source, branch=branch, title=title, auto_pr=auto_pr
             )
         except Exception as e:
             raise JulesValidationError(f"Invalid session parameters: {e}")
@@ -408,17 +393,15 @@ class JulesAPITool(BasePlugin):
         # Log warning about daily limits
         context.logger.info(
             "⚠️ Creating Jules session (Daily limit: 100 sessions). Consider checking usage with list_sessions() first.",
-            extra={"plugin_name": self.name}
+            extra={"plugin_name": self.name},
         )
-        
+
         data: Dict[str, Any] = {
             "prompt": request.prompt,
             "sourceContext": {
                 "source": request.source,
-                "githubRepoContext": {
-                    "startingBranch": request.branch
-                }
-            }
+                "githubRepoContext": {"startingBranch": request.branch},
+            },
         }
 
         if request.title:
@@ -428,17 +411,13 @@ class JulesAPITool(BasePlugin):
             data["automationMode"] = "AUTO_CREATE_PR"
 
         response = self._make_request(context, "POST", "sessions", data=data)
-        
+
         try:
             return JulesSession(**response)
         except Exception as e:
             raise JulesValidationError(f"Invalid session response: {e}")
 
-    def get_session(
-        self,
-        context: SharedContext,
-        session_id: str
-    ) -> JulesSession:
+    def get_session(self, context: SharedContext, session_id: str) -> JulesSession:
         """
         Gets details about a specific session with Pydantic validation.
 
@@ -459,7 +438,7 @@ class JulesAPITool(BasePlugin):
             endpoint = session_id
         else:
             endpoint = f"sessions/{session_id}"
-            
+
         response = self._make_request(context, "GET", endpoint)
         try:
             return JulesSession(**response)
@@ -487,12 +466,7 @@ class JulesAPITool(BasePlugin):
         except Exception as e:
             raise JulesValidationError(f"Invalid sessions response: {e}")
 
-    def send_message(
-        self,
-        context: SharedContext,
-        session_id: str,
-        prompt: str
-    ) -> Dict[str, Any]:
+    def send_message(self, context: SharedContext, session_id: str, prompt: str) -> Dict[str, Any]:
         """
         Sends a follow-up message to an existing session.
 
@@ -512,18 +486,10 @@ class JulesAPITool(BasePlugin):
             ... )
         """
         data = {"prompt": prompt}
-        return self._make_request(
-            context,
-            "POST",
-            f"sessions/{session_id}:sendMessage",
-            data=data
-        )
+        return self._make_request(context, "POST", f"sessions/{session_id}:sendMessage", data=data)
 
     def get_activity(
-        self,
-        context: SharedContext,
-        session_id: str,
-        activity_id: str
+        self, context: SharedContext, session_id: str, activity_id: str
     ) -> Dict[str, Any]:
         """
         Gets details about a specific activity within a session.
@@ -544,7 +510,5 @@ class JulesAPITool(BasePlugin):
             ... )
         """
         return self._make_request(
-            context,
-            "GET",
-            f"sessions/{session_id}/activities/{activity_id}"
+            context, "GET", f"sessions/{session_id}/activities/{activity_id}"
         )

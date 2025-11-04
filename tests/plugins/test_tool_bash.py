@@ -4,13 +4,12 @@ from unittest.mock import MagicMock
 from plugins.tool_bash import BashTool
 from core.context import SharedContext
 
+
 # Create a mock context for testing
 @pytest.fixture
 def mock_context():
     context = SharedContext(
-        session_id="test_session",
-        current_state="TESTING",
-        logger=MagicMock(spec=logging.Logger)
+        session_id="test_session", current_state="TESTING", logger=MagicMock(spec=logging.Logger)
     )
     return context
 

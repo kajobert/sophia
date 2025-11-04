@@ -1,0 +1,20 @@
+Hi! I need your help continuing work on Sophia AGI project. 
+
+**Context:** Previous session completed dependency injection standardization across all plugins. All 177 tests passing. System stable and ready for next phase.
+
+**Your Mission:** Complete remaining tasks 1-4 from the stabilization plan.
+
+**CRITICAL - Read These First:**
+1. `docs/cs/AGENTS.md` - Your operating manual (5 golden rules, workflow)
+2. `docs/STABILIZATION_EXECUTION_PLAN.md` - Your task list
+3. `docs/NEXT_SESSION_PROMPT.md` - Complete context (446 lines)
+
+Or use quick version: `docs/NEXT_SESSION_QUICK.md` (100 lines)
+
+**Quick Status:**
+- ✅ Tests: 177 passed, 16 deselected (integration), 0 failed
+- ✅ Sophia responds in <30s with --once mode
+- ✅ Jules Hybrid Strategy documented and dependencies injected
+- 🎯 Next: Real-world Jules testing, integration tests, code quality, docs
+
+**Start by reading AGENTS.md, then confirm you understand the mission!**

@@ -40,11 +40,13 @@ def create_mock_llm_message(tool_calls: list) -> MagicMock:
                 args = json.loads(call.function.arguments)
             except json.JSONDecodeError:
                 args = {}  # Default to empty dict if JSON is malformed
-            content_list.append({
-                "tool_name": call.function.name.split('.')[0],
-                "method_name": call.function.name.split('.')[1],
-                "arguments": args
-            })
+            content_list.append(
+                {
+                    "tool_name": call.function.name.split(".")[0],
+                    "method_name": call.function.name.split(".")[1],
+                    "arguments": args,
+                }
+            )
         mock_message.content = json.dumps(content_list)
     return mock_message
 
@@ -70,7 +72,7 @@ def planner():
         logging.getLogger("test"),
         payload={"llm_response": create_mock_llm_message([])},
     )
-    p.setup({"plugins": {"tool_llm": mock_llm_tool}})
+    p.setup({"all_plugins": {"tool_llm": mock_llm_tool}})
     # Avoid file read errors in tests
     p.prompt_template = "Test Prompt with tools: {tool_list}"
     return p

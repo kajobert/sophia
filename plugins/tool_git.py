@@ -31,9 +31,11 @@ class GitTool(BasePlugin):
             # Assumes the script is run from the root of the repository
             self.repo = Repo(".", search_parent_directories=True)
             import logging
+
             logging.info("Git tool initialized for the current repository.")
         except Exception as e:
             import logging
+
             logging.error(f"Failed to initialize Git repository: {e}", exc_info=True)
             self.repo = None
 

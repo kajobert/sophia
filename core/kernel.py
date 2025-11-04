@@ -4,7 +4,7 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import yaml
 from pydantic import ValidationError
@@ -24,23 +24,27 @@ class Kernel:
     plugin execution.
     """
 
-    def __init__(self, use_event_driven: bool = False):
+    def __init__(self, use_event_driven: bool = False, offline_mode: bool = False):
         """
         Initialize Kernel.
-        
+
         Args:
             use_event_driven: If True, enable event-driven architecture (Phase 1)
+            offline_mode: If True, force use of local LLM only (no cloud fallback)
         """
         self.plugin_manager = PluginManager()
         self.is_running = False
         self.json_repair_prompt_template = ""
         self.all_plugins_map = {}
         self.memory = None  # Will be set during initialization
-        
+
         # NEW: Event-driven components (Phase 1)
         self.use_event_driven = use_event_driven
         self.event_bus = None
         self.task_queue = None
+        
+        # NEW: Offline mode (Phase 1 - Offline Dreaming)
+        self.offline_mode = offline_mode
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
@@ -60,25 +64,27 @@ class Kernel:
             from core.event_bus import EventBus
             from core.task_queue import TaskQueue
             from core.events import Event, EventType, EventPriority
-            
+
             self.event_bus = EventBus()
             await self.event_bus.start()
-            
+
             self.task_queue = TaskQueue(event_bus=self.event_bus, max_workers=5)
             await self.task_queue.start()
-            
+
             logger.info(
                 "Event-driven architecture enabled - EventBus and TaskQueue started",
-                extra={"plugin_name": "Kernel"}
+                extra={"plugin_name": "Kernel"},
             )
-            
+
             # Publish startup event
-            self.event_bus.publish(Event(
-                event_type=EventType.SYSTEM_STARTUP,
-                source="kernel",
-                priority=EventPriority.HIGH,
-                data={"use_event_driven": True, "max_workers": 5}
-            ))
+            self.event_bus.publish(
+                Event(
+                    event_type=EventType.SYSTEM_STARTUP,
+                    source="kernel",
+                    priority=EventPriority.HIGH,
+                    data={"use_event_driven": True, "max_workers": 5},
+                )
+            )
 
         # --- PLUGIN SETUP PHASE ---
         logger.info("Initializing plugin setup...", extra={"plugin_name": "Kernel"})
@@ -86,7 +92,7 @@ class Kernel:
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
         self.all_plugins_map = {p.name: p for p in all_plugins_list}
-        
+
         # Get memory plugin for state persistence
         memory_plugins = self.plugin_manager.get_plugins_by_type(PluginType.MEMORY)
         if memory_plugins:
@@ -115,10 +121,15 @@ class Kernel:
             plugin_configs = main_config.get("plugins", {})
             specific_config = plugin_configs.get(plugin.name, {})
 
+            # Create plugin-specific logger
+            plugin_logger = logging.getLogger(f"plugin.{plugin.name}")
+
             full_plugin_config = {
                 **specific_config,
                 "plugin_manager": self.plugin_manager,
-                "plugins": self.all_plugins_map,
+                "all_plugins": self.all_plugins_map,  # Pass all plugins for dependency injection
+                "logger": plugin_logger,  # Inject logger per Development Guidelines
+                "offline_mode": self.offline_mode,  # Pass offline mode flag
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -138,12 +149,37 @@ class Kernel:
             extra={"plugin_name": "Kernel"},
         )
 
+        # --- PHASE 3: MEMORY CONSOLIDATION INTEGRATION ---
+        if self.use_event_driven and self.event_bus:
+            # Find Phase 3 plugins
+            sleep_scheduler = self.all_plugins_map.get("core_sleep_scheduler")
+            consolidator = self.all_plugins_map.get("cognitive_memory_consolidator")
+
+            if sleep_scheduler and consolidator:
+                # Wire dependencies
+                sleep_scheduler.set_event_bus(self.event_bus)
+                sleep_scheduler.set_consolidator(consolidator)
+                consolidator.event_bus = self.event_bus
+
+                # Start sleep scheduler
+                await sleep_scheduler.start()
+
+                logger.info(
+                    "Phase 3 Memory Consolidation enabled - sleep scheduler active",
+                    extra={"plugin_name": "Kernel"},
+                )
+            elif sleep_scheduler or consolidator:
+                logger.warning(
+                    f"Phase 3 partial: scheduler={bool(sleep_scheduler)}, consolidator={bool(consolidator)}",
+                    extra={"plugin_name": "Kernel"},
+                )
+
     async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
         self.is_running = True
         session_id = str(uuid.uuid4())
 
-        setup_logging(log_queue=asyncio.Queue())  # Placeholder queue
+        setup_logging(log_queue=asyncio.Queue())  # Setup logging with queue
         session_logger = logging.getLogger(f"session-{session_id[:8]}")
         session_logger.addFilter(SessionIdFilter(session_id))
 
@@ -156,38 +192,41 @@ class Kernel:
             event_bus=self.event_bus,
             task_queue=self.task_queue,
             use_event_driven=self.use_event_driven,
+            offline_mode=self.offline_mode,  # Pass offline mode to all plugins
         )
-        
+
         # Publish SYSTEM_READY event if event-driven
         if self.use_event_driven:
             from core.events import Event, EventType, EventPriority
-            self.event_bus.publish(Event(
-                event_type=EventType.SYSTEM_READY,
-                source="kernel",
-                priority=EventPriority.HIGH,
-                data={"session_id": session_id}
-            ))
-            
+
+            self.event_bus.publish(
+                Event(
+                    event_type=EventType.SYSTEM_READY,
+                    source="kernel",
+                    priority=EventPriority.HIGH,
+                    data={"session_id": session_id},
+                )
+            )
+
             # Use event-driven loop (Phase 1 implementation)
             from core.event_loop import EventDrivenLoop
-            
+
             event_loop = EventDrivenLoop(
                 plugin_manager=self.plugin_manager,
                 all_plugins_map=self.all_plugins_map,
                 event_bus=self.event_bus,
-                task_queue=self.task_queue
+                task_queue=self.task_queue,
             )
-            
+
             logger.info(
-                "Using event-driven consciousness loop (Phase 1)",
-                extra={"plugin_name": "Kernel"}
+                "Using event-driven consciousness loop (Phase 1)", extra={"plugin_name": "Kernel"}
             )
-            
+
             await event_loop.run(context, single_run_input)
-            
+
             # Graceful shutdown
             await self._shutdown_event_system(context, session_id)
-            
+
             return
 
         # Legacy blocking mode (original behavior)
@@ -199,7 +238,7 @@ class Kernel:
                 if single_run_input:
                     context.user_input = single_run_input
                     self.is_running = False  # End the loop after this run
-                    
+
                     # IMPORTANT: Still call interface plugins to register callbacks!
                     interface_plugins = self.plugin_manager.get_plugins_by_type(
                         PluginType.INTERFACE
@@ -272,22 +311,20 @@ class Kernel:
                         extra={"plugin_name": "Kernel"},
                     )
                     context.history.append({"role": "user", "content": context.user_input})
-                    
+
                     # NEW: Publish USER_INPUT event if event-driven
                     if self.use_event_driven:
                         from core.events import Event, EventType, EventPriority
-                        self.event_bus.publish(Event(
-                            event_type=EventType.USER_INPUT,
-                            source="kernel",
-                            priority=EventPriority.HIGH,
-                            data={
-                                "input": context.user_input,
-                                "session_id": session_id
-                            },
-                            metadata={
-                                "timestamp": datetime.now().isoformat()
-                            }
-                        ))
+
+                        self.event_bus.publish(
+                            Event(
+                                event_type=EventType.USER_INPUT,
+                                source="kernel",
+                                priority=EventPriority.HIGH,
+                                data={"input": context.user_input, "session_id": session_id},
+                                metadata={"timestamp": datetime.now().isoformat()},
+                            )
+                        )
 
                     # 2. PLANNING PHASE
                     context.current_state = "PLANNING"
@@ -327,7 +364,28 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
-                    llm_tool = self.all_plugins_map.get("tool_llm")
+                    
+                    # Select LLM tool based on offline mode
+                    if self.offline_mode:
+                        # Force local LLM only (no cloud fallback)
+                        llm_tool = self.all_plugins_map.get("tool_local_llm")
+                        if not llm_tool:
+                            raise RuntimeError(
+                                "Offline mode enabled but tool_local_llm not available! "
+                                "Please install Ollama and configure local LLM."
+                            )
+                        context.logger.info(
+                            "🔒 OFFLINE MODE: Using local LLM only",
+                            extra={"plugin_name": "Kernel"}
+                        )
+                    else:
+                        # Cloud LLM (stable, tested)
+                        # TODO: Enable local LLM preference after benchmarking
+                        llm_tool = self.all_plugins_map.get("tool_llm")
+                        context.logger.debug(
+                            "☁️ ONLINE MODE: Using cloud LLM",
+                            extra={"plugin_name": "Kernel"}
+                        )
 
                     if plan:
                         context.logger.info(
@@ -367,7 +425,7 @@ class Kernel:
                                             }.get(prop_def.get("type"), str)
                                             desc = prop_def.get("description")
                                             default_value = prop_def.get("default")
-                                            
+
                                             # Use Field(...) for required, Field(default=...) for optional
                                             if prop_name in required_fields:
                                                 fields[prop_name] = (
@@ -398,23 +456,27 @@ class Kernel:
                                 # New syntax: ${step_N.field} or ${step_N}
                                 if isinstance(arg_value, str) and "${step_" in arg_value:
                                     import re
+
                                     # Match ${step_N.field} or ${step_N}
-                                    pattern = r'\$\{step_(\d+)(?:\.(\w+))?\}'
+                                    pattern = r"\$\{step_(\d+)(?:\.(\w+))?\}"
                                     matches = re.findall(pattern, arg_value)
-                                    
+
                                     replacement = arg_value
                                     for match in matches:
                                         source_step_index = int(match[0])
                                         field_name = match[1] if match[1] else None
-                                        
+
                                         if source_step_index in step_outputs:
                                             output = step_outputs[source_step_index]
-                                            
+
                                             # Extract specific field if requested
                                             if field_name:
                                                 if hasattr(output, field_name):
                                                     value = getattr(output, field_name)
-                                                elif isinstance(output, dict) and field_name in output:
+                                                elif (
+                                                    isinstance(output, dict)
+                                                    and field_name in output
+                                                ):
                                                     value = output[field_name]
                                                 else:
                                                     context.logger.warning(
@@ -424,18 +486,24 @@ class Kernel:
                                                     value = str(output)
                                             else:
                                                 value = str(output)
-                                            
+
                                             # Replace in the argument value
-                                            placeholder = f"${{step_{source_step_index}" + (f".{field_name}" if field_name else "") + "}"
-                                            replacement = replacement.replace(placeholder, str(value))
+                                            placeholder = (
+                                                f"${{step_{source_step_index}"
+                                                + (f".{field_name}" if field_name else "")
+                                                + "}"
+                                            )
+                                            replacement = replacement.replace(
+                                                placeholder, str(value)
+                                            )
                                         else:
                                             context.logger.error(
                                                 f"Could not find result for step {source_step_index}",
                                                 extra={"plugin_name": "Kernel"},
                                             )
-                                    
+
                                     arguments[arg_name] = replacement
-                                
+
                                 # Old syntax: $result.step_N (keep for backward compatibility)
                                 elif isinstance(arg_value, str) and arg_value.startswith(
                                     "$result.step_"
@@ -526,13 +594,15 @@ class Kernel:
                                     # Convert step_outputs to JSON-serializable format
                                     serializable_outputs = []
                                     for output in step_outputs:
-                                        if hasattr(output, 'model_dump'):
+                                        if hasattr(output, "model_dump"):
                                             serializable_outputs.append(output.model_dump())
-                                        elif isinstance(output, (str, int, float, bool, type(None))):
+                                        elif isinstance(
+                                            output, (str, int, float, bool, type(None))
+                                        ):
                                             serializable_outputs.append(output)
                                         else:
                                             serializable_outputs.append(str(output))
-                                    
+
                                     corrupted_json_data = {
                                         "tool_name": tool_name,
                                         "method_name": method_name,
@@ -541,10 +611,14 @@ class Kernel:
                                         "user_input": context.user_input,
                                         "previous_steps": serializable_outputs,
                                     }
-                                    
+
                                     # Get function schema for repair
-                                    function_schema = validation_model.model_json_schema() if hasattr(validation_model, 'model_json_schema') else {}
-                                    
+                                    function_schema = (
+                                        validation_model.model_json_schema()
+                                        if hasattr(validation_model, "model_json_schema")
+                                        else {}
+                                    )
+
                                     repair_prompt = self.json_repair_prompt_template.format(
                                         user_input=context.user_input or "",
                                         tool_name=tool_name,
@@ -552,7 +626,7 @@ class Kernel:
                                         error=str(e),
                                         function_schema=json.dumps(function_schema, indent=2),
                                         previous_steps=json.dumps(serializable_outputs, indent=2),
-                                        arguments=json.dumps(arguments, indent=2)
+                                        arguments=json.dumps(arguments, indent=2),
                                     )
 
                                     repair_context = await llm_tool.execute(
@@ -632,7 +706,7 @@ class Kernel:
                                         step_results.append(str(step_result))
 
                                     step_outputs[step_index + 1] = output_for_chaining
-                                    
+
                                     # Save step completion to memory for recovery
                                     if self.memory:
                                         try:
@@ -642,7 +716,7 @@ class Kernel:
                                                 current_state="EXECUTING",
                                                 logger=context.logger,
                                                 user_input=f"[STEP {step_index + 1}] {tool_name}.{method_name}",
-                                                history=context.history
+                                                history=context.history,
                                             )
                                             mem_context.payload["llm_response"] = (
                                                 f"Step {step_index + 1} completed: {tool_name}.{method_name}\n"
@@ -654,9 +728,9 @@ class Kernel:
                                         except Exception as mem_err:
                                             context.logger.warning(
                                                 f"Failed to save step to memory: {mem_err}",
-                                                extra={"plugin_name": "Kernel"}
+                                                extra={"plugin_name": "Kernel"},
                                             )
-                                    
+
                                     context.logger.info(
                                         f"Step '{method_name}' executed. "
                                         f"Result: {step_result}",
@@ -773,55 +847,171 @@ class Kernel:
                 # Publish SYSTEM_ERROR event if event-driven
                 if self.use_event_driven:
                     from core.events import Event, EventType, EventPriority
-                    self.event_bus.publish(Event(
-                        event_type=EventType.SYSTEM_ERROR,
-                        source="kernel",
-                        priority=EventPriority.CRITICAL,
-                        data={"error": str(e), "session_id": session_id}
-                    ))
+
+                    self.event_bus.publish(
+                        Event(
+                            event_type=EventType.SYSTEM_ERROR,
+                            source="kernel",
+                            priority=EventPriority.CRITICAL,
+                            data={"error": str(e), "session_id": session_id},
+                        )
+                    )
                 await asyncio.sleep(5)
 
         context.logger.info("Consciousness loop finished.", extra={"plugin_name": "Kernel"})
-        
+
         # NEW: Graceful shutdown of event-driven components
         await self._shutdown_event_system(context, session_id)
-    
+
     async def _shutdown_event_system(self, context: SharedContext, session_id: str):
         """
         Gracefully shutdown event-driven components.
-        
+
         Args:
             context: Shared context
             session_id: Current session ID
         """
         if self.use_event_driven and self.event_bus:
             from core.events import Event, EventType, EventPriority
-            
+
             # Publish shutdown event
-            self.event_bus.publish(Event(
-                event_type=EventType.SYSTEM_SHUTDOWN,
-                source="kernel",
-                priority=EventPriority.CRITICAL,
-                data={"session_id": session_id}
-            ))
-            
+            self.event_bus.publish(
+                Event(
+                    event_type=EventType.SYSTEM_SHUTDOWN,
+                    source="kernel",
+                    priority=EventPriority.CRITICAL,
+                    data={"session_id": session_id},
+                )
+            )
+
             # Wait briefly for events to process
             await asyncio.sleep(0.5)
-            
+
             # Stop task queue first
             if self.task_queue:
                 await self.task_queue.stop()
                 context.logger.info(
-                    "Task queue stopped gracefully",
-                    extra={"plugin_name": "Kernel"}
+                    "Task queue stopped gracefully", extra={"plugin_name": "Kernel"}
                 )
-            
+
             # Stop event bus
             await self.event_bus.stop()
-            context.logger.info(
-                "Event bus stopped gracefully",
-                extra={"plugin_name": "Kernel"}
+            context.logger.info("Event bus stopped gracefully", extra={"plugin_name": "Kernel"})
+
+    async def process_single_input(self, context: SharedContext) -> str:
+        """
+        Process single input without interface plugins.
+        Used for CLI/scripted interactions (--once mode).
+
+        Args:
+            context: Context with user_input already set
+
+        Returns:
+            Response string
+        """
+        logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE START ==========")
+        logger.info(f"🎯 [Kernel] Input: {context.user_input}")
+        logger.info(f"🎯 [Kernel] Session: {context.session_id}")
+
+        # Skip LISTENING phase (already have input)
+        # Go straight to: PLANNING → EXECUTING → RESPONDING
+
+        # 1. PLANNING PHASE
+        logger.info("🎯 [Kernel] Phase 1: PLANNING")
+        context.current_state = "PLANNING"
+        context.history.append({"role": "user", "content": context.user_input})
+
+        # --- Cognitive Task Routing ---
+        logger.info("🎯 [Kernel] Checking for task router...")
+        router = self.all_plugins_map.get("cognitive_task_router")
+        # Skip router in offline mode for faster response (router also calls LLM)
+        if router and not context.offline_mode:
+            try:
+                logger.info("🎯 [Kernel] Executing task router...")
+                context = await router.execute(context=context)
+                logger.info("🎯 [Kernel] Task router completed")
+            except Exception as e:
+                logger.error(f"❌ [Kernel] Task router error: {e}")
+        elif context.offline_mode:
+            logger.info("🔒 [Kernel] Task router skipped in offline mode")
+
+        # --- Planning ---
+        logger.info("🎯 [Kernel] Checking for planner...")
+        planner = self.all_plugins_map.get("cognitive_planner")
+        plan = []
+        if planner:
+            logger.info("🎯 [Kernel] Executing planner...")
+            context = await planner.execute(context)
+            plan = context.payload.get("plan", [])
+            logger.info(
+                f"🎯 [Kernel] Planner returned {len(plan) if isinstance(plan, list) else 0} steps"
             )
+            if not isinstance(plan, list):
+                logger.error(f"Planner returned invalid plan: {plan}. Defaulting to empty.")
+                plan = []
+        else:
+            logger.warning("🎯 [Kernel] No planner found")
+
+        # 2. EXECUTING PHASE
+        logger.info("🎯 [Kernel] Phase 2: EXECUTING")
+        context.current_state = "EXECUTING"
+        execution_result = {"success": False, "output": ""}
+
+        if plan:
+            logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
+            
+            # Select LLM tool based on offline mode
+            if self.offline_mode:
+                # Force local LLM only (no cloud fallback)
+                llm_tool = self.all_plugins_map.get("tool_local_llm")
+                if not llm_tool:
+                    raise RuntimeError(
+                        "Offline mode enabled but tool_local_llm not available! "
+                        "Please install Ollama and configure local LLM."
+                    )
+                logger.info("🔒 OFFLINE MODE: Using local LLM only")
+            else:
+                # Cloud LLM (stable, tested)
+                # TODO: Enable local LLM preference after benchmarking
+                llm_tool = self.all_plugins_map.get("tool_llm")
+                logger.debug("☁️ ONLINE MODE: Using cloud LLM")
+            
+            if llm_tool:
+                try:
+                    logger.info("🎯 [Kernel] Calling LLM tool...")
+                    # Get LLM to respond directly for simplicity
+                    llm_context = await llm_tool.execute(context=context)
+                    logger.info("🎯 [Kernel] LLM call completed")
+                    response_text = llm_context.payload.get(
+                        "llm_response", "No response generated"
+                    )
+                    execution_result = {"success": True, "output": response_text}
+                    logger.info(f"🎯 [Kernel] Got response: {response_text[:100]}...")
+                except Exception as e:
+                    logger.error(f"❌ [Kernel] LLM error: {e}")
+                    execution_result = {"success": False, "error": str(e)}
+            else:
+                logger.error("❌ [Kernel] No LLM tool found")
+                execution_result = {"success": False, "error": "No LLM tool found"}
+        else:
+            logger.warning("🎯 [Kernel] No plan, skipping execution")
+            execution_result = {"success": False, "error": "No plan generated"}
+
+        # 3. RESPONDING
+        logger.info("🎯 [Kernel] Phase 3: RESPONDING")
+        context.current_state = "RESPONDING"
+        response = self._generate_response(context, execution_result)
+
+        logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
+        logger.info(f"🎯 [Kernel] Response ready: {response[:100]}...")
+        return response
+
+    def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
+        """Generate user-facing response from execution result."""
+        if execution_result.get("success"):
+            return execution_result.get("output", "Task completed successfully.")
+        else:
+            return f"Error: {execution_result.get('error', 'Unknown error')}"
 
     def start(self):
         """Starts the main consciousness loop."""

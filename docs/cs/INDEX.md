@@ -13,6 +13,12 @@
 3. 👤 [Uživatelská příručka](06_UZIVATELSKA_PRIRUCKA.md) - Jak pracovat se Sophií
 4. 🧑‍💻 [Příručka vývojáře](07_DEVELOPER_GUIDE.md) - Jak rozšířit Sophii
 
+### 🪟 Windows 11 Uživatelé
+
+**Gaming laptop (Lenovo Legion, ASUS ROG, MSI)?**
+- ⚡ **[Rychlý Start (15 minut)](../WINDOWS_QUICKSTART.md)** - Pro zkušené uživatele
+- 📚 **[Kompletní WSL2 + VS Code Guide](../WINDOWS_WSL2_SETUP.md)** - Detailní instrukce + troubleshooting
+
 **Chcete přispět?**
 - [Vývojové pokyny](04_DEVELOPMENT_GUIDELINES.md)
 - [Správa projektu](05_PROJECT_GOVERNANCE.md)

@@ -2,21 +2,17 @@
 Test script for GitHub Integration Plugin
 Tests Pydantic validation, plugin initialization, and basic functionality.
 """
+
 from plugins.tool_github import (
     ToolGitHub,
     CreateIssueRequest,
     ListIssuesRequest,
     UpdateIssueRequest,
-    AddCommentRequest,
     CreatePullRequestRequest,
-    MergePullRequestRequest,
     IssueResponse,
     PullRequestResponse,
-    GitHubError,
-    GitHubValidationError
 )
 from core.context import SharedContext
-from plugins.base_plugin import PluginType
 import logging
 
 # Setup logging
@@ -32,7 +28,7 @@ try:
         repo="sophia",
         title="Test Issue",
         body="This is a test issue",
-        labels=["bug", "enhancement"]
+        labels=["bug", "enhancement"],
     )
     print(f"✅ CreateIssueRequest: {request.title}")
 except Exception as e:
@@ -40,24 +36,14 @@ except Exception as e:
 
 # Test ListIssuesRequest
 try:
-    request = ListIssuesRequest(
-        owner="ShotyCZ",
-        repo="sophia",
-        state="open",
-        per_page=10
-    )
+    request = ListIssuesRequest(owner="ShotyCZ", repo="sophia", state="open", per_page=10)
     print(f"✅ ListIssuesRequest: state={request.state}, per_page={request.per_page}")
 except Exception as e:
     print(f"❌ ListIssuesRequest failed: {e}")
 
 # Test UpdateIssueRequest
 try:
-    request = UpdateIssueRequest(
-        owner="ShotyCZ",
-        repo="sophia",
-        issue_number=1,
-        state="closed"
-    )
+    request = UpdateIssueRequest(owner="ShotyCZ", repo="sophia", issue_number=1, state="closed")
     print(f"✅ UpdateIssueRequest: issue #{request.issue_number}, state={request.state}")
 except Exception as e:
     print(f"❌ UpdateIssueRequest failed: {e}")
@@ -70,7 +56,7 @@ try:
         title="Add GitHub Integration",
         body="Adds tool_github.py plugin",
         head="feature/github-integration",
-        base="master"
+        base="master",
     )
     print(f"✅ CreatePullRequestRequest: {request.head} -> {request.base}")
 except Exception as e:
@@ -79,10 +65,7 @@ except Exception as e:
 # Test validation error
 try:
     invalid = CreateIssueRequest(
-        owner="",  # Invalid: empty string
-        repo="sophia",
-        title="Test",
-        body="Test"
+        owner="", repo="sophia", title="Test", body="Test"  # Invalid: empty string
     )
     print("❌ Should have failed validation!")
 except Exception as e:
@@ -91,9 +74,7 @@ except Exception as e:
 # Test invalid state
 try:
     invalid = ListIssuesRequest(
-        owner="ShotyCZ",
-        repo="sophia",
-        state="invalid"  # Invalid: must be open, closed, or all
+        owner="ShotyCZ", repo="sophia", state="invalid"  # Invalid: must be open, closed, or all
     )
     print("❌ Should have failed validation!")
 except Exception as e:
@@ -102,11 +83,7 @@ except Exception as e:
 print("\n=== Testing Plugin Initialization ===")
 
 # Create plugin instance
-context = SharedContext(
-    session_id="test-session",
-    current_state="testing",
-    logger=logger
-)
+context = SharedContext(session_id="test-session", current_state="testing", logger=logger)
 
 plugin = ToolGitHub()
 print(f"✅ Plugin name: {plugin.name}")
@@ -151,7 +128,7 @@ try:
         created_at="2025-11-03T00:00:00Z",
         updated_at="2025-11-03T00:00:00Z",
         labels=["bug"],
-        assignees=["ShotyCZ"]
+        assignees=["ShotyCZ"],
     )
     print(f"✅ IssueResponse: #{issue.number} - {issue.title}")
 except Exception as e:
@@ -169,7 +146,7 @@ try:
         base="master",
         created_at="2025-11-03T00:00:00Z",
         updated_at="2025-11-03T00:00:00Z",
-        merged=False
+        merged=False,
     )
     print(f"✅ PullRequestResponse: #{pr.number} - {pr.head} -> {pr.base}")
 except Exception as e:
