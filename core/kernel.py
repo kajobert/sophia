@@ -224,6 +224,11 @@ class Kernel:
             return
 
         # Legacy blocking mode (original behavior)
+        # Show initial prompt before loop starts
+        terminal = self.all_plugins_map.get("interface_terminal")
+        if terminal and hasattr(terminal, "prompt") and not single_run_input:
+            terminal.prompt()
+        
         while self.is_running:
             try:
                 # 1. LISTENING PHASE
@@ -740,9 +745,34 @@ class Kernel:
                                 break
 
                         if not execution_summary:
-                            execution_summary = (
-                                "Plan executed successfully. Result: " + " | ".join(step_results)
-                            )
+                            # Clean step results: remove "Plan executed successfully. Result:" prefix if present
+                            # This prevents LLM from imitating the pattern in future responses
+                            cleaned_steps = []
+                            for step in step_results:
+                                step_str = str(step)
+                                # Remove the prefix if it exists (case-insensitive, handle multiple variants)
+                                if "plan executed successfully" in step_str.lower():
+                                    # Find the "Result:" part and take everything after it
+                                    if "result:" in step_str.lower():
+                                        parts = step_str.split(":", 2)  # Split on first 2 colons
+                                        if len(parts) >= 3:
+                                            step_str = parts[2].strip()
+                                        elif len(parts) == 2:
+                                            step_str = parts[1].strip()
+                                cleaned_steps.append(step_str)
+                            
+                            clean_result = " | ".join(cleaned_steps)
+                            execution_summary = "Plan executed successfully. Result: " + clean_result
+                        else:
+                            # For error cases, also clean the prefix
+                            clean_result = execution_summary
+                            if "plan executed successfully" in clean_result.lower():
+                                if "result:" in clean_result.lower():
+                                    parts = clean_result.split(":", 2)
+                                    if len(parts) >= 3:
+                                        clean_result = parts[2].strip()
+                                    elif len(parts) == 2:
+                                        clean_result = parts[1].strip()
 
                     else:
                         if llm_tool:
@@ -754,10 +784,12 @@ class Kernel:
                             execution_summary = context.payload.get(
                                 "llm_response", "Input received, no plan formed."
                             )
+                            clean_result = execution_summary
                         else:
                             execution_summary = (
                                 "Input received, but no planner or LLM tool is configured."
                             )
+                            clean_result = execution_summary
                             context.logger.warning(
                                 "No plan and no LLM tool found for direct response.",
                                 extra={"plugin_name": "Kernel"},
@@ -770,7 +802,9 @@ class Kernel:
                         f"Final response: {execution_summary}",
                         extra={"plugin_name": "Kernel"},
                     )
-                    context.history.append({"role": "assistant", "content": execution_summary})
+                    # Add CLEAN result to history (without "Plan executed successfully" prefix)
+                    # This prevents LLM from imitating the pattern in future responses
+                    context.history.append({"role": "assistant", "content": clean_result})
 
                     response_callback = context.payload.get("_response_callback")
                     if response_callback:
@@ -785,6 +819,10 @@ class Kernel:
                                 exc_info=True,
                                 extra={"plugin_name": "Kernel"},
                             )
+                        # Re-display prompt after callback
+                        terminal = self.all_plugins_map.get("interface_terminal")
+                        if terminal and hasattr(terminal, "prompt"):
+                            terminal.prompt()
                     else:
                         print(f">>> Sophia: {execution_summary}")
                         # After printing to the console, re-display the user prompt.

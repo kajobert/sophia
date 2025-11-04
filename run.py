@@ -19,17 +19,17 @@ async def _load_scifi_interface(kernel, ui_style: str):
     """Load sci-fi terminal interface plugin and REMOVE classic terminal."""
     try:
         if ui_style == "matrix":
-            from plugins.interface_terminal_matrix import InterfaceTerminalMatrix
+            from plugins._demo_interface_matrix import InterfaceTerminalMatrix
 
             interface = InterfaceTerminalMatrix()
             print("🟢 Loading Matrix interface... 'Follow the white rabbit!' 🐰")
         elif ui_style == "startrek":
-            from plugins.interface_terminal_startrek import InterfaceTerminalStarTrek
+            from plugins._demo_interface_startrek import InterfaceTerminalStarTrek
 
             interface = InterfaceTerminalStarTrek()
             print("🟡 Loading Star Trek LCARS interface... 'Make it so!' 🖖")
         elif ui_style == "cyberpunk":
-            from plugins.interface_terminal_scifi import InterfaceTerminalSciFi
+            from plugins._demo_interface_scifi import InterfaceTerminalSciFi
 
             interface = InterfaceTerminalSciFi()
             print("🌈 Loading Cyberpunk interface... Maximum WOW! ⚡")
@@ -130,14 +130,13 @@ async def main():
         print(f"🎯 Single-run mode: {removed_count} interface plugins disabled for speed")
     # DISABLE WebUI if --no-webui flag is set
     elif args.no_webui:
-        # Remove only WebUI, keep terminal
-        webui_removed = False
+        # Remove WebUI and sci-fi interfaces, keep only basic terminal
         kernel.plugin_manager._plugins[PluginType.INTERFACE] = [
             p
             for p in kernel.plugin_manager._plugins[PluginType.INTERFACE]
-            if p.name != "interface_webui"
+            if p.name == "interface_terminal"  # Keep only basic terminal
         ]
-        print(f"🚫 Web UI disabled - terminal-only mode")
+        print(f"🚫 Web UI disabled - terminal-only mode (basic interface)")
     # THEN replace interface plugin if sci-fi mode requested (interactive only)
     elif ui_style != "classic":
         scifi_interface = await _load_scifi_interface(kernel, ui_style)
@@ -148,6 +147,14 @@ async def main():
 
             install_scifi_logging(scifi_interface)
             print(f"✨ Sci-fi logging enabled - all output now in {ui_style.upper()} style!")
+    else:
+        # Classic mode - remove sci-fi interfaces, keep basic terminal and webui
+        kernel.plugin_manager._plugins[PluginType.INTERFACE] = [
+            p
+            for p in kernel.plugin_manager._plugins[PluginType.INTERFACE]
+            if p.name in ["interface_terminal", "interface_webui"]
+        ]
+        print(f"⚪ Classic mode - using basic terminal interface")
 
     # SINGLE-RUN MODE: Fast processing without UI
     if args.once or args.input:
