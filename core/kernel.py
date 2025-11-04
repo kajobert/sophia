@@ -44,6 +44,9 @@ class Kernel:
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
+        
+        # Logging is already set up in run.py - no need to call again
+        
         # --- PROMPT LOADING PHASE ---
         try:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
@@ -168,7 +171,7 @@ class Kernel:
         self.is_running = True
         session_id = str(uuid.uuid4())
 
-        setup_logging(log_queue=asyncio.Queue())  # Placeholder queue
+        # Logging is already set up in initialize() - just create session logger
         session_logger = logging.getLogger(f"session-{session_id[:8]}")
         session_logger.addFilter(SessionIdFilter(session_id))
 

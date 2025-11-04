@@ -3,6 +3,11 @@ import sys
 import os
 import argparse
 from dotenv import load_dotenv
+
+# --- CRITICAL: Setup logging BEFORE importing Kernel! ---
+from core.logging_config import setup_logging
+setup_logging()  # Setup logging before any imports that use logger
+
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
 
