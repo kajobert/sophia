@@ -91,6 +91,11 @@ async def main():
         help="Choose sci-fi terminal UI style (matrix, startrek, cyberpunk, or classic)",
     )
     parser.add_argument(
+        "--no-webui",
+        action="store_true",
+        help="Disable Web UI (terminal-only mode for faster startup and simple interaction)",
+    )
+    parser.add_argument(
         "--once", type=str, help="Single-run mode: process one input and exit (fast, no UI)"
     )
     parser.add_argument("input", nargs="*", help="Non-interactive input for single-run mode")
@@ -123,6 +128,16 @@ async def main():
         removed_count = len(kernel.plugin_manager._plugins[PluginType.INTERFACE])
         kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
         print(f"🎯 Single-run mode: {removed_count} interface plugins disabled for speed")
+    # DISABLE WebUI if --no-webui flag is set
+    elif args.no_webui:
+        # Remove only WebUI, keep terminal
+        webui_removed = False
+        kernel.plugin_manager._plugins[PluginType.INTERFACE] = [
+            p
+            for p in kernel.plugin_manager._plugins[PluginType.INTERFACE]
+            if p.name != "interface_webui"
+        ]
+        print(f"🚫 Web UI disabled - terminal-only mode")
     # THEN replace interface plugin if sci-fi mode requested (interactive only)
     elif ui_style != "classic":
         scifi_interface = await _load_scifi_interface(kernel, ui_style)

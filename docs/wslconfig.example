@@ -1,0 +1,81 @@
+# WSL2 Configuration for Sophia AI Development
+# 
+# This file configures Windows Subsystem for Linux 2 (WSL2) performance
+# for optimal Sophia AI development and local LLM inference.
+#
+# LOCATION: C:\Users\YOUR_USERNAME\.wslconfig
+#
+# After editing, restart WSL2:
+#   PowerShell: wsl --shutdown
+#   Then start WSL: wsl
+#
+
+[wsl2]
+
+# Memory allocation
+# Recommended: 50-75% of total RAM
+# For 16GB system: memory=12GB
+# For 32GB system: memory=24GB
+memory=16GB
+
+# Processor cores
+# Recommended: All available cores (or leave commented for auto)
+# processors=8
+
+# Swap space (for large AI models)
+# Recommended: 25-50% of allocated memory
+swap=8GB
+
+# Swap file location (optional, uncomment to customize)
+# swapFile=C:\\Users\\YOUR_USERNAME\\wsl-swap.vhdx
+
+# Disable page reporting (improves performance)
+pageReporting=false
+
+# Enable nested virtualization (for Docker in WSL, optional)
+# nestedVirtualization=true
+
+# Network mode (optional, uncomment if needed)
+# networkingMode=mirrored
+
+# Kernel command line (optional, for advanced tuning)
+# kernelCommandLine=
+
+# Localhostforwarding (allows Windows to access WSL services)
+# localhostForwarding=true
+
+# ============================================================================
+# GAMING LAPTOP OPTIMIZATIONS (Lenovo Legion, ASUS ROG, MSI, Acer Predator)
+# ============================================================================
+
+# For 32GB+ RAM systems with NVIDIA GPU (recommended for local LLM):
+# memory=24GB
+# swap=12GB
+
+# For 16GB RAM systems (balanced for coding + gaming):
+# memory=12GB
+# swap=6GB
+
+# For development only (no gaming running simultaneously):
+# memory=14GB
+# swap=8GB
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# 1. WSL2 dynamically allocates memory up to the limit you set
+# 2. More RAM = larger AI models you can run locally
+# 3. GPU passthrough works automatically (NVIDIA CUDA in WSL2)
+# 4. Restart WSL2 after changes: wsl --shutdown
+# 5. Check current usage: Task Manager → Performance → WSL
+#
+# Sophia AI memory requirements:
+# - Basic operation: 4-6GB
+# - With local LLM (gemma2:2b): 6-8GB
+# - With local LLM (llama3.2:3b): 8-12GB
+# - With local LLM (llama3.1:8b): 12-20GB
+#
+# ============================================================================
+
+# For more info: https://learn.microsoft.com/en-us/windows/wsl/wsl-config

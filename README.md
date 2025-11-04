@@ -85,6 +85,15 @@
 
 ## 🚀 Quick Start
 
+### 🤖 Auto-Install with GitHub Copilot
+
+**Fastest way - let AI do the work!**
+
+1. Open GitHub Copilot Chat in VS Code (`Ctrl+Shift+I`)
+2. Copy-paste prompt from **[COPILOT_QUICK.md](COPILOT_QUICK.md)**
+3. Follow Copilot's step-by-step instructions
+4. ✅ Done in 15 minutes!
+
 ### Prerequisites
 - **Python 3.12+**
 - **Git**
@@ -110,6 +119,54 @@ python run.py
 ```
 
 Sophia launches **both Terminal and Web UI** (http://localhost:8000) simultaneously.
+
+### Usage Modes
+
+```bash
+# 🖥️ Full Interactive Mode (Terminal + Web UI)
+python run.py
+
+# 🔥 Terminal-Only Mode (no Web UI)
+python run.py --no-webui
+
+# ⚡ Single-Run Mode (CLI/scripting)
+python run.py --once "Ahoj Sophio, kolik je 2+2?"
+# Output: "2 + 2 = 4" (Response time: ~8s)
+
+# 🎨 Custom UI Style
+python run.py --ui matrix      # Matrix-style terminal
+python run.py --ui startrek    # LCARS Star Trek interface
+python run.py --ui cyberpunk   # Cyberpunk aesthetic
+```
+
+**Pro Tip:** `--once` mode is perfect for testing, scripting, or CI/CD integration. Response time includes 4s startup + 4s LLM processing.
+
+### 🏠 Local LLM Support (Optional)
+
+Run Sophia **completely offline** with local AI models:
+
+```bash
+# Install Ollama (recommended)
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Download model
+ollama pull gemma2:2b
+
+# Configure .env
+LOCAL_LLM_RUNTIME=ollama
+LOCAL_LLM_MODEL=gemma2:2b
+
+# Done! Zero API costs, complete privacy 🔒
+```
+
+**Full Guide:** [Local LLM Setup](docs/LOCAL_LLM_SETUP.md) - Supports Ollama, LM Studio, llamafile
+
+### 🪟 Windows 11 Setup
+
+**Running on Lenovo Legion or other gaming laptop with Windows 11?**
+
+✅ **[Complete WSL2 + VS Code Setup Guide](docs/WINDOWS_WSL2_SETUP.md)**  
+Optimized for gaming laptops (Lenovo Legion, ASUS ROG, MSI) with GPU support for local AI.
 
 **Detailed Setup:** [English User Guide](docs/en/06_USER_GUIDE.md) | [Česká příručka](docs/cs/06_UZIVATELSKA_PRIRUCKA.md)
 

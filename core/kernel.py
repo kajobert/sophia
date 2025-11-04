@@ -882,64 +882,81 @@ class Kernel:
         Returns:
             Response string
         """
-        logger.info(f"[Kernel] Processing single input: {context.user_input}")
+        logger.info(f"🎯 [Kernel] ========== SINGLE INPUT MODE START ==========")
+        logger.info(f"🎯 [Kernel] Input: {context.user_input}")
+        logger.info(f"🎯 [Kernel] Session: {context.session_id}")
 
         # Skip LISTENING phase (already have input)
         # Go straight to: PLANNING → EXECUTING → RESPONDING
 
         # 1. PLANNING PHASE
+        logger.info(f"🎯 [Kernel] Phase 1: PLANNING")
         context.current_state = "PLANNING"
         context.history.append({"role": "user", "content": context.user_input})
 
         # --- Cognitive Task Routing ---
+        logger.info(f"🎯 [Kernel] Checking for task router...")
         router = self.all_plugins_map.get("cognitive_task_router")
         if router:
             try:
+                logger.info(f"🎯 [Kernel] Executing task router...")
                 context = await router.execute(context=context)
-                logger.info("Cognitive Task Router executed successfully.")
+                logger.info("🎯 [Kernel] Task router completed")
             except Exception as e:
-                logger.error(f"Error executing Cognitive Task Router: {e}")
+                logger.error(f"❌ [Kernel] Task router error: {e}")
 
         # --- Planning ---
+        logger.info(f"🎯 [Kernel] Checking for planner...")
         planner = self.all_plugins_map.get("cognitive_planner")
         plan = []
         if planner:
+            logger.info(f"🎯 [Kernel] Executing planner...")
             context = await planner.execute(context)
             plan = context.payload.get("plan", [])
+            logger.info(f"🎯 [Kernel] Planner returned {len(plan) if isinstance(plan, list) else 0} steps")
             if not isinstance(plan, list):
                 logger.error(f"Planner returned invalid plan: {plan}. Defaulting to empty.")
                 plan = []
         else:
-            logger.warning("Cognitive planner plugin not found.")
+            logger.warning("🎯 [Kernel] No planner found")
 
         # 2. EXECUTING PHASE
+        logger.info(f"🎯 [Kernel] Phase 2: EXECUTING")
         context.current_state = "EXECUTING"
         execution_result = {"success": False, "output": ""}
 
         if plan:
-            logger.info(f"Executing plan with {len(plan)} steps")
+            logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
             # Execute plan steps (simplified - just get LLM response for now)
             llm_tool = self.all_plugins_map.get("tool_llm")
             if llm_tool:
                 try:
+                    logger.info(f"🎯 [Kernel] Calling LLM tool...")
                     # Get LLM to respond directly for simplicity
                     llm_context = await llm_tool.execute(context=context)
+                    logger.info(f"🎯 [Kernel] LLM call completed")
                     response_text = llm_context.payload.get(
                         "llm_response", "No response generated"
                     )
                     execution_result = {"success": True, "output": response_text}
+                    logger.info(f"🎯 [Kernel] Got response: {response_text[:100]}...")
                 except Exception as e:
+                    logger.error(f"❌ [Kernel] LLM error: {e}")
                     execution_result = {"success": False, "error": str(e)}
             else:
+                logger.error(f"❌ [Kernel] No LLM tool found")
                 execution_result = {"success": False, "error": "No LLM tool found"}
         else:
+            logger.warning(f"🎯 [Kernel] No plan, skipping execution")
             execution_result = {"success": False, "error": "No plan generated"}
 
         # 3. RESPONDING
+        logger.info(f"🎯 [Kernel] Phase 3: RESPONDING")
         context.current_state = "RESPONDING"
         response = self._generate_response(context, execution_result)
 
-        logger.info("[Kernel] Single input processed, response ready")
+        logger.info(f"🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
+        logger.info(f"🎯 [Kernel] Response ready: {response[:100]}...")
         return response
 
     def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
