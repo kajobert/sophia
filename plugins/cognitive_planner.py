@@ -31,7 +31,7 @@ class Planner(BasePlugin):
         except FileNotFoundError:
             logger.error(
                 "Planner prompt template not found. The planner will not be effective.",
-                extra={"plugin_name": "cognitive_planner"}
+                extra={"plugin_name": "cognitive_planner"},
             )
             self.prompt_template = "Create a plan. Available tools: {tool_list}"
 
@@ -40,7 +40,7 @@ class Planner(BasePlugin):
         if not self.llm_tool:
             logger.error(
                 "Planner plugin requires 'tool_llm' to be available.",
-                extra={"plugin_name": "cognitive_planner"}
+                extra={"plugin_name": "cognitive_planner"},
             )
 
     async def execute(self, context: SharedContext) -> SharedContext:
@@ -58,7 +58,7 @@ class Planner(BasePlugin):
             # Skip Langfuse temporarily due to validation issues
             if plugin.name == "tool_langfuse":
                 continue
-                
+
             if hasattr(plugin, "get_tool_definitions"):
                 for tool_def in plugin.get_tool_definitions():
                     func = tool_def.get("function", {})
@@ -120,27 +120,37 @@ class Planner(BasePlugin):
 
         planned_context = await self.llm_tool.execute(context=planning_context)
         llm_message = planned_context.payload.get("llm_response")
-        context.logger.info(f"Raw LLM response received in planner: {llm_message}", extra={"plugin_name": "cognitive_planner"})
+        context.logger.info(
+            f"Raw LLM response received in planner: {llm_message}",
+            extra={"plugin_name": "cognitive_planner"},
+        )
 
         try:
             # --- Robust Plan Extraction (Handles multiple response formats) ---
             plan_data = []
-            if isinstance(llm_message, list) and hasattr(llm_message[0], 'function'):
+            if isinstance(llm_message, list) and hasattr(llm_message[0], "function"):
                 # Handle direct tool_calls format (e.g., from claude-3.5-sonnet)
                 tool_call = llm_message[0]
-                if tool_call.function.name == 'create_plan':
+                if tool_call.function.name == "create_plan":
                     plan_str = tool_call.function.arguments
                     plan_data = json.loads(plan_str).get("plan", [])
             else:
                 # Handle raw string or object with .content
-                response_text = str(llm_message.content) if hasattr(llm_message, 'content') else str(llm_message)
-                json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+                response_text = (
+                    str(llm_message.content)
+                    if hasattr(llm_message, "content")
+                    else str(llm_message)
+                )
+                json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
                 if json_match:
                     plan_str = json_match.group(0)
                     plan_data = json.loads(plan_str)
 
             if not plan_data:
-                context.logger.warning("No valid plan found in LLM response, creating empty plan.", extra={"plugin_name": "cognitive_planner"})
+                context.logger.warning(
+                    "No valid plan found in LLM response, creating empty plan.",
+                    extra={"plugin_name": "cognitive_planner"},
+                )
                 context.payload["plan"] = []
             else:
                 context.payload["plan"] = plan_data
@@ -151,7 +161,7 @@ class Planner(BasePlugin):
                 e,
                 llm_message,
                 exc_info=True,
-                extra={"plugin_name": "cognitive_planner"}
+                extra={"plugin_name": "cognitive_planner"},
             )
             context.payload["plan"] = []
 

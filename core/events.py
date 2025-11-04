@@ -14,19 +14,20 @@ import uuid
 
 class EventPriority(Enum):
     """Event priority levels for processing order."""
-    CRITICAL = 0   # System errors, crashes
-    HIGH = 1       # User input, urgent tasks
-    NORMAL = 2     # Regular tasks, updates
-    LOW = 3        # Background tasks, cleanup
+
+    CRITICAL = 0  # System errors, crashes
+    HIGH = 1  # User input, urgent tasks
+    NORMAL = 2  # Regular tasks, updates
+    LOW = 3  # Background tasks, cleanup
 
 
 class EventType(Enum):
     """Core event types in Sophia."""
-    
+
     # User Interaction
     USER_INPUT = "user_input"
     USER_COMMAND = "user_command"
-    
+
     # Task Management
     TASK_CREATED = "task_created"
     TASK_STARTED = "task_started"
@@ -34,41 +35,41 @@ class EventType(Enum):
     TASK_COMPLETED = "task_completed"
     TASK_FAILED = "task_failed"
     TASK_CANCELLED = "task_cancelled"
-    
+
     # Memory & Learning
     MEMORY_CREATED = "memory_created"
     MEMORY_UPDATED = "memory_updated"
     MEMORY_RETRIEVED = "memory_retrieved"
     DREAM_STARTED = "dream_started"
     DREAM_COMPLETED = "dream_completed"
-    
+
     # Process Management
     PROCESS_STARTED = "process_started"
     PROCESS_STOPPED = "process_stopped"
     PROCESS_FAILED = "process_failed"
     PROCESS_HEALTH_CHECK = "process_health_check"
-    
+
     # System Events
     SYSTEM_STARTUP = "system_startup"
     SYSTEM_SHUTDOWN = "system_shutdown"
     SYSTEM_ERROR = "system_error"
     SYSTEM_READY = "system_ready"
-    
+
     # Plugin Events
     PLUGIN_LOADED = "plugin_loaded"
     PLUGIN_FAILED = "plugin_failed"
     PLUGIN_MESSAGE = "plugin_message"
-    
+
     # Jules Integration
     JULES_TASK_SUBMITTED = "jules_task_submitted"
     JULES_TASK_STARTED = "jules_task_started"
     JULES_TASK_COMPLETED = "jules_task_completed"
     JULES_TASK_FAILED = "jules_task_failed"
-    
+
     # UI Updates
     UI_UPDATE = "ui_update"
     UI_NOTIFICATION = "ui_notification"
-    
+
     # Custom Events
     CUSTOM = "custom"
 
@@ -77,7 +78,7 @@ class EventType(Enum):
 class Event:
     """
     Immutable event object representing a system occurrence.
-    
+
     Attributes:
         event_id: Unique identifier for this event
         event_type: Type of event (from EventType enum)
@@ -88,6 +89,7 @@ class Event:
         metadata: Additional context (user_id, session_id, etc.)
         correlation_id: Link related events together
     """
+
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     event_type: EventType = EventType.CUSTOM
     source: str = "unknown"
@@ -96,17 +98,17 @@ class Event:
     data: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     correlation_id: Optional[str] = None
-    
+
     def __post_init__(self):
         """Ensure immutability by freezing after creation."""
-        object.__setattr__(self, '_frozen', True)
-    
+        object.__setattr__(self, "_frozen", True)
+
     def __setattr__(self, key, value):
         """Prevent modification after initialization."""
-        if hasattr(self, '_frozen'):
+        if hasattr(self, "_frozen"):
             raise AttributeError(f"Event is immutable - cannot modify {key}")
         super().__setattr__(key, value)
-    
+
     def __str__(self) -> str:
         """String representation of event."""
         return (
@@ -115,7 +117,7 @@ class Event:
             f"priority={self.priority.name}, "
             f"id={self.event_id[:8]}...)"
         )
-    
+
     def __repr__(self) -> str:
         """Detailed representation of event."""
         return (

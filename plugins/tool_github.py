@@ -5,7 +5,7 @@ Enables Sophie to autonomously improve herself by creating PRs, managing issues,
 Created: 2025-11-03
 Purpose: Self-improvement and autonomous development workflow
 """
-from datetime import datetime
+
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from plugins.base_plugin import BasePlugin, PluginType
@@ -20,27 +20,32 @@ logger = logging.getLogger(__name__)
 # Custom exceptions
 class GitHubError(Exception):
     """Base exception for GitHub errors"""
+
     pass
 
 
 class GitHubAuthenticationError(GitHubError):
     """Raised when GitHub authentication fails"""
+
     pass
 
 
 class GitHubValidationError(GitHubError):
     """Raised when input validation fails"""
+
     pass
 
 
 class GitHubAPIError(GitHubError):
     """Raised for GitHub API errors"""
+
     pass
 
 
 # Request Models (Input Validation)
 class CreateIssueRequest(BaseModel):
     """Request model for creating a GitHub issue"""
+
     owner: str = Field(..., min_length=1, description="Repository owner")
     repo: str = Field(..., min_length=1, description="Repository name")
     title: str = Field(..., min_length=1, max_length=256, description="Issue title")
@@ -51,6 +56,7 @@ class CreateIssueRequest(BaseModel):
 
 class ListIssuesRequest(BaseModel):
     """Request model for listing GitHub issues"""
+
     owner: str = Field(..., min_length=1)
     repo: str = Field(..., min_length=1)
     state: str = Field(default="open", pattern="^(open|closed|all)$")
@@ -62,6 +68,7 @@ class ListIssuesRequest(BaseModel):
 
 class UpdateIssueRequest(BaseModel):
     """Request model for updating a GitHub issue"""
+
     owner: str = Field(..., min_length=1)
     repo: str = Field(..., min_length=1)
     issue_number: int = Field(..., ge=1)
@@ -73,6 +80,7 @@ class UpdateIssueRequest(BaseModel):
 
 class AddCommentRequest(BaseModel):
     """Request model for adding a comment to an issue"""
+
     owner: str = Field(..., min_length=1)
     repo: str = Field(..., min_length=1)
     issue_number: int = Field(..., ge=1)
@@ -81,6 +89,7 @@ class AddCommentRequest(BaseModel):
 
 class CreatePullRequestRequest(BaseModel):
     """Request model for creating a pull request"""
+
     owner: str = Field(..., min_length=1)
     repo: str = Field(..., min_length=1)
     title: str = Field(..., min_length=1, max_length=256)
@@ -92,6 +101,7 @@ class CreatePullRequestRequest(BaseModel):
 
 class MergePullRequestRequest(BaseModel):
     """Request model for merging a pull request"""
+
     owner: str = Field(..., min_length=1)
     repo: str = Field(..., min_length=1)
     pull_number: int = Field(..., ge=1)
@@ -103,6 +113,7 @@ class MergePullRequestRequest(BaseModel):
 # Response Models
 class IssueResponse(BaseModel):
     """Response model for GitHub issue"""
+
     number: int
     title: str
     body: str
@@ -116,6 +127,7 @@ class IssueResponse(BaseModel):
 
 class PullRequestResponse(BaseModel):
     """Response model for GitHub pull request"""
+
     number: int
     title: str
     body: str
@@ -131,6 +143,7 @@ class PullRequestResponse(BaseModel):
 
 class CommentResponse(BaseModel):
     """Response model for GitHub comment"""
+
     id: int
     body: str
     html_url: str
@@ -141,29 +154,29 @@ class CommentResponse(BaseModel):
 class ToolGitHub(BasePlugin):
     """
     GitHub Integration Plugin
-    
+
     Provides comprehensive GitHub API access for Sophie to autonomously
     manage her own development through issues, PRs, and repository operations.
     """
-    
+
     @property
     def name(self) -> str:
         return "tool_github"
-    
+
     @property
     def plugin_type(self) -> PluginType:
         return PluginType.TOOL
-    
+
     @property
     def version(self) -> str:
         return "1.0.0"
-    
+
     def __init__(self):
         super().__init__()
         self.api_key = None
         self.base_url = "https://api.github.com"
         self.session = None
-    
+
     def setup(self, config: dict) -> None:
         """
         Sets up the GitHub API client with authentication.
@@ -174,7 +187,7 @@ class ToolGitHub(BasePlugin):
         """
         # Get API token from config or environment
         token_config = config.get("github_token", "")
-        
+
         # If config contains ${ENV_VAR}, load from environment
         if token_config.startswith("${") and token_config.endswith("}"):
             env_var_name = token_config[2:-1]
@@ -190,34 +203,36 @@ class ToolGitHub(BasePlugin):
         else:
             # Initialize session with headers
             self.session = requests.Session()
-            self.session.headers.update({
-                "Authorization": f"token {self.api_key}",
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "Sophia-AI-Agent"
-            })
+            self.session.headers.update(
+                {
+                    "Authorization": f"token {self.api_key}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "Sophia-AI-Agent",
+                }
+            )
             logger.info("GitHub API client initialized successfully")
 
     def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
         """
         Makes an authenticated request to the GitHub API.
-        
+
         Args:
             method: HTTP method (GET, POST, PATCH, DELETE)
             endpoint: API endpoint (e.g., "repos/owner/repo/issues")
             data: Optional request body data
-            
+
         Returns:
             Dict with API response
-            
+
         Raises:
             GitHubAuthenticationError: If authentication fails
             GitHubAPIError: If API request fails
         """
         if not self.api_key:
             raise GitHubAuthenticationError("GitHub API token is not configured.")
-        
+
         url = f"{self.base_url}/{endpoint}"
-        
+
         try:
             if method == "GET":
                 response = self.session.get(url, params=data)
@@ -231,25 +246,27 @@ class ToolGitHub(BasePlugin):
                 response = self.session.delete(url)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
-            
+
             # Handle authentication errors
             if response.status_code == 401:
-                raise GitHubAuthenticationError("GitHub API authentication failed. Check your token.")
-            
+                raise GitHubAuthenticationError(
+                    "GitHub API authentication failed. Check your token."
+                )
+
             # Handle rate limiting
-            if response.status_code == 403 and 'X-RateLimit-Remaining' in response.headers:
-                if response.headers['X-RateLimit-Remaining'] == '0':
+            if response.status_code == 403 and "X-RateLimit-Remaining" in response.headers:
+                if response.headers["X-RateLimit-Remaining"] == "0":
                     raise GitHubAPIError("GitHub API rate limit exceeded.")
-            
+
             response.raise_for_status()
-            
+
             # Some endpoints return 204 No Content
             if response.status_code == 204:
                 return {}
-            
+
             return response.json()
-            
-        except requests.exceptions.HTTPError as e:
+
+        except requests.exceptions.HTTPError:
             raise GitHubAPIError(f"HTTP error {response.status_code}: {response.text}")
         except requests.exceptions.RequestException as e:
             raise GitHubAPIError(f"Request failed: {str(e)}")
@@ -262,11 +279,11 @@ class ToolGitHub(BasePlugin):
         title: str,
         body: str,
         labels: Optional[List[str]] = None,
-        assignees: Optional[List[str]] = None
+        assignees: Optional[List[str]] = None,
     ) -> IssueResponse:
         """
         Creates a new GitHub issue.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
@@ -275,38 +292,30 @@ class ToolGitHub(BasePlugin):
             body: Issue description
             labels: Optional list of label names
             assignees: Optional list of GitHub usernames to assign
-            
+
         Returns:
             IssueResponse with created issue details
         """
         # Validate input
         try:
             request = CreateIssueRequest(
-                owner=owner,
-                repo=repo,
-                title=title,
-                body=body,
-                labels=labels,
-                assignees=assignees
+                owner=owner, repo=repo, title=title, body=body, labels=labels, assignees=assignees
             )
         except Exception as e:
             context.logger.error(f"Invalid create_issue parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Prepare request data
-        data = {
-            "title": request.title,
-            "body": request.body
-        }
+        data = {"title": request.title, "body": request.body}
         if request.labels:
             data["labels"] = request.labels
         if request.assignees:
             data["assignees"] = request.assignees
-        
+
         # Make API request
         context.logger.info(f"Creating issue in {owner}/{repo}: {title}")
         response = self._make_request("POST", f"repos/{owner}/{repo}/issues", data)
-        
+
         # Parse response
         return IssueResponse(
             number=response["number"],
@@ -317,7 +326,7 @@ class ToolGitHub(BasePlugin):
             created_at=response["created_at"],
             updated_at=response["updated_at"],
             labels=[label["name"] for label in response.get("labels", [])],
-            assignees=[user["login"] for user in response.get("assignees", [])]
+            assignees=[user["login"] for user in response.get("assignees", [])],
         )
 
     def list_issues(
@@ -329,11 +338,11 @@ class ToolGitHub(BasePlugin):
         labels: Optional[str] = None,
         sort: str = "created",
         direction: str = "desc",
-        per_page: int = 30
+        per_page: int = 30,
     ) -> List[IssueResponse]:
         """
         Lists issues from a GitHub repository.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
@@ -343,7 +352,7 @@ class ToolGitHub(BasePlugin):
             sort: Sort by: created, updated, comments
             direction: Sort direction: asc, desc
             per_page: Results per page (1-100)
-            
+
         Returns:
             List of IssueResponse objects
         """
@@ -356,45 +365,47 @@ class ToolGitHub(BasePlugin):
                 labels=labels,
                 sort=sort,
                 direction=direction,
-                per_page=per_page
+                per_page=per_page,
             )
         except Exception as e:
             context.logger.error(f"Invalid list_issues parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Prepare query parameters
         params = {
             "state": request.state,
             "sort": request.sort,
             "direction": request.direction,
-            "per_page": request.per_page
+            "per_page": request.per_page,
         }
         if request.labels:
             params["labels"] = request.labels
-        
+
         # Make API request
         context.logger.info(f"Listing issues from {owner}/{repo}")
         response = self._make_request("GET", f"repos/{owner}/{repo}/issues", params)
-        
+
         # Parse response
         issues = []
         for issue_data in response:
             # Skip pull requests (they appear in issues endpoint)
             if "pull_request" in issue_data:
                 continue
-                
-            issues.append(IssueResponse(
-                number=issue_data["number"],
-                title=issue_data["title"],
-                body=issue_data.get("body", ""),
-                state=issue_data["state"],
-                html_url=issue_data["html_url"],
-                created_at=issue_data["created_at"],
-                updated_at=issue_data["updated_at"],
-                labels=[label["name"] for label in issue_data.get("labels", [])],
-                assignees=[user["login"] for user in issue_data.get("assignees", [])]
-            ))
-        
+
+            issues.append(
+                IssueResponse(
+                    number=issue_data["number"],
+                    title=issue_data["title"],
+                    body=issue_data.get("body", ""),
+                    state=issue_data["state"],
+                    html_url=issue_data["html_url"],
+                    created_at=issue_data["created_at"],
+                    updated_at=issue_data["updated_at"],
+                    labels=[label["name"] for label in issue_data.get("labels", [])],
+                    assignees=[user["login"] for user in issue_data.get("assignees", [])],
+                )
+            )
+
         return issues
 
     def update_issue(
@@ -406,11 +417,11 @@ class ToolGitHub(BasePlugin):
         title: Optional[str] = None,
         body: Optional[str] = None,
         state: Optional[str] = None,
-        labels: Optional[List[str]] = None
+        labels: Optional[List[str]] = None,
     ) -> IssueResponse:
         """
         Updates an existing GitHub issue.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
@@ -420,7 +431,7 @@ class ToolGitHub(BasePlugin):
             body: New body (optional)
             state: New state: open or closed (optional)
             labels: New labels list (optional)
-            
+
         Returns:
             IssueResponse with updated issue details
         """
@@ -433,12 +444,12 @@ class ToolGitHub(BasePlugin):
                 title=title,
                 body=body,
                 state=state,
-                labels=labels
+                labels=labels,
             )
         except Exception as e:
             context.logger.error(f"Invalid update_issue parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Prepare request data (only include provided fields)
         data = {}
         if request.title:
@@ -449,11 +460,11 @@ class ToolGitHub(BasePlugin):
             data["state"] = request.state
         if request.labels is not None:
             data["labels"] = request.labels
-        
+
         # Make API request
         context.logger.info(f"Updating issue #{issue_number} in {owner}/{repo}")
         response = self._make_request("PATCH", f"repos/{owner}/{repo}/issues/{issue_number}", data)
-        
+
         # Parse response
         return IssueResponse(
             number=response["number"],
@@ -464,78 +475,64 @@ class ToolGitHub(BasePlugin):
             created_at=response["created_at"],
             updated_at=response["updated_at"],
             labels=[label["name"] for label in response.get("labels", [])],
-            assignees=[user["login"] for user in response.get("assignees", [])]
+            assignees=[user["login"] for user in response.get("assignees", [])],
         )
 
     def close_issue(
-        self,
-        context: SharedContext,
-        owner: str,
-        repo: str,
-        issue_number: int
+        self, context: SharedContext, owner: str, repo: str, issue_number: int
     ) -> IssueResponse:
         """
         Closes a GitHub issue.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
             repo: Repository name
             issue_number: Issue number to close
-            
+
         Returns:
             IssueResponse with closed issue details
         """
         return self.update_issue(context, owner, repo, issue_number, state="closed")
 
     def add_comment(
-        self,
-        context: SharedContext,
-        owner: str,
-        repo: str,
-        issue_number: int,
-        body: str
+        self, context: SharedContext, owner: str, repo: str, issue_number: int, body: str
     ) -> CommentResponse:
         """
         Adds a comment to a GitHub issue or pull request.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
             repo: Repository name
             issue_number: Issue/PR number
             body: Comment text
-            
+
         Returns:
             CommentResponse with created comment details
         """
         # Validate input
         try:
             request = AddCommentRequest(
-                owner=owner,
-                repo=repo,
-                issue_number=issue_number,
-                body=body
+                owner=owner, repo=repo, issue_number=issue_number, body=body
             )
         except Exception as e:
             context.logger.error(f"Invalid add_comment parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Make API request
         context.logger.info(f"Adding comment to #{issue_number} in {owner}/{repo}")
         response = self._make_request(
-            "POST",
-            f"repos/{owner}/{repo}/issues/{issue_number}/comments",
-            {"body": request.body}
+            "POST", f"repos/{owner}/{repo}/issues/{issue_number}/comments", {"body": request.body}
         )
-        
+
         # Parse response
         return CommentResponse(
             id=response["id"],
             body=response["body"],
             html_url=response["html_url"],
             created_at=response["created_at"],
-            updated_at=response["updated_at"]
+            updated_at=response["updated_at"],
         )
 
     def create_pull_request(
@@ -547,11 +544,11 @@ class ToolGitHub(BasePlugin):
         body: str,
         head: str,
         base: str = "master",
-        draft: bool = False
+        draft: bool = False,
     ) -> PullRequestResponse:
         """
         Creates a new pull request.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
@@ -561,38 +558,32 @@ class ToolGitHub(BasePlugin):
             head: Branch containing changes
             base: Branch to merge into (default: master)
             draft: Create as draft PR
-            
+
         Returns:
             PullRequestResponse with created PR details
         """
         # Validate input
         try:
             request = CreatePullRequestRequest(
-                owner=owner,
-                repo=repo,
-                title=title,
-                body=body,
-                head=head,
-                base=base,
-                draft=draft
+                owner=owner, repo=repo, title=title, body=body, head=head, base=base, draft=draft
             )
         except Exception as e:
             context.logger.error(f"Invalid create_pull_request parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Prepare request data
         data = {
             "title": request.title,
             "body": request.body,
             "head": request.head,
             "base": request.base,
-            "draft": request.draft
+            "draft": request.draft,
         }
-        
+
         # Make API request
         context.logger.info(f"Creating PR in {owner}/{repo}: {head} -> {base}")
         response = self._make_request("POST", f"repos/{owner}/{repo}/pulls", data)
-        
+
         # Parse response
         return PullRequestResponse(
             number=response["number"],
@@ -605,7 +596,7 @@ class ToolGitHub(BasePlugin):
             created_at=response["created_at"],
             updated_at=response["updated_at"],
             mergeable=response.get("mergeable"),
-            merged=response.get("merged", False)
+            merged=response.get("merged", False),
         )
 
     def merge_pull_request(
@@ -616,11 +607,11 @@ class ToolGitHub(BasePlugin):
         pull_number: int,
         commit_title: Optional[str] = None,
         commit_message: Optional[str] = None,
-        merge_method: str = "merge"
+        merge_method: str = "merge",
     ) -> Dict[str, Any]:
         """
         Merges a pull request.
-        
+
         Args:
             context: Shared context for the session
             owner: Repository owner
@@ -629,7 +620,7 @@ class ToolGitHub(BasePlugin):
             commit_title: Optional commit title
             commit_message: Optional commit message
             merge_method: Method: merge, squash, or rebase
-            
+
         Returns:
             Dict with merge result
         """
@@ -641,49 +632,49 @@ class ToolGitHub(BasePlugin):
                 pull_number=pull_number,
                 commit_title=commit_title,
                 commit_message=commit_message,
-                merge_method=merge_method
+                merge_method=merge_method,
             )
         except Exception as e:
             context.logger.error(f"Invalid merge_pull_request parameters: {e}")
             raise GitHubValidationError(f"Invalid parameters: {e}")
-        
+
         # Prepare request data
-        data = {
-            "merge_method": request.merge_method
-        }
+        data = {"merge_method": request.merge_method}
         if request.commit_title:
             data["commit_title"] = request.commit_title
         if request.commit_message:
             data["commit_message"] = request.commit_message
-        
+
         # Make API request
         context.logger.info(f"Merging PR #{pull_number} in {owner}/{repo}")
-        response = self._make_request("PUT", f"repos/{owner}/{repo}/pulls/{pull_number}/merge", data)
-        
+        response = self._make_request(
+            "PUT", f"repos/{owner}/{repo}/pulls/{pull_number}/merge", data
+        )
+
         return response
 
     async def execute(self, context: SharedContext, method_name: str, **kwargs) -> Any:
         """
         Executes a tool method dynamically.
-        
+
         Args:
             context: The shared context for the session
             method_name: Name of the method to execute
             **kwargs: Method arguments
-            
+
         Returns:
             Method execution result
         """
         if not hasattr(self, method_name):
             raise ValueError(f"Unknown method: {method_name}")
-        
+
         method = getattr(self, method_name)
         return method(context, **kwargs)
 
     def get_tool_definitions(self) -> List[dict]:
         """
         Returns the tool definitions for this plugin.
-        
+
         Returns:
             List of tool definition dictionaries
         """
@@ -697,8 +688,8 @@ class ToolGitHub(BasePlugin):
                     "title": "Issue title (string, required)",
                     "body": "Issue description (string, required)",
                     "labels": "List of label names (list of strings, optional)",
-                    "assignees": "List of GitHub usernames to assign (list of strings, optional)"
-                }
+                    "assignees": "List of GitHub usernames to assign (list of strings, optional)",
+                },
             },
             {
                 "name": "list_issues",
@@ -710,8 +701,8 @@ class ToolGitHub(BasePlugin):
                     "labels": "Comma-separated label names (string, optional)",
                     "sort": "Sort by: created, updated, comments (string, default: created)",
                     "direction": "Sort direction: asc, desc (string, default: desc)",
-                    "per_page": "Results per page, 1-100 (integer, default: 30)"
-                }
+                    "per_page": "Results per page, 1-100 (integer, default: 30)",
+                },
             },
             {
                 "name": "update_issue",
@@ -723,8 +714,8 @@ class ToolGitHub(BasePlugin):
                     "title": "New title (string, optional)",
                     "body": "New description (string, optional)",
                     "state": "New state: open or closed (string, optional)",
-                    "labels": "New labels list (list of strings, optional)"
-                }
+                    "labels": "New labels list (list of strings, optional)",
+                },
             },
             {
                 "name": "close_issue",
@@ -732,8 +723,8 @@ class ToolGitHub(BasePlugin):
                 "parameters": {
                     "owner": "Repository owner (string, required)",
                     "repo": "Repository name (string, required)",
-                    "issue_number": "Issue number to close (integer, required)"
-                }
+                    "issue_number": "Issue number to close (integer, required)",
+                },
             },
             {
                 "name": "add_comment",
@@ -742,8 +733,8 @@ class ToolGitHub(BasePlugin):
                     "owner": "Repository owner (string, required)",
                     "repo": "Repository name (string, required)",
                     "issue_number": "Issue or PR number (integer, required)",
-                    "body": "Comment text (string, required)"
-                }
+                    "body": "Comment text (string, required)",
+                },
             },
             {
                 "name": "create_pull_request",
@@ -755,8 +746,8 @@ class ToolGitHub(BasePlugin):
                     "body": "PR description (string, required)",
                     "head": "Branch containing changes (string, required)",
                     "base": "Branch to merge into (string, default: master)",
-                    "draft": "Create as draft PR (boolean, default: false)"
-                }
+                    "draft": "Create as draft PR (boolean, default: false)",
+                },
             },
             {
                 "name": "merge_pull_request",
@@ -767,7 +758,7 @@ class ToolGitHub(BasePlugin):
                     "pull_number": "PR number to merge (integer, required)",
                     "commit_title": "Commit title (string, optional)",
                     "commit_message": "Commit message (string, optional)",
-                    "merge_method": "Method: merge, squash, or rebase (string, default: merge)"
-                }
-            }
+                    "merge_method": "Method: merge, squash, or rebase (string, default: merge)",
+                },
+            },
         ]

@@ -153,7 +153,99 @@ The `SharedContext` is a data object passed between plugins. It allows them to s
 - `history`: The conversation history.
 - `payload`: A dictionary for plugins to store and retrieve data.
 
-### 5.3. Exposing Functions as Tools for the AI
+### 5.3. Dependency Injection Pattern
+
+**CRITICAL:** All plugins MUST follow the dependency injection pattern for configuration and cross-plugin dependencies.
+
+#### Why Dependency Injection?
+- **Testability:** Plugins can be easily tested with mock dependencies
+- **Maintainability:** No hardcoded dependencies or module-level state
+- **Flexibility:** Configuration and dependencies injected at runtime
+- **Consistency:** All plugins follow the same pattern
+
+#### The Pattern
+```python
+class MyPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__()
+        # ✅ CORRECT: Initialize to None, set in setup()
+        self.logger = None
+        self.other_plugin = None
+    
+    def setup(self, config: dict):
+        """
+        Setup method called by Kernel with injected dependencies.
+        
+        Args:
+            config: Dict with:
+                - "logger": Logger instance for this plugin
+                - "all_plugins": Dict of {plugin_name: plugin_instance}
+                - Plugin-specific config from settings.yaml
+        """
+        super().setup(config)
+        
+        # ✅ CORRECT: Get logger from config
+        self.logger = config.get("logger")
+        if not self.logger:
+            raise ValueError("Logger must be provided in config")
+        
+        # ✅ CORRECT: Get cross-plugin dependencies
+        all_plugins = config.get("all_plugins", {})
+        self.other_plugin = all_plugins.get("other_plugin_name")
+        
+        if not self.other_plugin:
+            self.logger.warning("other_plugin not available")
+        
+        # ✅ CORRECT: Get plugin-specific config
+        plugin_config = config.get(self.name, {})
+        self.api_key = plugin_config.get("api_key")
+```
+
+#### Common Mistakes to Avoid
+```python
+class BadPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__()
+        # ❌ WRONG: Don't call setup() in __init__
+        self.setup({})  
+        
+        # ❌ WRONG: Don't create logger at module level
+        self.logger = logging.getLogger(__name__)
+        
+    def setup(self, config: dict):
+        # ❌ WRONG: Old config format (deprecated)
+        plugins = config.get("plugins")  
+        
+        # ❌ WRONG: Don't use module-level logger
+        logger.info("Setting up...")
+```
+
+#### Testing with Dependency Injection
+```python
+def test_my_plugin():
+    import logging
+    
+    plugin = MyPlugin()
+    
+    # Mock dependencies
+    mock_other_plugin = Mock()
+    
+    # Inject via config
+    config = {
+        "logger": logging.getLogger("test"),
+        "all_plugins": {
+            "other_plugin_name": mock_other_plugin
+        }
+    }
+    
+    plugin.setup(config)
+    
+    # Now plugin is ready to test
+    assert plugin.logger is not None
+    assert plugin.other_plugin is mock_other_plugin
+```
+
+### 5.4. Exposing Functions as Tools for the AI
 Any plugin (regardless of its `PluginType`) can expose its methods to be callable by the AI. This is achieved through a "duck typing" convention. The Kernel will automatically discover any plugin that implements the `get_tool_definitions` method.
 
 To make a plugin's methods available as tools:
@@ -249,7 +341,66 @@ This section provides an overview of the available `TOOL` plugins that can be us
     -   `write_file(path: str, content: str) -> str`: Writes content to a file within the sandbox.
     -   `list_directory(path: str) -> List[str]`: Lists the contents of a directory within the sandbox.
 
-## 7. Submitting Changes
+### 7.2. Jules Integration - AI Coding Agent (`tool_jules`, `tool_jules_cli`, `cognitive_jules_autonomy`)
+
+**Overview:** Jules is Google's AI coding agent that runs in cloud VMs with its own compute, tokens, and Gemini 2.5 Pro access. Sophia uses a **Hybrid Strategy** combining Jules API and CLI for maximum capability.
+
+#### Jules API Tool (`tool_jules`)
+-   **Purpose:** Create and monitor Jules coding sessions via REST API
+-   **Configuration (`config/settings.yaml`):**
+    ```yaml
+    tool_jules:
+      jules_api_key: "${JULES_API_KEY}"  # From .env file
+    ```
+-   **Environment Setup:**
+    ```bash
+    echo "JULES_API_KEY=your-key-here" >> .env
+    ```
+-   **Methods:**
+    -   `create_session(prompt, source, branch)` - Start Jules coding task
+    -   `get_session(session_id)` - Check session status
+    -   `list_sessions()` - Get all active sessions
+
+#### Jules CLI Tool (`tool_jules_cli`)
+-   **Purpose:** Pull results and apply changes locally via Jules CLI
+-   **Installation:**
+    ```bash
+    npm install -g @google/jules
+    jules login
+    ```
+-   **Configuration:** No API key needed (uses `jules login` OAuth)
+-   **Methods:**
+    -   `pull_results(session_id, apply=True)` - Get and apply Jules changes
+    -   `list_sessions()` - List all sessions
+    -   `create_session(repo, task, parallel)` - Alternative CLI-based creation
+
+#### Jules Autonomy Plugin (`cognitive_jules_autonomy`)
+-   **Purpose:** High-level autonomous workflows combining API + CLI
+-   **Key Method:** `delegate_task(repo, task, auto_apply=True)`
+-   **What it does:**
+    1. Creates Jules session via API (`tool_jules`)
+    2. Monitors progress until COMPLETED
+    3. Automatically pulls and applies results via CLI (`tool_jules_cli`)
+-   **Example:**
+    ```python
+    # Sophie can delegate entire coding tasks with one command
+    result = await autonomy.delegate_task(
+        context,
+        repo="ShotyCZ/sophia",
+        task="Add unit tests for FileSystemTool",
+        auto_apply=True
+    )
+    # Jules creates tests, Sophie auto-applies changes ✨
+    ```
+
+#### Hybrid Strategy Benefits
+- **API** for session creation & monitoring (stable, typed responses)
+- **CLI** for pulling results (local git integration, file writing)
+- **Autonomy** for complete end-to-end workflows (one command)
+
+See **[`docs/JULES_HYBRID_STRATEGY.md`](../JULES_HYBRID_STRATEGY.md)** for complete implementation details.
+
+## 8. Submitting Changes
 
 1.  **Ensure all tests pass:** Run `PYTHONPATH=. .venv/bin/python -m pytest`.
 2.  **Ensure all quality checks pass:** Run `pre-commit run --all-files`.
@@ -296,4 +447,4 @@ PYTHONPATH=. .venv/bin/python -m pytest --cov=plugins --cov-report=html
 
 ---
 
-*Last Updated: November 3, 2025 | Status: ✅ Current | 27 Plugin Examples Available*
+*Last Updated: November 4, 2025 | Status: ✅ Current | 27 Plugin Examples | Jules Hybrid Strategy ✨*

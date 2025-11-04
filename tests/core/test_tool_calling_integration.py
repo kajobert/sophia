@@ -25,11 +25,19 @@ async def test_kernel_dynamic_replanning_on_failure():
 
     # --- Plan Definitions ---
     initial_failing_plan = [
-        {"tool_name": "failing_tool", "method_name": "doomed_to_fail", "arguments": {"arg": "value"}},
+        {
+            "tool_name": "failing_tool",
+            "method_name": "doomed_to_fail",
+            "arguments": {"arg": "value"},
+        },
         {"tool_name": "successful_tool", "method_name": "should_not_be_called", "arguments": {}},
     ]
     corrected_successful_plan = [
-        {"tool_name": "successful_tool", "method_name": "run_successfully", "arguments": {"arg": "corrected"}},
+        {
+            "tool_name": "successful_tool",
+            "method_name": "run_successfully",
+            "arguments": {"arg": "corrected"},
+        },
     ]
 
     # --- Mock Behaviors ---
@@ -45,18 +53,34 @@ async def test_kernel_dynamic_replanning_on_failure():
     failing_method = AsyncMock(side_effect=ValueError("This was designed to fail"))
     mock_failing_tool.name = "failing_tool"
     mock_failing_tool.doomed_to_fail = failing_method
-    mock_failing_tool.get_tool_definitions.return_value = [{"function": {"name": "doomed_to_fail", "parameters": {"properties": {"arg": {"type": "string"}}}}}]
+    mock_failing_tool.get_tool_definitions.return_value = [
+        {
+            "function": {
+                "name": "doomed_to_fail",
+                "parameters": {"properties": {"arg": {"type": "string"}}},
+            }
+        }
+    ]
 
     # Use an event to signal when the final, successful method has been called.
     final_step_executed_event = asyncio.Event()
+
     async def successful_method_side_effect(*args, **kwargs):
         final_step_executed_event.set()
         return "Success"
+
     successful_method = AsyncMock(side_effect=successful_method_side_effect)
 
     mock_successful_tool.name = "successful_tool"
     mock_successful_tool.run_successfully = successful_method
-    mock_successful_tool.get_tool_definitions.return_value = [{"function": {"name": "run_successfully", "parameters": {"properties": {"arg": {"type": "string"}}}}}]
+    mock_successful_tool.get_tool_definitions.return_value = [
+        {
+            "function": {
+                "name": "run_successfully",
+                "parameters": {"properties": {"arg": {"type": "string"}}},
+            }
+        }
+    ]
 
     # --- Test Setup ---
     with patch("core.kernel.PluginManager") as mock_plugin_manager_constructor:
@@ -72,6 +96,7 @@ async def test_kernel_dynamic_replanning_on_failure():
             if plugin_type == PluginType.INTERFACE:
                 return [mock_terminal]
             return []
+
         mock_plugin_manager.get_plugins_by_type.side_effect = get_plugins_by_type_side_effect
 
         kernel = Kernel()
@@ -89,11 +114,15 @@ async def test_kernel_dynamic_replanning_on_failure():
         try:
             await asyncio.wait_for(final_step_executed_event.wait(), timeout=5.0)
         except asyncio.TimeoutError:
-            pytest.fail("The test timed out, indicating the replanning cycle did not complete as expected.")
+            pytest.fail(
+                "The test timed out, indicating the replanning cycle did not complete as expected."
+            )
 
         # --- Assertions ---
         # 1. Assert that the planner was called twice.
-        assert mock_planner.execute.call_count == 2, "Planner should be called once for the initial plan, and a second time after failure."
+        assert (
+            mock_planner.execute.call_count == 2
+        ), "Planner should be called once for the initial plan, and a second time after failure."
 
         # 2. Assert that the failing tool's method was attempted.
         failing_method.assert_awaited_once()
@@ -102,7 +131,9 @@ async def test_kernel_dynamic_replanning_on_failure():
         successful_method.assert_awaited_once()
 
         # 4. Assert that the second step of the initial failing plan was never attempted.
-        assert mock_successful_tool.should_not_be_called.call_count == 0, "The second step of a failing plan should be discarded."
+        assert (
+            mock_successful_tool.should_not_be_called.call_count == 0
+        ), "The second step of a failing plan should be discarded."
 
         logger.info("Test successful: Kernel correctly initiated replanning.")
 

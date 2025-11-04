@@ -3,7 +3,6 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict
 
 from core.context import SharedContext
 from plugins.base_plugin import BasePlugin, PluginType
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 class CodeWorkspaceTool(BasePlugin):
     """
     A tool plugin for reading code and documentation from the project workspace.
-    
+
     This plugin allows read-only access to specific workspace directories
     like plugins/, docs/, config/ for code analysis and learning purposes.
     Write operations are still restricted to the sandbox.
@@ -51,9 +50,9 @@ class CodeWorkspaceTool(BasePlugin):
         # Default to current directory
         self.project_root = Path.cwd().resolve()
         logger.info(
-            "Code workspace tool initialized. Project root: '%s'", 
+            "Code workspace tool initialized. Project root: '%s'",
             self.project_root,
-            extra={"plugin_name": self.name}
+            extra={"plugin_name": self.name},
         )
 
     async def execute(self, context: SharedContext) -> SharedContext:
@@ -66,10 +65,10 @@ class CodeWorkspaceTool(BasePlugin):
     def _is_allowed_path(self, user_path: str) -> bool:
         """
         Check if the path is in an allowed directory.
-        
+
         Args:
             user_path: The path to check
-            
+
         Returns:
             True if path is allowed for reading
         """
@@ -99,7 +98,7 @@ class CodeWorkspaceTool(BasePlugin):
 
         # Normalize the path
         path = Path(user_path)
-        
+
         # Check if it's allowed
         if not self._is_allowed_path(str(path)):
             raise PermissionError(
@@ -131,11 +130,8 @@ class CodeWorkspaceTool(BasePlugin):
             NotADirectoryError: If the path is not a directory
         """
         safe_path = self._get_safe_path(path)
-        context.logger.info(
-            "Listing directory: %s", safe_path,
-            extra={"plugin_name": self.name}
-        )
-        
+        context.logger.info("Listing directory: %s", safe_path, extra={"plugin_name": self.name})
+
         if not safe_path.is_dir():
             raise NotADirectoryError(f"Path is not a directory: {safe_path}")
 
@@ -158,11 +154,8 @@ class CodeWorkspaceTool(BasePlugin):
             FileNotFoundError: If the file doesn't exist
         """
         safe_path = self._get_safe_path(path)
-        context.logger.info(
-            "Reading file: %s", safe_path,
-            extra={"plugin_name": self.name}
-        )
-        
+        context.logger.info("Reading file: %s", safe_path, extra={"plugin_name": self.name})
+
         if not safe_path.is_file():
             raise FileNotFoundError(f"File not found: {safe_path}")
 

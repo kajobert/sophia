@@ -135,6 +135,98 @@ Všechny pluginy musí dědit z `plugins.base_plugin.BasePlugin` a implementovat
 - `history`: Historie konverzace.
 - `payload`: Slovník, do kterého mohou pluginy ukládat a načítat data.
 
+### 5.3. Vzor Dependency Injection (Vkládání Závislostí)
+
+**KRITICKÉ:** Všechny pluginy MUSÍ dodržovat vzor dependency injection pro konfiguraci a mezipluginové závislosti.
+
+#### Proč Dependency Injection?
+- **Testovatelnost:** Pluginy lze snadno testovat s mock závislostmi
+- **Udržovatelnost:** Žádné natvrdo kódované závislosti nebo stav na úrovni modulu
+- **Flexibilita:** Konfigurace a závislosti vkládány za běhu
+- **Konzistence:** Všechny pluginy následují stejný vzor
+
+#### Vzor
+```python
+class MyPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__()
+        # ✅ SPRÁVNĚ: Inicializace na None, nastavení v setup()
+        self.logger = None
+        self.other_plugin = None
+    
+    def setup(self, config: dict):
+        """
+        Setup metoda volaná Kernelem s vloženými závislostmi.
+        
+        Args:
+            config: Dict obsahující:
+                - "logger": Logger instance pro tento plugin
+                - "all_plugins": Dict {plugin_name: plugin_instance}
+                - Plugin-specifická konfigurace ze settings.yaml
+        """
+        super().setup(config)
+        
+        # ✅ SPRÁVNĚ: Získání loggeru z configu
+        self.logger = config.get("logger")
+        if not self.logger:
+            raise ValueError("Logger musí být poskytnut v configu")
+        
+        # ✅ SPRÁVNĚ: Získání mezipluginových závislostí
+        all_plugins = config.get("all_plugins", {})
+        self.other_plugin = all_plugins.get("other_plugin_name")
+        
+        if not self.other_plugin:
+            self.logger.warning("other_plugin není dostupný")
+        
+        # ✅ SPRÁVNĚ: Získání plugin-specifické konfigurace
+        plugin_config = config.get(self.name, {})
+        self.api_key = plugin_config.get("api_key")
+```
+
+#### Časté chyby, kterým se vyhnout
+```python
+class BadPlugin(BasePlugin):
+    def __init__(self):
+        super().__init__()
+        # ❌ ŠPATNĚ: Nevolejte setup() v __init__
+        self.setup({})  
+        
+        # ❌ ŠPATNĚ: Nevytvářejte logger na úrovni modulu
+        self.logger = logging.getLogger(__name__)
+        
+    def setup(self, config: dict):
+        # ❌ ŠPATNĚ: Starý formát configu (deprecated)
+        plugins = config.get("plugins")  
+        
+        # ❌ ŠPATNĚ: Nepoužívejte logger na úrovni modulu
+        logger.info("Nastavuji...")
+```
+
+#### Testování s Dependency Injection
+```python
+def test_my_plugin():
+    import logging
+    
+    plugin = MyPlugin()
+    
+    # Mock závislosti
+    mock_other_plugin = Mock()
+    
+    # Vložení přes config
+    config = {
+        "logger": logging.getLogger("test"),
+        "all_plugins": {
+            "other_plugin_name": mock_other_plugin
+        }
+    }
+    
+    plugin.setup(config)
+    
+    # Nyní je plugin připraven k testování
+    assert plugin.logger is not None
+    assert plugin.other_plugin is mock_other_plugin
+```
+
 ## 6. Kognitivní Pluginy (Cognitive Plugins)
 
 Kognitivní pluginy jsou "mozkem" agenta, zodpovědné za interpretaci uživatelských požadavků a rozhodování.
@@ -188,6 +280,65 @@ Tato sekce poskytuje přehled dostupných `TOOL` pluginů, které mohou kognitiv
     -   `read_file(path: str) -> str`: Čte obsah souboru v sandboxu.
     -   `write_file(path: str, content: str) -> str`: Zapisuje obsah do souboru v sandboxu.
     -   `list_directory(path: str) -> List[str]`: Vypíše obsah adresáře v sandboxu.
+
+### 7.2. Jules Integrace - AI Kódovací Agent (`tool_jules`, `tool_jules_cli`, `cognitive_jules_autonomy`)
+
+**Přehled:** Jules je AI kódovací agent od Google, který běží v cloudových VM s vlastním výpočetním výkonem, tokeny a přístupem ke Gemini 2.5 Pro. Sophia používá **Hybridní Strategii** kombinující Jules API a CLI pro maximální schopnosti.
+
+#### Jules API Tool (`tool_jules`)
+-   **Účel:** Vytváření a monitorování Jules kódovacích sessions přes REST API
+-   **Konfigurace (`config/settings.yaml`):**
+    ```yaml
+    tool_jules:
+      jules_api_key: "${JULES_API_KEY}"  # Z .env souboru
+    ```
+-   **Nastavení prostředí:**
+    ```bash
+    echo "JULES_API_KEY=váš-klíč-zde" >> .env
+    ```
+-   **Metody:**
+    -   `create_session(prompt, source, branch)` - Spustit Jules kódovací úlohu
+    -   `get_session(session_id)` - Zkontrolovat stav session
+    -   `list_sessions()` - Získat všechny aktivní sessions
+
+#### Jules CLI Tool (`tool_jules_cli`)
+-   **Účel:** Stahování výsledků a aplikace změn lokálně přes Jules CLI
+-   **Instalace:**
+    ```bash
+    npm install -g @google/jules
+    jules login
+    ```
+-   **Konfigurace:** Není potřeba API klíč (používá `jules login` OAuth)
+-   **Metody:**
+    -   `pull_results(session_id, apply=True)` - Získat a aplikovat Jules změny
+    -   `list_sessions()` - Vypsat všechny sessions
+    -   `create_session(repo, task, parallel)` - Alternativní CLI-based vytvoření
+
+#### Jules Autonomy Plugin (`cognitive_jules_autonomy`)
+-   **Účel:** High-level autonomní workflows kombinující API + CLI
+-   **Klíčová metoda:** `delegate_task(repo, task, auto_apply=True)`
+-   **Co dělá:**
+    1. Vytvoří Jules session přes API (`tool_jules`)
+    2. Monitoruje pokrok dokud není COMPLETED
+    3. Automaticky stáhne a aplikuje výsledky přes CLI (`tool_jules_cli`)
+-   **Příklad:**
+    ```python
+    # Sophie může delegovat celé kódovací úlohy jedním příkazem
+    result = await autonomy.delegate_task(
+        context,
+        repo="ShotyCZ/sophia",
+        task="Přidat unit testy pro FileSystemTool",
+        auto_apply=True
+    )
+    # Jules vytvoří testy, Sophie auto-aplikuje změny ✨
+    ```
+
+#### Výhody Hybridní Strategie
+- **API** pro vytváření sessions & monitorování (stabilní, typované odpovědi)
+- **CLI** pro stahování výsledků (lokální git integrace, zápis souborů)
+- **Autonomy** pro kompletní end-to-end workflows (jeden příkaz)
+
+Viz **[`docs/JULES_HYBRID_STRATEGY.md`](../JULES_HYBRID_STRATEGY.md)** pro kompletní implementační detaily.
 
 ### 5.3. Zpřístupnění funkcí jako nástrojů pro AI
 Jakýkoli plugin (bez ohledu na jeho `PluginType`) může zpřístupnit své metody, aby je AI mohla volat. Toho je dosaženo pomocí konvence "duck typing". Kernel automaticky objeví jakýkoli plugin, který implementuje metodu `get_tool_definitions`.

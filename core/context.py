@@ -22,10 +22,10 @@ class SharedContext:
     user_input: Optional[str] = None
     history: List[Dict[str, str]] = field(default_factory=list)
     payload: Dict[str, Any] = field(default_factory=dict)
-    
+
     # NEW: Event-driven components (optional for backwards compatibility)
     event_bus: Optional["EventBus"] = None
     task_queue: Optional["TaskQueue"] = None
-    
+
     # Feature flag to enable new architecture
     use_event_driven: bool = False

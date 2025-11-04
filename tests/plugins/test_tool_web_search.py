@@ -4,14 +4,14 @@ from plugins.tool_web_search import WebSearchTool
 from unittest.mock import patch, MagicMock
 from core.context import SharedContext
 
+
 @pytest.fixture
 def mock_context():
     context = SharedContext(
-        session_id="test_session",
-        current_state="TESTING",
-        logger=MagicMock(spec=logging.Logger)
+        session_id="test_session", current_state="TESTING", logger=MagicMock(spec=logging.Logger)
     )
     return context
+
 
 @pytest.fixture
 def web_search_tool():
@@ -64,4 +64,6 @@ def test_web_search_api_error(web_search_tool, mock_context):
     results = web_search_tool.search(context=mock_context, query="test query")
     assert len(results) == 1
     assert "API Error" in results[0].get("error", "")
-    mock_context.logger.error.assert_called_with("An error occurred during web search: API Error", exc_info=True)
+    mock_context.logger.error.assert_called_with(
+        "An error occurred during web search: API Error", exc_info=True
+    )
