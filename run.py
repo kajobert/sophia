@@ -129,4 +129,11 @@ async def main():
 
 
 if __name__ == "__main__":
+    # Suppress warnings for clean UI
+    import warnings
+    warnings.filterwarnings("ignore")
+    
+    # Suppress langfuse startup messages
+    os.environ["LANGFUSE_ENABLED"] = "false"
+    
     asyncio.run(main())
