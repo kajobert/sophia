@@ -70,6 +70,9 @@ Our strategic plan is divided into four key phases. Each phase builds upon the l
 *   **[Phase 3: Self-Analysis Framework](./roadmap/03_SELF_ANALYSIS_FRAMEWORK.md):** Enable Sophia to read and understand her own code and documentation.
 *   **[Phase 4: Autonomous Operations](./roadmap/04_AUTONOMOUS_OPERATIONS.md):** Achieve the final goal of self-managed development and evolution.
 
+> For a complete, task-oriented breakdown of the project, see the full technical roadmap:
+> **[🗺️ Detailed Implementation Roadmap](./02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md)**
+
 ## 🤝 How to Contribute
 
 We welcome contributions from everyone. Before you start, please carefully study our **Development Guidelines**. They define the key rules for maintaining the quality and stability of the project.
