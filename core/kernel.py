@@ -1,10 +1,11 @@
 import asyncio
 import json
 import logging
+import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import yaml
 from pydantic import ValidationError
@@ -16,6 +17,44 @@ from plugins.base_plugin import PluginType
 
 # Get the root logger
 logger = logging.getLogger(__name__)
+
+
+async def _load_scifi_interface(kernel, ui_style: str):
+    """Load sci-fi terminal interface plugin and REMOVE classic terminal."""
+    try:
+        if ui_style == "matrix":
+            from plugins.interface_terminal_matrix import InterfaceTerminalMatrix
+
+            interface = InterfaceTerminalMatrix()
+            print("🟢 Loading Matrix interface... 'Follow the white rabbit!' 🐰")
+        elif ui_style == "startrek":
+            from plugins.interface_terminal_startrek import InterfaceTerminalStarTrek
+
+            interface = InterfaceTerminalStarTrek()
+            print("🟡 Loading Star Trek LCARS interface... 'Make it so!' 🖖")
+        elif ui_style == "cyberpunk":
+            from plugins.interface_terminal_scifi import InterfaceTerminalSciFi
+
+            interface = InterfaceTerminalSciFi()
+            print("🌈 Loading Cyberpunk interface... Maximum WOW! ⚡")
+        else:
+            return None  # Classic mode, use default
+
+        # CRITICAL: Remove ALL existing interface plugins first!
+        kernel.plugin_manager._plugins[PluginType.INTERFACE] = []
+
+        # Register ONLY our sci-fi interface (setup already called by kernel)
+        kernel.plugin_manager._plugins[PluginType.INTERFACE].append(interface)
+        kernel.all_plugins_map[interface.name] = interface
+
+        print(f"✅ {interface.name} ready!\n")
+
+        return interface  # Return interface for logging hookup
+
+    except Exception as e:
+        print(f"⚠️  Warning: Could not load {ui_style} interface: {e}")
+        print("   Falling back to classic terminal...")
+        return None
 
 
 class Kernel:
@@ -42,7 +81,7 @@ class Kernel:
         self.use_event_driven = use_event_driven
         self.event_bus = None
         self.task_queue = None
-        
+
         # NEW: Offline mode (Phase 1 - Offline Dreaming)
         self.offline_mode = offline_mode
 
@@ -173,6 +212,39 @@ class Kernel:
                     f"Phase 3 partial: scheduler={bool(sleep_scheduler)}, consolidator={bool(consolidator)}",
                     extra={"plugin_name": "Kernel"},
                 )
+
+        # --- UI CONFIGURATION PHASE ---
+        # Determine UI style from environment variables
+        ui_style = os.getenv("SOPHIA_UI_STYLE", "cyberpunk")  # Default to cyberpunk as requested
+        webui_enabled = os.getenv("SOPHIA_WEBUI_ENABLED", "true").lower() == "true"
+
+        # Print UI style
+        ui_icons = {
+            "matrix": "🟢 MATRIX",
+            "startrek": "🟡 STAR TREK LCARS",
+            "cyberpunk": "🌈 CYBERPUNK",
+            "classic": "⚪ CLASSIC",
+        }
+        print(f"🎨 UI Style: {ui_icons.get(ui_style, ui_style.upper())}")
+
+        # Disable WebUI if SOPHIA_WEBUI_ENABLED is false
+        if not webui_enabled:
+            self.plugin_manager._plugins[PluginType.INTERFACE] = [
+                p
+                for p in self.plugin_manager._plugins[PluginType.INTERFACE]
+                if p.name != "interface_webui"
+            ]
+            print("🚫 Web UI disabled via environment variable.")
+        # Load sci-fi interface if requested
+        elif ui_style != "classic":
+            scifi_interface = await _load_scifi_interface(self, ui_style)
+
+            # Install sci-fi logging handler
+            if scifi_interface:
+                from core.scifi_logging import install_scifi_logging
+
+                install_scifi_logging(scifi_interface)
+                print(f"✨ Sci-fi logging enabled - all output now in {ui_style.upper()} style!")
 
     async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
@@ -364,7 +436,7 @@ class Kernel:
                     # 3. EXECUTING PHASE
                     context.current_state = "EXECUTING"
                     execution_summary = ""
-                    
+
                     # Select LLM tool based on offline mode
                     if self.offline_mode:
                         # Force local LLM only (no cloud fallback)
@@ -863,6 +935,30 @@ class Kernel:
         # NEW: Graceful shutdown of event-driven components
         await self._shutdown_event_system(context, session_id)
 
+    def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
+        """Generate user-facing response from execution result."""
+        if execution_result.get("success"):
+            return execution_result.get("output", "Task completed successfully.")
+        else:
+            return f"Error: {execution_result.get('error', 'Unknown error')}"
+
+    def start(self):
+        """Starts the main consciousness loop."""
+        try:
+            asyncio.run(self.consciousness_loop())
+        except KeyboardInterrupt:
+            logger.info(
+                "Application terminated by user (Ctrl+C).",
+                extra={"plugin_name": "Kernel"},
+            )
+
+    async def run_autonomous_mode(self):
+        """
+        Starts the main, non-terminating event loop for 24/7 operation.
+        This is the primary entry point for autonomous mode.
+        """
+        await self.consciousness_loop()
+
     async def _shutdown_event_system(self, context: SharedContext, session_id: str):
         """
         Gracefully shutdown event-driven components.
@@ -959,7 +1055,7 @@ class Kernel:
 
         if plan:
             logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
-            
+
             # Select LLM tool based on offline mode
             if self.offline_mode:
                 # Force local LLM only (no cloud fallback)
@@ -975,7 +1071,7 @@ class Kernel:
                 # TODO: Enable local LLM preference after benchmarking
                 llm_tool = self.all_plugins_map.get("tool_llm")
                 logger.debug("☁️ ONLINE MODE: Using cloud LLM")
-            
+
             if llm_tool:
                 try:
                     logger.info("🎯 [Kernel] Calling LLM tool...")
@@ -1005,20 +1101,3 @@ class Kernel:
         logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
         logger.info(f"🎯 [Kernel] Response ready: {response[:100]}...")
         return response
-
-    def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
-        """Generate user-facing response from execution result."""
-        if execution_result.get("success"):
-            return execution_result.get("output", "Task completed successfully.")
-        else:
-            return f"Error: {execution_result.get('error', 'Unknown error')}"
-
-    def start(self):
-        """Starts the main consciousness loop."""
-        try:
-            asyncio.run(self.consciousness_loop())
-        except KeyboardInterrupt:
-            logger.info(
-                "Application terminated by user (Ctrl+C).",
-                extra={"plugin_name": "Kernel"},
-            )
