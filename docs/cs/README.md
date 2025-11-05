@@ -41,7 +41,7 @@ Srdcem projektu je robustní a bezpečný design, který chrání stabilitu a z�
 </p>
 
 > Pro detailní technický popis navštivte dokumentaci architektury:
-> **[🏗️ 03_TECHNICAL_ARCHITECTURE.md](03_TECHNICAL_ARCHITECTURE.md)**
+> **[🏗️ 03_TECHNICKA_ARCHITEKTURA.md](03_TECHNICKA_ARCHITEKTURA.md)**
 
 ## 🚀 Začínáme
 
@@ -49,92 +49,17 @@ Chcete-li začít se Sophií, postupujte podle naší podrobné **Uživatelské 
 
 *   **[➡️ Uživatelská příručka](./06_UZIVATELSKA_PRIRUCKA.md)**
 
----
-
-## ⭐ AKTUÁLNĚ: Sophia 2.0 - Autonomous MVP
-
-**Datum:** 3. listopadu 2025  
-**Status:** Analýza hotova, čeká na schválení implementace
-
-### 🎯 Co je nového?
-
-Provedli jsme **kompletní audit** projektu Sophia a vytvořili roadmapu pro plně autonomní operaci.
-
-**Klíčové dokumenty:**
-1. **📋 Stručný Přehled** - [`SOPHIA_2.0_PREHLED.md`](SOPHIA_2.0_PREHLED.md)
-   - Co funguje, co chybí
-   - 6-fázová roadmapa (20-25 dní práce)
-   - Top 5 kritických otázek
-   - **ZAČNI TADY!** 👈
-
-2. **❓ Kritické Otázky** - [`../en/CRITICAL_QUESTIONS.md`](../en/CRITICAL_QUESTIONS.md)
-   - 18 otázek, které blokují implementaci
-   - Bezpečnost, autonomie, paměť, osobnost
-   - **ODPOVĚZ PRO POKRAČOVÁNÍ** 👈
-
-3. **📋 Kompletní Roadmapa** - [`../en/AUTONOMOUS_MVP_ROADMAP.md`](../en/AUTONOMOUS_MVP_ROADMAP.md)
-   - Detailní plán 6 fází
-   - Success criteria & timeline
-   - Plugin specs
-
-4. **🔍 Gap Analýza** - [`../en/DOCUMENTATION_GAP_ANALYSIS.md`](../en/DOCUMENTATION_GAP_ANALYSIS.md)
-   - Konflikty v dokumentaci
-   - Chybějící specs
-   - Technical debt
-
-### 🎯 Cíl: Plně Autonomní Sophia
-
-**Po implementaci bude Sophia schopná:**
-- ✅ Běžet nepřetržitě jako daemon proces
-- ✅ Asynchronně komunikovat s uživatelem (chat při práci)
-- ✅ Spravovat více úkolů současně
-- ✅ Automaticky implementovat nápady z `roberts-notes.txt`
-- ✅ Inteligentně konsolidovat paměť ("snění")
-- ✅ Vyvíjet vlastní personalitu
-- ✅ Přežít crash a automaticky se obnovit
-
-**Timeline:** 3-4 týdny implementace po schválení
-
-### 📊 Současný Stav
-
-**✅ Hotovo (100%):**
-- Roadmap Phase 1-3: MVP, Tools, Self-Analysis
-- 27 funkčních pluginů
-- Cost optimization & benchmarking
-- Jules hybrid integration (API + CLI)
-
-**⚠️ Částečně (60%):**
-- Roadmap Phase 4: Autonomous Operations
-- Chybí: Continuous loop, orchestrace, memory consolidation
-
-**❌ Chybí (Pro plnou autonomii):**
-- Event-driven non-blocking loop
-- Task queue & scheduler
-- Background process manager
-- Memory consolidation ("dreaming")
-- Autonomous self-improvement
-- State persistence (crash recovery)
-
-### 🚦 Next Steps
-
-1. **Tvůrce:** Přečti [`SOPHIA_2.0_PREHLED.md`](SOPHIA_2.0_PREHLED.md)
-2. **Tvůrce:** Odpověz na [`CRITICAL_QUESTIONS.md`](../en/CRITICAL_QUESTIONS.md)
-3. **Agent:** Vytvoří design specs (3 dny)
-4. **Agent:** Začne implementaci Phase 1 (5 dní)
-
----
-
 ## 📚 Projektová dokumentace
 
 Veškeré znalosti o tomto projektu jsou uloženy v adresáři `docs/`. Je to nejdůležitější zdroj informací pro lidské i AI vývojáře.
 
 *   **[Uživatelská příručka](./06_UZIVATELSKA_PRIRUCKA.md):** Jak spustit aplikaci.
-*   **[Příručka pro vývojáře](./07_PRIRUCKA_PRO_VYVOJARE.md):** Jak přispívat do projektu.
+*   **[Příručka pro vývojáře](./07_DEVELOPER_GUIDE.md):** Jak přispívat do projektu.
 *   **[Přehled projektu](./08_PREHLED_PROJEKTU.md):** Celková architektura, tok dat a roadmapa.
 *   **[Vize a DNA](./01_VISION_AND_DNA.md):** Klíčová filozofie projektu.
 *   **[Kognitivní architektura](./02_COGNITIVE_ARCHITECTURE.md):** Koncepční model AI.
-*   **[Technická architektura](./03_TECHNICAL_ARCHITECTURE.md):** Návrh a struktura softwaru.
-*   **[Pokyny pro vývoj](./04_POKYNY_PRO_VYVOJ.md):** Pravidla a standardy pro vývoj.
+*   **[Technická architektura](./03_TECHNICKA_ARCHITEKTURA.md):** Návrh a struktura softwaru.
+*   **[Pokyny pro vývoj](./04_DEVELOPMENT_GUIDELINES.md):** Pravidla a standardy pro vývoj.
 
 ### 🗺️ Roadmapa
 
@@ -144,6 +69,9 @@ Náš strategický plán je rozdělen do čtyř klíčových fází. Každá fá
 *   **[Fáze 2: Integrace Nástrojů](./roadmap/02_TOOL_INTEGRATION.md):** Vybavit Sophii nástroji pro interakci s jejím prostředím (Git, souborový systém, web).
 *   **[Fáze 3: Rámec pro Sebe-Analýzu](./roadmap/03_SELF_ANALYSIS_FRAMEWORK.md):** Umožnit Sophii číst a chápat svůj vlastní kód a dokumentaci.
 *   **[Fáze 4: Autonomní Operace](./roadmap/04_AUTONOMOUS_OPERATIONS.md):** Dosáhnout konečného cíle samostatně řízeného vývoje a evoluce.
+
+> Pro kompletní, úkolově orientovaný rozpis projektu, navštivte plnou technickou roadmapu:
+> **[🗺️ Detailní Plán Implementace](./02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md)**
 
 ## 🤝 Jak Přispívat
 

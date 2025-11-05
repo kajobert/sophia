@@ -203,8 +203,8 @@ See: [Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md) | [Cognitive
 | **Phase 3** | Self-Analysis Framework | ✅ Complete | 100% |
 | **Phase 4** | Autonomous Operations | 🟡 In Progress | 60% |
 
-**Sophia 2.0 Implementation:** 20-25 day roadmap for full autonomy  
-See: [Autonomous MVP Roadmap](docs/en/AUTONOMOUS_MVP_ROADMAP.md) | [Implementation Plan](docs/en/IMPLEMENTATION_ACTION_PLAN.md)
+**Sophia 2.0 Implementation:** 20-25 day roadmap for full autonomy
+See: [Detailed Implementation Roadmap (EN)](docs/en/02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md) | [Detailní Plán Implementace (CS)](docs/cs/02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md)
 
 ---
 
