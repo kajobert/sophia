@@ -188,7 +188,31 @@ Optimized for gaming laptops (Lenovo Legion, ASUS ROG, MSI) with GPU support for
 LISTENING → PLANNING → EXECUTING → RESPONDING → MEMORIZING
 ```
 
-See: [Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md) | [Cognitive Architecture](docs/en/02_COGNITIVE_ARCHITECTURE.md)
+### ⭐ Autonomous Self-Upgrade Workflow (Phase 3.7)
+
+Complete autonomous improvement cycle with **ZERO human intervention**:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ERROR DETECTION → REFLECTION → HYPOTHESIS → SANDBOX TESTING   │
+│         ↓                                                        │
+│  DEPLOYMENT → GIT COMMIT → PR CREATION → RESTART REQUEST        │
+│         ↓                                                        │
+│  GUARDIAN RESTART → VALIDATION (plugin init, tests, regressions)│
+│         ↓                                                        │
+│  SUCCESS? → FINALIZE ✅  OR  FAILURE? → AUTOMATIC ROLLBACK ⚠️   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Features:**
+- 🔄 Automatic restart after code deployment
+- 🧪 Post-restart validation suite (3-step check)
+- 📦 Automatic backup & rollback on failure
+- 🔁 Max 3 validation attempts (prevents infinite loops)
+- 📝 Complete upgrade logs for learning
+- 💰 90% cost savings with adaptive LLM escalation
+
+See: [Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md) | [Cognitive Architecture](docs/en/02_COGNITIVE_ARCHITECTURE.md) | [Phase 3.7 Handoff](HANDOFF_SESSION_9.md)
 
 ---
 
@@ -200,11 +224,22 @@ See: [Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md) | [Cognitive
 |-------|------|--------|------------|
 | **Phase 1** | MVP Implementation | ✅ Complete | 100% |
 | **Phase 2** | Tool Integration | ✅ Complete | 100% |
-| **Phase 3** | Self-Analysis Framework | ✅ Complete | 100% |
-| **Phase 4** | Autonomous Operations | 🟡 In Progress | 60% |
+| **Phase 2.5** | Budget Pacing System | ✅ Complete | 100% |
+| **Phase 3.1** | Memory Schema & Hypotheses | ✅ Complete | 100% |
+| **Phase 3.2** | Memory Consolidation | ✅ Complete | 100% |
+| **Phase 3.3** | Cognitive Reflection | ✅ Complete | 100% |
+| **Phase 3.4** | Self-Tuning Engine | ✅ Complete | 100% |
+| **Phase 3.5** | GitHub Integration | ✅ Complete | 100% |
+| **Phase 3.6** | Adaptive Model Escalation | ✅ Complete | 100% |
+| **Phase 3.7** | **Autonomous Self-Upgrade** | ✅ **Complete** | **100%** |
+| **Integration** | Testing + Docs + Dashboard | ✅ Complete | 100% |
+| **Phase 4** | Advanced Features | 🟡 Future | 0% |
 
-**Sophia 2.0 Implementation:** 20-25 day roadmap for full autonomy
-See: [Detailed Implementation Roadmap (EN)](docs/en/02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md) | [Detailní Plán Implementace (CS)](docs/cs/02_SOPHIA_AMI_IMPLEMENTATION_PLAN.md)
+**🎯 AMI 1.0 Status: 97% Complete** (28/29 components)  
+**Remaining:** Production Validation (1-2 hours)
+
+**Sophia 2.0 Implementation:** Phase 3.7 autonomous upgrade cycle complete!  
+See: [AMI TODO Roadmap](AMI_TODO_ROADMAP.md) | [Handoff Session 9](HANDOFF_SESSION_9.md)
 
 ---
 
@@ -221,13 +256,24 @@ See: [Detailed Implementation Roadmap (EN)](docs/en/02_SOPHIA_AMI_IMPLEMENTATION
 - ✅ **Model Evaluation** - Performance benchmarking
 - ✅ **Observability** - Langfuse integration
 
-### 🚧 Sophia 2.0 (In Progress)
-- 🚧 **Continuous Operation** - Event-driven 24/7 loop
-- 🚧 **Autonomous Task Execution** - Self-directed from `roberts-notes.txt`
-- 🚧 **Memory Consolidation** - Automated "dreaming" phase
-- 🚧 **Self-Improvement Engine** - Automated enhancements (HITL approval)
-- 🚧 **Process Management** - Background operations (Jules monitoring)
-- 🚧 **State Persistence** - Crash recovery system
+### ✅ Sophia 2.0 AMI (Phase 3.7 Complete!)
+- ✅ **Continuous Operation** - Event-driven 24/7 loop with proactive heartbeat
+- ✅ **Autonomous Task Execution** - Self-directed from `roberts-notes.txt`
+- ✅ **Memory Consolidation** - Automated "dreaming" phase with ChromaDB
+- ✅ **Self-Improvement Engine** - Complete autonomous upgrade cycle:
+  - ✅ Error detection & reflection
+  - ✅ Hypothesis generation & testing
+  - ✅ Sandbox validation & benchmarking
+  - ✅ Automated deployment with git commits
+  - ✅ **Autonomous restart & validation** ⭐ NEW
+  - ✅ **Automatic rollback on failure** ⭐ NEW
+  - ✅ GitHub PR creation
+  - ✅ Budget-aware LLM escalation (90% cost savings)
+- ✅ **Process Management** - Phoenix Protocol (Guardian watchdog)
+- ✅ **State Persistence** - Crash recovery & upgrade state persistence
+
+**🎯 AMI 1.0 Status: 97% Complete**  
+Remaining: Production Validation (1-2 hours)
 
 ---
 

@@ -54,6 +54,10 @@ class EventDrivenLoop:
         self.event_bus = event_bus
         self.task_queue = task_queue
         self.is_running = False
+        
+        # AMI 1.0: Proactive heartbeat
+        self._heartbeat_task = None
+        self._last_heartbeat = 0
 
         # Subscribe to events
         self._setup_event_handlers()
@@ -133,6 +137,9 @@ class EventDrivenLoop:
         logger.info(
             "Starting event-driven consciousness loop", extra={"plugin_name": "EventDrivenLoop"}
         )
+        
+        # AMI 1.0: Start proactive heartbeat
+        self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
         # Handle single-run mode
         if single_run_input:
@@ -194,6 +201,37 @@ class EventDrivenLoop:
         logger.info(
             "Event-driven consciousness loop finished", extra={"plugin_name": "EventDrivenLoop"}
         )
+    
+    async def _heartbeat_loop(self):
+        """Emit PROACTIVE_HEARTBEAT event every 60 seconds."""
+        import time
+        logger.info("💓 Heartbeat loop started (60s intervals)", extra={"plugin_name": "EventDrivenLoop"})
+        
+        while self.is_running:
+            try:
+                # Emit heartbeat event FIRST (don't wait 60s before first beat)
+                self.event_bus.publish(
+                    Event(
+                        event_type=EventType.PROACTIVE_HEARTBEAT,
+                        source="event_driven_loop",
+                        priority=EventPriority.LOW,
+                        data={"timestamp": datetime.now().isoformat()},
+                    )
+                )
+                
+                self._last_heartbeat = time.time()
+                logger.info("💓 PROACTIVE_HEARTBEAT emitted", extra={"plugin_name": "EventDrivenLoop"})
+                
+                # Sleep 60s until next beat
+                await asyncio.sleep(60)
+                
+                if not self.is_running:
+                    break
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Heartbeat error: {e}", extra={"plugin_name": "EventDrivenLoop"})
 
     async def _check_input(self, context: SharedContext):
         """
@@ -225,11 +263,26 @@ class EventDrivenLoop:
         - Check roberts-notes.txt for new ideas
         - Run scheduled maintenance tasks
         - Consolidate memories
-        - Self-improvement workflows
+        - Self-improvement workflows (BenchmarkRunner)
         """
-        # TODO: Implement autonomous task checking
-        # For Phase 1, this is a placeholder
-        pass
+        # Run BenchmarkRunner plugin periodically (every N seconds) in a background task
+        if not hasattr(self, "_last_benchmark_run"):
+            self._last_benchmark_run = 0
+        if not hasattr(self, "_benchmark_task"):
+            self._benchmark_task = None
+        import time
+        BENCHMARK_INTERVAL = 300  # seconds (5 minutes)
+        now = time.time()
+        if now - self._last_benchmark_run > BENCHMARK_INTERVAL:
+            benchmark_runner = self.all_plugins_map.get("benchmark_runner")
+            if benchmark_runner and hasattr(benchmark_runner, "execute"):
+                try:
+                    self._last_benchmark_run = now
+                    # Pokud předchozí task ještě běží, nečekej na něj
+                    if self._benchmark_task is None or self._benchmark_task.done():
+                        self._benchmark_task = asyncio.create_task(benchmark_runner.execute(context))
+                except Exception as e:
+                    logger.error(f"BenchmarkRunner error: {e}", extra={"plugin_name": "EventDrivenLoop"})
 
     def stop(self):
         """Stop the event-driven loop."""

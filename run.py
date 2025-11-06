@@ -13,6 +13,94 @@ load_dotenv()
 
 from core.kernel import Kernel
 from plugins.base_plugin import PluginType
+from pathlib import Path
+import json
+
+
+async def _check_pending_upgrade(kernel):
+    """
+    Check for pending autonomous upgrade validation (Phase 3.7).
+    
+    If upgrade_state.json exists, this means:
+    1. SOPHIA deployed code change in previous session
+    2. Restarted to apply changes
+    3. Need to validate upgrade now
+    
+    Workflow:
+    - Load upgrade_state.json
+    - Call cognitive_self_tuning._validate_upgrade()
+    - If validation passes: finalize upgrade
+    - If validation fails: rollback deployment
+    """
+    upgrade_state_file = Path(".data/upgrade_state.json")
+    
+    if not upgrade_state_file.exists():
+        return  # No pending upgrade
+    
+    try:
+        print("🔄 Pending autonomous upgrade detected!")
+        
+        with open(upgrade_state_file, 'r') as f:
+            upgrade_state = json.load(f)
+        
+        hypothesis_id = upgrade_state.get('hypothesis_id')
+        target_file = upgrade_state.get('target_file')
+        
+        print(f"📝 Hypothesis: {hypothesis_id}")
+        print(f"📝 Modified file: {target_file}")
+        print(f"🧪 Running upgrade validation...")
+        
+        # Get cognitive_self_tuning plugin
+        self_tuning = kernel.all_plugins_map.get('cognitive_self_tuning')
+        
+        if not self_tuning:
+            print("❌ ERROR: cognitive_self_tuning plugin not found!")
+            print("⚠️  Cannot validate upgrade, keeping current state")
+            return
+        
+        # Increment attempt counter
+        upgrade_state['validation_attempts'] = upgrade_state.get('validation_attempts', 0) + 1
+        
+        # Check max attempts
+        if upgrade_state['validation_attempts'] > upgrade_state.get('max_attempts', 3):
+            print(f"❌ Max validation attempts exceeded ({upgrade_state['max_attempts']})")
+            print(f"⚠️  Triggering rollback...")
+            await self_tuning._rollback_deployment(upgrade_state)
+            upgrade_state_file.unlink()  # Clean up
+            return
+        
+        # Run validation
+        validation_result = await self_tuning._validate_upgrade(upgrade_state)
+        
+        if validation_result:
+            print("✅ Upgrade validation PASSED!")
+            print("✅ Upgrade finalized, cleaning up state...")
+            
+            # Clean up upgrade state
+            upgrade_state_file.unlink()
+            
+            # Clean up backup file
+            backup_file = Path(upgrade_state.get('backup_file'))
+            if backup_file.exists():
+                backup_file.unlink()
+                print(f"🗑️  Backup removed: {backup_file}")
+        else:
+            print("❌ Upgrade validation FAILED!")
+            print("🔄 Triggering automatic rollback...")
+            
+            # Rollback deployment
+            await self_tuning._rollback_deployment(upgrade_state)
+            
+            # Clean up upgrade state
+            upgrade_state_file.unlink()
+        
+    except Exception as e:
+        print(f"❌ Error checking pending upgrade: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Don't crash on upgrade check errors
+        print("⚠️  Continuing normal startup...")
 
 
 async def _load_scifi_interface(kernel, ui_style: str):
@@ -70,10 +158,13 @@ async def main():
     """The main entry point of the application."""
     # Parse command-line arguments FIRST to check for debug flag
     parser = argparse.ArgumentParser(description="Sophia AI Assistant")
+    # Default to event-driven autonomous operation as per AMI Phase 1.
+    # Provide an explicit opt-out flag (--no-event-driven) for backwards
+    # compatibility with scripts/tests that expect legacy blocking behavior.
     parser.add_argument(
-        "--use-event-driven",
+        "--no-event-driven",
         action="store_true",
-        help="Enable event-driven architecture (Phase 1 - EXPERIMENTAL)",
+        help="Disable event-driven architecture and use legacy blocking loop",
     )
     parser.add_argument(
         "--ui",
@@ -129,7 +220,9 @@ async def main():
     ui_style = args.ui or os.getenv("SOPHIA_UI_STYLE", "classic")
 
     print("Starting Sophia's kernel...")
-    if args.use_event_driven:
+    # If the user explicitly disabled event-driven via CLI flag, honor it;
+    # otherwise default to event-driven (AMI mode ON).
+    if not args.no_event_driven:
         print("🚀 Event-driven architecture ENABLED (Phase 1)")
     if args.offline:
         print("🔒 OFFLINE MODE ENABLED - Local LLM only (no cloud fallback)")
@@ -143,10 +236,13 @@ async def main():
     }
     print(f"🎨 UI Style: {ui_icons.get(ui_style, ui_style.upper())}")
 
-    kernel = Kernel(use_event_driven=args.use_event_driven, offline_mode=args.offline)
+    kernel = Kernel(use_event_driven=not args.no_event_driven, offline_mode=args.offline)
 
     # IMPORTANT: Initialize kernel to load all plugins
     await kernel.initialize()
+
+    # PHASE 3.7: Check for pending autonomous upgrades
+    await _check_pending_upgrade(kernel)
 
     # ADAPTIVE UI: Remove interface plugins AFTER init in single-run mode (Gemini's optimization)
     if args.once or args.input:

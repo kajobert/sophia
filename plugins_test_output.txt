@@ -1,0 +1,481 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /mnt/c/SOPHIA/sophia/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /mnt/c/SOPHIA/sophia
+configfile: pytest.ini
+plugins: anyio-4.11.0, aresponses-3.0.0, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 150 items
+
+tests/plugins/test_cognitive_code_reader.py::test_code_reader_list_plugins PASSED [  0%]
+tests/plugins/test_cognitive_code_reader.py::test_code_reader_get_source_success PASSED [  1%]
+tests/plugins/test_cognitive_code_reader.py::test_code_reader_get_source_not_found PASSED [  2%]
+tests/plugins/test_cognitive_dependency_analyzer.py::test_dep_analyzer_list_dependencies_default PASSED [  2%]
+tests/plugins/test_cognitive_dependency_analyzer.py::test_dep_analyzer_list_dependencies_dev PASSED [  3%]
+tests/plugins/test_cognitive_dependency_analyzer.py::test_dep_analyzer_file_not_found PASSED [  4%]
+tests/plugins/test_cognitive_doc_reader.py::test_doc_reader_list_documents PASSED [  4%]
+tests/plugins/test_cognitive_doc_reader.py::test_doc_reader_read_document_success PASSED [  5%]
+tests/plugins/test_cognitive_doc_reader.py::test_doc_reader_read_document_not_found PASSED [  6%]
+tests/plugins/test_cognitive_doc_reader.py::test_doc_reader_security_prevents_traversal PASSED [  6%]
+tests/plugins/test_cognitive_historian.py::test_historian_review_past_missions PASSED [  7%]
+tests/plugins/test_cognitive_historian.py::test_historian_file_not_found PASSED [  8%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPluginMetadata::test_plugin_name PASSED [  8%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPluginMetadata::test_plugin_type PASSED [  9%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPluginMetadata::test_plugin_version PASSED [ 10%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPluginMetadata::test_setup_config PASSED [ 10%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPydanticModels::test_extracted_memory_valid PASSED [ 11%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPydanticModels::test_extracted_memory_importance_validation PASSED [ 12%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPydanticModels::test_consolidation_result_empty PASSED [ 12%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestPydanticModels::test_consolidation_metrics_defaults PASSED [ 13%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestEventBusIntegration::test_set_event_bus PASSED [ 14%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestEventBusIntegration::test_dream_started_event_emitted PASSED [ 14%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryExtraction::test_build_extraction_prompt PASSED [ 15%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryExtraction::test_extract_memories_with_llm_stub PASSED [ 16%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryStorage::test_store_consolidated_memories_filters_low_importance PASSED [ 16%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryStorage::test_store_consolidated_memories_counts_by_type PASSED [ 17%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestConsolidationWorkflow::test_trigger_consolidation_no_sessions PASSED [ 18%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestConsolidationWorkflow::test_trigger_consolidation_updates_tracking PASSED [ 18%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolDefinitions::test_get_tool_definitions PASSED [ 19%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolDefinitions::test_trigger_consolidation_tool_schema PASSED [ 20%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolExecution::test_execute_tool_trigger_consolidation PASSED [ 20%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolExecution::test_execute_tool_get_status PASSED [ 21%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolExecution::test_execute_tool_search_memories_not_implemented PASSED [ 22%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestToolExecution::test_execute_tool_unknown_tool PASSED [ 22%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryPluginIntegration::test_set_memory_plugins PASSED [ 23%]
+tests/plugins/test_cognitive_memory_consolidator.py::TestMemoryPluginIntegration::test_execute_returns_context_unchanged PASSED [ 24%]
+tests/plugins/test_cognitive_planner.py::test_planner_parses_legacy_create_plan_format FAILED [ 24%]
+tests/plugins/test_cognitive_planner.py::test_planner_parses_direct_tool_call_list_format FAILED [ 25%]
+tests/plugins/test_cognitive_planner.py::test_planner_handles_empty_llm_response PASSED [ 26%]
+tests/plugins/test_cognitive_planner.py::test_planner_handles_response_with_no_tool_calls PASSED [ 26%]
+tests/plugins/test_cognitive_planner.py::test_planner_handles_malformed_json_in_arguments FAILED [ 27%]
+tests/plugins/test_cognitive_task_router.py::test_successful_classification_and_routing[simple_query-openrouter/anthropic/claude-3-haiku] PASSED [ 28%]
+tests/plugins/test_cognitive_task_router.py::test_successful_classification_and_routing[text_summarization-openrouter/mistralai/mistral-small] PASSED [ 28%]
+tests/plugins/test_cognitive_task_router.py::test_successful_classification_and_routing[plan_generation-openrouter/anthropic/claude-3.5-sonnet] PASSED [ 29%]
+tests/plugins/test_cognitive_task_router.py::test_routing_fallback_on_invalid_classification PASSED [ 30%]
+tests/plugins/test_cognitive_task_router.py::test_routing_fallback_on_llm_error PASSED [ 30%]
+tests/plugins/test_core_process_manager.py::test_process_manager_initialization PASSED [ 31%]
+tests/plugins/test_core_process_manager.py::test_background_process_creation PASSED [ 32%]
+tests/plugins/test_core_process_manager.py::test_background_process_to_dict PASSED [ 32%]
+tests/plugins/test_core_process_manager.py::test_process_manager_tool_definitions PASSED [ 33%]
+tests/plugins/test_core_process_manager.py::test_start_background_process_success PASSED [ 34%]
+tests/plugins/test_core_process_manager.py::test_start_background_process_failure PASSED [ 34%]
+tests/plugins/test_core_process_manager.py::test_start_background_process_timeout PASSED [ 35%]
+tests/plugins/test_core_process_manager.py::test_get_process_status PASSED [ 36%]
+tests/plugins/test_core_process_manager.py::test_get_process_status_not_found PASSED [ 36%]
+tests/plugins/test_core_process_manager.py::test_stop_background_process PASSED [ 37%]
+tests/plugins/test_core_process_manager.py::test_list_background_processes PASSED [ 38%]
+tests/plugins/test_core_process_manager.py::test_process_events_emitted PASSED [ 38%]
+tests/plugins/test_core_process_manager.py::test_concurrent_processes PASSED [ 39%]
+tests/plugins/test_core_sleep_scheduler.py::TestPluginMetadata::test_plugin_name PASSED [ 40%]
+tests/plugins/test_core_sleep_scheduler.py::TestPluginMetadata::test_plugin_type PASSED [ 40%]
+tests/plugins/test_core_sleep_scheduler.py::TestPluginMetadata::test_plugin_version PASSED [ 41%]
+tests/plugins/test_core_sleep_scheduler.py::TestPluginMetadata::test_no_tool_definitions PASSED [ 42%]
+tests/plugins/test_core_sleep_scheduler.py::TestConfiguration::test_config_loading PASSED [ 42%]
+tests/plugins/test_core_sleep_scheduler.py::TestConfiguration::test_config_defaults PASSED [ 43%]
+tests/plugins/test_core_sleep_scheduler.py::TestConfiguration::test_low_activity_config PASSED [ 44%]
+tests/plugins/test_core_sleep_scheduler.py::TestDependencyInjection::test_set_event_bus PASSED [ 44%]
+tests/plugins/test_core_sleep_scheduler.py::TestDependencyInjection::test_set_consolidator PASSED [ 45%]
+tests/plugins/test_core_sleep_scheduler.py::TestUserActivityTracking::test_user_activity_updates_timestamp PASSED [ 46%]
+tests/plugins/test_core_sleep_scheduler.py::TestTimeBasedTrigger::test_initial_consolidation_triggers_immediately PASSED [ 46%]
+tests/plugins/test_core_sleep_scheduler.py::TestTimeBasedTrigger::test_time_based_trigger_respects_interval PASSED [ 47%]
+tests/plugins/test_core_sleep_scheduler.py::TestTimeBasedTrigger::test_time_based_trigger_fires_after_interval PASSED [ 48%]
+tests/plugins/test_core_sleep_scheduler.py::TestIdleTrigger::test_idle_trigger_waits_for_idle_period PASSED [ 48%]
+tests/plugins/test_core_sleep_scheduler.py::TestIdleTrigger::test_idle_trigger_fires_after_idle_period PASSED [ 49%]
+tests/plugins/test_core_sleep_scheduler.py::TestIdleTrigger::test_idle_trigger_rate_limits_consolidation PASSED [ 50%]
+tests/plugins/test_core_sleep_scheduler.py::TestSchedulerLifecycle::test_start_creates_scheduler_task PASSED [ 50%]
+tests/plugins/test_core_sleep_scheduler.py::TestSchedulerLifecycle::test_stop_cancels_scheduler_task PASSED [ 51%]
+tests/plugins/test_core_sleep_scheduler.py::TestSchedulerLifecycle::test_disabled_scheduler_doesnt_start PASSED [ 52%]
+tests/plugins/test_core_sleep_scheduler.py::TestConsolidationTriggering::test_trigger_consolidation_calls_plugin PASSED [ 52%]
+tests/plugins/test_core_sleep_scheduler.py::TestConsolidationTriggering::test_trigger_without_consolidator_logs_warning PASSED [ 53%]
+tests/plugins/test_core_sleep_scheduler.py::TestConsolidationTriggering::test_trigger_handles_consolidation_errors PASSED [ 54%]
+tests/plugins/test_core_sleep_scheduler.py::TestExecuteMethod::test_execute_returns_context_unchanged PASSED [ 54%]
+tests/plugins/test_interface_webui.py::test_webui_plugin_initialization PASSED [ 55%]
+tests/plugins/test_interface_webui.py::test_webui_server_starts_on_first_execute PASSED [ 56%]
+tests/plugins/test_interface_webui.py::test_webui_execute_updates_context PASSED [ 56%]
+tests/plugins/test_memory_chroma.py::test_chroma_memory_add_and_search_successfully PASSED [ 57%]
+tests/plugins/test_memory_chroma.py::test_search_for_nonexistent_memory_returns_empty PASSED [ 58%]
+tests/plugins/test_memory_chroma.py::test_add_empty_memory_is_ignored PASSED [ 58%]
+tests/plugins/test_memory_chroma.py::test_search_with_empty_query_returns_empty PASSED [ 59%]
+tests/plugins/test_memory_sqlite.py::test_sqlite_memory_execute_and_get_history PASSED [ 60%]
+tests/plugins/test_tool_bash.py::test_bash_tool_success PASSED           [ 60%]
+tests/plugins/test_tool_bash.py::test_bash_tool_error PASSED             [ 61%]
+tests/plugins/test_tool_bash.py::test_bash_tool_timeout PASSED           [ 62%]
+tests/plugins/test_tool_file_system.py::test_fs_tool_write_and_read PASSED [ 62%]
+tests/plugins/test_tool_file_system.py::test_fs_tool_list_directory PASSED [ 63%]
+tests/plugins/test_tool_file_system.py::test_fs_tool_sandbox_security PASSED [ 64%]
+tests/plugins/test_tool_file_system.py::test_fs_tool_read_nonexistent_file PASSED [ 64%]
+tests/plugins/test_tool_file_system.py::test_fs_tool_list_nondirectory PASSED [ 65%]
+tests/plugins/test_tool_file_system.py::test_get_tool_definitions PASSED [ 66%]
+tests/plugins/test_tool_git.py::test_git_tool_get_status PASSED          [ 66%]
+tests/plugins/test_tool_git.py::test_git_tool_get_diff PASSED            [ 67%]
+tests/plugins/test_tool_git.py::test_git_tool_get_current_branch PASSED  [ 68%]
+tests/plugins/test_tool_git.py::test_git_tool_initialization_failure PASSED [ 68%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_single FAILED [ 69%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_parallel PASSED [ 70%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_validation_error PASSED [ 70%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_bash_failure PASSED [ 71%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_pull_results_view_only PASSED [ 72%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_pull_results_with_apply PASSED [ 72%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_pull_results_session_id_cleanup PASSED [ 73%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_list_sessions PASSED [ 74%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_list_sessions_empty PASSED [ 74%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_parse_session_ids_single PASSED [ 75%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_parse_session_ids_multiple PASSED [ 76%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_parse_session_ids_full_format PASSED [ 76%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_parse_session_ids_no_duplicates PASSED [ 77%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_get_tool_definitions PASSED [ 78%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIIntegration::test_real_session_creation SKIPPED [ 78%]
+tests/plugins/test_tool_jules_cli.py::TestJulesCLIIntegration::test_real_pull_results SKIPPED [ 79%]
+tests/plugins/test_tool_llm.py::test_llm_tool_execute_with_config PASSED [ 80%]
+tests/plugins/test_tool_local_llm.py::TestPluginMetadata::test_plugin_name PASSED [ 80%]
+tests/plugins/test_tool_local_llm.py::TestPluginMetadata::test_plugin_type PASSED [ 81%]
+tests/plugins/test_tool_local_llm.py::TestPluginMetadata::test_plugin_version PASSED [ 82%]
+tests/plugins/test_tool_local_llm.py::TestPluginMetadata::test_config_loading PASSED [ 82%]
+tests/plugins/test_tool_local_llm.py::TestConfiguration::test_local_model_config_defaults PASSED [ 83%]
+tests/plugins/test_tool_local_llm.py::TestConfiguration::test_local_model_config_custom PASSED [ 84%]
+tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_generate_ollama_success FAILED [ 84%]
+tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_generate_ollama_http_error FAILED [ 85%]
+tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_check_availability_ollama_success FAILED [ 86%]
+tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_check_availability_ollama_model_missing FAILED [ 86%]
+tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_list_models_ollama FAILED [ 87%]
+tests/plugins/test_tool_local_llm.py::TestLMStudioIntegration::test_generate_lmstudio_success FAILED [ 88%]
+
+=================================== FAILURES ===================================
+________________ test_planner_parses_legacy_create_plan_format _________________
+
+planner = <plugins.cognitive_planner.Planner object at 0x75af87028350>
+
+    @pytest.mark.asyncio
+    async def test_planner_parses_legacy_create_plan_format(planner):
+        """
+        Tests that the planner correctly parses the old format where the plan
+        is wrapped in a single 'create_plan' function call.
+        """
+        # Arrange
+        context = SharedContext("test_legacy", "PLANNING", logging.getLogger("test"), "list files")
+    
+        plan_dict = {
+            "plan": [
+                {
+                    "tool_name": "tool_file_system",
+                    "method_name": "list_directory",
+                    "arguments": {"path": "."},
+                }
+            ]
+        }
+        plan_json_str = json.dumps(plan_dict)
+    
+        tool_call = create_mock_tool_call("create_plan", plan_json_str)
+        mock_response = create_mock_llm_message([tool_call])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_legacy",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        assert "plan" in result_context.payload
+>       assert result_context.payload["plan"] == plan_dict["plan"]
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains one more item: {'arguments': {'path': '.'}, 'method_name': 'list_directory', 'tool_name': 'tool_file_system'}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (7 lines hidden), use '-vv' to show
+
+tests/plugins/test_cognitive_planner.py:119: AssertionError
+_______________ test_planner_parses_direct_tool_call_list_format _______________
+
+planner = <plugins.cognitive_planner.Planner object at 0x75af86f765a0>
+
+    @pytest.mark.asyncio
+    async def test_planner_parses_direct_tool_call_list_format(planner):
+        """
+        Tests that the planner correctly parses the new format where the LLM
+        returns a direct list of tool calls.
+        """
+        # Arrange
+        context = SharedContext("test_direct", "PLANNING", logging.getLogger("test"), "write hello")
+    
+        tool_call_1 = create_mock_tool_call(
+            "tool_file_system.write_file", '{"filepath": "hello.txt", "content": "Hello, World!"}'
+        )
+        tool_call_2 = create_mock_tool_call("tool_file_system.read_file", '{"filepath": "hello.txt"}')
+        mock_response = create_mock_llm_message([tool_call_1, tool_call_2])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_direct",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        expected_plan = [
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "write_file",
+                "arguments": {"filepath": "hello.txt", "content": "Hello, World!"},
+            },
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "read_file",
+                "arguments": {"filepath": "hello.txt"},
+            },
+        ]
+        assert "plan" in result_context.payload
+>       assert result_context.payload["plan"] == expected_plan
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains 2 more items, first extra item: {'arguments': {'content': 'Hello, World!', 'filepath': 'hello.txt'}, 'method_name': 'write_file', 'tool_name': 'tool_file_system'}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (15 lines hidden), use '-vv' to show
+
+tests/plugins/test_cognitive_planner.py:162: AssertionError
+_______________ test_planner_handles_malformed_json_in_arguments _______________
+
+planner = <plugins.cognitive_planner.Planner object at 0x75af86ed5c70>
+
+    @pytest.mark.asyncio
+    async def test_planner_handles_malformed_json_in_arguments(planner):
+        """
+        Tests robustness against JSON errors in both legacy and direct formats.
+        """
+        # Arrange
+        context = SharedContext("test_json_error", "PLANNING", logging.getLogger("test"), "break json")
+    
+        # Simulate corrupted JSON in a direct tool call
+        tool_call = create_mock_tool_call("tool_file_system.write_file", '{"filepath": "bad.txt"')
+        mock_response = create_mock_llm_message([tool_call])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_json_error",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        # With the new robust parsing, malformed JSON should result in a plan
+        # with empty arguments for the failed step.
+        expected_plan = [
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "write_file",
+                "arguments": {},
+            }
+        ]
+>       assert result_context.payload["plan"] == expected_plan
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains one more item: {'arguments': {}, 'method_name': 'write_file', 'tool_name': 'tool_file_system'}
+E         
+E         Full diff:
+E         + []
+E         - [
+E         -     {...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+
+tests/plugins/test_cognitive_planner.py:244: AssertionError
+________________ TestJulesCLIPlugin.test_create_session_single _________________
+
+self = <test_tool_jules_cli.TestJulesCLIPlugin object at 0x75af8c205850>
+plugin = <plugins.tool_jules_cli.JulesCLIPlugin object at 0x75af840e3740>
+context = <Mock id='129396695549328'>
+
+    @pytest.mark.asyncio
+    async def test_create_session_single(self, plugin, context):
+        """Test creating single Jules session"""
+        # Mock bash output (execute_command returns string)
+        plugin.bash_tool.execute_command.return_value = "Session ID: 123456\nStatus: PLANNING"
+    
+        # Create session
+        result = await plugin.create_session(
+            context, repo="ShotyCZ/sophia", task="Fix bug in auth module"
+        )
+    
+        # Verify result
+        assert result["success"] is True
+        assert len(result["session_ids"]) == 1
+        assert result["session_ids"][0] == "123456"
+    
+        # Verify bash was called correctly
+>       plugin.bash_tool.execute_command.assert_called_once()
+
+tests/plugins/test_tool_jules_cli.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AsyncMock name='mock.execute_command' id='129396695250656'>
+
+    def assert_called_once(self):
+        """assert that the mock was called only once.
+        """
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to have been called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'execute_command' to have been called once. Called 2 times.
+E           Calls: [call(<Mock id='129396695549328'>, 'which jules'),
+E            call(<Mock id='129396695549328'>, 'jules remote new --repo ShotyCZ/sophia --session "Fix bug in auth module" --parallel 1')].
+
+/usr/lib/python3.12/unittest/mock.py:923: AssertionError
+______________ TestOllamaIntegration.test_generate_ollama_success ______________
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x75af876b1010>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x75af7c18cb30>
+
+    @pytest.mark.asyncio
+    async def test_generate_ollama_success(self, local_llm):
+        """Test successful text generation with Ollama."""
+        # Mock httpx response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"response": "This is a test response from Ollama"}
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(local_llm.client, "post", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:112: AttributeError
+____________ TestOllamaIntegration.test_generate_ollama_http_error _____________
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x75af876b1280>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x75af8411d2e0>
+
+    @pytest.mark.asyncio
+    async def test_generate_ollama_http_error(self, local_llm):
+        """Test Ollama HTTP error handling."""
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.text = "Internal server error"
+        mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "Error", request=MagicMock(), response=mock_response
+        )
+    
+>       with patch.object(local_llm.client, "post", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:129: AttributeError
+_________ TestOllamaIntegration.test_check_availability_ollama_success _________
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x75af876b14f0>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x75af84113ec0>
+
+    @pytest.mark.asyncio
+    async def test_check_availability_ollama_success(self, local_llm):
+        """Test Ollama availability check - model available."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "models": [{"name": "gemma2:2b"}, {"name": "llama3:8b"}]
+        }
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(local_llm.client, "get", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:142: AttributeError
+______ TestOllamaIntegration.test_check_availability_ollama_model_missing ______
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x75af876b1760>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x75af840fcda0>
+
+    @pytest.mark.asyncio
+    async def test_check_availability_ollama_model_missing(self, local_llm):
+        """Test Ollama availability check - model not downloaded."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "models": [{"name": "llama3:8b"}]  # gemma2:2b not in list
+        }
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(local_llm.client, "get", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:156: AttributeError
+________________ TestOllamaIntegration.test_list_models_ollama _________________
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x75af876b19d0>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x75af840b56a0>
+
+    @pytest.mark.asyncio
+    async def test_list_models_ollama(self, local_llm):
+        """Test listing available models in Ollama."""
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "models": [{"name": "gemma2:2b"}, {"name": "llama3:8b"}, {"name": "mistral:7b"}]
+        }
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(local_llm.client, "get", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:170: AttributeError
+____________ TestLMStudioIntegration.test_generate_lmstudio_success ____________
+
+self = <test_tool_local_llm.TestLMStudioIntegration object at 0x75af876b1cd0>
+
+    @pytest.mark.asyncio
+    async def test_generate_lmstudio_success(self):
+        """Test successful text generation with LM Studio."""
+        plugin = LocalLLMTool()
+        config = {
+            "local_llm": {
+                "runtime": "lmstudio",
+                "base_url": "http://localhost:1234",
+                "model": "gemma-2-2b-it",
+            }
+        }
+        plugin.setup(config)
+    
+        # Mock OpenAI-compatible response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": "LM Studio response"}}]
+        }
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(plugin.client, "post", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:201: AttributeError
+=========================== short test summary info ============================
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_parses_legacy_create_plan_format
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_parses_direct_tool_call_list_format
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_handles_malformed_json_in_arguments
+FAILED tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_single
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_generate_ollama_success
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_generate_ollama_http_error
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_check_availability_ollama_success
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_check_availability_ollama_model_missing
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_list_models_ollama
+FAILED tests/plugins/test_tool_local_llm.py::TestLMStudioIntegration::test_generate_lmstudio_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 10 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+============ 10 failed, 120 passed, 2 skipped, 2 warnings in 49.40s ============

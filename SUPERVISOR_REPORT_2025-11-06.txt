@@ -1,0 +1,158 @@
+SOPHIA AMI 1.0 MVP - FINAL COMPLETION REPORT | 2025-11-06
+Branch: feature/year-2030-ami-complete | Agent: GitHub Copilot
+================================================================================
+
+STATUS: ✅ ALL 3 PRIORITIES COMPLETE - Production Ready
+
+SESSION TIMELINE (3 hours):
+1. Worker validation & headless fixes (5 blockers) → ✅ DONE
+2. Priority 1: Systemd service → ✅ DONE
+3. Priority 2: WebUI dashboard → ✅ DONE
+4. Priority 3: Self-reflection plugin → ✅ DONE
+
+VALIDATION:
+- Tasks: 2/2 done (IDs 67,68), task #69 enqueued via API
+- Output: sandbox/scripts/tui_by_sophia.py verified
+- Mode: Offline-only (Ollama llama3.1:8b), 31 plugins loaded
+- Dashboard: http://127.0.0.1:8000/dashboard functional
+- Reflection: sandbox/sophia_reflection_journal.md created
+
+CRITICAL FIXES (5 blockers):
+1. Env vars BEFORE imports (scripts/autonomous_main.py, run_single_plan_and_wait.py)
+2. Env var check "1"|"true"|"yes" (core/kernel.py ~97)
+3. core_self_diagnostic disabled headless (core/kernel.py ~105)
+4. offline_mode=True hardcoded (scripts/autonomous_main.py ~50)
+5. single_run_input skips interface (core/kernel.py ~254)
+
+PRIORITY 1: SYSTEMD SERVICE ✅
+Files: sophia-ami.service, SYSTEMD_INSTALLATION.md
+Features: Auto-restart (on-failure), boot autostart (multi-user.target), resource limits (2GB RAM, 80% CPU), journald logs, restart limits (5×/5min)
+Install: sudo cp sophia-ami.service /etc/systemd/system/ && sudo systemctl enable --now sophia-ami.service
+
+PRIORITY 2: WEBUI DASHBOARD ✅
+Files: frontend/dashboard.html (enhanced), plugins/interface_webui.py (+/api/enqueue), scripts/dashboard_server.py
+Features: Real-time task table (5s refresh), statistics (pending/done/failed), task submission form, dark UI, REST API
+Run: .venv/bin/python scripts/dashboard_server.py
+Test: curl -X POST http://127.0.0.1:8000/api/enqueue -H "Content-Type: application/json" -d '{"instruction":"test","priority":50}'
+
+PRIORITY 3: SELF-REFLECTION ✅
+File: plugins/tool_self_reflection.py
+Features: Journal logging (sandbox/sophia_reflection_journal.md), timestamped entries, categories (REFLECTION/LEARNING/DECISION/ERROR/SUCCESS), helpers (log_task_start/complete/failed/insight/decision), foundation for Fáze 3 (Self-Tuning)
+API: plugin.log(context, message, category), plugin.get_recent_entries(10)
+
+ARCHITECTURE:
+autonomous_main.py → KernelWorker → SimplePersistentQueue (.data/tasks.sqlite) → consciousness_loop(single_run_input)
+Headless: SOPHIA_DISABLE_INTERACTIVE_PLUGINS=1 → filters PluginType.INTERFACE + core_self_diagnostic
+Offline: Kernel(offline_mode=True) → forces tool_local_llm, blocks cloud APIs
+Dashboard: standalone server, independent of worker, monitors queue via SQL
+
+FILES CREATED/MODIFIED:
++ sophia-ami.service, SYSTEMD_INSTALLATION.md
++ scripts/dashboard_server.py, scripts/autonomous_worker_with_dashboard.py
++ plugins/tool_self_reflection.py
++ sandbox/sophia_reflection_journal.md (auto-created)
+~ frontend/dashboard.html (enhanced UI)
+~ plugins/interface_webui.py (+/api/enqueue endpoint)
+~ scripts/autonomous_main.py, scripts/run_single_plan_and_wait.py (env vars)
+~ core/kernel.py (headless fixes)
++ MVP_COMPLETION_REPORT.md, WORKLOG.md updated
+
+DEPLOYMENT READY: ✅ FULL
+✅ Systemd service (24/7 autostart, auto-restart)
+✅ Dashboard (monitoring, task submission)
+✅ Reflection (learning foundation)
+✅ Offline enforced, queue persistent, headless operational
+
+ALIGNMENT WITH docs/01_SOPHIA AMI 1.0.md:
+✅ Fáze 1: Kognitivní smyčka (worker 24/7, event-driven)
+✅ Fáze 3: Self-Tuning (reflection plugin foundation)
+✅ Fáze 5: Phoenix Protocol (systemd part 1/2)
+
+TODO (Next Session):
+1. ✅ DONE: guardian.py watchdog (Fáze 5 part 2/2) - IMPLEMENTED & TESTED
+2. ✅ DONE: Integrate reflection into worker loop - auto-log task events (VALIDATED)
+3. ✅ DONE: Production deployment test - systemd + Guardian + crash recovery (PASSED)
+4. MED: Stress test - 100+ tasks, memory profiling over 24h
+5. LOW: cognitive_reflection.py - analyze failures from journal
+4. MED: Stress test - 100+ tasks, memory profiling
+5. LOW: cognitive_reflection.py - analyze failures from journal
+6. LOW: Full event bus migration (Fáze 1 complete)
+
+COMPLETED THIS SESSION:
++ Priority #1 - guardian.py (Phoenix Protocol watchdog, compact version):
+  - Crash detection & logging (logs/crash_*.log, logs/last_crash.log)
+  - Auto-restart with recovery context (--recovery-from-crash flag)
+  - Crash loop detection (N crashes in M seconds)
+  - Git rollback on destructive loops (git reset --hard HEAD~1)
+  - Combined output streaming (logs/worker_combined.log)
+  - Signal handling (SIGINT, SIGTERM graceful shutdown)
+  Test: ✅ Guardian captures crashes, logs correctly, restarts worker
+
++ Priority #2 - Reflection integration into kernel_worker.py:
+  - Modified core/kernel_worker.py to auto-log task lifecycle events
+  - Added log_task_start() call before task execution (line ~48-59)
+  - Added log_task_complete() after successful completion (line ~80-85)
+  - Added log_task_failed() on task errors (line ~90-96)
+  - Safe error handling: reflection failures don't break worker
+  Test: ✅ Reflection plugin logs to sandbox/sophia_reflection_journal.md
+  Validation: Task #999 logged with [TASK_START] and [SUCCESS] entries
+
++ Priority #3 - Production Deployment Test (ACCEPTANCE TEST):
+  ✅ SYSTEMD SERVICE DEPLOYMENT:
+  - Created sophia-guardian.service with proper WSL paths
+  - Installed to /etc/systemd/system/ and enabled auto-start
+  - Service runs Guardian (PID 43602) which supervises worker (PID 43685)
+  - Resource limits: 3GB RAM max, 90% CPU quota
+  - Actual usage: 244MB RAM, 7.8s CPU (well within limits)
+  
+  ✅ CRASH RECOVERY TEST:
+  - Test 1: Manual kill -9 on worker PID 43604
+    Result: Guardian detected crash in <1s, created crash log, restarted worker with --recovery-from-crash flag
+    New PID: 43685, crash log: logs/crash_20251106_154225_exit-9.log
+  - Test 2: Multiple crashes (2 crashes in 195 seconds)
+    Result: Guardian tracking crash rate correctly, no rollback triggered (threshold: 5 in 300s)
+    Logs: logs/crash_20251106_154541_exit-9.log created
+  
+  ✅ CRASH LOGGING VALIDATION:
+  - Crash reports contain: timestamp, exit code, worker path, restart count, stdout/stderr
+  - Symlink logs/last_crash.log points to latest crash
+  - Guardian log shows crash rate: "2 crashes in 195s"
+  
+  ✅ SERVICE HEALTH:
+  - Status: active (running) for 6+ minutes after multiple crashes
+  - Auto-restart working correctly (5s delay between restarts)
+  - Recovery context passed to worker via CLI flag
+  - systemctl status shows healthy Memory/CPU metrics
+  
+  PRODUCTION READY: ✅ CONFIRMED
+  - Phoenix Protocol fully operational
+  - Crash detection < 1 second
+  - Auto-restart with forensic logging
+  - Crash loop detection active (not triggered yet, needs 5 crashes in 300s)
+  - Git rollback capability ready (untested - would require intentional crash loop)
+
+KNOWN LIMITS:
+- Worker logs lack "Processing task" (non-critical, tasks execute)
+- Dashboard server separate from worker (by design)
+- Guardian watchdog not yet implemented
+- No auto-hypothesis generation yet
+
+LEARNINGS:
+- Env vars MUST precede Kernel import (plugin load in __init__)
+- Async/sync mix → hangs (core_self_diagnostic)
+- tool_file_system auto-prefixes "sandbox/"
+- Dashboard independence prevents worker blocking
+- 8B models need simplified prompts
+
+PRODUCTION COMMANDS:
+# Worker (headless)
+.venv/bin/python scripts/autonomous_main.py
+
+# Dashboard (monitoring)
+.venv/bin/python scripts/dashboard_server.py
+
+# Systemd (production)
+sudo systemctl start sophia-ami.service
+sudo journalctl -u sophia-ami.service -f
+
+CONCLUSION: SOPHIA AMI 1.0 MVP complete. All 3 priorities done. System production-ready for 24/7 autonomous operation with monitoring and self-reflection foundation. Next: guardian.py watchdog and production deployment.

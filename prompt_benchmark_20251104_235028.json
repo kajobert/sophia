@@ -1,0 +1,77 @@
+[
+  {
+    "name": "1. Simple greeting",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Ani Sophia, ale příjemné, že se ozýváte. Co vás přivedlo k mému chatu? Chci vám pomoci s nějakým tématem nebo ráda zodpovím jakékoliv otázky.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "2. Function calling (datetime)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "index": 0,
+              "name": "get_datetime",
+              "arguments": {}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "3. JSON validity",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "{\"foo\": 123, \"bar\": \"baz\"}",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "4. Edge case (empty input)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "It seems like you wanted to ask a question or discuss something, but the conversation hasn't started yet. How can I assist you today?",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "5. Consistency (repeat)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jsem model jazykového procesoru nazvaný Llama. Llama je zkratka pro „Large Language Model Meta AI“.",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Můžu pomoci s mnoha věcmi. Mohou to být všechno od informaci a vysvětlení, přes překlad textu, až po tvorbu textu nebo jeho úpravu. Můžeme hovořit o jakémkoliv tématu a já se snažím poskytnout přesné informace.",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jmenuji se LLaMA. LLaMA je akronym pro Large Language Model Meta AI. Jsem velkým jazykovým modelem vyvinutým společností Meta, který je schopen pohotově a přesně reagovat na otázky a dotazy. Mám mnoho různých témat a oblastí o kterých mohu mluvit, pokud potřebujete nějakou informace nebo máte nějaký dotaz, stáhněte si mě na vaši zařízení a začněte s ním jednat jako s jiným člověkem.",
+        "tool_calls": []
+      }
+    ]
+  }
+]

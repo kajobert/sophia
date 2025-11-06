@@ -1,0 +1,32 @@
+[Unit]
+Description=SOPHIA AMI 1.0 - Autonomous 24/7 Worker
+Documentation=https://github.com/ShotyCZ/sophia
+After=network.target
+
+[Service]
+Type=simple
+User=sophia
+Group=sophia
+WorkingDirectory=/mnt/c/SOPHIA/sophia
+Environment="PATH=/mnt/c/SOPHIA/sophia/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="SOPHIA_DISABLE_INTERACTIVE_PLUGINS=1"
+Environment="SOPHIA_FORCE_LOCAL_ONLY=1"
+ExecStart=/mnt/c/SOPHIA/sophia/.venv/bin/python /mnt/c/SOPHIA/sophia/scripts/autonomous_main.py
+
+# Restart configuration
+Restart=on-failure
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Resource limits (optional, adjust as needed)
+MemoryMax=2G
+CPUQuota=80%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sophia-ami
+
+[Install]
+WantedBy=multi-user.target

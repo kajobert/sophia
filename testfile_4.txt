@@ -1,0 +1,2 @@
+Toto je testovací soubor číslo 4.
+řádek {1..10}

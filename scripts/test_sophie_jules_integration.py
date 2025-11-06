@@ -32,7 +32,7 @@ import subprocess
 
 result = subprocess.run(
     [
-        "python",
+        sys.executable,
         "run.py",
         "Sophie, use Jules API to list all my coding sessions. Show me the results.",
     ],
@@ -69,7 +69,7 @@ print("")
 
 result2 = subprocess.run(
     [
-        "python",
+        sys.executable,
         "run.py",
         "What can you tell me about Jules API? What methods are available in the tool_jules plugin?",
     ],
@@ -92,7 +92,7 @@ print("")
 
 result3 = subprocess.run(
     [
-        "python",
+        sys.executable,
         "run.py",
         "Sophie, explain step-by-step how to use Jules API to create a new coding session. What parameters are needed?",
     ],

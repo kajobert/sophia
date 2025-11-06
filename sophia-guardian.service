@@ -1,0 +1,42 @@
+[Unit]
+Description=SOPHIA Guardian Watchdog - Phoenix Protocol
+Documentation=https://github.com/ShotyCZ/sophia
+After=network.target
+
+# Guardian monitors the worker, so it should start INSTEAD of worker
+# Worker will be started BY guardian as subprocess
+Conflicts=sophia-ami.service
+
+[Service]
+Type=simple
+User=sophia
+Group=sophia
+WorkingDirectory=/mnt/c/SOPHIA/sophia
+
+# Guardian command - runs worker as subprocess
+ExecStart=/mnt/c/SOPHIA/sophia/.venv/bin/python /mnt/c/SOPHIA/sophia/guardian.py \
+    --worker-script scripts/autonomous_main.py \
+    --max-crashes 5 \
+    --crash-window 300
+
+# Restart Guardian if IT crashes (but guardian should be stable)
+Restart=on-failure
+RestartSec=10
+StartLimitBurst=3
+StartLimitIntervalSec=600
+
+# Resource limits (Guardian + Worker combined)
+MemoryMax=3G
+CPUQuota=90%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sophia-guardian
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

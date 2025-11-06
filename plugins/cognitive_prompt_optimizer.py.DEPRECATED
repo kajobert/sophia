@@ -1,0 +1,391 @@
+"""
+Prompt Self-Optimizer Plugin
+
+Autonomous prompt optimization for local LLM performance improvement.
+
+Workflow:
+1. Listen to TASK_COMPLETED events
+2. Compare local LLM results vs cloud LLM results (when both available)
+3. Analyze failure patterns in local LLM responses
+4. Generate improved prompts using cloud LLM as teacher
+5. A/B test new prompts and keep better-performing versions
+6. Track prompt effectiveness metrics
+
+This enables Sophia to autonomously improve local LLM performance
+by learning from cloud model responses and iteratively refining prompts.
+
+Version: 1.0.0
+"""
+
+import logging
+import json
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from plugins.base_plugin import BasePlugin, PluginType
+from core.context import SharedContext
+from core.events import Event, EventType
+
+logger = logging.getLogger(__name__)
+
+
+class PromptOptimizerPlugin(BasePlugin):
+    """
+    Cognitive plugin for autonomous prompt self-optimization.
+    
+    Learns from cloud LLM responses to improve local LLM performance.
+    """
+
+    @property
+    def name(self) -> str:
+        return "cognitive_prompt_optimizer"
+
+    @property
+    def plugin_type(self) -> PluginType:
+        return PluginType.COGNITIVE
+
+    @property
+    def version(self) -> str:
+        return "1.0.0"
+
+    def __init__(self):
+        super().__init__()
+        self.event_bus = None
+        self.memory_plugin = None
+        self.llm_plugin = None
+        
+        # Prompt version tracking
+        self.prompt_versions = {}  # task_type -> list of prompt versions
+        self.current_prompts = {}  # task_type -> current prompt template
+        self.prompt_metrics = {}  # prompt_id -> metrics
+        
+        # Configuration
+        self.min_samples_for_optimization = 5  # Need 5 examples before optimizing
+        self.optimization_interval_hours = 24  # Optimize once per day max
+        self.last_optimization = {}  # task_type -> datetime
+        
+        # Prompt storage
+        self.prompts_dir = Path("config/prompts/optimized")
+        self.prompts_dir.mkdir(parents=True, exist_ok=True)
+
+    def setup(self, config: Dict[str, Any]) -> None:
+        """Initialize the prompt optimizer plugin."""
+        super().setup(config)
+        
+        # Get references to other plugins
+        all_plugins = config.get("all_plugins", {})
+        self.event_bus = config.get("event_bus")
+        self.memory_plugin = all_plugins.get("memory_sqlite")
+        self.llm_plugin = all_plugins.get("tool_llm")
+        
+        # Subscribe to relevant events
+        if self.event_bus:
+            # Listen for task completions to gather training data
+            self.event_bus.subscribe(EventType.TASK_COMPLETED, self.handle_event)
+            
+            logger.info(
+                "[PromptOptimizer] ✅ Subscribed to TASK_COMPLETED events",
+                extra={"plugin_name": self.name}
+            )
+        else:
+            logger.warning(
+                "[PromptOptimizer] Event bus not available - running in passive mode",
+                extra={"plugin_name": self.name}
+            )
+        
+        # Load existing optimized prompts
+        self._load_existing_prompts()
+        
+        logger.info(
+            f"[PromptOptimizer] Initialized with {len(self.current_prompts)} prompt templates",
+            extra={"plugin_name": self.name}
+        )
+
+    async def execute(self, context: SharedContext) -> SharedContext:
+        """
+        Main execution - typically not called directly.
+        Optimization happens via event subscriptions.
+        """
+        context.payload["info"] = "Prompt optimizer runs autonomously via events"
+        context.payload["optimized_prompts"] = len(self.current_prompts)
+        return context
+
+    async def handle_event(self, event: Event) -> None:
+        """
+        Handle TASK_COMPLETED events.
+        
+        Collects data for prompt optimization:
+        - User input
+        - Local LLM response (if used)
+        - Cloud LLM response (if used)
+        - Success/failure indicators
+        - Performance metrics
+        """
+        if event.event_type != EventType.TASK_COMPLETED:
+            return
+        
+        try:
+            data = event.data
+            
+            # Extract relevant information
+            task_type = data.get("task_type", "unknown")
+            offline_mode = data.get("offline_mode", False)
+            success = data.get("success", True)
+            
+            # Store task completion data for later analysis
+            await self._record_task_completion(
+                task_type=task_type,
+                user_input=data.get("user_input"),
+                response=data.get("response"),
+                model_used=data.get("model_used"),
+                offline_mode=offline_mode,
+                success=success,
+                quality_score=data.get("quality_score"),
+                timestamp=datetime.now().isoformat()
+            )
+            
+            # Check if it's time to optimize prompts for this task type
+            if self._should_optimize(task_type):
+                logger.info(
+                    f"[PromptOptimizer] 🔍 Triggering optimization for {task_type}",
+                    extra={"plugin_name": self.name}
+                )
+                await self._optimize_prompts_for_task_type(task_type)
+                
+        except Exception as e:
+            logger.error(
+                f"[PromptOptimizer] Error handling TASK_COMPLETED: {e}",
+                extra={"plugin_name": self.name}
+            )
+
+    async def _record_task_completion(
+        self,
+        task_type: str,
+        user_input: Optional[str],
+        response: Optional[str],
+        model_used: Optional[str],
+        offline_mode: bool,
+        success: bool,
+        quality_score: Optional[float],
+        timestamp: str
+    ) -> None:
+        """
+        Record task completion data for prompt optimization.
+        
+        Stores examples of successful/failed responses for analysis.
+        """
+        if not self.memory_plugin:
+            return
+        
+        # TODO: Store in dedicated prompt_training_data table
+        # For now, we can use operation_tracking
+        
+        logger.debug(
+            f"[PromptOptimizer] Recorded {task_type} completion: "
+            f"model={model_used}, success={success}, quality={quality_score}",
+            extra={"plugin_name": self.name}
+        )
+
+    def _should_optimize(self, task_type: str) -> bool:
+        """
+        Determine if prompts should be optimized for this task type.
+        
+        Criteria:
+        - Enough samples collected (min_samples_for_optimization)
+        - Not optimized recently (optimization_interval_hours)
+        - Observed performance issues
+        """
+        # Check cooldown period
+        last_opt = self.last_optimization.get(task_type)
+        if last_opt:
+            hours_since = (datetime.now() - last_opt).total_seconds() / 3600
+            if hours_since < self.optimization_interval_hours:
+                return False
+        
+        # Check sample count (would query database in real implementation)
+        # For now, return False to avoid spurious optimizations
+        return False
+
+    async def _optimize_prompts_for_task_type(self, task_type: str) -> None:
+        """
+        Optimize prompts for a specific task type.
+        
+        Process:
+        1. Gather successful cloud LLM responses
+        2. Gather failed local LLM responses
+        3. Use cloud LLM to analyze differences
+        4. Generate improved prompt template
+        5. A/B test new vs old prompt
+        6. Keep better-performing version
+        """
+        if not self.llm_plugin or not self.memory_plugin:
+            logger.warning(
+                "[PromptOptimizer] Cannot optimize - missing required plugins",
+                extra={"plugin_name": self.name}
+            )
+            return
+        
+        logger.info(
+            f"[PromptOptimizer] 🔧 Starting optimization for {task_type}",
+            extra={"plugin_name": self.name}
+        )
+        
+        try:
+            # Step 1: Gather training examples
+            examples = await self._gather_training_examples(task_type)
+            
+            if len(examples) < self.min_samples_for_optimization:
+                logger.info(
+                    f"[PromptOptimizer] Not enough samples for {task_type} "
+                    f"({len(examples)}/{self.min_samples_for_optimization})",
+                    extra={"plugin_name": self.name}
+                )
+                return
+            
+            # Step 2: Analyze patterns using cloud LLM
+            analysis = await self._analyze_response_patterns(task_type, examples)
+            
+            # Step 3: Generate improved prompt
+            new_prompt = await self._generate_improved_prompt(task_type, analysis)
+            
+            # Step 4: Save new prompt version
+            await self._save_prompt_version(task_type, new_prompt)
+            
+            # Step 5: Update last optimization timestamp
+            self.last_optimization[task_type] = datetime.now()
+            
+            logger.info(
+                f"[PromptOptimizer] ✅ Optimization complete for {task_type}",
+                extra={"plugin_name": self.name}
+            )
+            
+        except Exception as e:
+            logger.error(
+                f"[PromptOptimizer] Optimization failed for {task_type}: {e}",
+                extra={"plugin_name": self.name}
+            )
+
+    async def _gather_training_examples(self, task_type: str) -> List[Dict[str, Any]]:
+        """
+        Gather training examples from operation_tracking table.
+        
+        Returns both successful and failed examples for comparison.
+        """
+        # TODO: Query database for examples
+        # For now, return empty list
+        return []
+
+    async def _analyze_response_patterns(
+        self, task_type: str, examples: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Use cloud LLM to analyze patterns in successful vs failed responses.
+        
+        Returns insights about what makes responses better/worse.
+        """
+        # TODO: Implement cloud LLM analysis
+        return {"insights": "placeholder"}
+
+    async def _generate_improved_prompt(
+        self, task_type: str, analysis: Dict[str, Any]
+    ) -> str:
+        """
+        Generate an improved prompt template based on analysis.
+        
+        Uses cloud LLM as teacher to create better prompts for local LLM.
+        """
+        # TODO: Implement prompt generation
+        return "Improved prompt template placeholder"
+
+    async def _save_prompt_version(self, task_type: str, prompt: str) -> None:
+        """
+        Save a new prompt version to disk and tracking.
+        """
+        # Generate version number
+        existing_versions = self.prompt_versions.get(task_type, [])
+        version = len(existing_versions) + 1
+        
+        # Save to disk
+        prompt_file = self.prompts_dir / f"{task_type}_v{version}.txt"
+        prompt_file.write_text(prompt, encoding="utf-8")
+        
+        # Update tracking
+        if task_type not in self.prompt_versions:
+            self.prompt_versions[task_type] = []
+        
+        self.prompt_versions[task_type].append({
+            "version": version,
+            "prompt": prompt,
+            "created_at": datetime.now().isoformat(),
+            "metrics": {
+                "tests_run": 0,
+                "success_rate": 0.0,
+                "avg_quality": 0.0
+            }
+        })
+        
+        logger.info(
+            f"[PromptOptimizer] 💾 Saved {task_type} v{version}",
+            extra={"plugin_name": self.name}
+        )
+
+    def _load_existing_prompts(self) -> None:
+        """
+        Load previously optimized prompts from disk.
+        """
+        if not self.prompts_dir.exists():
+            return
+        
+        for prompt_file in self.prompts_dir.glob("*.txt"):
+            # Parse filename: task_type_vN.txt
+            parts = prompt_file.stem.split("_v")
+            if len(parts) == 2:
+                task_type = parts[0]
+                version = int(parts[1])
+                
+                prompt = prompt_file.read_text(encoding="utf-8")
+                
+                if task_type not in self.prompt_versions:
+                    self.prompt_versions[task_type] = []
+                
+                self.prompt_versions[task_type].append({
+                    "version": version,
+                    "prompt": prompt,
+                    "created_at": "unknown",
+                    "metrics": {}
+                })
+                
+                # Use latest version as current
+                self.current_prompts[task_type] = prompt
+        
+        if self.current_prompts:
+            logger.info(
+                f"[PromptOptimizer] Loaded {len(self.current_prompts)} optimized prompts",
+                extra={"plugin_name": self.name}
+            )
+
+    def get_optimized_prompt(self, task_type: str) -> Optional[str]:
+        """
+        Get the current optimized prompt for a task type.
+        
+        Returns None if no optimization exists yet.
+        """
+        return self.current_prompts.get(task_type)
+
+    def get_prompt_statistics(self) -> Dict[str, Any]:
+        """
+        Get statistics about prompt optimization.
+        
+        Returns metrics for monitoring and debugging.
+        """
+        stats = {
+            "total_task_types": len(self.current_prompts),
+            "total_versions": sum(len(v) for v in self.prompt_versions.values()),
+            "task_types": list(self.current_prompts.keys()),
+            "last_optimizations": {
+                k: v.isoformat() for k, v in self.last_optimization.items()
+            }
+        }
+        
+        return stats

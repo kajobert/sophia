@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -48,6 +49,11 @@ class Kernel:
 
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
+        
+        # AMI 1.0: Check for recovery mode
+        if "--recovery-from-crash" in sys.argv:
+            await self._handle_recovery_mode()
+        
         # --- PROMPT LOADING PHASE ---
         try:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
@@ -91,6 +97,29 @@ class Kernel:
         all_plugins_list = [
             p for pt in PluginType for p in self.plugin_manager.get_plugins_by_type(pt)
         ]
+        
+        # Honor SOPHIA_DISABLE_INTERACTIVE_PLUGINS: if set, do not register interface plugins
+        import os
+        disable_interactive = os.getenv("SOPHIA_DISABLE_INTERACTIVE_PLUGINS", "false").lower() in ("true", "1", "yes")
+        if disable_interactive:
+            filtered = []
+            for p in all_plugins_list:
+                if p.plugin_type == PluginType.INTERFACE:
+                    logger.info(
+                        f"SOPHIA_DISABLE_INTERACTIVE_PLUGINS=true: Skipping setup of interface plugin '{p.name}'",
+                        extra={"plugin_name": "Kernel"},
+                    )
+                    continue
+                # Also skip core_self_diagnostic in headless mode (it hangs during async file write)
+                if p.name == "core_self_diagnostic":
+                    logger.info(
+                        f"SOPHIA_DISABLE_INTERACTIVE_PLUGINS=true: Skipping core_self_diagnostic (headless mode)",
+                        extra={"plugin_name": "Kernel"},
+                    )
+                    continue
+                filtered.append(p)
+            all_plugins_list = filtered
+        
         self.all_plugins_map = {p.name: p for p in all_plugins_list}
 
         # Get memory plugin for state persistence
@@ -128,6 +157,8 @@ class Kernel:
                 **specific_config,
                 "plugin_manager": self.plugin_manager,
                 "all_plugins": self.all_plugins_map,  # Pass all plugins for dependency injection
+                "all_plugins_map": self.all_plugins_map,  # AMI 1.0: Consistent naming
+                "event_bus": self.event_bus if self.use_event_driven else None,  # AMI 1.0: Event subscription
                 "logger": plugin_logger,  # Inject logger per Development Guidelines
                 "offline_mode": self.offline_mode,  # Pass offline mode flag
             }
@@ -173,6 +204,37 @@ class Kernel:
                     f"Phase 3 partial: scheduler={bool(sleep_scheduler)}, consolidator={bool(consolidator)}",
                     extra={"plugin_name": "Kernel"},
                 )
+    
+    async def _handle_recovery_mode(self):
+        """Handle recovery from crash - load crash log and publish event."""
+        try:
+            idx = sys.argv.index("--recovery-from-crash")
+            crash_log_path = sys.argv[idx + 1]
+            
+            crash_log_file = Path(crash_log_path)
+            if not crash_log_file.exists():
+                logger.warning(
+                    f"Recovery mode: crash log not found: {crash_log_path}",
+                    extra={"plugin_name": "Kernel"}
+                )
+                return
+            
+            crash_log_content = crash_log_file.read_text(encoding="utf-8")
+            
+            logger.warning(
+                f"🔄 RECOVERY MODE: Loaded crash log from {crash_log_path}",
+                extra={"plugin_name": "Kernel"}
+            )
+            logger.debug(f"Crash log preview: {crash_log_content[:200]}...", extra={"plugin_name": "Kernel"})
+            
+            # Store for later event publication (after event_bus is initialized)
+            self._recovery_crash_log = crash_log_content
+            self._recovery_crash_log_path = str(crash_log_path)
+            
+        except (ValueError, IndexError):
+            logger.error("Recovery mode: Invalid --recovery-from-crash argument", extra={"plugin_name": "Kernel"})
+        except Exception as e:
+            logger.error(f"Recovery mode error: {e}", exc_info=True, extra={"plugin_name": "Kernel"})
 
     async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
@@ -207,6 +269,22 @@ class Kernel:
                     data={"session_id": session_id},
                 )
             )
+            
+            # AMI 1.0: Publish SYSTEM_RECOVERY event if in recovery mode
+            if hasattr(self, '_recovery_crash_log'):
+                logger.warning("🔄 Publishing SYSTEM_RECOVERY event", extra={"plugin_name": "Kernel"})
+                self.event_bus.publish(
+                    Event(
+                        event_type=EventType.SYSTEM_RECOVERY,
+                        source="kernel",
+                        priority=EventPriority.CRITICAL,
+                        data={
+                            "crash_log": self._recovery_crash_log,
+                            "crash_log_path": self._recovery_crash_log_path,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    )
+                )
 
             # Use event-driven loop (Phase 1 implementation)
             from core.event_loop import EventDrivenLoop
@@ -238,13 +316,7 @@ class Kernel:
                 if single_run_input:
                     context.user_input = single_run_input
                     self.is_running = False  # End the loop after this run
-
-                    # IMPORTANT: Still call interface plugins to register callbacks!
-                    interface_plugins = self.plugin_manager.get_plugins_by_type(
-                        PluginType.INTERFACE
-                    )
-                    for plugin in interface_plugins:
-                        await plugin.execute(context=context)
+                    # Skip interface plugins in single-run mode - go directly to processing
                 else:
                     context.user_input = None
                     context.payload = {}

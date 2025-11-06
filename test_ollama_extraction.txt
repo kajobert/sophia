@@ -1,0 +1,55 @@
+Analyzuj tyto poznámky Roberta a extrahuj konkrétní úkoly pro AI asistenta SOPHIA.
+
+POZNÁMKY:
+# Robert's Task Notes
+
+## Instructions for SOPHIA
+This file is monitored by the cognitive_notes_reader plugin.
+Add tasks here and SOPHIA will autonomously create them.
+
+Format:
+- Priority: 1-100 (higher = more urgent)
+- Category: development, research, optimization, documentation, testing, bugfix
+- Instruction: Clear, actionable task description
+
+---
+
+## Current Tasks
+
+**Priority: 85 - Development**
+Test Phase 1 implementation by verifying the proactive heartbeat emits every 60 seconds and this file is being monitored.
+
+**Priority: 70 - Testing**
+Create unit tests for the cognitive_notes_reader plugin to ensure LLM extraction works correctly.
+
+**Priority: 50 - Documentation**
+Document the new event-driven architecture in docs/ARCHITECTURE.md with diagrams showing event flow.
+
+---
+
+## Completed Tasks
+(SOPHIA will move completed tasks here)
+
+PRAVIDLA:
+1. Identifikuj POUZE akční úkoly (ne vágní myšlenky nebo obecné nápady)
+2. Každý úkol musí být konkrétní a implementovatelný
+3. Prioritizuj úkoly:
+   - 90-100 = urgentní (kritické, musí se udělat hned)
+   - 50-89 = důležité (vysoká hodnota, brzy)
+   - 1-49 = nice-to-have (můžeme odložit)
+4. Kategorie:
+   - development = implementace nového kódu/funkce
+   - research = zkoumání/analýza nových možností
+   - optimization = vylepšení existujícího kódu
+   - documentation = psaní dokumentace
+   - testing = testy, validace
+   - bugfix = oprava chyby
+
+FORMÁT ODPOVĚDI:
+Vrať POUZE validní JSON array (žádný další text!):
+[
+  {"priority": 95, "instruction": "Implementovat XYZ feature pro modul ABC", "category": "development"},
+  {"priority": 70, "instruction": "Prozkoumat knihovnu DEF pro optimalizaci", "category": "research"}
+]
+
+Pokud nejsou žádné akční úkoly, vrať prázdný array: []

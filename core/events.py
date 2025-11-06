@@ -42,6 +42,27 @@ class EventType(Enum):
     MEMORY_RETRIEVED = "memory_retrieved"
     DREAM_STARTED = "dream_started"
     DREAM_COMPLETED = "dream_completed"
+    
+    # Autonomous Operation (AMI 1.0)
+    PROACTIVE_HEARTBEAT = "proactive_heartbeat"  # Periodic autonomous trigger
+    DREAM_TRIGGER = "dream_trigger"  # Start memory consolidation
+    DREAM_COMPLETE = "dream_complete"  # Consolidation finished
+    HYPOTHESIS_CREATED = "hypothesis_created"  # New improvement hypothesis
+    HYPOTHESIS_TESTED = "hypothesis_tested"  # Benchmark results ready
+    HYPOTHESIS_DEPLOYED = "hypothesis_deployed"  # Approved fix deployed to production
+    SYSTEM_RECOVERY = "system_recovery"  # Recovered from crash
+    NOTES_UPDATED = "notes_updated"  # roberts-notes.txt changed
+    BUDGET_WARNING = "budget_warning"  # Approaching spending limit (monthly)
+    MODEL_OPTIMIZED = "model_optimized"  # LLM configuration improved
+    
+    # Budget Pacing (Phase 2.5)
+    BUDGET_PACE_WARNING = "budget_pace_warning"  # Daily budget overspending
+    BUDGET_PHASE_CHANGED = "budget_phase_changed"  # Conservative→Balanced→Aggressive
+    BUDGET_REQUEST_CREATED = "budget_request_created"  # Urgent approval needed
+    BUDGET_REQUEST_APPROVED = "budget_request_approved"  # User approved request
+    BUDGET_REQUEST_DENIED = "budget_request_denied"  # User denied request
+    BUDGET_REQUEST_TIMEOUT = "budget_request_timeout"  # No response after 2h
+    TASK_COMPLEXITY_HIGH = "task_complexity_high"  # Task requires expert LLM
 
     # Process Management
     PROCESS_STARTED = "process_started"

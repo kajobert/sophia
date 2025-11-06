@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
-from plugins.tool_llm import LLMTool
+from typing import Any
 
 
 class EvaluateModelArgs(BaseModel):
@@ -27,7 +27,8 @@ class ModelEvaluatorTool(BasePlugin):
 
     def __init__(self):
         super().__init__()
-        self.llm_tool: Optional[LLMTool] = None
+        # Accept any plugin that behaves like an LLM tool (duck-typed)
+        self.llm_tool: Optional[Any] = None
 
     @property
     def name(self) -> str:
@@ -44,7 +45,27 @@ class ModelEvaluatorTool(BasePlugin):
     def setup(self, config: dict) -> None:
         """Configures the tool and gets a reference to the LLMTool."""
         all_plugins = config.get("all_plugins", {})
-        self.llm_tool = all_plugins.get("tool_llm")
+        # Prefer cloud LLM plugin, but accept local LLM if running in offline mode.
+        self.llm_tool = all_plugins.get("tool_llm") or all_plugins.get("tool_local_llm")
+
+        # As a final fallback, try to pick the first plugin that exposes `execute`
+        # and looks like an LLM provider (duck-typing).
+        if not self.llm_tool:
+            for p in all_plugins.values():
+                if hasattr(p, "execute") and hasattr(p, "get_tool_definitions"):
+                    self.llm_tool = p
+                    break
+
+        # Extra fallback: pick any plugin whose name contains 'llm'
+        if not self.llm_tool:
+            for p in all_plugins.values():
+                try:
+                    if "llm" in getattr(p, "name", "").lower():
+                        self.llm_tool = p
+                        break
+                except Exception:
+                    continue
+
         if not self.llm_tool:
             raise ValueError("LLMTool not found in the list of available plugins.")
 

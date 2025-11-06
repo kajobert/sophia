@@ -1,0 +1,119 @@
+[
+  {
+    "name": "1. Simple greeting",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Ahoj! Nevim, kdo jsem. Já jsem pouze jazykový model, žádné skutečné jméno nebo identitu nemám. Můžu se ale pokusit odpovědět na tvou otázku. Proč mě ptáš, zda jsem Sophia?",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "2. Function calling (datetime)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "index": 0,
+              "name": "get_datetime",
+              "arguments": {}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "3. JSON validity",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "{\"foo\": 123, \"bar\": \"baz\"}",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "4. Edge case (empty input)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "You didn't ask a question. What can I help you with?",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "5. Consistency (repeat)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jmenuji se LLaMA. LLaMA je akronym pro Large Language Model Meta AI, což znamená velký model metaúdajů od firmy Meta. Můj hlavní úkol je poskytnout uživateli užitečné a relevantní informace na základě zadání dotazu.",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jmenuji se LLaMA. LLaMA je akronym pro Large Language Model v Area (velký jazykový model oblastí). Jsem velkým jazykovým modelem, který je vyvinutý společností Meta.",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Můžete říct, že jsem velkým počítačovým modelem jménem LLaMA.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "6. Long context",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Bardzo długa i powtarzająca się seria \"test\". Nie wiem, czego oczekujesz ode mnie. Czy jest to próba testowania mojej możliwości? Jeśli tak, to mogę powiedzieć, że potrafię obsłużyć wielu użytkowników jednocześnie, ale długi ciąg znaczących jednakowo nie ma zasadniczego znaczenia.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "7. Function call with param",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "index": 0,
+              "name": "list_files",
+              "arguments": {
+                "path": "/tmp"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "8. Error handling (timeout)",
+    "results": [
+      {
+        "ok": true,
+        "success": false,
+        "error": "HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=1)"
+      }
+    ]
+  }
+]

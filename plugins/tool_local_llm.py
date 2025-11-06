@@ -77,21 +77,68 @@ class LocalLLMTool(BasePlugin):
         self.config = LocalModelConfig(**config.get("local_llm", {}))
         # Don't create shared client here - create fresh client per request to avoid connection issues
         # self.client = httpx.AsyncClient(timeout=self.config.timeout)
-        
-        # Load system prompt from sophia_dna.txt
+        # Expose a `client` attribute so tests and callers can monkeypatch or inspect it.
+        # Clients should be created per call to avoid event-loop conflicts, but
+        # having this attribute present avoids AttributeErrors in tests.
+        # Provide a lightweight client object so tests can patch .post/.get methods
+        # Default client placeholders - leave .post/.get as None so the
+        # implementation falls back to the synchronous `requests` library.
+        self.client = SimpleNamespace(post=None, get=None)
+
+        # Use offline-specific prompt if offline_mode is set in config
+        offline_mode = config.get("offline_mode", False)
+        if offline_mode:
+            prompt_path = "config/prompts/sophia_dna_offline.txt"
+        else:
+            prompt_path = "config/prompts/sophia_dna.txt"
+
         self.system_prompt = "You are Sophia, a helpful AI assistant."
         try:
-            with open("config/prompts/sophia_dna.txt", "r", encoding="utf-8") as f:
+            with open(prompt_path, "r", encoding="utf-8") as f:
                 self.system_prompt = f.read()
-                logger.info("System prompt loaded from sophia_dna.txt")
+                logger.info(f"System prompt loaded from {prompt_path}")
         except FileNotFoundError:
-            logger.warning("sophia_dna.txt not found - using default system prompt")
+            logger.warning(f"{prompt_path} not found - using default system prompt")
 
         logger.info(
             f"Local LLM initialized: {self.config.runtime} @ {self.config.base_url}, "
             f"model={self.config.model}"
         )
 
+        # Quick synchronous health probe (best-effort). We do this synchronously
+        # to keep setup simple and avoid requiring an active asyncio loop here.
+        try:
+            probe_url = self.config.base_url
+            if self.config.runtime == "ollama":
+                probe_url = f"{self.config.base_url}/api/tags"
+            else:
+                probe_url = f"{self.config.base_url}/health"
+
+            logger.info(f"Probing local LLM runtime at {probe_url}", extra={"plugin_name": self.name})
+            resp = requests.get(probe_url, timeout=5)
+            if resp is None:
+                logger.warning("Local LLM probe returned no response (None)", extra={"plugin_name": self.name})
+            elif not resp.ok:
+                logger.warning(f"Local LLM probe returned status {resp.status_code}", extra={"plugin_name": self.name})
+            else:
+                try:
+                    j = resp.json()
+                    # If Ollama, warn if configured model not present
+                    if self.config.runtime == "ollama":
+                        models = j.get("models", []) if isinstance(j, dict) else []
+                        model_names = [m.get("name") for m in models if isinstance(m, dict)]
+                        if self.config.model not in model_names:
+                            logger.warning(
+                                f"Configured model '{self.config.model}' not found locally. Available: {model_names[:6]}",
+                                extra={"plugin_name": self.name},
+                            )
+                        else:
+                            logger.info(f"Local model '{self.config.model}' is present", extra={"plugin_name": self.name})
+                except Exception:
+                    # Non-fatal; best-effort only
+                    logger.debug("Local LLM probe returned non-JSON response", extra={"plugin_name": self.name})
+        except Exception as e:
+            logger.warning(f"Local LLM probe failed: {e}", extra={"plugin_name": self.name})
     async def execute(self, context: SharedContext) -> SharedContext:
         """
         Generate a response using local LLM with function calling support.
@@ -266,52 +313,122 @@ class LocalLLMTool(BasePlugin):
             },
         }
         
+        # Add JSON format requirement if prompt asks for JSON
+        if messages and len(messages) > 0:
+            last_message = messages[-1].get("content", "")
+            if "JSON" in last_message or "json" in last_message:
+                request["format"] = "json"
+                logger.info("🔧 Ollama JSON mode enabled (detected JSON keyword in prompt)")
+        
         # Add tools if provided (function calling)
         if tools:
             request["tools"] = tools
 
-        try:
-            logger.info(
-                f"🤖 Calling Ollama /api/chat: model={self.config.model}, "
-                f"messages={len(messages)}"
-                + (f", tools={len(tools)}" if tools else "")
-            )
-            
-            # Debug: Log request size
-            request_json = json.dumps(request)
-            logger.debug(f"Request size: {len(request_json)} bytes")
-            logger.debug(f"Request preview: {request_json[:500]}")
+        max_attempts = 3
+        backoff_base = 0.6
+        last_exception = None
 
-            # CRITICAL DEBUG: Log before HTTP call
-            logger.info(f"🔍 DEBUG: About to POST to {url}")
-            
-            # Use sync requests library instead of httpx (avoids async event loop conflicts)
-            response = requests.post(url, json=request, timeout=self.config.timeout)
-            logger.info(f"🔍 DEBUG: POST completed, status={response.status_code}")
-            response.raise_for_status()
+        for attempt in range(1, max_attempts + 1):
+            try:
+                logger.info(
+                    f"🤖 Calling Ollama /api/chat: model={self.config.model}, "
+                    f"messages={len(messages)}"
+                    + (f", tools={len(tools)}" if tools else "")
+                )
 
-            result = response.json()
-            message = result.get("message", {})
-            
-            # Log response details
-            has_tool_calls = bool(message.get("tool_calls"))
-            content_len = len(message.get("content", ""))
-            logger.info(
-                f"✅ Ollama response: content={content_len} chars"
-                + (f", tool_calls={len(message.get('tool_calls', []))}" if has_tool_calls else "")
-            )
+                # Debug: Log request size
+                request_json = json.dumps(request)
+                logger.debug(f"Request size: {len(request_json)} bytes")
+                logger.debug(f"Request preview: {request_json[:500]}")
 
-            return message
+                # CRITICAL DEBUG: Log before HTTP call
+                logger.info(f"🔍 DEBUG: About to POST to {url}")
 
-        except httpx.TimeoutException as e:
-            logger.error(f"❌ Ollama TIMEOUT after {self.config.timeout}s: {e}")
-            raise
-        except httpx.HTTPStatusError as e:
-            logger.error(f"❌ Ollama HTTP error: {e.response.status_code} - {e.response.text}")
-            raise
-        except Exception as e:
-            logger.error(f"❌ Ollama error: {e}", exc_info=True)
-            raise
+                # Prefer an injected client (useful for tests/mocking). If not present,
+                # fall back to synchronous requests.post.
+                import asyncio
+
+                if hasattr(self, "client") and getattr(self.client, "post", None):
+                    post_fn = getattr(self.client, "post")
+                    if asyncio.iscoroutinefunction(post_fn) or asyncio.iscoroutine(post_fn):
+                        response = await post_fn(url, json=request, timeout=self.config.timeout)
+                    else:
+                        response = post_fn(url, json=request, timeout=self.config.timeout)
+                else:
+                    # Use sync requests library instead of httpx (avoids async event loop conflicts)
+                    response = requests.post(url, json=request, timeout=self.config.timeout)
+
+                # Basic response validation
+                if response is None:
+                    raise RuntimeError("No response object received from Ollama (None)")
+
+                status = getattr(response, "status_code", None)
+                if status is not None:
+                    logger.info(f"🔍 DEBUG: POST completed, status={status}")
+                if hasattr(response, "raise_for_status"):
+                    response.raise_for_status()
+
+                # Parse JSON safely without assuming response.json exists or is callable
+                json_fn = getattr(response, "json", None)
+                if callable(json_fn):
+                    try:
+                        result = json_fn()
+                    except Exception as je:
+                        raise RuntimeError(f"Received non-JSON response from Ollama: {je}")
+                else:
+                    text = getattr(response, "text", None)
+                    if text:
+                        try:
+                            result = json.loads(text)
+                        except Exception as je:
+                            raise RuntimeError(f"Received non-JSON text response from Ollama: {je}")
+                    else:
+                        raise RuntimeError("Ollama response object has no json/text to parse")
+
+                # Support multiple response shapes:
+                # - Ollama runtime: {'message': {...}}
+                # - Some tests/mocks: {'response': 'text'}
+                # - LM Studio style: {'choices': [{'message': {...}}]}
+                message = result.get("message") if isinstance(result, dict) and "message" in result else result
+                if isinstance(message, dict):
+                    if "response" in message:
+                        message = {"content": message.get("response")}
+                    elif "choices" in message and isinstance(message.get("choices"), list):
+                        # Convert OpenAI-style choice wrapper
+                        choice = message["choices"][0]
+                        message = choice.get("message", {}) if isinstance(choice, dict) else message
+                else:
+                    message = {"content": message}
+
+                # Log response details
+                tool_calls_list = message.get("tool_calls") or []
+                has_tool_calls = bool(tool_calls_list)
+                content_len = len(message.get("content", "") or "")
+                logger.info(
+                    f"✅ Ollama response: content={content_len} chars"
+                    + (f", tool_calls={len(tool_calls_list)}" if has_tool_calls else "")
+                )
+
+                return message
+
+            except Exception as e:
+                last_exception = e
+                logger.warning(f"Attempt {attempt}/{max_attempts} failed calling Ollama: {e}", extra={"plugin_name": self.name})
+                if attempt < max_attempts:
+                    sleep_for = backoff_base * (2 ** (attempt - 1))
+                    logger.info(f"Retrying Ollama call in {sleep_for:.1f}s (attempt {attempt+1})", extra={"plugin_name": self.name})
+                    import asyncio as _asyncio
+
+                    await _asyncio.sleep(sleep_for)
+                    continue
+                else:
+                    logger.error(f"All {max_attempts} Ollama attempts failed. Last error: {last_exception}", extra={"plugin_name": self.name})
+                    raise
+
+        # If we exit the loop without returning, raise the last exception for clarity
+        if last_exception:
+            raise last_exception
+        raise RuntimeError("Ollama call failed without exception")
 
     async def _generate_lmstudio(
         self,

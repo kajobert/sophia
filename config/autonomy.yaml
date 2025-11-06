@@ -26,6 +26,53 @@ autonomy:
     daily_limit_usd: 1.00          # $1/day base limit
     monthly_limit_usd: 30.00       # $30/month base limit
     
+    # Daily Budget Pacing (Phase 2.5 - NEW!)
+    pacing:
+      enabled: true
+      safety_buffer_pct: 20        # Reserve 20% for end-of-month emergencies
+      overspend_threshold: 1.5     # Warn if daily spend > 150% of recommended
+      
+      # Phase-based strategy (day ranges within month)
+      phases:
+        conservative:
+          days: [1, 10]            # Days 1-10: Conservative spending
+          local_pct: 70            # 70% local, 30% cloud
+          description: "Start of month - build up budget reserve"
+        
+        balanced:
+          days: [11, 20]           # Days 11-20: Balanced usage
+          local_pct: 50            # 50% local, 50% cloud
+          description: "Mid-month - normal operations"
+        
+        aggressive:
+          days: [21, 31]           # Days 21-31: Use remaining budget
+          local_pct: 30            # 30% local, 70% cloud
+          description: "End of month - spend remaining budget"
+    
+    # Urgent Budget Requests (Phase 2.5 - NEW!)
+    urgent_requests:
+      enabled: true
+      auto_approve_under_usd: 2.0  # Auto-approve requests < $2
+      notification_email: ""       # Set to your email for notifications
+      notification_dashboard: true
+      timeout_seconds: 7200        # 2 hours wait for approval
+      
+      # Fallback strategy when timeout
+      timeout_strategy: "use_local"  # Options: use_local, skip_task, wait_indefinitely
+    
+    # Model Pricing (for cost estimation)
+    pricing:
+      # OpenRouter models (USD per 1M tokens - average of input+output)
+      "openrouter/anthropic/claude-3.5-sonnet": 0.003
+      "openrouter/anthropic/claude-3-haiku": 0.00025
+      "openrouter/openai/gpt-4o": 0.0025
+      "openrouter/openai/gpt-4o-mini": 0.00015
+      "openrouter/google/gemini-pro-1.5": 0.001
+      
+      # Local models (free)
+      "local": 0.0
+      "ollama": 0.0
+    
     # Task-based budget allocation
     task_limits:
       simple: 0.05      # Documentation, simple queries
@@ -253,6 +300,94 @@ self_improvement:
     require_benchmark: true
     no_performance_degradation: true
     rollback_plan_required: true
+
+  # Self-Tuning System (Phase 3.4 - NEW!)
+  self_tuning:
+    enabled: true
+    improvement_threshold: 0.10  # 10% minimum improvement required
+    sandbox_path: "sandbox/temp_testing"
+    auto_deploy: true  # Automatically deploy approved fixes
+    max_concurrent_tests: 1  # Test one hypothesis at a time
+    
+    # Safety limits
+    safety:
+      backup_before_deploy: true
+      git_commit_required: true
+      max_deployments_per_day: 5  # Prevent runaway self-modification
+      cooldown_hours: 24  # Wait 24h before re-testing same file
+    
+    # Benchmarking configuration
+    benchmarking:
+      pytest_timeout_seconds: 120
+      min_test_count: 1  # Minimum tests to run for code changes
+      require_pass_rate_improvement: true
+    
+    # Deployment workflow
+    deployment:
+      create_git_commit: true
+      commit_prefix: "[AUTO]"
+      backup_extension: ".backup"
+      restart_plugins_after_deploy: false  # Manual restart for safety
+
+  # Adaptive Model Escalation (Phase 3.6 - NEW!)
+  model_escalation:
+    enabled: true
+    
+    # 4-Tier Strategy (90% cost savings)
+    tiers:
+      - name: "Local 8B"
+        model: "llama3.1:8b"
+        provider: "ollama"
+        max_attempts: 3
+        cost_per_call: 0.0
+        description: "Free local model - first attempt"
+      
+      - name: "Local 70B"
+        model: "llama3.1:70b"
+        provider: "ollama"
+        max_attempts: 3
+        cost_per_call: 0.0
+        description: "Free larger local model - second tier"
+      
+      - name: "Cloud Mini"
+        model: "openrouter/openai/gpt-4o-mini"
+        provider: "cloud"
+        max_attempts: 1
+        cost_per_call: 0.005
+        description: "Affordable cloud model - third tier"
+      
+      - name: "Cloud Premium"
+        model: "openrouter/anthropic/claude-3.5-sonnet"
+        provider: "cloud"
+        max_attempts: 1
+        cost_per_call: 0.015
+        description: "Premium cloud model - last resort"
+    
+    # Budget tracking
+    budget_tracking:
+      log_savings: true
+      alert_on_cloud_usage: true
+      monthly_cloud_limit_usd: 6.00  # $6/month for cloud LLM calls
+      expected_savings_pct: 90  # Expect 90% savings vs always-cloud
+
+  # GitHub Integration (Phase 3.5 - NEW!)
+  github_integration:
+    enabled: true
+    repository_owner: "ShotyCZ"
+    repository_name: "sophia"
+    target_branch: "master"
+    create_as_draft: true  # Create PRs as drafts for safety
+    
+    # PR Configuration
+    pr_labels:
+      - "automated"
+      - "self-improvement"
+    auto_merge: false  # Always require human review
+    
+    # PR Template
+    include_hypothesis_details: true
+    include_test_results: true
+    include_benchmark_data: true
 
   # Mandatory Human Review
   mandatory_review:

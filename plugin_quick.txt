@@ -1,0 +1,238 @@
+....................................FF..F............................... [ 47%]
+.................................F.............ss.......F
+=================================== FAILURES ===================================
+________________ test_planner_parses_legacy_create_plan_format _________________
+
+planner = <plugins.cognitive_planner.Planner object at 0x7b41ccdbd310>
+
+    @pytest.mark.asyncio
+    async def test_planner_parses_legacy_create_plan_format(planner):
+        """
+        Tests that the planner correctly parses the old format where the plan
+        is wrapped in a single 'create_plan' function call.
+        """
+        # Arrange
+        context = SharedContext("test_legacy", "PLANNING", logging.getLogger("test"), "list files")
+    
+        plan_dict = {
+            "plan": [
+                {
+                    "tool_name": "tool_file_system",
+                    "method_name": "list_directory",
+                    "arguments": {"path": "."},
+                }
+            ]
+        }
+        plan_json_str = json.dumps(plan_dict)
+    
+        tool_call = create_mock_tool_call("create_plan", plan_json_str)
+        mock_response = create_mock_llm_message([tool_call])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_legacy",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        assert "plan" in result_context.payload
+>       assert result_context.payload["plan"] == plan_dict["plan"]
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains one more item: {'arguments': {'path': '.'}, 'method_name': 'list_directory', 'tool_name': 'tool_file_system'}
+E         Use -v to get more diff
+
+tests/plugins/test_cognitive_planner.py:119: AssertionError
+_______________ test_planner_parses_direct_tool_call_list_format _______________
+
+planner = <plugins.cognitive_planner.Planner object at 0x7b41cce20650>
+
+    @pytest.mark.asyncio
+    async def test_planner_parses_direct_tool_call_list_format(planner):
+        """
+        Tests that the planner correctly parses the new format where the LLM
+        returns a direct list of tool calls.
+        """
+        # Arrange
+        context = SharedContext("test_direct", "PLANNING", logging.getLogger("test"), "write hello")
+    
+        tool_call_1 = create_mock_tool_call(
+            "tool_file_system.write_file", '{"filepath": "hello.txt", "content": "Hello, World!"}'
+        )
+        tool_call_2 = create_mock_tool_call("tool_file_system.read_file", '{"filepath": "hello.txt"}')
+        mock_response = create_mock_llm_message([tool_call_1, tool_call_2])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_direct",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        expected_plan = [
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "write_file",
+                "arguments": {"filepath": "hello.txt", "content": "Hello, World!"},
+            },
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "read_file",
+                "arguments": {"filepath": "hello.txt"},
+            },
+        ]
+        assert "plan" in result_context.payload
+>       assert result_context.payload["plan"] == expected_plan
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains 2 more items, first extra item: {'arguments': {'content': 'Hello, World!', 'filepath': 'hello.txt'}, 'method_name': 'write_file', 'tool_name': 'tool_file_system'}
+E         Use -v to get more diff
+
+tests/plugins/test_cognitive_planner.py:162: AssertionError
+_______________ test_planner_handles_malformed_json_in_arguments _______________
+
+planner = <plugins.cognitive_planner.Planner object at 0x7b41cccc94f0>
+
+    @pytest.mark.asyncio
+    async def test_planner_handles_malformed_json_in_arguments(planner):
+        """
+        Tests robustness against JSON errors in both legacy and direct formats.
+        """
+        # Arrange
+        context = SharedContext("test_json_error", "PLANNING", logging.getLogger("test"), "break json")
+    
+        # Simulate corrupted JSON in a direct tool call
+        tool_call = create_mock_tool_call("tool_file_system.write_file", '{"filepath": "bad.txt"')
+        mock_response = create_mock_llm_message([tool_call])
+    
+        planner.llm_tool.execute.return_value = SharedContext(
+            "test_json_error",
+            "PLANNING",
+            logging.getLogger("test"),
+            payload={"llm_response": mock_response},
+        )
+    
+        # Act
+        result_context = await planner.execute(context)
+    
+        # Assert
+        # With the new robust parsing, malformed JSON should result in a plan
+        # with empty arguments for the failed step.
+        expected_plan = [
+            {
+                "tool_name": "tool_file_system",
+                "method_name": "write_file",
+                "arguments": {},
+            }
+        ]
+>       assert result_context.payload["plan"] == expected_plan
+E       AssertionError: assert [] == [{'arguments'...file_system'}]
+E         
+E         Right contains one more item: {'arguments': {}, 'method_name': 'write_file', 'tool_name': 'tool_file_system'}
+E         Use -v to get more diff
+
+tests/plugins/test_cognitive_planner.py:244: AssertionError
+________________ TestJulesCLIPlugin.test_create_session_single _________________
+
+self = <test_tool_jules_cli.TestJulesCLIPlugin object at 0x7b41d21ed010>
+plugin = <plugins.tool_jules_cli.JulesCLIPlugin object at 0x7b41bc129100>
+context = <Mock id='135522258626960'>
+
+    @pytest.mark.asyncio
+    async def test_create_session_single(self, plugin, context):
+        """Test creating single Jules session"""
+        # Mock bash output (execute_command returns string)
+        plugin.bash_tool.execute_command.return_value = "Session ID: 123456\nStatus: PLANNING"
+    
+        # Create session
+        result = await plugin.create_session(
+            context, repo="ShotyCZ/sophia", task="Fix bug in auth module"
+        )
+    
+        # Verify result
+        assert result["success"] is True
+        assert len(result["session_ids"]) == 1
+        assert result["session_ids"][0] == "123456"
+    
+        # Verify bash was called correctly
+>       plugin.bash_tool.execute_command.assert_called_once()
+
+tests/plugins/test_tool_jules_cli.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AsyncMock name='mock.execute_command' id='135522258423968'>
+
+    def assert_called_once(self):
+        """assert that the mock was called only once.
+        """
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to have been called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'execute_command' to have been called once. Called 2 times.
+E           Calls: [call(<Mock id='135522258626960'>, 'which jules'),
+E            call(<Mock id='135522258626960'>, 'jules remote new --repo ShotyCZ/sophia --session "Fix bug in auth module" --parallel 1')].
+
+/usr/lib/python3.12/unittest/mock.py:923: AssertionError
+______________ TestOllamaIntegration.test_generate_ollama_success ______________
+
+self = <test_tool_local_llm.TestOllamaIntegration object at 0x7b41cd615880>
+local_llm = <plugins.tool_local_llm.LocalLLMTool object at 0x7b41681884a0>
+
+    @pytest.mark.asyncio
+    async def test_generate_ollama_success(self, local_llm):
+        """Test successful text generation with Ollama."""
+        # Mock httpx response
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"response": "This is a test response from Ollama"}
+        mock_response.raise_for_status = MagicMock()
+    
+>       with patch.object(local_llm.client, "post", new=AsyncMock(return_value=mock_response)):
+                          ^^^^^^^^^^^^^^^^
+E       AttributeError: 'LocalLLMTool' object has no attribute 'client'
+
+tests/plugins/test_tool_local_llm.py:112: AttributeError
+=============================== warnings summary ===============================
+tests/plugins/test_core_process_manager.py::test_get_process_status_not_found
+tests/plugins/test_core_sleep_scheduler.py::TestPluginMetadata::test_no_tool_definitions
+tests/plugins/test_tool_file_system.py::test_fs_tool_write_and_read
+  /mnt/c/SOPHIA/sophia/.venv/lib/python3.12/site-packages/_pytest/unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <function BaseSubprocessTransport.__del__ at 0x7b420a5c1300>
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.12/asyncio/base_subprocess.py", line 126, in __del__
+      self.close()
+    File "/usr/lib/python3.12/asyncio/base_subprocess.py", line 104, in close
+      proto.pipe.close()
+    File "/usr/lib/python3.12/asyncio/unix_events.py", line 568, in close
+      self._close(None)
+    File "/usr/lib/python3.12/asyncio/unix_events.py", line 592, in _close
+      self._loop.call_soon(self._call_connection_lost, exc)
+    File "/usr/lib/python3.12/asyncio/base_events.py", line 795, in call_soon
+      self._check_closed()
+    File "/usr/lib/python3.12/asyncio/base_events.py", line 541, in _check_closed
+      raise RuntimeError('Event loop is closed')
+  RuntimeError: Event loop is closed
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_parses_legacy_create_plan_format
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_parses_direct_tool_call_list_format
+FAILED tests/plugins/test_cognitive_planner.py::test_planner_handles_malformed_json_in_arguments
+FAILED tests/plugins/test_tool_jules_cli.py::TestJulesCLIPlugin::test_create_session_single
+FAILED tests/plugins/test_tool_local_llm.py::TestOllamaIntegration::test_generate_ollama_success
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 5 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+5 failed, 122 passed, 2 skipped, 3 warnings in 42.31s

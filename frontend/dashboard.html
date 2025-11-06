@@ -1,0 +1,539 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>SOPHIA AMI 1.0 - Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0e27; color: #e0e6ed; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header { border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    h1 { font-size: 32px; color: #60a5fa; margin-bottom: 8px; }
+    .subtitle { color: #94a3b8; font-size: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .card { background: #1e293b; border-radius: 8px; padding: 20px; border: 1px solid #334155; }
+    .card h2 { font-size: 18px; color: #60a5fa; margin-bottom: 15px; }
+    .stat { font-size: 36px; font-weight: bold; color: #e0e6ed; }
+    .stat-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-top: 5px; }
+    .status-pending { color: #fbbf24; }
+    .status-running { color: #60a5fa; }
+    .status-done { color: #34d399; }
+    .status-failed { color: #f87171; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #0f172a; color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    td { font-size: 14px; }
+    .task-id { color: #60a5fa; font-weight: 600; }
+    .task-payload { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cbd5e1; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; color: #94a3b8; font-size: 14px; }
+    input, textarea { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 4px; color: #e0e6ed; font-family: inherit; }
+    button { background: #60a5fa; color: #0a0e27; border: none; padding: 12px 24px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #3b82f6; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    .success-msg { background: #065f46; color: #34d399; padding: 12px; border-radius: 4px; margin-top: 10px; display: none; }
+    .error-msg { background: #7f1d1d; color: #f87171; padding: 12px; border-radius: 4px; margin-top: 10px; display: none; }
+    .last-update { color: #64748b; font-size: 12px; text-align: right; margin-top: 10px; }
+    code { background: #0f172a; padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #fbbf24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🤖 SOPHIA AMI 1.0</h1>
+      <div class="subtitle">Autonomous 24/7 Worker Dashboard</div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <h2>System Status</h2>
+        <div class="stat" id="pluginCount">--</div>
+        <div class="stat-label">Plugins Active</div>
+      </div>
+      <div class="card">
+        <h2>Pending Tasks</h2>
+        <div class="stat status-pending" id="pendingCount">--</div>
+        <div class="stat-label">Waiting in Queue</div>
+      </div>
+      <div class="card">
+        <h2>Completed</h2>
+        <div class="stat status-done" id="doneCount">--</div>
+        <div class="stat-label">Successfully Done</div>
+      </div>
+      <div class="card">
+        <h2>Failed</h2>
+        <div class="stat status-failed" id="failedCount">--</div>
+        <div class="stat-label">Errors</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px;">
+      <h2>🧠 Self-Improvement Status</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-top: 15px;">
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Hypotheses</div>
+          <div style="font-size: 24px; font-weight: bold; color: #e0e6ed;">
+            <span id="totalHypotheses">0</span> total
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            <span id="pendingHypotheses">0</span> pending
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Success Rate</div>
+          <div style="font-size: 24px; font-weight: bold;">
+            <span id="successRate" style="color: #34d399;">0%</span>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            <span id="successfulUpgrades">0</span>/<span id="totalUpgrades">0</span> upgrades
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Current Status</div>
+          <div style="font-size: 18px; font-weight: bold; margin-top: 8px;">
+            <span id="currentUpgradeStatus">🟢 IDLE</span>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 8px;" id="currentUpgradeDetails">
+            No upgrade in progress
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Rollbacks</div>
+          <div style="font-size: 24px; font-weight: bold;">
+            <span id="rollbackCount" style="color: #f87171;">0</span>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            Last: <span id="lastRollback">Never</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px;">
+      <h2>💰 Budget Status</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 15px;">
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Monthly Budget</div>
+          <div style="font-size: 24px; font-weight: bold; color: #e0e6ed;">
+            <span id="monthlySpent">$0.00</span> / <span id="monthlyLimit">$30.00</span>
+          </div>
+          <div style="margin-top: 8px; background: #0f172a; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="monthlyProgress" style="background: linear-gradient(90deg, #34d399 0%, #fbbf24 60%, #f87171 90%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            <span id="monthlyPct">0%</span> used
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Daily Budget</div>
+          <div style="font-size: 24px; font-weight: bold; color: #e0e6ed;">
+            <span id="dailySpent">$0.00</span> / <span id="dailyLimit">$0.00</span>
+          </div>
+          <div style="margin-top: 8px; background: #0f172a; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div id="dailyProgress" style="background: linear-gradient(90deg, #34d399 0%, #fbbf24 100%, #f87171 150%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 5px;">
+            <span id="dailyPct">0%</span> used
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Current Phase</div>
+          <div style="font-size: 20px; font-weight: bold; margin-top: 8px;">
+            <code id="currentPhase" style="background: #0f172a; padding: 8px 16px; border-radius: 4px; font-size: 16px;">--</code>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
+            <span id="daysRemaining">--</span> days left
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Pacing Status</div>
+          <div style="font-size: 20px; font-weight: bold; margin-top: 8px;">
+            <span id="pacingStatus">--</span>
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
+            Auto-adjust enabled
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card">
+        <h2>📋 Task Queue (Last 20)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Instruction</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody id="taskTableBody">
+            <tr><td colspan="5" style="text-align: center; color: #64748b;">Loading tasks...</td></tr>
+          </tbody>
+        </table>
+        <div class="last-update">Last updated: <span id="lastUpdate">--</span></div>
+      </div>
+
+      <div class="card">
+        <h2>🧬 Hypotheses (Last 20)</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Description</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody id="hypothesesTableBody">
+            <tr><td colspan="5" style="text-align: center; color: #64748b;">Loading hypotheses...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 2fr 1fr; margin-top: 20px;">
+      <div class="card">
+        <h2>➕ Add New Task</h2>
+        <form id="taskForm">
+          <div class="form-group">
+            <label for="taskInput">Task Instruction</label>
+            <textarea id="taskInput" rows="8" placeholder="Example: Create a Python script that prints 'Hello World' and save it to scripts/hello.py" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="taskPriority">Priority (lower = higher)</label>
+            <input type="number" id="taskPriority" value="100" min="1" max="1000">
+          </div>
+          <button type="submit" id="submitBtn">Enqueue Task</button>
+          <div class="success-msg" id="successMsg">✅ Task enqueued successfully!</div>
+          <div class="error-msg" id="errorMsg">❌ Failed to enqueue task</div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let autoRefreshInterval = null;
+
+    async function refreshDashboard() {
+      try {
+        // Fetch system status
+        const statusRes = await fetch('/api/status');
+        const status = await statusRes.json();
+        document.getElementById('pluginCount').textContent = status.plugins?.length || 0;
+
+        // Fetch budget status
+        try {
+          const budgetRes = await fetch('/api/budget');
+          const budget = await budgetRes.json();
+          
+          if (!budget.error) {
+            // Monthly budget
+            document.getElementById('monthlySpent').textContent = `$${budget.monthly_spent}`;
+            document.getElementById('monthlyLimit').textContent = `$${budget.monthly_limit}`;
+            document.getElementById('monthlyPct').textContent = `${budget.monthly_usage_pct}%`;
+            document.getElementById('monthlyProgress').style.width = `${Math.min(budget.monthly_usage_pct, 100)}%`;
+            
+            // Daily budget
+            document.getElementById('dailySpent').textContent = `$${budget.daily_spent}`;
+            document.getElementById('dailyLimit').textContent = `$${budget.daily_limit}`;
+            document.getElementById('dailyPct').textContent = `${budget.daily_usage_pct}%`;
+            document.getElementById('dailyProgress').style.width = `${Math.min(budget.daily_usage_pct, 100)}%`;
+            
+            // Current phase
+            const phaseColors = {
+              'conservative': '#34d399',
+              'balanced': '#fbbf24',
+              'aggressive': '#f87171',
+              'unknown': '#64748b',
+              'error': '#f87171'
+            };
+            const phaseElement = document.getElementById('currentPhase');
+            phaseElement.textContent = budget.current_phase.toUpperCase();
+            phaseElement.style.color = phaseColors[budget.current_phase] || '#64748b';
+            
+            // Days remaining
+            document.getElementById('daysRemaining').textContent = budget.days_remaining || 0;
+            
+            // Pacing status
+            const pacingElement = document.getElementById('pacingStatus');
+            if (budget.pacing_enabled) {
+              if (budget.daily_usage_pct > 150) {
+                pacingElement.textContent = '⚠️ OVERSPENT';
+                pacingElement.style.color = '#f87171';
+              } else if (budget.daily_usage_pct > 100) {
+                pacingElement.textContent = '⚡ HIGH';
+                pacingElement.style.color = '#fbbf24';
+              } else {
+                pacingElement.textContent = '✅ ON TRACK';
+                pacingElement.style.color = '#34d399';
+              }
+            } else {
+              pacingElement.textContent = '⏸️ DISABLED';
+              pacingElement.style.color = '#64748b';
+            }
+          } else {
+            // Show error in budget section
+            document.getElementById('currentPhase').textContent = 'N/A';
+            document.getElementById('pacingStatus').textContent = 'UNAVAILABLE';
+          }
+        } catch (budgetError) {
+          console.error('Budget fetch error:', budgetError);
+        }
+
+        // Fetch self-improvement stats
+        try {
+          const selfImprovementRes = await fetch('/api/self_improvement');
+          const selfImprovement = await selfImprovementRes.json();
+          
+          if (!selfImprovement.error) {
+            // Hypotheses counts
+            document.getElementById('totalHypotheses').textContent = selfImprovement.hypotheses?.total || 0;
+            document.getElementById('pendingHypotheses').textContent = selfImprovement.hypotheses?.pending || 0;
+            
+            // Success rate
+            const successRate = selfImprovement.upgrade_stats?.success_rate || 0;
+            const successRateElement = document.getElementById('successRate');
+            successRateElement.textContent = `${successRate}%`;
+            successRateElement.style.color = successRate >= 80 ? '#34d399' : successRate >= 60 ? '#fbbf24' : '#f87171';
+            
+            document.getElementById('successfulUpgrades').textContent = selfImprovement.upgrade_stats?.successful || 0;
+            document.getElementById('totalUpgrades').textContent = selfImprovement.upgrade_stats?.total_upgrades || 0;
+            
+            // Current upgrade status
+            if (selfImprovement.current_upgrade && selfImprovement.current_upgrade.in_progress) {
+              const upgrade = selfImprovement.current_upgrade;
+              document.getElementById('currentUpgradeStatus').textContent = '🔄 IN PROGRESS';
+              document.getElementById('currentUpgradeStatus').style.color = '#fbbf24';
+              document.getElementById('currentUpgradeDetails').textContent = 
+                `Hypothesis #${upgrade.hypothesis_id} - ${upgrade.status} (${upgrade.validation_attempts}/${upgrade.max_attempts})`;
+            } else {
+              document.getElementById('currentUpgradeStatus').textContent = '🟢 IDLE';
+              document.getElementById('currentUpgradeStatus').style.color = '#34d399';
+              
+              if (selfImprovement.last_upgrade) {
+                const lastUpgrade = selfImprovement.last_upgrade;
+                const timeAgo = lastUpgrade.timestamp !== 'N/A' 
+                  ? new Date(lastUpgrade.timestamp).toLocaleString() 
+                  : 'Never';
+                document.getElementById('currentUpgradeDetails').textContent = `Last: #${lastUpgrade.hypothesis_id} at ${timeAgo}`;
+              } else {
+                document.getElementById('currentUpgradeDetails').textContent = 'No upgrades yet';
+              }
+            }
+            
+            // Rollbacks
+            document.getElementById('rollbackCount').textContent = selfImprovement.upgrade_stats?.rolled_back || 0;
+            if (selfImprovement.last_rollback) {
+              const lastRollback = selfImprovement.last_rollback;
+              const timeAgo = lastRollback.timestamp !== 'N/A' 
+                ? new Date(lastRollback.timestamp).toLocaleString() 
+                : 'Never';
+              document.getElementById('lastRollback').textContent = `#${lastRollback.hypothesis_id} (${timeAgo})`;
+            } else {
+              document.getElementById('lastRollback').textContent = 'Never';
+            }
+          } else {
+            // Error fetching self-improvement stats
+            console.error('Self-improvement fetch error:', selfImprovement.error);
+          }
+        } catch (selfImprovementError) {
+          console.error('Self-improvement fetch error:', selfImprovementError);
+        }
+
+        // Fetch tasks
+        const tasksRes = await fetch('/api/tasks?limit=20');
+        const tasksData = await tasksRes.json();
+        
+        if (tasksData.error) {
+          document.getElementById('taskTableBody').innerHTML = 
+            `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${tasksData.error}</td></tr>`;
+          return;
+        }
+
+        const tasks = tasksData.tasks || [];
+        
+        // Calculate statistics
+        const stats = tasks.reduce((acc, t) => {
+          acc[t.status] = (acc[t.status] || 0) + 1;
+          return acc;
+        }, {});
+
+        document.getElementById('pendingCount').textContent = stats.pending || 0;
+        document.getElementById('doneCount').textContent = stats.done || 0;
+        document.getElementById('failedCount').textContent = stats.failed || 0;
+
+        // Render task table
+        const tbody = document.getElementById('taskTableBody');
+        if (tasks.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No tasks in queue</td></tr>';
+        } else {
+          tbody.innerHTML = tasks.map(task => {
+            let instruction = 'N/A';
+            try {
+              const payload = JSON.parse(task.payload);
+              instruction = payload.instruction || 'N/A';
+            } catch (e) {
+              instruction = task.payload.substring(0, 50);
+            }
+            
+            return `
+              <tr>
+                <td class="task-id">#${task.id}</td>
+                <td><code class="status-${task.status}">${task.status}</code></td>
+                <td>${task.priority}</td>
+                <td class="task-payload" title="${instruction}">${instruction}</td>
+                <td style="color: #64748b; font-size: 12px;">${task.created_at || '--'}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        // Fetch hypotheses
+        try {
+          const hypothesesRes = await fetch('/api/hypotheses?limit=20');
+          const hypothesesData = await hypothesesRes.json();
+          
+          if (hypothesesData.error) {
+            document.getElementById('hypothesesTableBody').innerHTML = 
+              `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${hypothesesData.error}</td></tr>`;
+          } else {
+            const hypotheses = hypothesesData.hypotheses || [];
+            
+            const hypothesesBody = document.getElementById('hypothesesTableBody');
+            if (hypotheses.length === 0) {
+              hypothesesBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No hypotheses</td></tr>';
+            } else {
+              hypothesesBody.innerHTML = hypotheses.map(hyp => {
+                // Status badge with emoji
+                let statusBadge = '';
+                let statusColor = '';
+                switch (hyp.status) {
+                  case 'deployed_validated':
+                    statusBadge = '✅ validated';
+                    statusColor = 'color: #34d399;';
+                    break;
+                  case 'deployed_rollback':
+                    statusBadge = '⚠️ rollback';
+                    statusColor = 'color: #f87171;';
+                    break;
+                  case 'deployed_awaiting_validation':
+                    statusBadge = '🔄 validating';
+                    statusColor = 'color: #fbbf24;';
+                    break;
+                  case 'approved':
+                    statusBadge = '👍 approved';
+                    statusColor = 'color: #60a5fa;';
+                    break;
+                  case 'testing':
+                    statusBadge = '🧪 testing';
+                    statusColor = 'color: #a78bfa;';
+                    break;
+                  default:
+                    statusBadge = '⏳ pending';
+                    statusColor = 'color: #94a3b8;';
+                }
+                
+                // Category badge
+                let categoryBadge = hyp.category || 'unknown';
+                let categoryColor = '';
+                switch (hyp.category) {
+                  case 'bug_fix':
+                    categoryColor = 'color: #f87171;';
+                    break;
+                  case 'optimization':
+                    categoryColor = 'color: #fbbf24;';
+                    break;
+                  case 'feature':
+                    categoryColor = 'color: #60a5fa;';
+                    break;
+                  default:
+                    categoryColor = 'color: #94a3b8;';
+                }
+                
+                return `
+                  <tr>
+                    <td class="task-id">#${hyp.id}</td>
+                    <td><code style="${categoryColor}">${categoryBadge}</code></td>
+                    <td><span style="${statusColor}">${statusBadge}</span></td>
+                    <td class="task-payload" title="${hyp.description}">${hyp.description}</td>
+                    <td style="color: #64748b; font-size: 12px;">${hyp.created_at !== 'N/A' ? new Date(hyp.created_at).toLocaleString() : '--'}</td>
+                  </tr>
+                `;
+              }).join('');
+            }
+          }
+        } catch (hypothesesError) {
+          console.error('Hypotheses fetch error:', hypothesesError);
+          document.getElementById('hypothesesTableBody').innerHTML = 
+            `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error loading hypotheses</td></tr>`;
+        }
+
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error('Dashboard refresh error:', e);
+        document.getElementById('taskTableBody').innerHTML = 
+          `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error loading dashboard: ${e.message}</td></tr>`;
+      }
+    }
+
+    async function enqueueTask(instruction, priority) {
+      const res = await fetch('/api/enqueue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction, priority: parseInt(priority) })
+      });
+      
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error);
+      }
+      
+      return await res.json();
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const instruction = document.getElementById('taskInput').value.trim();
+      const priority = document.getElementById('taskPriority').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const successMsg = document.getElementById('successMsg');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      if (!instruction) return;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enqueueing...';
+      successMsg.style.display = 'none';
+      errorMsg.style.display = 'none';
+      
+      try {
+        await enqueueTask(instruction, priority);
+        successMsg.style.display = 'block';
+        document.getElementById('taskInput').value = '';
+        refreshDashboard(); // Refresh immediately
+      } catch (error) {
+        errorMsg.textContent = `❌ Error: ${error.message}`;
+        errorMsg.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enqueue Task';
+        setTimeout(() => {
+          successMsg.style.display = 'none';
+          errorMsg.style.display = 'none';
+        }, 5000);
+      }
+    });
+
+    // Initial refresh and start auto-refresh
+    refreshDashboard();
+    autoRefreshInterval = setInterval(refreshDashboard, 5000);
+  </script>
+</body>
+</html>
