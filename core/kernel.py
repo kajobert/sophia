@@ -54,6 +54,9 @@ class Kernel:
         if "--recovery-from-crash" in sys.argv:
             await self._handle_recovery_mode()
         
+        # AMI 1.0: Check for pending autonomous upgrade
+        await self._check_pending_upgrade()
+        
         # --- PROMPT LOADING PHASE ---
         try:
             with open("config/prompts/json_repair_prompt.txt", "r") as f:
@@ -236,6 +239,60 @@ class Kernel:
         except Exception as e:
             logger.error(f"Recovery mode error: {e}", exc_info=True, extra={"plugin_name": "Kernel"})
 
+    async def _check_pending_upgrade(self):
+        """
+        AMI 1.0: Check for pending autonomous upgrade and prepare for validation.
+        
+        If .data/upgrade_state.json exists, it means SOPHIA was restarted after
+        a deployment and needs to run validation checks before finalizing the upgrade.
+        """
+        upgrade_state_file = Path(".data/upgrade_state.json")
+        
+        if not upgrade_state_file.exists():
+            return  # No pending upgrade
+        
+        try:
+            with open(upgrade_state_file, 'r') as f:
+                upgrade_state = json.load(f)
+            
+            hypothesis_id = upgrade_state.get('hypothesis_id')
+            target_file = upgrade_state.get('target_file')
+            validation_attempts = upgrade_state.get('validation_attempts', 0)
+            
+            logger.warning(
+                f"🔄 Pending upgrade detected (hypothesis {hypothesis_id}, "
+                f"target: {target_file}, attempt {validation_attempts + 1}/3), "
+                f"validation will run after startup...",
+                extra={"plugin_name": "Kernel"}
+            )
+            
+            # Store for later event publication (after event_bus is initialized)
+            self._pending_upgrade_state = upgrade_state
+            
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Failed to parse upgrade state file: {e}",
+                exc_info=True,
+                extra={"plugin_name": "Kernel"}
+            )
+            # Corrupted file - rename it to prevent boot loop
+            try:
+                corrupted_path = upgrade_state_file.with_suffix('.json.corrupted')
+                upgrade_state_file.rename(corrupted_path)
+                logger.warning(
+                    f"Corrupted upgrade state file renamed to {corrupted_path}",
+                    extra={"plugin_name": "Kernel"}
+                )
+            except Exception as rename_error:
+                logger.error(f"Failed to rename corrupted file: {rename_error}", extra={"plugin_name": "Kernel"})
+                
+        except Exception as e:
+            logger.error(
+                f"Failed to load upgrade state: {e}",
+                exc_info=True,
+                extra={"plugin_name": "Kernel"}
+            )
+
     async def consciousness_loop(self, single_run_input: str | None = None):
         """The main, infinite loop that keeps Sophia "conscious"."""
         self.is_running = True
@@ -283,6 +340,21 @@ class Kernel:
                             "crash_log_path": self._recovery_crash_log_path,
                             "timestamp": datetime.now().isoformat()
                         }
+                    )
+                )
+            
+            # AMI 1.0: Publish UPGRADE_VALIDATION_REQUIRED event if pending upgrade
+            if hasattr(self, '_pending_upgrade_state'):
+                logger.warning(
+                    "🔄 Publishing UPGRADE_VALIDATION_REQUIRED event", 
+                    extra={"plugin_name": "Kernel"}
+                )
+                self.event_bus.publish(
+                    Event(
+                        event_type=EventType.UPGRADE_VALIDATION_REQUIRED,
+                        source="kernel",
+                        priority=EventPriority.CRITICAL,
+                        data=self._pending_upgrade_state
                     )
                 )
 

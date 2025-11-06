@@ -371,8 +371,15 @@ class InterfaceTerminalMatrix(BasePlugin):
         """Display success message."""
         self.console.print(f"\n[bold bright_green]✓[/] [green]{message}[/]\n")
 
-    async def execute(self, **kwargs):
-        """Plugin execution (not used for interface)."""
+    async def execute(self, context):
+        """
+        Plugin execution (interface plugin - non-blocking input check).
+        
+        AMI 1.0 FIX: Changed from execute(self, **kwargs) to execute(self, context)
+        to match BasePlugin contract and prevent TypeError.
+        """
+        # Interface plugins handle input asynchronously
+        # No active input check needed for Matrix terminal
         return {"status": "matrix_interface_active"}
 
 

@@ -50,6 +50,7 @@ class EventType(Enum):
     HYPOTHESIS_CREATED = "hypothesis_created"  # New improvement hypothesis
     HYPOTHESIS_TESTED = "hypothesis_tested"  # Benchmark results ready
     HYPOTHESIS_DEPLOYED = "hypothesis_deployed"  # Approved fix deployed to production
+    UPGRADE_VALIDATION_REQUIRED = "upgrade_validation_required"  # AMI 1.0: Pending upgrade needs validation
     SYSTEM_RECOVERY = "system_recovery"  # Recovered from crash
     NOTES_UPDATED = "notes_updated"  # roberts-notes.txt changed
     BUDGET_WARNING = "budget_warning"  # Approaching spending limit (monthly)

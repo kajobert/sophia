@@ -141,7 +141,7 @@ class EventDrivenLoop:
         # AMI 1.0: Start proactive heartbeat
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
-        # Handle single-run mode
+        # Handle single-run mode (but DON'T exit - continue running)
         if single_run_input:
             # Publish USER_INPUT event
             self.event_bus.publish(
@@ -157,8 +157,9 @@ class EventDrivenLoop:
             # Wait for processing
             await asyncio.sleep(1.0)
 
-            self.is_running = False
-            return
+            # AMI 1.0 FIX: Don't stop here - continue running in event-driven mode
+            # Previously: self.is_running = False; return
+            # Now: Continue to main loop for continuous autonomous operation
 
         # Main event-driven loop
         while self.is_running:

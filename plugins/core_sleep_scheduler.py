@@ -249,7 +249,7 @@ class CoreSleepScheduler(BasePlugin):
 
                 await self.event_bus.publish(
                     Event(
-                        event_type=EventType.SYSTEM_NOTIFICATION,
+                        event_type=EventType.UI_NOTIFICATION,  # AMI 1.0 FIX: was SYSTEM_NOTIFICATION
                         source=self.name,
                         data={"consolidation_metrics": metrics},
                     )

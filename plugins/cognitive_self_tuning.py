@@ -117,7 +117,8 @@ class CognitiveSelfTuning(BasePlugin):
         # Subscribe to hypothesis events
         if self.event_bus:
             self.event_bus.subscribe(EventType.HYPOTHESIS_CREATED, self._on_hypothesis_created)
-            self.logger.info("✅ Subscribed to HYPOTHESIS_CREATED events")
+            self.event_bus.subscribe(EventType.UPGRADE_VALIDATION_REQUIRED, self._on_upgrade_validation_required)
+            self.logger.info("✅ Subscribed to HYPOTHESIS_CREATED and UPGRADE_VALIDATION_REQUIRED events")
         
         # Ensure sandbox directory exists
         self.sandbox_path.mkdir(parents=True, exist_ok=True)
@@ -154,6 +155,54 @@ class CognitiveSelfTuning(BasePlugin):
             
         except Exception as e:
             self.logger.error(f"❌ Error handling HYPOTHESIS_CREATED: {e}", exc_info=True)
+    
+    async def _on_upgrade_validation_required(self, event: Event):
+        """
+        AMI 1.0: Handle pending upgrade validation on startup.
+        
+        Triggered by Kernel when upgrade_state.json is detected after restart.
+        This is the critical step that validates the deployed code before finalizing.
+        """
+        try:
+            upgrade_state = event.data
+            hypothesis_id = upgrade_state.get("hypothesis_id")
+            validation_attempts = upgrade_state.get("validation_attempts", 0)
+            
+            self.logger.warning(
+                f"🔄 Upgrade validation required for hypothesis {hypothesis_id} "
+                f"(attempt {validation_attempts + 1}/3)"
+            )
+            
+            # Run validation in background (don't block startup)
+            asyncio.create_task(self._validate_and_finalize_upgrade(upgrade_state))
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error handling UPGRADE_VALIDATION_REQUIRED: {e}", exc_info=True)
+    
+    async def _validate_and_finalize_upgrade(self, upgrade_state: Dict[str, Any]):
+        """
+        Run validation suite and finalize or rollback the upgrade.
+        
+        This is called after restart when pending upgrade is detected.
+        """
+        try:
+            # Run validation (already implemented in Phase 3.7)
+            success = await self._validate_upgrade(upgrade_state)
+            
+            if success:
+                self.logger.info("✅ Upgrade validation PASSED - finalizing deployment")
+                # Cleanup is done in _validate_upgrade
+            else:
+                self.logger.error("❌ Upgrade validation FAILED - initiating rollback")
+                await self._rollback_deployment(upgrade_state)
+                
+        except Exception as e:
+            self.logger.error(f"❌ Error in upgrade validation workflow: {e}", exc_info=True)
+            # On error, attempt rollback for safety
+            try:
+                await self._rollback_deployment(upgrade_state)
+            except Exception as rollback_error:
+                self.logger.critical(f"💥 CRITICAL: Rollback also failed: {rollback_error}")
     
     async def _process_hypothesis(self, hypothesis_id: int):
         """

@@ -1,9 +1,0 @@
-{
-  "hypothesis_id": 9999,
-  "target_file": "plugins/test_integration_plugin.py",
-  "backup_file": "plugins/test_integration_plugin.backup",
-  "deployed_at": "2025-11-06T20:31:16.060741",
-  "status": "pending_validation",
-  "validation_attempts": 0,
-  "max_attempts": 3
-}
