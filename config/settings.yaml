@@ -17,12 +17,23 @@ plugins:
       timeout: 300  # 5 minutes for planning with tools (quality over speed)
       max_tokens: 131072  # MAXIMUM: Full 128K context window for best quality
       temperature: 0.7
-  # Configuration for the SQLite Memory plugin
+  
+  # Configuration for the SQLite Memory plugin (short-term)
   memory_sqlite:
     db_path: "data/sophia.db"
+  
+  # Configuration for the ChromaDB Memory plugin (long-term semantic search)
+  memory_chroma:
+    db_path: "data/chroma_db"
+    allow_reset: false
 
   cognitive_task_router:
     enabled: true
+
+  # Configuration for the Self-Tuning Plugin (Phase 3.4 - AMI 1.0)
+  cognitive_self_tuning:
+    enabled: true
+    # Inherits config from autonomy.yaml → self_improvement.self_tuning
 
   # Configuration for the Jules API plugin
   tool_jules:

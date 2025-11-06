@@ -1,10 +1,110 @@
 import logging
 import json
 import re
+import os
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json_from_text(text: str):
+    """
+    Try to extract a JSON object or array from free-form text.
+    Returns a parsed Python object on success, or None on failure.
+
+    Strategy:
+    1. Try direct json.loads(text)
+    2. Search for balanced JSON array `[...]` or object `{...}` blocks and attempt to parse them.
+    3. As a last resort, attempt a naive replacement of single quotes to doubles (best-effort).
+    """
+    if not text:
+        return None
+
+    # 1) direct parse
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+
+    # 2) collect balanced blocks for arrays or objects and attempt to parse them all
+    candidates = []
+    for start_char, end_char in ("[", "]"), ("{", "}"):
+        idx = text.find(start_char)
+        while idx != -1:
+            depth = 0
+            in_string = False
+            escape = False
+            for i in range(idx, len(text)):
+                ch = text[i]
+                if ch == '"' and not escape:
+                    in_string = not in_string
+                if ch == '\\' and not escape:
+                    escape = True
+                    continue
+                else:
+                    escape = False
+
+                if not in_string:
+                    if ch == start_char:
+                        depth += 1
+                    elif ch == end_char:
+                        depth -= 1
+                        if depth == 0:
+                            candidate = text[idx : i + 1]
+                            candidates.append(candidate)
+                            break
+            idx = text.find(start_char, idx + 1)
+
+    # Try parsing candidates and pick the most useful one:
+    parsed_candidates = []
+    for cand in candidates:
+        try:
+            parsed = json.loads(cand)
+            parsed_candidates.append((cand, parsed))
+        except Exception:
+            # try naive single->double quote replacement as last resort
+            try:
+                fixed = cand.replace("'", '"')
+                parsed = json.loads(fixed)
+                parsed_candidates.append((cand, parsed))
+            except Exception:
+                continue
+
+    # Prefer dicts with 'plan' key, then lists, then longest parsed candidate
+    for cand, parsed in parsed_candidates:
+        if isinstance(parsed, dict) and parsed.get("plan"):
+            return parsed
+
+    for cand, parsed in parsed_candidates:
+        if isinstance(parsed, list):
+            return parsed
+
+    if parsed_candidates:
+        # return the longest parsed text as a last resort
+        parsed_candidates.sort(key=lambda x: len(x[0]), reverse=True)
+        return parsed_candidates[0][1]
+
+    return None
+def _validate_plan(plan):
+    """Validate plan structure: list of objects with required keys and types.
+    Returns (bool, reason)
+    """
+    if not isinstance(plan, list):
+        return False, "Plan is not a JSON array"
+    for idx, item in enumerate(plan):
+        if not isinstance(item, dict):
+            return False, f"Step {idx} is not an object"
+        for k in ("tool_name", "method_name", "arguments"):
+            if k not in item:
+                return False, f"Step {idx} missing required key: {k}"
+        if not isinstance(item.get("tool_name"), str):
+            return False, f"Step {idx} 'tool_name' must be a string"
+        if not isinstance(item.get("method_name"), str):
+            return False, f"Step {idx} 'method_name' must be a string"
+        if not isinstance(item.get("arguments"), dict):
+            return False, f"Step {idx} 'arguments' must be an object"
+    return True, ""
 
 
 class Planner(BasePlugin):
@@ -63,14 +163,31 @@ class Planner(BasePlugin):
     async def execute(self, context: SharedContext) -> SharedContext:
         """
         Takes user input and generates a plan by instructing the LLM to call a
-        predefined function. It can handle both a single 'create_plan' call
-        and properly extract multiple tool calls from the response.
-        
-        Respects offline_mode from context to select appropriate LLM.
+        predefined function. Implements fallback logic: retries plan generation
+        up to `max_retries` times if extraction fails, and sets a planner_failed
+        flag if all attempts fail.
         """
+        # Number of attempts to ask the LLM to produce a valid JSON plan.
+        # We try once + max_retries repair attempts (total attempts = max_retries+1)
+        max_retries = 3
+        attempt = 0
+        plan_data = []
+        last_llm_message = None
+        last_exception = None
+
+        # Respect global local-only flag unless payload explicitly allows cloud
+        force_local = os.getenv("SOPHIA_FORCE_LOCAL_ONLY", "false").lower() == "true"
+        allow_cloud_payload = False
+        try:
+            allow_cloud_payload = bool(context.payload.get("allow_cloud", False))
+        except Exception:
+            allow_cloud_payload = False
+
+        if force_local and not allow_cloud_payload and context.payload.get("origin") != "user_input":
+            context.offline_mode = True
+
         # Select LLM based on offline mode (runtime decision)
         if context.offline_mode:
-            # Force local LLM in offline mode
             llm_tool = self.plugins.get("tool_local_llm")
             if not llm_tool:
                 context.logger.error(
@@ -78,51 +195,44 @@ class Planner(BasePlugin):
                     extra={"plugin_name": "cognitive_planner"}
                 )
                 context.payload["plan"] = []
+                context.payload["planner_failed"] = True
                 return context
             context.logger.info(
                 "🔒 Planner using local LLM (offline mode)",
                 extra={"plugin_name": "cognitive_planner"}
             )
         else:
-            # Use configured LLM (cloud for stability)
             llm_tool = self.llm_tool
             context.logger.debug(
                 "☁️ Planner using cloud LLM (online mode)",
                 extra={"plugin_name": "cognitive_planner"}
             )
-        
+
         if not context.user_input or not llm_tool:
             return context
 
         # --- Dynamically discover available tools ---
         available_tools = []
-        
-        # In offline mode, only include essential tools to reduce prompt size
         if context.offline_mode:
             essential_tool_names = {
-                "tool_local_llm",  # LLM execution
-                "tool_code_workspace",  # Read project files
-                "tool_file_system",  # Read/write sandbox files
-                "tool_datetime",  # Time queries
-                "tool_terminal",  # Terminal commands
+                "tool_local_llm",
+                "tool_code_workspace",
+                "tool_file_system",
+                "tool_datetime",
+                "tool_terminal",
             }
         else:
-            essential_tool_names = None  # Include all tools in online mode
-        
+            essential_tool_names = None
+
         for plugin in self.plugins.values():
-            # Skip if not in essential set (when in offline mode)
             if essential_tool_names and plugin.name not in essential_tool_names:
                 continue
-            
-            # Skip Langfuse temporarily due to validation issues
             if plugin.name == "tool_langfuse":
                 continue
-
             if hasattr(plugin, "get_tool_definitions"):
                 for tool_def in plugin.get_tool_definitions():
                     func = tool_def.get("function", {})
                     if "name" in func and "description" in func:
-                        # Keep tool_name and method_name separate for clarity
                         tool_string = (
                             f"- tool_name: '{plugin.name}', "
                             f"method_name: '{func['name']}', "
@@ -165,82 +275,212 @@ class Planner(BasePlugin):
         ]
 
         prompt = f"User Request: {context.user_input}"
+
+        # Strong, explicit system instruction to force JSON-only output.
+        strict_instructions = (
+            "You are a planner. You MUST output ONLY a JSON array (no surrounding text, no explanation),\n"
+            "where each item is an object with keys: 'tool_name' (string), 'method_name' (string), and 'arguments' (object).\n"
+            "Example (one item):\n"
+            "[{\n"
+            "  \"tool_name\": \"tool_file_system\",\n"
+            "  \"method_name\": \"write_file\",\n"
+            "  \"arguments\": {\"path\": \"scripts/x.py\", \"content\": \"print(\\\"hi\\\")\"}\n"
+            "}]\n"
+            "Output exactly the JSON array and nothing else. If you cannot produce the schema, return an empty array: []"
+        )
+
         planning_context = SharedContext(
             session_id=context.session_id,
             current_state="PLANNING",
             logger=context.logger,
             user_input=prompt,
-            history=[{"role": "user", "content": prompt}],
-            payload=context.payload.copy(),  # Propagate payload
+            history=[],
+            payload=context.payload.copy(),
         )
-
         planning_context.payload["tools"] = planner_tool
         planning_context.payload["tool_choice"] = "auto"
+        # Loop: try initial planning + repair attempts. If the LLM output isn't valid JSON matching
+        # the schema, we retry and provide the last output as context so the model can correct itself.
+        while attempt <= max_retries:
+            try:
+                # Build history fresh each attempt, injecting strict system instruction.
+                planning_context.history = [
+                    {"role": "system", "content": strict_instructions},
+                    {"role": "user", "content": prompt},
+                ]
 
-        # Use the selected LLM tool (respects offline mode)
-        planned_context = await llm_tool.execute(context=planning_context)
-        llm_message = planned_context.payload.get("llm_response")
-        context.logger.info(
-            f"Raw LLM response received in planner: {llm_message}",
-            extra={"plugin_name": "cognitive_planner"},
-        )
+                if attempt > 0 and last_llm_message:
+                    # Provide the previous invalid output and a short hint to correct it.
+                    planning_context.history.append(
+                        {"role": "user", "content": "Previous output was invalid JSON: \n" + str(last_llm_message) + "\n\nPlease output only the JSON array as described."}
+                    )
 
-        try:
-            # --- Robust Plan Extraction (Handles multiple response formats) ---
-            plan_data = []
-            if isinstance(llm_message, list) and hasattr(llm_message[0], "function"):
-                # Handle direct tool_calls format (e.g., from claude-3.5-sonnet, Ollama)
-                tool_call = llm_message[0]
-                if tool_call.function.name == "create_plan":
-                    arguments = tool_call.function.arguments
-                    
-                    # Handle both string JSON and dict (Ollama returns dict, OpenAI returns string)
-                    if isinstance(arguments, dict):
-                        # Ollama format: arguments is already a dict
-                        plan_str = arguments.get("plan", "[]")
-                        # Plan can be string JSON or already parsed
-                        if isinstance(plan_str, str):
-                            # Tolerant parsing for incomplete JSON (8B models may truncate)
-                            if plan_str and not plan_str.strip().endswith("]"):
-                                logger.warning(f"⚠️ Incomplete JSON: {plan_str[:80]}...")
-                                if plan_str.count("[") > plan_str.count("]"):
-                                    plan_str = plan_str.rstrip() + "}]"
-                                    logger.info("✅ Auto-fixed incomplete JSON")
-                            plan_data = json.loads(plan_str)
-                        else:
-                            plan_data = plan_str  # Already a list
-                    else:
-                        # OpenAI format: arguments is JSON string
-                        plan_data = json.loads(arguments).get("plan", [])
-            else:
-                # Handle raw string or object with .content
-                response_text = (
-                    str(llm_message.content)
-                    if hasattr(llm_message, "content")
-                    else str(llm_message)
-                )
-                json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
-                if json_match:
-                    plan_str = json_match.group(0)
-                    plan_data = json.loads(plan_str)
-
-            if not plan_data:
-                context.logger.warning(
-                    "No valid plan found in LLM response, creating empty plan.",
+                planned_context = await llm_tool.execute(context=planning_context)
+                llm_message = planned_context.payload.get("llm_response")
+                last_llm_message = llm_message
+                context.logger.info(
+                    f"Raw LLM response received in planner (attempt {attempt+1}): {llm_message}",
                     extra={"plugin_name": "cognitive_planner"},
                 )
-                context.payload["plan"] = []
-            else:
-                context.payload["plan"] = plan_data
+                plan_data = []
+                # Normalize various LLM response shapes used in tests and runtimes
+                tool_calls = None
+                # 1) Ollama / tool-call converted responses: list of objects with .function
+                if isinstance(llm_message, list) and len(llm_message) > 0 and hasattr(llm_message[0], "function"):
+                    tool_calls = llm_message
+                # 2) Some test helpers attach .tool_calls to a MagicMock
+                elif hasattr(llm_message, "tool_calls"):
+                    tool_calls = llm_message.tool_calls
 
-        except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
-            context.logger.error(
-                "Failed to decode or process plan from LLM response: %s\nResponse was: %s",
-                e,
-                llm_message,
-                exc_info=True,
-                extra={"plugin_name": "cognitive_planner"},
-            )
-            context.payload["plan"] = []
+                if tool_calls:
+                    tool_call = tool_calls[0]
+                    if getattr(tool_call, "function", None) and getattr(tool_call.function, "name", None) == "create_plan":
+                        arguments = getattr(tool_call.function, "arguments", None)
+                        if isinstance(arguments, dict):
+                            plan_str = arguments.get("plan", "[]")
+                            if isinstance(plan_str, str):
+                                if plan_str and not plan_str.strip().endswith("]"):
+                                    logger.warning(f"⚠️ Incomplete JSON: {plan_str[:80]}...")
+                                    if plan_str.count("[") > plan_str.count("]"):
+                                        plan_str = plan_str.rstrip() + "}]"
+                                        logger.info("✅ Auto-fixed incomplete JSON")
+                                plan_data = json.loads(plan_str)
+                            else:
+                                plan_data = plan_str
+                        else:
+                            try:
+                                plan_data = json.loads(arguments).get("plan", [])
+                            except Exception:
+                                plan_data = []
+                    else:
+                        # Direct tool call list: convert tool_calls -> plan entries
+                        plan_data = []
+                        for tc in tool_calls:
+                            fn = getattr(tc.function, "name", "")
+                            # Split into plugin and method if possible
+                            if "." in fn:
+                                plugin_name, method_name = fn.split(".", 1)
+                            else:
+                                plugin_name = fn
+                                method_name = ""
+                            raw_args = getattr(tc.function, "arguments", None)
+                            parsed_args = {}
+                            if isinstance(raw_args, str):
+                                try:
+                                    parsed_args = json.loads(raw_args)
+                                except Exception:
+                                    parsed_args = {}
+                            elif isinstance(raw_args, dict):
+                                parsed_args = raw_args
+                            plan_data.append(
+                                {
+                                    "tool_name": plugin_name,
+                                    "method_name": method_name,
+                                    "arguments": parsed_args,
+                                }
+                            )
+                else:
+                    # Fallback: extract plan from free-form string content
+                    response_text = getattr(llm_message, "content", None)
+                    if response_text is None:
+                        response_text = str(llm_message)
 
+                    parsed = _extract_json_from_text(response_text)
+                    # Aggressive fallback: try to find the first balanced JSON array
+                    # in the raw response string (handles double-encoded plan strings).
+                    if parsed is None and isinstance(response_text, str):
+                        s = response_text
+                        parsed = None
+                        start = s.find("[")
+                        while start != -1 and parsed is None:
+                            depth = 0
+                            in_string = False
+                            escape = False
+                            for i in range(start, len(s)):
+                                ch = s[i]
+                                if ch == '"' and not escape:
+                                    in_string = not in_string
+                                if ch == '\\' and not escape:
+                                    escape = True
+                                    continue
+                                else:
+                                    escape = False
+
+                                if not in_string:
+                                    if ch == '[':
+                                        depth += 1
+                                    elif ch == ']':
+                                        depth -= 1
+                                        if depth == 0:
+                                            candidate = s[start : i + 1]
+                                            try:
+                                                parsed = json.loads(candidate)
+                                                break
+                                            except Exception:
+                                                parsed = None
+                                                break
+                            start = s.find("[", start + 1)
+                    # If we recovered a parsed array but the items use alternate arg names,
+                    # try to normalize common variants (e.g., 'file_path' or 'filename' -> 'path').
+                    if parsed is not None and isinstance(parsed, list):
+                        normalized = []
+                        for item in parsed:
+                            if not isinstance(item, dict):
+                                normalized.append(item)
+                                continue
+                            args = item.get("arguments")
+                            if isinstance(args, str):
+                                try:
+                                    args = json.loads(args)
+                                except Exception:
+                                    args = {"raw": args}
+
+                            if isinstance(args, dict):
+                                # common alternate keys mapping
+                                if "file_path" in args and "path" not in args:
+                                    args["path"] = args.pop("file_path")
+                                if "filename" in args and "path" not in args:
+                                    args["path"] = args.pop("filename")
+                                # ensure only simple content (avoid complex escaping)
+                                if "content" in args and not isinstance(args["content"], str):
+                                    args["content"] = str(args["content"])
+
+                            item["arguments"] = args
+                            normalized.append(item)
+                        parsed = normalized
+                    if isinstance(parsed, list):
+                        plan_data = parsed
+                    elif isinstance(parsed, dict) and parsed.get("plan"):
+                        plan_data = parsed.get("plan")
+                # (duplicate fallback removed)
+
+                if plan_data:
+                    context.payload["plan"] = plan_data
+                    context.payload["planner_failed"] = False
+                    return context
+                else:
+                    context.logger.warning(
+                        f"No valid plan found in LLM response (attempt {attempt+1}). Retrying...",
+                        extra={"plugin_name": "cognitive_planner"},
+                    )
+            except (json.JSONDecodeError, AttributeError, ValueError, TypeError) as e:
+                last_exception = e
+                context.logger.error(
+                    f"Failed to decode/process plan from LLM response (attempt {attempt+1}): {e}\nResponse was: {last_llm_message}",
+                    exc_info=True,
+                    extra={"plugin_name": "cognitive_planner"},
+                )
+            attempt += 1
+
+        # All retries failed
+        context.logger.error(
+            f"Planner failed to generate a plan after {max_retries+1} attempts.",
+            extra={"plugin_name": "cognitive_planner"},
+        )
+        context.payload["plan"] = []
+        context.payload["planner_failed"] = True
+        context.payload["planner_error_message"] = (
+            f"Planner failed after {max_retries+1} attempts. Last exception: {last_exception}"
+            if last_exception else "Planner failed to generate a plan."
+        )
         return context

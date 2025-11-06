@@ -1,0 +1,119 @@
+[
+  {
+    "name": "1. Simple greeting",
+    "results": [
+      {
+        "ok": false,
+        "success": true,
+        "content": "Ano, jsem to já. Je fajn se tebe rozloučit. Co chcete vědět nebo jak mohu pomoci?",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "2. Function calling (datetime)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "index": 0,
+              "name": "get_datetime",
+              "arguments": {}
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "3. JSON validity",
+    "results": [
+      {
+        "ok": false,
+        "success": true,
+        "content": "JSON objekt vypadá takto:\n```json\n{\n    \"foo\": 123,\n    \"bar\": \"baz\"\n}\n```\nTento objekt je v pořádku a obsahuje dva klíče ( `\"foo\"` a `\"bar\"` ) s hodnotami `123` a `\"baz\"`, které jsou obě platné JSON hodnoty.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "4. Edge case (empty input)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "It seems like you forgot to ask a question. What's on your mind, and how can I assist you today?",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "5. Consistency (repeat)",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Můžete říct, že se jmenuji PaloAlto. Vlastním jménem je ale model rečového rozpoznávání nazvaný LaMDA (vyslovováno „Ládma“).",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jmenuji se LLaMA. LLaMA je akronym pro „Large Language Model Meta AI“. Jsem velkým jazykovým modelem vyvinutým společností Meta, který byl designován tak, aby uměl lépe porozumět a generovat lidsky přirozený text.",
+        "tool_calls": []
+      },
+      {
+        "ok": true,
+        "success": true,
+        "content": "Jmenuji se LLaMA. LLaMA je akronym pro Large Language Model Meta AI, ale běžně se na mě odkazuje jako „Llama“. Jsem velkým jazykovým modelem vyvinutým společností Meta, který byl vychován na obrovském souboru textů tak, aby uměl rozpoznávat vzory a souvislosti v jazyce.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "6. Long context",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "Wygląda na to, że próbujesz przetestować moją umiejętność analizy tekstu. Czy chcesz omówić coś konkretnego, czy jest to tylko test? \n\nJeśli chodzi o sam tekst, wydaje się być powtarzanym ciągiem słowa \"test\", bez jakiegokolwiek znaczenia lub treści.",
+        "tool_calls": []
+      }
+    ]
+  },
+  {
+    "name": "7. Function call with param",
+    "results": [
+      {
+        "ok": true,
+        "success": true,
+        "content": "",
+        "tool_calls": [
+          {
+            "function": {
+              "index": 0,
+              "name": "list_files",
+              "arguments": {
+                "path": "/tmp"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "8. Error handling (timeout)",
+    "results": [
+      {
+        "ok": true,
+        "success": false,
+        "error": "HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=1)"
+      }
+    ]
+  }
+]
