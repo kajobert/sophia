@@ -1,0 +1,5 @@
+This is a very poorly written prompt that will cause failures.
+It's too vague, has no structure, and doesn't give clear instructions.
+The LLM won't know what to do with this mess of words.
+Just some random text here to make it longer but still useless.
+No examples, no format specification, nothing helpful at all.

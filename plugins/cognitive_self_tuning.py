@@ -182,9 +182,9 @@ class CognitiveSelfTuning(BasePlugin):
                 self.logger.error(f"❌ Hypothesis {hypothesis_id} not found in database")
                 return
             
-            self.logger.info(f"📋 Hypothesis: {hypothesis['description'][:100]}...")
+            self.logger.info(f"📋 Hypothesis: {hypothesis['hypothesis_text'][:100]}...")
             self.logger.info(f"🎯 Priority: {hypothesis['priority']}")
-            self.logger.info(f"🔧 Fix type: {hypothesis['fix_type']}")
+            self.logger.info(f"🔧 Category: {hypothesis['category']}")
             
             # Step 2: Update status to 'testing'
             self.db.update_hypothesis_status(
@@ -194,8 +194,32 @@ class CognitiveSelfTuning(BasePlugin):
             )
             
             # Step 3: Determine fix type and prepare sandbox
-            fix_type = hypothesis["fix_type"]
-            target_file = hypothesis["target_file"]
+            fix_type = hypothesis["category"]  # Using category as fix_type
+            # For prompt_optimization, derive target_file from source failures
+            target_file = None
+            
+            if fix_type == "prompt_optimization":
+                # Get operation_type from source failures to determine prompt file
+                source_id = hypothesis.get("source_failure_id")
+                if source_id:
+                    # Query operation_tracking to get operation_type
+                    from sqlalchemy import select
+                    with self.db.engine.connect() as conn:
+                        stmt = select(self.db.operation_tracking_table.c.operation_type).where(
+                            self.db.operation_tracking_table.c.id == source_id
+                        )
+                        op_row = conn.execute(stmt).fetchone()
+                        if op_row:
+                            op_type = op_row[0]
+                            target_file = f"config/prompts/{op_type}.txt"
+                            self.logger.info(f"📁 Target file: {target_file}")
+                        else:
+                            self.logger.warning(f"⚠️ Could not find source failure {source_id}")
+                            target_file = "config/prompts/default.txt"  # Fallback
+                else:
+                    self.logger.warning(f"⚠️ No source_failure_id in hypothesis")
+                    target_file = "config/prompts/default.txt"  # Fallback
+            
             proposed_fix = hypothesis["proposed_fix"]
             
             # Step 4: Create sandbox environment
@@ -347,6 +371,13 @@ class CognitiveSelfTuning(BasePlugin):
                     f.write(proposed_fix)
                 self.logger.info(f"✏️  Created optimized prompt: {sandbox_file}")
                 
+            elif fix_type == "prompt_optimization":
+                # Prompt optimization: Same as prompt fix
+                sandbox_file = sandbox_dir / Path(target_file).name
+                with open(sandbox_file, 'w', encoding='utf-8') as f:
+                    f.write(proposed_fix)
+                self.logger.info(f"✏️  Created optimized prompt: {sandbox_file}")
+                
             elif fix_type == "config":
                 # Config fix: Update YAML configuration
                 import yaml
@@ -411,7 +442,7 @@ class CognitiveSelfTuning(BasePlugin):
             # Code benchmarking: Run unit tests
             return await self._benchmark_code(workspace_root, sandbox_dir, target_file)
             
-        elif fix_type == "prompt":
+        elif fix_type == "prompt" or fix_type == "prompt_optimization":
             # Prompt benchmarking: Test on sample inputs
             return await self._benchmark_prompt(workspace_root, sandbox_dir, target_file)
             
@@ -842,7 +873,7 @@ class CognitiveSelfTuning(BasePlugin):
             self.logger.info(f"📦 Deployed {sandbox_file} → {production_file}")
             
             # Create git commit and PR (Phase 3.5)
-            commit_message = f"[AUTO] Self-tuning: {hypothesis['description'][:80]}\n\nHypothesis ID: {hypothesis['id']}\nPriority: {hypothesis['priority']}\nFix type: {hypothesis['fix_type']}"
+            commit_message = f"[AUTO] Self-tuning: {hypothesis['hypothesis_text'][:80]}\n\nHypothesis ID: {hypothesis['id']}\nPriority: {hypothesis['priority']}\nCategory: {hypothesis['category']}"
             
             try:
                 subprocess.run(
@@ -930,17 +961,16 @@ class CognitiveSelfTuning(BasePlugin):
                 return
             
             # Build PR title and body
-            pr_title = f"[AUTO] {hypothesis['category']}: {hypothesis['description'][:60]}"
+            pr_title = f"[AUTO] {hypothesis['category']}: {hypothesis['hypothesis_text'][:60]}"
             
             pr_body = f"""## 🤖 Automated Self-Tuning Deployment
 
 **Hypothesis ID**: {hypothesis['id']}
 **Category**: {hypothesis['category']}
 **Priority**: {hypothesis['priority']}
-**Fix Type**: {hypothesis['fix_type']}
 
 ### Description
-{hypothesis['description']}
+{hypothesis['hypothesis_text']}
 
 ### Proposed Fix
 {hypothesis.get('proposed_fix', 'See commit details')}
