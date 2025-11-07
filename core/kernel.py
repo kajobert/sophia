@@ -1157,6 +1157,21 @@ class Kernel:
                 method_name = step.get("method_name")
                 arguments = step.get("arguments", {})
                 
+                # Substitute placeholders like ${step_1.results} with actual results
+                import re
+                for key, value in arguments.items():
+                    if isinstance(value, str):
+                        # Find all ${step_X.results} or ${step_X.output} patterns
+                        placeholders = re.findall(r'\$\{step_(\d+)\.(results|output)\}', value)
+                        for step_num, attr in placeholders:
+                            step_idx = int(step_num) - 1
+                            if 0 <= step_idx < len(step_results):
+                                prev_result = step_results[step_idx]
+                                if prev_result.get("success"):
+                                    replacement = str(prev_result.get("output", ""))
+                                    value = value.replace(f"${{step_{step_num}.{attr}}}", replacement)
+                        arguments[key] = value
+                
                 logger.info(f"🎯 [Kernel] Step {i}/{len(plan)}: {tool_name}.{method_name}")
                 
                 # Get the tool plugin
