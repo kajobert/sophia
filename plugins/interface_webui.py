@@ -561,6 +561,105 @@ class WebUIInterface(BasePlugin):
                 logger.error(f"Error fetching hypotheses: {e}")
                 return {"error": f"Failed to fetch hypotheses: {str(e)}", "hypotheses": [], "total": 0}
 
+        @self.app.get("/api/deployments")
+        async def api_deployments(
+            limit: int = 20,
+            offset: int = 0
+        ):
+            """Return deployment history from hypotheses with deployed_* status.
+            
+            Shows what Sophie has autonomously changed, when, and with what impact.
+            Critical for human oversight and transparency.
+            
+            Args:
+                limit: Number of deployments to return (default 20)
+                offset: Number to skip for pagination (default 0)
+            """
+            try:
+                from pathlib import Path
+                import sqlite3
+                
+                db_path = Path(".data/memory.db")
+                if not db_path.exists():
+                    return {"error": "Database not found", "deployments": [], "total": 0}
+                
+                conn = sqlite3.connect(str(db_path))
+                cur = conn.cursor()
+                
+                # Get deployed hypotheses (any status starting with "deployed_")
+                query = """
+                    SELECT 
+                        id,
+                        hypothesis_text,
+                        category,
+                        status,
+                        improvement_pct,
+                        target_file,
+                        created_at,
+                        deployed_at,
+                        git_commit_sha,
+                        rollback_reason
+                    FROM hypotheses
+                    WHERE status LIKE 'deployed_%'
+                    ORDER BY deployed_at DESC
+                    LIMIT ? OFFSET ?
+                """
+                
+                cur.execute(query, (int(limit), int(offset)))
+                rows = cur.fetchall()
+                
+                # Get total count
+                cur.execute("SELECT COUNT(*) FROM hypotheses WHERE status LIKE 'deployed_%'")
+                total = cur.fetchone()[0]
+                
+                deployments = []
+                for row in rows:
+                    hid, hyp_text, cat, status, improvement, target_file, created, deployed, commit, rollback = row
+                    
+                    # Status emoji and display
+                    status_map = {
+                        "deployed_validated": ("✅", "Validated", "#34d399"),
+                        "deployed_awaiting_validation": ("🔄", "Validating", "#fbbf24"),
+                        "deployed_rollback": ("⚠️", "Rolled Back", "#f87171")
+                    }
+                    emoji, display, color = status_map.get(status, ("❓", status.replace("deployed_", ""), "#94a3b8"))
+                    
+                    # Improvement display
+                    improvement_display = f"+{improvement}%" if improvement and improvement > 0 else "N/A"
+                    if improvement and improvement < 0:
+                        improvement_display = f"{improvement}%"  # Negative already has minus
+                    
+                    deployments.append({
+                        "id": hid,
+                        "hypothesis": hyp_text[:100] + "..." if hyp_text and len(hyp_text) > 100 else (hyp_text or "N/A"),
+                        "full_hypothesis": hyp_text or "N/A",
+                        "category": cat or "unknown",
+                        "status": status,
+                        "status_emoji": emoji,
+                        "status_display": display,
+                        "status_color": color,
+                        "improvement": improvement_display,
+                        "file": target_file or "unknown",
+                        "deployed_at": deployed or "N/A",
+                        "created_at": created or "N/A",
+                        "git_commit": commit[:8] if commit else "N/A",
+                        "git_commit_full": commit or None,
+                        "rollback_reason": rollback or None
+                    })
+                
+                conn.close()
+                
+                return {
+                    "deployments": deployments,
+                    "total": total,
+                    "limit": limit,
+                    "offset": offset
+                }
+                
+            except Exception as e:
+                logger.error(f"Error fetching deployments: {e}")
+                return {"error": f"Failed to fetch deployments: {str(e)}", "deployments": [], "total": 0}
+
         @self.app.get("/api/benchmarks")
         async def api_benchmarks(
             limit: int = 100,
