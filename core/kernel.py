@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import logging
 import os
@@ -1171,7 +1172,37 @@ class Kernel:
                     if hasattr(tool, method_name):
                         # Call the specific method
                         method = getattr(tool, method_name)
-                        result = await method(context=context, **arguments)
+                        
+                        # Check if method accepts 'context' parameter and if it's async
+                        sig = inspect.signature(method)
+                        accepts_context = 'context' in sig.parameters
+                        is_async = inspect.iscoroutinefunction(method)
+                        
+                        # Check if 'context' is already in arguments
+                        context_in_args = 'context' in arguments
+                        
+                        # If context is in arguments as a string, convert to SharedContext
+                        if context_in_args and isinstance(arguments['context'], str):
+                            arguments['context'] = SharedContext(
+                                user_input=arguments['context'],
+                                session_id=context.session_id,
+                                current_state=context.current_state,
+                                logger=logger
+                            )
+                        
+                        # Call method based on its signature
+                        if is_async:
+                            if accepts_context and not context_in_args:
+                                result = await method(context=context, **arguments)
+                            else:
+                                result = await method(**arguments)
+                        else:
+                            # Sync method
+                            if accepts_context and not context_in_args:
+                                result = method(context=context, **arguments)
+                            else:
+                                result = method(**arguments)
+                        
                         step_results.append({"success": True, "output": result})
                         logger.info(f"✅ [Kernel] Step {i} completed")
                     else:
@@ -1218,7 +1249,19 @@ class Kernel:
     def _generate_response(self, context: SharedContext, execution_result: dict) -> str:
         """Generate user-facing response from execution result."""
         if execution_result.get("success"):
-            return execution_result.get("output", "Task completed successfully.")
+            output = execution_result.get("output", "Task completed successfully.")
+            
+            # If output is SharedContext, extract the text response
+            if isinstance(output, SharedContext):
+                # Try to get LLM response from payload
+                if "llm_response" in output.payload:
+                    return output.payload["llm_response"]
+                elif "response" in output.payload:
+                    return output.payload["response"]
+                else:
+                    return str(output.payload)
+            
+            return str(output)
         else:
             return f"Error: {execution_result.get('error', 'Unknown error')}"
 

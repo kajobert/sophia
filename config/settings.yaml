@@ -2,7 +2,7 @@
 
 llm:
   provider: "litellm"
-  model: "openrouter/deepseek/deepseek-chat"  # Changed from claude-3-haiku - 44% cheaper, same 10/10 quality!
+  model: "openrouter/anthropic/claude-3.5-sonnet"  # TESTING: Best reasoning with new credits
   temperature: 0.1
   max_tokens: 4096
 
