@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 import time
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -312,7 +313,7 @@ class CognitiveJulesMonitor(BasePlugin):
 
         return f"Session completed at {session.update_time}"
 
-    def monitor_until_completion(
+    async def monitor_until_completion(
         self,
         context: SharedContext,
         session_id: str,
@@ -431,7 +432,7 @@ class CognitiveJulesMonitor(BasePlugin):
             )
 
             # Wait before next check
-            time.sleep(request.check_interval)
+            await asyncio.sleep(request.check_interval)
 
         # Timeout reached
         context.logger.warning(f"⏱️ Monitoring timeout reached for session {request.session_id}")

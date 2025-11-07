@@ -91,31 +91,43 @@ class LLMTool(BasePlugin):
                     "name": "execute",
                     "description": (
                         "For general text generation, summarization, reformatting, or "
-                        "any other language-based task. The text to be processed must "
-                        "be passed in the context payload."
+                        "any other language-based task. Pass the text to process as the 'prompt' parameter."
                     ),
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "context": {
-                                "type": "object",
+                            "prompt": {
+                                "type": "string",
                                 "description": (
-                                    "The shared context containing the prompt in its payload."
+                                    "The text to process, analyze, summarize, or transform."
                                 ),
                             },
                         },
-                        "required": ["context"],
+                        "required": ["prompt"],
                     },
                 },
             }
         ]
 
-    async def execute(self, *, context: SharedContext) -> SharedContext:
+    async def execute(
+        self, 
+        *, 
+        context: SharedContext,
+        prompt: str | None = None
+    ) -> SharedContext:
         """
         Generate a response using the configured LLM.
+        
+        Args:
+            context: Shared context (auto-injected by kernel)
+            prompt: Text to process. If not provided, falls back to context.payload["prompt"] or context.user_input
+        
         Accepts an optional 'model_config' in the payload to override the default model.
         """
-        prompt = context.payload.get("prompt", context.user_input)
+        # Priority: direct parameter > payload > user_input
+        if prompt is None:
+            prompt = context.payload.get("prompt", context.user_input)
+        
         tools = context.payload.get("tools")
         tool_choice = context.payload.get("tool_choice")
         model_config = context.payload.get("model_config", {})

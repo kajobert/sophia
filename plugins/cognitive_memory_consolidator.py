@@ -13,14 +13,24 @@ Philosophy:
 """
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 from core.events import Event, EventType
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ConsolidationMetrics:
+    """Metrics from memory consolidation process."""
+    memories_created: int = 0
+    sessions_processed: int = 0
+    duration_seconds: float = 0.0
+    timestamp: Optional[datetime] = None
 
 
 class CognitiveMemoryConsolidator(BasePlugin):
@@ -330,6 +340,43 @@ class CognitiveMemoryConsolidator(BasePlugin):
                 
         except Exception as e:
             return 0
+
+    async def trigger_consolidation(self) -> ConsolidationMetrics:
+        """
+        Manually trigger memory consolidation process.
+        
+        Returns:
+            ConsolidationMetrics with stats about consolidation
+        """
+        start_time = datetime.now()
+        
+        try:
+            # Use existing dream trigger logic
+            operations = await self._get_old_operations()
+            conversations = await self._get_old_conversations()
+            
+            memories_created = 0
+            
+            if operations:
+                memories_created += await self._consolidate_to_chroma(operations)
+            
+            duration = (datetime.now() - start_time).total_seconds()
+            
+            return ConsolidationMetrics(
+                memories_created=memories_created,
+                sessions_processed=len(operations) + len(conversations),
+                duration_seconds=duration,
+                timestamp=datetime.now()
+            )
+            
+        except Exception as e:
+            logger.error(f"Consolidation failed: {e}")
+            return ConsolidationMetrics(
+                memories_created=0,
+                sessions_processed=0,
+                duration_seconds=0.0,
+                timestamp=datetime.now()
+            )
 
     async def _emit_dream_complete(self, consolidated_count: int, deleted_count: int):
         if not self.event_bus:

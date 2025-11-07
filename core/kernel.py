@@ -1161,14 +1161,25 @@ class Kernel:
                 import re
                 for key, value in arguments.items():
                     if isinstance(value, str):
-                        # Find all ${step_X.results} or ${step_X.output} patterns
-                        placeholders = re.findall(r'\$\{step_(\d+)\.(results|output)\}', value)
+                        # Find all ${step_X.field} patterns (any field name)
+                        placeholders = re.findall(r'\$\{step_(\d+)\.(\w+)\}', value)
                         for step_num, attr in placeholders:
                             step_idx = int(step_num) - 1
                             if 0 <= step_idx < len(step_results):
                                 prev_result = step_results[step_idx]
                                 if prev_result.get("success"):
-                                    replacement = str(prev_result.get("output", ""))
+                                    # Try to get the field from output
+                                    output = prev_result.get("output", "")
+                                    
+                                    # If output is a dict/object, try to get the specific field
+                                    if isinstance(output, dict) and attr in output:
+                                        replacement = str(output[attr])
+                                    elif hasattr(output, attr):
+                                        replacement = str(getattr(output, attr))
+                                    else:
+                                        # Fallback: use entire output (for common fields like 'output', 'results', 'content')
+                                        replacement = str(output)
+                                    
                                     value = value.replace(f"${{step_{step_num}.{attr}}}", replacement)
                         arguments[key] = value
                 

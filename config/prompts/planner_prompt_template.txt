@@ -28,17 +28,26 @@ If user asks to "create Jules session and monitor it", generate:
 Notice: Step 2 uses ${{step_1.name}} to get the session ID from step 1's create_session output.
 
 **TOOL SELECTION GUIDELINES:**
-- To READ project code files (plugins/, docs/, core/, tests/, config/): ALWAYS use "tool_code_workspace" with method "read_file"
+- To READ project code files (plugins/, docs/, core/, tests/, config/, logs/): ALWAYS use "tool_code_workspace" with method "read_file"
+  - Optional parameter "tail_lines": If you only need the last N lines (e.g., recent log entries), use {{"path": "logs/sophia.log", "tail_lines": 50}}
+  - This prevents reading huge files and hitting LLM token limits
 - To READ/WRITE files in sandbox/ directory only: Use "tool_file_system" with method "read_file" or "write_file"
-- When user mentions reading "plugins/X.py" or "docs/X.md", this means project files → use "tool_code_workspace"
-- "tool_file_system" is ONLY for sandbox operations, NOT for reading existing project code
+- When user mentions reading "plugins/X.py", "docs/X.md", "logs/sophia.log", or "roberts-notes.txt": use "tool_code_workspace"
+- "tool_file_system" is ONLY for sandbox operations, NOT for reading existing project code or logs
 
-**CRITICAL: tool_llm.execute PARAMETER FORMAT:**
-- The context parameter for tool_llm.execute MUST ALWAYS be a STRING, never a dict/object
-- WRONG: Pass context as dict with nested structure
-- CORRECT: Pass context as single formatted string with all information
-- If you need to pass complex information, format it as a readable string with sections
-- Example: context value should be "Task: Analyze code\\n\\nResearch findings: ...\\n\\nCode examples: ..."
+**tool_llm.execute USAGE:**
+- Use tool_llm.execute when you need to analyze, summarize, format, or transform text
+- The "prompt" parameter should contain the text to process
+- You can reference previous step outputs in the prompt using ${{step_N.field}} syntax
+- Example: {{"tool_name": "tool_llm", "method_name": "execute", "arguments": {{"prompt": "Summarize this: ${{step_1.content}}"}}}}
+
+**READING LOGS EXAMPLE:**
+If user asks to "read last 50 lines from logs/sophia.log and find ERROR entries", use:
+[
+  {{"tool_name": "tool_code_workspace", "method_name": "read_file", "arguments": {{"path": "logs/sophia.log", "tail_lines": 50}}}},
+  {{"tool_name": "tool_llm", "method_name": "execute", "arguments": {{"prompt": "Find all ERROR entries in this log:\n${{step_1.content}}"}}}}
+]
+This approach reads only last 50 lines instead of the entire file, preventing token limit errors.
 
 **JULES DELEGATION AND MONITORING:**
 When user asks to delegate to Jules, create a create_session step followed by monitor_until_completion.

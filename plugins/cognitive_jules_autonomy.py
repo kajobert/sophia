@@ -177,17 +177,16 @@ class JulesAutonomyPlugin(BasePlugin):
         source = f"sources/github/{request.repo}"
 
         try:
-            create_result = await self.jules_api_tool.create_session(
+            jules_session = await self.jules_api_tool.create_session(
+                context=context,
                 prompt=request.task,
                 source=source,
                 branch="main",
                 auto_pr=False,  # Don't auto-create PR, we'll handle results ourselves
             )
 
-            if not create_result.get("success"):
-                raise Exception(create_result.get("error", "Unknown error"))
-
-            session_id = create_result["session_id"]
+            # JulesSession.name format: "sessions/{session_id}"
+            session_id = jules_session.name.split("/")[1]
             context.logger.info(f"✅ Created session: {session_id}")
 
         except Exception as e:

@@ -23,7 +23,8 @@ class CodeWorkspaceTool(BasePlugin):
         """Initializes the CodeWorkspaceTool."""
         super().__init__()
         self.project_root: Path | None = None
-        self.allowed_read_paths = ["plugins", "docs", "config", "core", "tests"]
+        # Allow reading from logs/ for self-analysis and root files like roberts-notes.txt
+        self.allowed_read_paths = ["plugins", "docs", "config", "core", "tests", "logs", "."]
 
     @property
     def name(self) -> str:
@@ -73,9 +74,15 @@ class CodeWorkspaceTool(BasePlugin):
             True if path is allowed for reading
         """
         path = Path(user_path)
+        path_str = str(path)
+        
         # Check if path starts with any allowed directory
         for allowed in self.allowed_read_paths:
-            if str(path).startswith(allowed + "/") or str(path) == allowed:
+            if allowed == ".":
+                # Allow root-level files (e.g., roberts-notes.txt)
+                if "/" not in path_str and "\\" not in path_str:
+                    return True
+            elif path_str.startswith(allowed + "/") or path_str.startswith(allowed + "\\") or path_str == allowed:
                 return True
         return False
 
@@ -138,28 +145,45 @@ class CodeWorkspaceTool(BasePlugin):
         items = [item.name for item in safe_path.iterdir()]
         return items
 
-    def read_file(self, context: SharedContext, path: str) -> str:
+    def read_file(self, context: SharedContext, path: str, tail_lines: int | None = None) -> str:
         """
         Reads the content of a file in an allowed workspace directory.
 
         Args:
             context: The shared context for the session
             path: The path to the file, relative to project root
+            tail_lines: If specified, return only the last N lines of the file
 
         Returns:
-            The content of the file
+            The content of the file (or last N lines if tail_lines specified)
 
         Raises:
             PermissionError: If path is not in allowed directories
             FileNotFoundError: If the file doesn't exist
         """
         safe_path = self._get_safe_path(path)
-        context.logger.info("Reading file: %s", safe_path, extra={"plugin_name": self.name})
+        
+        if tail_lines:
+            context.logger.info(
+                "Reading last %d lines from file: %s", 
+                tail_lines, 
+                safe_path, 
+                extra={"plugin_name": self.name}
+            )
+        else:
+            context.logger.info("Reading file: %s", safe_path, extra={"plugin_name": self.name})
 
         if not safe_path.is_file():
             raise FileNotFoundError(f"File not found: {safe_path}")
 
-        return safe_path.read_text(encoding="utf-8")
+        content = safe_path.read_text(encoding="utf-8")
+        
+        # If tail_lines specified, return only last N lines
+        if tail_lines:
+            lines = content.splitlines()
+            return "\n".join(lines[-tail_lines:])
+        
+        return content
 
     def file_exists(self, context: SharedContext, path: str) -> bool:
         """

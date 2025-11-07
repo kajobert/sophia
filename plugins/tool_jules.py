@@ -339,7 +339,7 @@ class JulesAPITool(BasePlugin):
         except Exception as e:
             raise JulesValidationError(f"Invalid sources response: {e}")
 
-    def create_session(
+    async def create_session(
         self,
         context: SharedContext,
         prompt: str,
