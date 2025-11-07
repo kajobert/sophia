@@ -1,2 +1,2 @@
 Toto je testovací soubor číslo 2.
-řádek {1..6}
+řádek {1..5}

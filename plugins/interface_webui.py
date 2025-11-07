@@ -45,8 +45,8 @@ class WebUIInterface(BasePlugin):
         self.input_queue: asyncio.Queue = asyncio.Queue()
 
         @self.app.get("/")
-        async def get_chat_ui():
-            return FileResponse("frontend/chat.html")
+        async def get_dashboard():
+            return FileResponse("frontend/dashboard.html")
 
         @self.app.websocket("/ws/{session_id}")
         async def websocket_endpoint(websocket: WebSocket, session_id: str):

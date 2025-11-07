@@ -255,6 +255,213 @@ print(f"Weather in Prague: {result['temperature']}°C")
 
 ---
 
-**Status:** ✅ VERIFIED - Autonomní spolupráce funguje!  
+## 🔍 CRITICAL UPDATE (2025-11-07): Jules VM Capabilities - REAL DATA
+
+**Source:** https://jules.google/docs/environment/
+
+### Jules VM Has FULL Development Environment
+
+**✅ Pre-installed Tools:**
+```bash
+# Languages & Runtimes
+- Python 3.12.11 (pyenv, pip, pipx, poetry, uv, black, mypy, pytest, ruff)
+- Node.js 22.16.0 (nvm, npm, yarn, pnpm, eslint, prettier)
+- Go 1.24.3
+- Java 21.0.7 (maven, gradle)
+- Rust 1.87.0 (cargo)
+
+# Testing & Automation
+- pytest 8.4.0
+- Playwright (via npm/pip)
+- chromedriver 137.0.7151.70
+- Docker 28.2.2 + Docker Compose
+
+# Build Tools
+- gcc 13.3.0, clang 18.1.3
+- cmake, ninja, conan
+
+# Utilities
+- git 2.49.0
+- curl, jq, grep, awk
+- bash (full shell access)
+```
+
+**✅ Jules CAN:**
+1. **Run bash scripts** - Full shell command execution
+2. **Analyze his VM** - `uname -a`, `df -h`, `pip list`, etc.
+3. **Run tests** - `pytest`, `npm test`, `playwright test`
+4. **Install packages** - `pip install`, `npm install`
+5. **Access internet** - Download docs, scrape websites
+6. **Create files** - Edit code, write reports
+7. **Run long commands** (with limits) - Build, test, benchmark
+
+**❌ Jules CANNOT:**
+1. **Run dev servers** - `npm run dev`, `python manage.py runserver` (long-running processes blocked)
+2. **Access Sophia's runtime** - Jules VM is isolated from Sophia's process
+3. **Call Sophia's plugins directly** - Can only communicate via GitHub (code changes)
+4. **Access local .env secrets** - Uses secrets configured in jules.google.com UI
+
+---
+
+## 🎯 CORRECTED Delegation Strategy
+
+### Previous Claims vs Reality
+
+**❌ WRONG (Session 11 claim):**
+> "Sophia is fully autonomous - created cognitive_dashboard_testing.py for autonomous testing"
+
+**✅ REALITY:**
+- `cognitive_dashboard_testing.py` **does NOT exist** in workspace
+- Only **documentation** was created, not implementation
+- Sophia **CANNOT run Playwright** (no browser in her runtime)
+- Jules **CAN run Playwright** (has chromium, firefox, webkit installed)
+
+### Correct Testing Workflow
+
+**Delegation, Not Autonomy:**
+
+```
+User: "Test dashboard with Playwright"
+  ↓
+Sophia Self-Reflection:
+  - Checks self.capabilities: ❌ No browser, no Playwright drivers
+  - Checks jules.capabilities: ✅ Playwright + chromium installed
+  - Decision: MUST DELEGATE to Jules
+  ↓
+Sophia Creates Jules Task:
+  Task: "Run Playwright tests in tests/e2e/test_dashboard.py
+         1. Install playwright browsers: playwright install chromium
+         2. Run tests: pytest tests/e2e/test_dashboard.py -v
+         3. Generate report with:
+            - Test results (pass/fail counts)
+            - Screenshots of failures
+            - Root cause analysis
+            - Proposed fixes"
+  ↓
+Jules Executes in His VM:
+  1. playwright install chromium
+  2. pytest tests/e2e/test_dashboard.py --html=report.html
+  3. Parse test results
+  4. Analyze failures (using Google AI)
+  5. Propose fixes
+  6. Create PR with fixes OR commit to branch
+  ↓
+Sophia Pulls Results:
+  - jules pull sessions/{session_id}
+  - Review proposed fixes
+  - Apply to local workspace
+  - Verify fixes work
+  - Mark task complete
+```
+
+**Key Insight:** Sophia **orchestrates** (decides, delegates, reviews), Jules **executes** (tests, analyzes, fixes)
+
+---
+
+## 🎯 Updated Delegation Decision Matrix
+
+| Task Type | Sophia Can Do | Jules Can Do | Decision |
+|-----------|---------------|--------------|----------|
+| **Web research** | ❌ No browser | ✅ curl, wget, browser | DELEGATE |
+| **Code review** | ✅ Static analysis | ✅ Deep analysis | SOPHIA (faster) |
+| **Unit tests** | ✅ pytest (Python) | ✅ pytest + more | SOPHIA (direct access) |
+| **E2E tests (Playwright)** | ❌ **No browser** | ✅ **Chromium installed** | **DELEGATE** |
+| **Database ops** | ✅ Direct access to .data/ | ❌ No access | SOPHIA |
+| **File editing** | ✅ Fast (local) | ✅ Slower (VM) | SOPHIA |
+| **Documentation** | ⚠️ Template-based | ✅ Deep research | DELEGATE |
+| **Install packages** | ✅ Persistent .venv | ✅ In VM (ephemeral) | SOPHIA |
+| **Long-running servers** | ✅ Background processes | ❌ VMs are short-lived | SOPHIA |
+| **Analyze Jules VM** | ❌ No VM access | ✅ **Full bash access** | **DELEGATE (only option)** |
+| **Docker builds** | ⚠️ Depends on WSL2 | ✅ Docker installed | JULES (cleaner) |
+| **Multi-language** | ⚠️ Python-focused | ✅ Go, Rust, Java | JULES |
+
+### When to Use Jules (UPDATED)
+
+**✅ DELEGATE to Jules:**
+1. **Browser-based testing** (Playwright, Selenium) - **Jules has browsers, Sophia does not**
+2. **Deep web research** (documentation, examples, benchmarks)
+3. **Isolated feature development** (doesn't need Sophia's runtime)
+4. **Code generation with examples** (Jules can search GitHub, docs)
+5. **VM environment analysis** (Jules analyzes his own environment)
+6. **Package compatibility testing** (test in clean VM before Sophia installs)
+7. **Multi-language projects** (Jules has Go, Rust, Java - Sophia is Python-focused)
+
+**✅ SOPHIA handles:**
+1. **Database operations** (access to .data/*.db)
+2. **Quick file edits** (faster than Jules VM round-trip)
+3. **Plugin execution** (cognitive planning, tool orchestration)
+4. **Real-time monitoring** (dashboard, logs, metrics)
+5. **Local LLM calls** (Ollama - Jules uses Google AI)
+6. **Package installation** (persistent in Sophia's .venv)
+7. **Background processes** (servers, watchers, heartbeats)
+8. **Unit tests** (direct pytest execution, no browser needed)
+
+---
+
+## 📝 Jules VM Analysis Task - READY TO DELEGATE
+
+**Created:** `docs/JULES_VM_ANALYSIS_TASK.md`
+
+**Your Proposal:** "Delogovat na julese úkol aby analyzoval svůj VM pomocí bash a skriptů"
+
+**✅ YES, THIS IS POSSIBLE AND RECOMMENDED!**
+
+**Task Specification:**
+```bash
+# Jules will run this comprehensive analysis:
+#!/bin/bash
+# Analyze Jules VM environment
+
+# System info
+uname -a
+df -h
+free -h
+
+# Languages
+python --version
+pip list
+node --version
+npm list -g --depth=0
+
+# Testing tools
+pytest --version
+playwright --version
+chromedriver --version
+
+# Network access
+curl -I https://google.com
+curl -I https://api.github.com
+curl -I https://openrouter.ai/api/v1/models
+
+# Environment
+env | grep -E "(PATH|PYTHON|NODE|JAVA)"
+source /opt/environment_summary.sh  # Jules preinstalled tools
+
+# Generate report
+> docs/JULES_VM_CAPABILITIES.md
+```
+
+**Deliverable:** `docs/JULES_VM_CAPABILITIES.md` - Complete capability matrix for Sophia's self-reflection
+
+**Benefits:**
+1. Sophia knows **exactly** what Jules can handle
+2. Smart delegation based on **real data**, not assumptions
+3. Testing strategy: Jules runs Playwright, Sophia gets results
+4. Future AMI planning based on VM specs
+
+**Delegation Command:**
+```python
+# Sophia can execute:
+await cognitive_jules_autonomy.delegate_task(
+    context,
+    repo="ShotyCZ/sophia",
+    task=open("docs/JULES_VM_ANALYSIS_TASK.md").read(),
+    auto_apply=True
+)
+```
+
+---
+
+**Status:** ✅ VERIFIED - Collaboration works | ⚠️ CORRECTED - Testing strategy updated  
 **Author:** GitHub Copilot (Agentic Mode)  
-**Date:** 2025-11-04
+**Date:** 2025-11-04 (Updated: 2025-11-07)

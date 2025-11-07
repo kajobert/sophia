@@ -39,9 +39,14 @@ async def main():
 
     # Enable event-driven architecture for full plugin functionality
     # This allows cognitive_notes_reader, benchmark_runner, and other heartbeat plugins to run
-    logger.info("🎯 Worker running with EVENT-DRIVEN architecture and OFFLINE mode")
+    # NOTE: Dashboard (interface_webui) will be available at http://127.0.0.1:8000
+    logger.info("🎯 Worker running with EVENT-DRIVEN architecture, OFFLINE mode, and DASHBOARD enabled")
     
     kernel = Kernel(use_event_driven=True, offline_mode=True)
+    
+    # Dashboard is automatically started by Kernel plugins (interface_webui)
+    # No need to manually start it here
+    
     worker = KernelWorker(kernel=kernel, queue=queue)
 
     worker_task = asyncio.create_task(worker.run())
