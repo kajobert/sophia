@@ -1,0 +1,24 @@
+#!/bin/bash
+# SOPHIA Start Command
+SOPHIA_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$SOPHIA_DIR" || exit 1
+
+if pgrep -f "python.*run.py" > /dev/null; then
+    echo "⚠️  SOPHIA již běží!"
+    exit 1
+fi
+
+echo "🚀 Spouštím SOPHII..."
+nohup .venv/bin/python run.py --ui classic > /tmp/sophia.log 2>&1 &
+PID=$!
+
+echo "✅ SOPHIA spuštěna (PID: $PID)"
+echo "📊 Dashboard: http://127.0.0.1:8000/dashboard"
+echo "Počkej 30s na inicializaci..."
+
+sleep 30
+if curl -s http://127.0.0.1:8000/api/stats > /dev/null 2>&1; then
+    echo "✅ SOPHIA běží a odpovídá!"
+else
+    echo "⚠️  Zkontroluj logy: tail -f /tmp/sophia.log"
+fi

@@ -1,0 +1,9 @@
+#!/bin/bash
+echo "🤖 SOPHIA CLI Commands"
+echo "======================"
+echo ""
+echo "sophia-start     - Spustit"
+echo "sophia-stop      - Zastavit"  
+echo "sophia-status    - Status check"
+echo ""
+echo "📊 http://127.0.0.1:8000/dashboard"

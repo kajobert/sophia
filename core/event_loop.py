@@ -39,6 +39,7 @@ class EventDrivenLoop:
         all_plugins_map: Dict[str, Any],
         event_bus: EventBus,
         task_queue: TaskQueue,
+        kernel=None,  # AMI 1.0: Reference to kernel for process_single_input
     ):
         """
         Initialize event-driven loop.
@@ -48,11 +49,13 @@ class EventDrivenLoop:
             all_plugins_map: Map of plugin names to plugin instances
             event_bus: Event bus instance
             task_queue: Task queue instance
+            kernel: Kernel instance (for WebUI to use same pipeline as --once)
         """
         self.plugin_manager = plugin_manager
         self.all_plugins_map = all_plugins_map
         self.event_bus = event_bus
         self.task_queue = task_queue
+        self.kernel = kernel  # AMI 1.0: Store kernel reference
         self.is_running = False
         
         # AMI 1.0: Proactive heartbeat
@@ -81,10 +84,11 @@ class EventDrivenLoop:
         """
         Handle USER_INPUT events.
 
-        This triggers the planning and execution pipeline.
+        This triggers the same processing pipeline as --once mode.
         """
         user_input = event.data.get("input")
-        session_id = event.data.get("session_id")
+        session_id = event.data.get("session_id", "webui-session")
+        response_callback = event.data.get("response_callback")
 
         if not user_input:
             return
@@ -94,11 +98,40 @@ class EventDrivenLoop:
             extra={"plugin_name": "EventDrivenLoop"},
         )
 
-        # TODO: Trigger planner via event
-        # For now, log that we received the event
-        logger.debug(
-            f"USER_INPUT event received: {user_input}", extra={"plugin_name": "EventDrivenLoop"}
-        )
+        # Use the same pipeline as --once mode: process_single_input
+        try:
+            from core.context import SharedContext
+            
+            # Create context just like --once mode
+            context = SharedContext(
+                user_input=user_input,
+                session_id=session_id,
+                current_state="WEBUI_INPUT",
+                logger=logger,
+                offline_mode=False,  # WebUI uses online mode by default
+            )
+            
+            # Use kernel's process_single_input (same as --once)
+            if not self.kernel:
+                raise Exception("Kernel reference not available - cannot process input")
+            
+            logger.info(f"Calling kernel.process_single_input() - same pipeline as --once", extra={"plugin_name": "EventDrivenLoop"})
+            
+            # Process through full pipeline (planner → executor → tools)
+            response = await asyncio.wait_for(
+                self.kernel.process_single_input(context),
+                timeout=120.0  # 2 minutes timeout for WebUI
+            )
+            
+            # Send response back to WebUI
+            if response_callback:
+                await response_callback(response)
+                logger.info(f"Response sent back to user via WebUI", extra={"plugin_name": "EventDrivenLoop"})
+                
+        except Exception as e:
+            logger.error(f"Error handling user input: {e}", exc_info=True, extra={"plugin_name": "EventDrivenLoop"})
+            if response_callback:
+                await response_callback(f"Sorry, I encountered an error: {e}")
 
     async def _handle_task_completed(self, event: Event):
         """

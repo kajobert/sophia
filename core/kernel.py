@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import sys
 import uuid
 from datetime import datetime
@@ -366,6 +367,7 @@ class Kernel:
                 all_plugins_map=self.all_plugins_map,
                 event_bus=self.event_bus,
                 task_queue=self.task_queue,
+                kernel=self,  # AMI 1.0: Pass kernel reference for WebUI integration
             )
 
             logger.info(
@@ -1096,6 +1098,49 @@ class Kernel:
         else:
             logger.warning("🎯 [Kernel] No planner found")
 
+        # --- Plan Quality Check & Auto-Escalation ---
+        if plan and self._is_poor_quality_plan(plan, context):
+            logger.warning("⚠️ [Kernel] Plan quality is poor - escalating to better model")
+            
+            # Simple 3-tier escalation without complex plugin
+            # Tier 1: llama3.1:8b (already tried - failed)
+            # Tier 2: escalation_model from config (qwen2.5:14b or better)
+            # Tier 3: cloud (if API key available)
+            
+            import os
+            
+            # Get escalation model from config
+            escalation_model = "qwen2.5:14b"  # Default fallback
+            try:
+                with open("config/settings.yaml", "r") as f:
+                    settings = yaml.safe_load(f)
+                    escalation_model = settings.get("plugins", {}).get("tool_local_llm", {}).get("local_llm", {}).get("escalation_model", "qwen2.5:14b")
+            except Exception as e:
+                logger.warning(f"⚠️ [Kernel] Could not read escalation_model from config: {e}")
+            
+            # Try Tier 2: Better model for reasoning
+            logger.info(f"🔄 [Kernel] Tier 2: Re-planning with {escalation_model}...")
+            os.environ["LOCAL_LLM_MODEL_OVERRIDE"] = escalation_model
+            
+            try:
+                if planner:
+                    context.payload["escalated_planning"] = True
+                    context = await planner.execute(context)
+                    plan = context.payload.get("plan", [])
+                    logger.info(f"✅ [Kernel] Tier 2 completed: {len(plan) if isinstance(plan, list) else 0} steps")
+                    
+                    # Check if new plan is better
+                    if plan and not self._is_poor_quality_plan(plan, context):
+                        logger.info("✅ [Kernel] Tier 2 produced better plan!")
+                    else:
+                        logger.warning("⚠️  [Kernel] Tier 2 plan still poor quality")
+            except Exception as e:
+                logger.error(f"❌ [Kernel] Tier 2 failed: {e}")
+            finally:
+                # Clear model override
+                if "LOCAL_LLM_MODEL_OVERRIDE" in os.environ:
+                    del os.environ["LOCAL_LLM_MODEL_OVERRIDE"]
+
         # 2. EXECUTING PHASE
         logger.info("🎯 [Kernel] Phase 2: EXECUTING")
         context.current_state = "EXECUTING"
@@ -1104,39 +1149,59 @@ class Kernel:
         if plan:
             logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
             
-            # Select LLM tool based on offline mode
-            if self.offline_mode:
-                # Force local LLM only (no cloud fallback)
-                llm_tool = self.all_plugins_map.get("tool_local_llm")
-                if not llm_tool:
-                    raise RuntimeError(
-                        "Offline mode enabled but tool_local_llm not available! "
-                        "Please install Ollama and configure local LLM."
-                    )
-                logger.info("🔒 OFFLINE MODE: Using local LLM only")
-            else:
-                # Cloud LLM (stable, tested)
-                # TODO: Enable local LLM preference after benchmarking
-                llm_tool = self.all_plugins_map.get("tool_llm")
-                logger.debug("☁️ ONLINE MODE: Using cloud LLM")
-            
-            if llm_tool:
+            # Execute each step in the plan
+            step_results = []
+            for i, step in enumerate(plan, 1):
+                tool_name = step.get("tool_name")
+                method_name = step.get("method_name")
+                arguments = step.get("arguments", {})
+                
+                logger.info(f"🎯 [Kernel] Step {i}/{len(plan)}: {tool_name}.{method_name}")
+                
+                # Get the tool plugin
+                tool = self.all_plugins_map.get(tool_name)
+                if not tool:
+                    error_msg = f"Tool '{tool_name}' not found"
+                    logger.error(f"❌ [Kernel] {error_msg}")
+                    step_results.append({"success": False, "error": error_msg})
+                    continue
+                
                 try:
-                    logger.info("🎯 [Kernel] Calling LLM tool...")
-                    # Get LLM to respond directly for simplicity
-                    llm_context = await llm_tool.execute(context=context)
-                    logger.info("🎯 [Kernel] LLM call completed")
-                    response_text = llm_context.payload.get(
-                        "llm_response", "No response generated"
-                    )
-                    execution_result = {"success": True, "output": response_text}
-                    logger.info(f"🎯 [Kernel] Got response: {response_text[:100]}...")
+                    # Check if tool has the method
+                    if hasattr(tool, method_name):
+                        # Call the specific method
+                        method = getattr(tool, method_name)
+                        result = await method(context=context, **arguments)
+                        step_results.append({"success": True, "output": result})
+                        logger.info(f"✅ [Kernel] Step {i} completed")
+                    else:
+                        # Fallback: call execute() method
+                        result_context = await tool.execute(context)
+                        result = result_context.payload.get("llm_response", str(result_context.payload))
+                        step_results.append({"success": True, "output": result})
+                        logger.info(f"✅ [Kernel] Step {i} completed (via execute)")
                 except Exception as e:
-                    logger.error(f"❌ [Kernel] LLM error: {e}")
-                    execution_result = {"success": False, "error": str(e)}
+                    error_msg = f"Error executing {tool_name}.{method_name}: {e}"
+                    logger.error(f"❌ [Kernel] {error_msg}")
+                    step_results.append({"success": False, "error": error_msg})
+            
+            # Aggregate results
+            successful_steps = [r for r in step_results if r.get("success")]
+            if successful_steps:
+                # Use last successful step output as final response
+                execution_result = {
+                    "success": True,
+                    "output": successful_steps[-1].get("output", "Task completed"),
+                    "steps": step_results
+                }
+                logger.info(f"🎯 [Kernel] Execution completed: {len(successful_steps)}/{len(plan)} steps successful")
             else:
-                logger.error("❌ [Kernel] No LLM tool found")
-                execution_result = {"success": False, "error": "No LLM tool found"}
+                execution_result = {
+                    "success": False,
+                    "error": "All steps failed",
+                    "steps": step_results
+                }
+                logger.error("❌ [Kernel] All execution steps failed")
         else:
             logger.warning("🎯 [Kernel] No plan, skipping execution")
             execution_result = {"success": False, "error": "No plan generated"}
@@ -1156,6 +1221,42 @@ class Kernel:
             return execution_result.get("output", "Task completed successfully.")
         else:
             return f"Error: {execution_result.get('error', 'Unknown error')}"
+
+    def _is_poor_quality_plan(self, plan: list, context: SharedContext) -> bool:
+        """
+        Detect if plan is of poor quality (e.g., just LLM calls instead of real tool usage).
+        
+        Poor quality indicators:
+        - Single step plan that only calls tool_local_llm or tool_llm
+        - Plan doesn't use any actual tools for actionable tasks
+        - User asks for system info but plan doesn't query system
+        
+        Returns True if plan quality is poor and should be escalated.
+        """
+        if not plan or not isinstance(plan, list):
+            return False
+        
+        # Check if plan is just a single LLM call
+        if len(plan) == 1:
+            step = plan[0]
+            tool_name = step.get("tool_name", "")
+            
+            # If only tool is LLM, check if user asked for actionable info
+            if tool_name in ["tool_local_llm", "tool_llm"]:
+                user_input_lower = context.user_input.lower() if context.user_input else ""
+                
+                # Patterns that should use real tools, not just LLM
+                actionable_patterns = [
+                    "schopnost", "capability", "plugin", "modul", "module",
+                    "kolik", "how many", "seznam", "list", "aktuální", "current",
+                    "stav", "status", "info", "informace", "information"
+                ]
+                
+                if any(pattern in user_input_lower for pattern in actionable_patterns):
+                    logger.info(f"🔍 [Kernel] Plan quality check: User asked for actionable info but plan only has LLM call")
+                    return True
+        
+        return False
 
     def start(self):
         """Starts the main consciousness loop."""

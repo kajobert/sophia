@@ -7,9 +7,17 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0e27; color: #e0e6ed; padding: 20px; }
     .container { max-width: 1400px; margin: 0 auto; }
-    header { border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    header { border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 20px; }
     h1 { font-size: 32px; color: #60a5fa; margin-bottom: 8px; }
     .subtitle { color: #94a3b8; font-size: 14px; }
+    
+    /* Tabs */
+    .tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 2px solid #1e293b; }
+    .tab { background: transparent; color: #94a3b8; border: none; padding: 12px 24px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s; border-bottom: 3px solid transparent; }
+    .tab:hover { color: #e0e6ed; background: #1e293b50; }
+    .tab.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
     .card { background: #1e293b; border-radius: 8px; padding: 20px; border: 1px solid #334155; }
     .card h2 { font-size: 18px; color: #60a5fa; margin-bottom: 15px; }
@@ -35,6 +43,61 @@
     .error-msg { background: #7f1d1d; color: #f87171; padding: 12px; border-radius: 4px; margin-top: 10px; display: none; }
     .last-update { color: #64748b; font-size: 12px; text-align: right; margin-top: 10px; }
     code { background: #0f172a; padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #fbbf24; }
+    
+    /* Chat Interface */
+    .chat-container { display: flex; flex-direction: column; height: 70vh; background: #1e293b; border-radius: 8px; border: 1px solid #334155; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+    .chat-message { display: flex; gap: 12px; }
+    .chat-message.user { flex-direction: row-reverse; }
+    .chat-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .chat-message.user .chat-avatar { background: #60a5fa; }
+    .chat-message.assistant .chat-avatar { background: #34d399; }
+    .chat-bubble { max-width: 70%; padding: 12px 16px; border-radius: 12px; }
+    .chat-message.user .chat-bubble { background: #60a5fa; color: #0a0e27; border-bottom-right-radius: 4px; }
+    .chat-message.assistant .chat-bubble { background: #334155; color: #e0e6ed; border-bottom-left-radius: 4px; }
+    .chat-input-area { padding: 20px; border-top: 1px solid #334155; display: flex; gap: 10px; }
+    .chat-input { flex: 1; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e0e6ed; font-family: inherit; font-size: 14px; }
+    .chat-send { background: #60a5fa; color: #0a0e27; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .chat-send:hover { background: #3b82f6; }
+    .chat-send:disabled { background: #475569; cursor: not-allowed; }
+    .chat-status { padding: 8px 16px; background: #0f172a; border-radius: 6px; font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+    
+    /* Logs */
+    .logs-container { background: #0f172a; border-radius: 8px; padding: 20px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; height: 70vh; overflow-y: auto; border: 1px solid #334155; }
+    .log-line { padding: 4px 0; white-space: pre-wrap; word-break: break-all; }
+    .log-line.INFO { color: #94a3b8; }
+    .log-line.WARNING { color: #fbbf24; }
+    .log-line.ERROR { color: #f87171; }
+    .log-line.DEBUG { color: #64748b; }
+    .log-controls { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
+    .log-filter { padding: 8px 12px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e0e6ed; font-size: 14px; }
+    .log-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+    .log-badge.INFO { background: #1e40af; color: #bfdbfe; }
+    .log-badge.WARNING { background: #854d0e; color: #fde68a; }
+    .log-badge.ERROR { background: #7f1d1d; color: #fecaca; }
+    .log-badge.DEBUG { background: #1e293b; color: #64748b; }
+    
+    /* Tools Tab */
+    .tool-button {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #e0e6ed;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .tool-button:hover {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      border-color: #60a5fa;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);
+    }
+    .tool-button:active {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -43,6 +106,17 @@
       <h1>🤖 SOPHIA AMI 1.0</h1>
       <div class="subtitle">Autonomous 24/7 Worker Dashboard</div>
     </header>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+      <button class="tab" onclick="switchTab('chat')">💬 Chat</button>
+      <button class="tab" onclick="switchTab('logs')">📋 Logs</button>
+      <button class="tab" onclick="switchTab('tools')">🛠️ Tools</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div id="overview-tab" class="tab-content active">
 
     <div class="grid">
       <div class="card">
@@ -215,10 +289,192 @@
       </div>
     </div>
 
+    </div> <!-- End Overview Tab -->
+
+    <!-- CHAT TAB -->
+    <div id="chat-tab" class="tab-content">
+      <div class="chat-status">
+        <span id="chatStatus">🔌 Connecting to SOPHIA...</span>
+      </div>
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-message assistant">
+            <div class="chat-avatar">🤖</div>
+            <div class="chat-bubble">
+              Hello! I'm SOPHIA, your autonomous AI assistant. How can I help you today?
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." />
+          <button class="chat-send" id="chatSend">Send</button>
+        </div>
+      </div>
+    </div> <!-- End Chat Tab -->
+
+    <!-- LOGS TAB -->
+    <div id="logs-tab" class="tab-content">
+      <div class="log-controls">
+        <label style="color: #94a3b8; font-size: 14px;">Filter:</label>
+        <select class="log-filter" id="logLevel" onchange="fetchLogs()">
+          <option value="ALL">All Levels</option>
+          <option value="INFO">INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="ERROR">ERROR</option>
+          <option value="DEBUG">DEBUG</option>
+        </select>
+        <button style="padding: 8px 16px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e0e6ed; cursor: pointer; margin-left: auto;" onclick="fetchLogs()">
+          🔄 Refresh
+        </button>
+        <button style="padding: 8px 16px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e0e6ed; cursor: pointer;" onclick="toggleAutoScroll()">
+          <span id="autoScrollIcon">📌</span> Auto-scroll
+        </button>
+      </div>
+      <div class="logs-container" id="logsContainer">
+        <div style="text-align: center; color: #64748b; padding: 40px;">Loading logs...</div>
+      </div>
+    </div> <!-- End Logs Tab -->
+
+    <!-- TOOLS TAB -->
+    <div id="tools-tab" class="tab-content">
+      <h2 style="margin-bottom: 20px;">🛠️ System Tools</h2>
+      
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        
+        <!-- Testing Tools -->
+        <div class="card">
+          <h3>🧪 Testing & Debugging</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="runTool('test_dashboard')">
+              📸 Test Dashboard (Screenshots)
+            </button>
+            <button class="tool-button" onclick="runTool('test_e2e')">
+              🔬 Run E2E Tests
+            </button>
+            <button class="tool-button" onclick="runTool('test_plugins')">
+              🔌 Test All Plugins
+            </button>
+            <button class="tool-button" onclick="runTool('interactive_debug')">
+              🐛 Interactive Debugger
+            </button>
+          </div>
+        </div>
+
+        <!-- Browser Control -->
+        <div class="card">
+          <h3>🌐 Browser Automation</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="runBrowserTest()">
+              🤖 SOPHIA Self-Test Dashboard
+            </button>
+            <button class="tool-button" onclick="runTool('screenshot_all')">
+              📸 Capture All Tabs
+            </button>
+            <button class="tool-button" onclick="openTraceViewer()">
+              🔍 View Trace Debugger
+            </button>
+          </div>
+        </div>
+
+        <!-- System Management -->
+        <div class="card">
+          <h3>⚙️ System Control</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="runTool('backup_db')">
+              💾 Backup Database
+            </button>
+            <button class="tool-button" onclick="runTool('clear_queue')">
+              🗑️ Clear Task Queue
+            </button>
+            <button class="tool-button" onclick="runTool('restart_sophia')">
+              🔄 Restart SOPHIA
+            </button>
+            <button class="tool-button" onclick="runTool('view_logs')">
+              📋 View Full Logs
+            </button>
+          </div>
+        </div>
+
+        <!-- Model Management -->
+        <div class="card">
+          <h3>🤖 Model Management</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="runTool('test_llama')">
+              🦙 Test llama3.1:8b
+            </button>
+            <button class="tool-button" onclick="runTool('test_qwen')">
+              🧠 Test qwen2.5:14b
+            </button>
+            <button class="tool-button" onclick="runTool('list_models')">
+              📋 List All Models
+            </button>
+            <button class="tool-button" onclick="runTool('model_escalation')">
+              🚀 Test Model Escalation
+            </button>
+          </div>
+        </div>
+
+        <!-- Diagnostics -->
+        <div class="card">
+          <h3>🔬 Diagnostics</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="runTool('system_info')">
+              📊 System Information
+            </button>
+            <button class="tool-button" onclick="runTool('check_health')">
+              ❤️ Health Check
+            </button>
+            <button class="tool-button" onclick="runTool('export_data')">
+              📤 Export Dashboard Data
+            </button>
+            <button class="tool-button" onclick="runTool('run_diagnostics')">
+              🩺 Full Diagnostics
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <h3>⚡ Quick Actions</h3>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <button class="tool-button" onclick="openDashboard()">
+              🖥️ Open in New Tab
+            </button>
+            <button class="tool-button" onclick="refreshAllData()">
+              🔄 Refresh All Data
+            </button>
+            <button class="tool-button" onclick="clearConsole()">
+              🧹 Clear Console
+            </button>
+            <button class="tool-button" onclick="downloadLogs()">
+              📥 Download Logs
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tool Output Console -->
+      <div class="card" style="margin-top: 20px;">
+        <h3>📟 Tool Output</h3>
+        <div id="toolOutput" style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; font-family: 'Consolas', monospace; font-size: 13px; max-height: 300px; overflow-y: auto; color: #94a3b8;">
+          <div style="color: #64748b;">Ready to run tools...</div>
+        </div>
+        <button class="tool-button" style="margin-top: 10px;" onclick="clearToolOutput()">
+          🧹 Clear Output
+        </button>
+      </div>
+
+    </div> <!-- End Tools Tab -->
+
   </div>
 
   <script>
     let autoRefreshInterval = null;
+    let chatWs = null;
+    let chatSessionId = 'dashboard-' + Date.now();
+    let autoScroll = true;
+    let logRefreshInterval = null;
 
     async function refreshDashboard() {
       try {
@@ -534,6 +790,279 @@
     // Initial refresh and start auto-refresh
     refreshDashboard();
     autoRefreshInterval = setInterval(refreshDashboard, 5000);
+
+    // ========== TAB SWITCHING ==========
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName + '-tab').classList.add('active');
+      
+      // Start/stop specific tab features
+      if (tabName === 'chat') {
+        initChat();
+      } else if (tabName === 'logs') {
+        startLogRefresh();
+      } else {
+        stopLogRefresh();
+      }
+    }
+
+    // ========== CHAT FUNCTIONALITY ==========
+    function initChat() {
+      if (chatWs && chatWs.readyState === WebSocket.OPEN) return; // Already connected
+      
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/${chatSessionId}`;
+      
+      chatWs = new WebSocket(wsUrl);
+      
+      chatWs.onopen = () => {
+        document.getElementById('chatStatus').innerHTML = '✅ Connected to SOPHIA';
+        document.getElementById('chatStatus').style.color = '#34d399';
+      };
+      
+      chatWs.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'response') {
+          addChatMessage('assistant', data.message);
+        }
+      };
+      
+      chatWs.onerror = (error) => {
+        document.getElementById('chatStatus').innerHTML = '❌ Connection error';
+        document.getElementById('chatStatus').style.color = '#f87171';
+      };
+      
+      chatWs.onclose = () => {
+        document.getElementById('chatStatus').innerHTML = '🔌 Disconnected - Click to reconnect';
+        document.getElementById('chatStatus').style.color = '#fbbf24';
+        document.getElementById('chatStatus').style.cursor = 'pointer';
+        document.getElementById('chatStatus').onclick = initChat;
+      };
+    }
+
+    function addChatMessage(role, text) {
+      const messagesDiv = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${role}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'chat-avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🤖';
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.textContent = text;
+      
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(bubble);
+      messagesDiv.appendChild(messageDiv);
+      
+      // Auto-scroll to bottom
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      
+      if (!message || !chatWs || chatWs.readyState !== WebSocket.OPEN) return;
+      
+      addChatMessage('user', message);
+      chatWs.send(JSON.stringify({ message }));
+      input.value = '';
+    }
+
+    // Chat event listeners
+    document.getElementById('chatSend').addEventListener('click', sendChatMessage);
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    // ========== LOGS FUNCTIONALITY ==========
+    async function fetchLogs() {
+      try {
+        const level = document.getElementById('logLevel').value;
+        const res = await fetch(`/api/logs?level=${level}&lines=200`);
+        const data = await res.json();
+        
+        if (data.error) {
+          document.getElementById('logsContainer').innerHTML = 
+            `<div style="text-align: center; color: #f87171; padding: 40px;">Error: ${data.error}</div>`;
+          return;
+        }
+        
+        const logsContainer = document.getElementById('logsContainer');
+        logsContainer.innerHTML = '';
+        
+        data.logs.forEach(log => {
+          const lineDiv = document.createElement('div');
+          lineDiv.className = `log-line ${log.level}`;
+          
+          const badge = document.createElement('span');
+          badge.className = `log-badge ${log.level}`;
+          badge.textContent = log.level;
+          
+          const timestamp = document.createElement('span');
+          timestamp.style.color = '#64748b';
+          timestamp.textContent = log.timestamp + ' ';
+          
+          const message = document.createElement('span');
+          message.textContent = log.message;
+          
+          lineDiv.appendChild(badge);
+          lineDiv.appendChild(timestamp);
+          lineDiv.appendChild(message);
+          logsContainer.appendChild(lineDiv);
+        });
+        
+        // Auto-scroll to bottom if enabled
+        if (autoScroll) {
+          logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+      } catch (e) {
+        console.error('Logs fetch error:', e);
+      }
+    }
+
+    function toggleAutoScroll() {
+      autoScroll = !autoScroll;
+      document.getElementById('autoScrollIcon').textContent = autoScroll ? '📌' : '📍';
+    }
+
+    function startLogRefresh() {
+      fetchLogs(); // Fetch immediately
+      logRefreshInterval = setInterval(fetchLogs, 2000); // Refresh every 2 seconds
+    }
+
+    function stopLogRefresh() {
+      if (logRefreshInterval) {
+        clearInterval(logRefreshInterval);
+        logRefreshInterval = null;
+      }
+    }
+
+    // ========== TOOLS TAB FUNCTIONALITY ==========
+    function appendToolOutput(message, type = 'info') {
+      const output = document.getElementById('toolOutput');
+      const line = document.createElement('div');
+      line.style.marginBottom = '5px';
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const colors = {
+        info: '#94a3b8',
+        success: '#34d399',
+        error: '#f87171',
+        warning: '#fbbf24'
+      };
+      
+      line.innerHTML = `<span style="color: #64748b;">[${timestamp}]</span> <span style="color: ${colors[type]};">${message}</span>`;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function clearToolOutput() {
+      document.getElementById('toolOutput').innerHTML = '<div style="color: #64748b;">Console cleared.</div>';
+    }
+
+    async function runTool(toolName) {
+      appendToolOutput(`🔧 Running tool: ${toolName}...`, 'info');
+      
+      try {
+        const response = await fetch('/api/tools/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tool: toolName })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          appendToolOutput(`✅ ${toolName}: ${result.message || 'Success'}`, 'success');
+          if (result.output) {
+            appendToolOutput(result.output, 'info');
+          }
+        } else {
+          appendToolOutput(`❌ ${toolName}: ${result.error || 'Failed'}`, 'error');
+        }
+      } catch (error) {
+        appendToolOutput(`❌ Error running ${toolName}: ${error.message}`, 'error');
+      }
+    }
+
+    async function runBrowserTest() {
+      appendToolOutput('🤖 Starting SOPHIA Dashboard self-test...', 'info');
+      
+      try {
+        const response = await fetch('/api/tools/browser-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          appendToolOutput(`✅ Self-test completed: ${result.passed}/${result.total} tests passed`, 'success');
+          if (result.screenshots) {
+            result.screenshots.forEach(path => {
+              appendToolOutput(`📸 Screenshot: ${path}`, 'info');
+            });
+          }
+        } else {
+          appendToolOutput(`❌ Self-test failed: ${result.error}`, 'error');
+        }
+      } catch (error) {
+        appendToolOutput(`❌ Error: ${error.message}`, 'error');
+      }
+    }
+
+    function openTraceViewer() {
+      appendToolOutput('🔍 Opening trace viewer...', 'info');
+      appendToolOutput('💡 Run: playwright show-trace screenshots/debug/trace.zip', 'info');
+    }
+
+    function openDashboard() {
+      window.open('/dashboard', '_blank');
+    }
+
+    function refreshAllData() {
+      appendToolOutput('🔄 Refreshing all data...', 'info');
+      refreshDashboard();
+      fetchLogs();
+      appendToolOutput('✅ Data refreshed', 'success');
+    }
+
+    function clearConsole() {
+      console.clear();
+      appendToolOutput('✅ Browser console cleared', 'success');
+    }
+
+    async function downloadLogs() {
+      try {
+        const response = await fetch('/api/logs?lines=1000');
+        const data = await response.json();
+        
+        const logText = data.logs.map(log => 
+          `[${log.timestamp}] ${log.level}: ${log.message}`
+        ).join('\n');
+        
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sophia_logs_${new Date().toISOString()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        appendToolOutput('✅ Logs downloaded', 'success');
+      } catch (error) {
+        appendToolOutput(`❌ Download failed: ${error.message}`, 'error');
+      }
+    }
   </script>
 </body>
 </html>

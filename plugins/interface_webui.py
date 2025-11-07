@@ -38,6 +38,7 @@ class WebUIInterface(BasePlugin):
         # Store references to other plugins for the dashboard
         self.all_plugins = config.get("all_plugins", {})
         self.plugin_manager = config.get("plugin_manager")
+        self.event_bus = config.get("event_bus")  # Store event bus for publishing events
         self.host = config.get("host", "127.0.0.1")
         self.port = config.get("port", 8000)
         self.connections: Dict[str, WebSocket] = {}
@@ -83,6 +84,44 @@ class WebUIInterface(BasePlugin):
                 "plugins": plugins,
                 "connections": list(self.connections.keys()),
             }
+
+        @self.app.get("/api/stats")
+        async def api_stats():
+            """Return system statistics for dashboard."""
+            stats = {
+                "plugin_count": 0,
+                "pending_count": 0,
+                "done_count": 0,
+                "failed_count": 0,
+            }
+            
+            try:
+                # Count active plugins
+                if self.plugin_manager and hasattr(self.plugin_manager, "plugins"):
+                    stats["plugin_count"] = len(self.plugin_manager.plugins)
+                elif self.all_plugins:
+                    stats["plugin_count"] = len(self.all_plugins)
+                
+                # Count tasks by status from SQLite
+                db_path = Path(".data") / "tasks.sqlite"
+                if db_path.exists():
+                    conn = sqlite3.connect(str(db_path))
+                    cur = conn.cursor()
+                    
+                    cur.execute("SELECT COUNT(*) FROM tasks WHERE status = 'pending'")
+                    stats["pending_count"] = cur.fetchone()[0]
+                    
+                    cur.execute("SELECT COUNT(*) FROM tasks WHERE status = 'done'")
+                    stats["done_count"] = cur.fetchone()[0]
+                    
+                    cur.execute("SELECT COUNT(*) FROM tasks WHERE status = 'failed'")
+                    stats["failed_count"] = cur.fetchone()[0]
+                    
+                    conn.close()
+            except Exception as e:
+                logger.error(f"Error fetching stats: {e}")
+            
+            return stats
 
         @self.app.get("/api/tasks")
         async def api_tasks(limit: int = 20):
@@ -254,7 +293,7 @@ class WebUIInterface(BasePlugin):
                 from pathlib import Path
                 import sqlite3
                 
-                db_path = Path(".data/sophia.db")
+                db_path = Path(".data/memory.db")
                 if not db_path.exists():
                     return {
                         "error": "Database not found",
@@ -381,7 +420,7 @@ class WebUIInterface(BasePlugin):
                 from pathlib import Path
                 import sqlite3
                 
-                db_path = Path(".data/sophia.db")
+                db_path = Path(".data/memory.db")
                 if not db_path.exists():
                     return {"error": "Database not found", "hypotheses": []}
                 
@@ -432,6 +471,154 @@ class WebUIInterface(BasePlugin):
                 logger.error(f"Error fetching hypotheses: {e}")
                 return {"error": f"Failed to fetch hypotheses: {str(e)}", "hypotheses": []}
 
+        @self.app.get("/api/logs")
+        async def api_logs(level: str = "ALL", lines: int = 200):
+            """Return recent log entries."""
+            try:
+                from pathlib import Path
+                import re
+                
+                # Find the most recent log file
+                log_files = sorted(Path("logs").glob("sophia*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+                
+                if not log_files:
+                    return {"error": "No log files found", "logs": []}
+                
+                log_file = log_files[0]
+                
+                # Read last N lines
+                with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+                    all_lines = f.readlines()
+                    recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+                
+                # Parse JSON log lines
+                logs = []
+                
+                for line in recent_lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    try:
+                        # Parse JSON log entry
+                        log_entry = json.loads(line)
+                        log_level = log_entry.get("levelname", "INFO")
+                        
+                        # Filter by level
+                        if level != "ALL" and log_level != level:
+                            continue
+                        
+                        logs.append({
+                            "timestamp": log_entry.get("asctime", ""),
+                            "level": log_level,
+                            "message": f"[{log_entry.get('name', 'unknown')}] {log_entry.get('message', '')}"
+                        })
+                    except json.JSONDecodeError:
+                        # Fallback for non-JSON lines
+                        if logs:  # Append to previous message as continuation
+                            logs[-1]["message"] += "\n" + line
+                
+                return {"logs": logs, "log_file": str(log_file)}
+            except Exception as e:
+                logger.error(f"Error fetching logs: {e}")
+                import traceback
+                traceback.print_exc()
+                return {"error": f"Failed to fetch logs: {str(e)}", "logs": []}
+        
+        @self.app.post("/api/tools/run")
+        async def run_tool(request: Request):
+            """Execute a tool command."""
+            try:
+                data = await request.json()
+                tool_name = data.get("tool")
+                
+                import subprocess
+                import os
+                
+                # Map tool names to commands
+                tools = {
+                    "test_dashboard": ".venv/bin/python capture_dashboard_screenshots.py",
+                    "test_e2e": ".venv/bin/pytest test_dashboard_e2e.py -v",
+                    "test_plugins": ".venv/bin/pytest tests/ -k plugin -v",
+                    "backup_db": "cp -r .data .data_backup_$(date +%Y%m%d_%H%M%S)",
+                    "clear_queue": "sqlite3 .data/tasks.sqlite 'DELETE FROM tasks WHERE status=\"pending\"'",
+                    "view_logs": "tail -100 logs/sophia.log",
+                    "test_llama": "curl -X POST http://localhost:11434/api/generate -d '{\"model\": \"llama3.1:8b\", \"prompt\": \"test\", \"stream\": false}'",
+                    "test_qwen": "curl -X POST http://localhost:11434/api/generate -d '{\"model\": \"qwen2.5:14b\", \"prompt\": \"test\", \"stream\": false}'",
+                    "list_models": "curl -s http://localhost:11434/api/tags",
+                    "system_info": "echo 'CPU:' && lscpu | grep 'Model name' && echo 'Memory:' && free -h",
+                    "check_health": "ps aux | grep -E '(python run.py|ollama)' | grep -v grep",
+                    "export_data": "curl -s http://127.0.0.1:8000/api/stats",
+                    "run_diagnostics": "echo 'Disk:' && df -h . && echo 'Memory:' && free -h"
+                }
+                
+                cmd = tools.get(tool_name)
+                if not cmd:
+                    return {"success": False, "error": f"Unknown tool: {tool_name}"}
+                
+                # Execute command
+                result = subprocess.run(
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                output = result.stdout or result.stderr
+                success = result.returncode == 0
+                
+                return {
+                    "success": success,
+                    "message": "Command executed" if success else "Command failed",
+                    "output": output[:500]  # Limit output
+                }
+                
+            except Exception as e:
+                logger.error(f"Tool execution error: {e}")
+                return {"success": False, "error": str(e)}
+        
+        @self.app.post("/api/tools/browser-test")
+        async def browser_test():
+            """Run browser test using cognitive_browser_control plugin."""
+            try:
+                # Check if browser control plugin is available
+                browser_plugin = None
+                
+                # First try to get from all_plugins map (faster)
+                if self.all_plugins:
+                    browser_plugin = self.all_plugins.get("cognitive_browser_control")
+                
+                # Fallback: search through plugin_manager
+                if not browser_plugin and self.plugin_manager:
+                    for plugin_type in PluginType:
+                        for plugin in self.plugin_manager.get_plugins_by_type(plugin_type):
+                            if plugin.name == "cognitive_browser_control":
+                                browser_plugin = plugin
+                                break
+                        if browser_plugin:
+                            break
+                
+                if not browser_plugin:
+                    return {
+                        "success": False,
+                        "error": "Browser control plugin not available - check if cognitive_browser_control is loaded"
+                    }
+                
+                # Run dashboard test
+                result = await browser_plugin.test_dashboard()
+                
+                return {
+                    "success": result.get("success", False),
+                    "total": result.get("total_tests", 0),
+                    "passed": result.get("passed", 0),
+                    "screenshots": result.get("screenshots", [])
+                }
+                
+            except Exception as e:
+                logger.error(f"Browser test error: {e}")
+                return {"success": False, "error": str(e)}
+
     async def start_server(self):
         """Starts the Uvicorn server in a background task."""
         server_config = Config(self.app, host=self.host, port=self.port, log_level="info")
@@ -441,13 +628,33 @@ class WebUIInterface(BasePlugin):
         self._server_started = True
 
     async def execute(self, context: SharedContext) -> SharedContext:
-        """Waits for user input from the WebSocket and starts the server if not already running."""
+        """Checks for user input from the WebSocket (non-blocking) and starts the server if not already running."""
         if not self._server_started:
             await self.start_server()
 
-        user_input, response_callback = await self.input_queue.get()
-        context.user_input = user_input
-        context.payload["_response_callback"] = response_callback
+        # Non-blocking check for messages
+        try:
+            user_input, response_callback = self.input_queue.get_nowait()
+            context.user_input = user_input
+            context.payload["_response_callback"] = response_callback
+            logger.info(f"[WebUI] Received message: {user_input}", extra={"plugin_name": "interface_webui"})
+            
+            # Publish USER_INPUT event to trigger processing
+            if self.event_bus:
+                from core.events import Event, EventType, EventPriority
+                self.event_bus.publish(
+                    Event(
+                        event_type=EventType.USER_INPUT,
+                        source="interface_webui",
+                        priority=EventPriority.HIGH,
+                        data={"input": user_input, "response_callback": response_callback}
+                    )
+                )
+                logger.info(f"[WebUI] USER_INPUT event published", extra={"plugin_name": "interface_webui"})
+        except asyncio.QueueEmpty:
+            # No messages waiting, that's fine
+            pass
+            
         return context
 
     async def send_response(self, session_id: str, message: str):

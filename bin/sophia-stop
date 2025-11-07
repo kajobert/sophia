@@ -1,0 +1,14 @@
+#!/bin/bash
+echo "🛑 Zastavuji SOPHII..."
+if pgrep -f "python.*run.py" > /dev/null; then
+    pkill -f "python.*run.py"
+    sleep 2
+    if ! pgrep -f "python.*run.py" > /dev/null; then
+        echo "✅ SOPHIA zastavena"
+    else
+        pkill -9 -f "python.*run.py"
+        echo "✅ SOPHIA zastavena (SIGKILL)"
+    fi
+else
+    echo "ℹ️  SOPHIA neběží"
+fi
