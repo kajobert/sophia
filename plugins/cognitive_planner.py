@@ -500,6 +500,10 @@ class Planner(BasePlugin):
                         plan_data = parsed
                     elif isinstance(parsed, dict) and parsed.get("plan"):
                         plan_data = parsed.get("plan")
+                    elif isinstance(parsed, dict) and "tool_name" in parsed:
+                        # LLM returned single tool call dict instead of array - wrap it
+                        logger.info("✅ Auto-wrapped single tool dict into array")
+                        plan_data = [parsed]
                 # (duplicate fallback removed)
 
                 if plan_data:

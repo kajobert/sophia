@@ -1,0 +1,75 @@
+========================================
+SOPHIA Query Test - 20251107_152338
+========================================
+
+Query: Přečti soubor roberts-notes.txt
+
+✅ SOPHIA is running (PID: 3322470)
+
+📋 Capturing pre-query log snapshot...
+📤 Sending query to SOPHIA...
+✅ Query sent successfully
+
+⏳ Waiting for SOPHIA to process (max 120s)...
+📝 Task ID: 207
+  ... still processing (10 s)
+  ... still processing (20 s)
+  ... still processing (30 s)
+  ... still processing (40 s)
+  ... still processing (50 s)
+  ... still processing (60 s)
+  ... still processing (70 s)
+  ... still processing (80 s)
+  ... still processing (90 s)
+  ... still processing (100 s)
+  ... still processing (110 s)
+  ... still processing (120 s)
+⚠️  Timeout or no completion signal after 120s
+
+📋 Capturing post-query logs...
+
+========================================
+PLANNER OUTPUT
+========================================
+
+========================================
+EXECUTION STEPS
+========================================
+
+========================================
+ERRORS & WARNINGS
+========================================
+{"asctime": "2025-11-07 15:03:01,902", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session failed: None", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:03:01,903", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session did not complete within timeout", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:07:57,877", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session failed: None", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:07:57,891", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session did not complete within timeout", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:13:18,804", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session failed: None", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:13:18,805", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session did not complete within timeout", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:17:58,817", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session failed: None", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:17:58,818", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session did not complete within timeout", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:23:37,969", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session failed: None", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+{"asctime": "2025-11-07 15:23:37,970", "name": "session-25c625e6", "levelname": "ERROR", "message": "\u274c Session did not complete within timeout", "session_id": "25c625e6-dc73-43d5-b88c-8306cc62bba2"}
+
+========================================
+RESPONSE
+========================================
+
+========================================
+API RESPONSE
+========================================
+{"success":true,"task_id":207}
+
+========================================
+TEST SUMMARY
+========================================
+Steps executed: 0
+Errors: 10
+Status: ⚠️  UNCERTAIN
+
+Full logs saved to: test_results/logs_20251107_152338.txt
+Test results saved to: test_results/test_20251107_152338.txt
+
+========================================
+To view full results: cat test_results/test_20251107_152338.txt
+To view logs: cat test_results/logs_20251107_152338.txt
+========================================

@@ -43,6 +43,7 @@ class JulesAutonomyPlugin(BasePlugin):
         self.jules_api_tool = None  # API for session creation
         self.jules_cli_tool = None  # CLI for pulling results
         self.jules_monitor = None
+        self.jules_plan_validator = None  # NEW: LLM-based plan validation
         self.logger = None
 
     @property
@@ -81,13 +82,65 @@ class JulesAutonomyPlugin(BasePlugin):
         if not self.jules_monitor:
             self.logger.warning("cognitive_jules_monitor not found - autonomy features disabled")
 
+        # Inject Jules plan validator (NEW - Phase 3.8)
+        self.jules_plan_validator = all_plugins.get("cognitive_jules_plan_validator")
+        if not self.jules_plan_validator:
+            self.logger.warning("cognitive_jules_plan_validator not found - using simple keyword validation")
+
         # Report status
         if self.jules_api_tool and self.jules_cli_tool and self.jules_monitor:
             self.logger.info(
                 "✅ Jules Autonomy Plugin ready - HYBRID MODE (API creation + CLI pull)"
             )
+            if self.jules_plan_validator:
+                self.logger.info("   ✅ LLM-based plan validation enabled")
         elif self.jules_api_tool and self.jules_monitor:
             self.logger.info("⚡ Jules Autonomy Plugin ready - API-ONLY MODE (no local pull)")
+
+    def _enhance_prompt_for_jules(self, sophia_task: str, context: SharedContext) -> str:
+        """
+        Enhance Sophia's task description for Jules with better structure.
+        
+        IMPORTANT: Jules has access to:
+        - Full GitHub repo (including files in .gitignore if configured in jules.google.com)
+        - Secrets configured in jules.google.com UI for this repo
+        - Web search, bash commands, file editing
+        
+        This function ONLY improves prompt clarity, NOT sanitization.
+        
+        Args:
+            sophia_task: Original task from Sophia
+            context: Shared context (for logging)
+            
+        Returns:
+            Enhanced prompt with better structure for Jules
+            
+        Example:
+            Input:  "Fix benchmark runner"
+            Output: "Task: Fix benchmark runner
+                     
+                     File: plugins/benchmark_runner.py
+                     Issue: [extracted from context]
+                     Expected: [clear success criteria]"
+        """
+        # If task is already well-structured (has "Task:", "File:", etc.), use as-is
+        if any(keyword in sophia_task for keyword in ["Task:", "File:", "Issue:", "Expected:"]):
+            context.logger.info("📋 Task already well-structured, using as-is")
+            return sophia_task
+        
+        # Otherwise, add minimal structure
+        enhanced = f"""Task for Jules AI Agent:
+
+{sophia_task}
+
+IMPORTANT:
+- You have access to secrets configured in jules.google.com for this repo
+- Use web search if you need documentation or examples
+- Run tests to verify your changes work
+- Create clear commit messages
+"""
+        
+        return enhanced
 
     async def delegate_task(
         self,
@@ -170,6 +223,10 @@ class JulesAutonomyPlugin(BasePlugin):
             f"Auto-apply: {request.auto_apply}"
         )
 
+        # STEP 0: Enhance task prompt for Jules (add structure, not sanitize)
+        jules_prompt = self._enhance_prompt_for_jules(request.task, context)
+        context.logger.info(f"📝 Jules prompt (enhanced): {jules_prompt[:100]}...")
+
         # STEP 1: Create Jules session via API
         context.logger.info("📝 STEP 1: Creating Jules session via API...")
 
@@ -179,10 +236,11 @@ class JulesAutonomyPlugin(BasePlugin):
         try:
             jules_session = await self.jules_api_tool.create_session(
                 context=context,
-                prompt=request.task,
+                prompt=jules_prompt,  # Use enhanced prompt
                 source=source,
-                branch="main",
+                branch="master",  # FIX: repo uses 'master' not 'main'
                 auto_pr=False,  # Don't auto-create PR, we'll handle results ourselves
+                require_plan_approval=True,  # CRITICAL: Sophia must approve plan first!
             )
 
             # JulesSession.name format: "sessions/{session_id}"
@@ -192,6 +250,92 @@ class JulesAutonomyPlugin(BasePlugin):
         except Exception as e:
             context.logger.error(f"❌ Failed to create session: {e}")
             return {"success": False, "error": str(e), "workflow": "autonomous"}
+
+        # STEP 1.5: Get and review plan (CRITICAL SAFETY STEP)
+        context.logger.info(f"📋 STEP 1.5: Getting Jules plan for review...")
+        
+        try:
+            # Wait a bit for Jules to generate plan
+            import asyncio
+            await asyncio.sleep(5)
+            
+            plan_details = self.jules_api_tool.get_plan_details(context, session_id)
+            
+            if not plan_details.get("has_plan"):
+                error = "Jules didn't generate a plan"
+                context.logger.error(f"❌ {error}")
+                return {
+                    "success": False,
+                    "error": error,
+                    "session_id": session_id,
+                    "workflow": "autonomous",
+                }
+            
+            # Extract plan
+            plan = plan_details.get("plan", {})
+            context.logger.info("📋 Jules Plan received:")
+            context.logger.info(f"   {plan}")
+            
+            # VALIDATE PLAN using LLM (if validator available)
+            if self.jules_plan_validator:
+                context.logger.info("🔍 Running LLM-based plan validation...")
+                
+                validation_result = await self.jules_plan_validator.validate_plan(
+                    context=context,
+                    sophia_task=request.task,  # Original Sophia task
+                    jules_plan=plan,
+                    session_id=session_id
+                )
+                
+                # Log validation decision
+                if validation_result.approved:
+                    context.logger.info(
+                        f"✅ Plan APPROVED by LLM validator (confidence: {validation_result.confidence:.2f})"
+                    )
+                    context.logger.info(f"   Reasoning: {validation_result.reasoning}")
+                else:
+                    error = f"Plan REJECTED by LLM validator: {validation_result.reasoning}"
+                    context.logger.error(f"❌ {error}")
+                    context.logger.warning(f"   Risks identified: {validation_result.risks}")
+                    
+                    return {
+                        "success": False,
+                        "error": error,
+                        "session_id": session_id,
+                        "plan": plan,
+                        "validation": validation_result.model_dump(),
+                        "workflow": "autonomous",
+                    }
+            else:
+                # Fallback: Simple keyword-based validation
+                context.logger.warning("⚠️  Using fallback keyword validation (LLM validator not available)")
+                
+                plan_str = str(plan)
+                dangerous_keywords = [".env delete", "rm -rf", "DROP TABLE", "DELETE FROM users"]
+                
+                if any(keyword in plan_str for keyword in dangerous_keywords):
+                    error = f"Plan contains dangerous operation: {plan_str[:200]}"
+                    context.logger.error(f"❌ {error}")
+                    return {
+                        "success": False,
+                        "error": error,
+                        "session_id": session_id,
+                        "plan": plan,
+                        "workflow": "autonomous",
+                    }
+            
+            # Approve plan
+            context.logger.info("✅ Plan approved, submitting approval to Jules...")
+            self.jules_api_tool.approve_plan(context, session_id)
+            
+        except Exception as e:
+            context.logger.error(f"❌ Plan review failed: {e}")
+            return {
+                "success": False,
+                "error": f"Plan review failed: {e}",
+                "session_id": session_id,
+                "workflow": "autonomous",
+            }
 
         # STEP 2: Monitor until completion
         context.logger.info(f"👁️  STEP 2: Monitoring session {session_id} until completion...")
@@ -308,22 +452,15 @@ class JulesAutonomyPlugin(BasePlugin):
                 "workflow": "autonomous",
             }
 
-    async def execute(
-        self, context: SharedContext, tool_name: str, arguments: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Execute tool call - route to delegate_task"""
-        if tool_name == "delegate_task":
-            return await self.delegate_task(
-                context=context,
-                repo=arguments["repo"],
-                task=arguments["task"],
-                parallel=arguments.get("parallel", 1),
-                auto_apply=arguments.get("auto_apply", True),
-                timeout=arguments.get("timeout", 3600),
-                check_interval=arguments.get("check_interval", 30),
-            )
-        else:
-            return {"success": False, "error": f"Unknown tool: {tool_name}"}
+    async def execute(self, context: SharedContext) -> SharedContext:
+        """
+        Cognitive plugin execute method (not used for autonomous workflows).
+        
+        This plugin is called via delegate_task() method, not execute().
+        """
+        context.payload["info"] = "Use delegate_task() method for Jules workflows"
+        context.payload["available_methods"] = ["delegate_task"]
+        return context
 
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         """Tool definitions for cognitive planner"""

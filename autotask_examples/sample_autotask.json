@@ -1,0 +1,4 @@
+[
+  { "id": "read_logs", "instruction": "Přečti si posledních 50 řádků z logs/sophia.log a najdi všechny ERROR záznamy." },
+  { "id": "read_roberts", "instruction": "Přečti soubor roberts-notes.txt a shrň první 3 úkoly." }
+]

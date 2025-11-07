@@ -145,32 +145,46 @@ class CognitiveNotesReader(BasePlugin):
         """
         Use LLM to extract actionable tasks from notes.
         
+        CRITICAL: Uses cloud LLM (tool_llm) for better accuracy in parsing notes.
+        Local models struggle with structured JSON output for complex notes.
+        
         Returns:
             List of task dicts: [{"priority": 90, "instruction": "...", "category": "..."}]
         """
-        # Get LLM plugin from stored map
+        # Get LLM plugin from stored map - PREFER CLOUD LLM for notes parsing
         llm_plugin = None
         
         if self._all_plugins_map:
-            llm_plugin = self._all_plugins_map.get("tool_local_llm")
+            # Try cloud LLM first (better at structured output)
+            llm_plugin = self._all_plugins_map.get("tool_llm")
             if not llm_plugin:
-                llm_plugin = self._all_plugins_map.get("tool_llm")
+                # Fallback to local LLM if cloud unavailable
+                llm_plugin = self._all_plugins_map.get("tool_local_llm")
+                if llm_plugin:
+                    logger.warning(f"[{self.name}] ⚠️  Using local LLM fallback - may produce invalid JSON")
         
         if not llm_plugin:
             logger.warning(f"[{self.name}] No LLM plugin available, cannot extract tasks")
             return []
+        
+        # Log which LLM is being used
+        llm_name = "cloud (tool_llm)" if llm_plugin.name == "tool_llm" else "local (tool_local_llm)"
+        logger.info(f"[{self.name}] 🤖 Using {llm_name} for notes parsing")
 
         # Create extraction prompt
         extraction_prompt = self._create_extraction_prompt(notes_content)
 
         try:
             # Call LLM
+            # CRITICAL: Force allow_cloud for notes parsing even in offline mode
+            # Notes need accurate structured JSON output which local models struggle with
             context = SharedContext(
                 user_input=extraction_prompt,
                 session_id=f"notes-reader-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
                 current_state="EXTRACTING_TASKS",
                 logger=logger,
-                offline_mode=getattr(self.context, 'offline_mode', False) if hasattr(self, 'context') else False
+                offline_mode=False,  # Override offline mode for notes parsing
+                payload={"allow_cloud": True}  # Explicitly allow cloud LLM
             )
             
             # Execute LLM

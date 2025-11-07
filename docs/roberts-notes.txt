@@ -39,3 +39,6 @@ sophia si muze vytvorit branche (například nomad/web-explorer) urcene pro jule
 
 
 Chtěl bych mít vizuální zobrazení toho jak jules postupuje a například nějakou zpětnou vazbu z jeho chatu. Ideální by bylo aby se ho Sofia po nějakých intervalech sama ptala pomocí chatu na jeho postup a případně se ho zeptala jestli nepotřebuje s něčím pomoct aby mu mohla poradit a optimalizovat tím jeho činnost. A bylo by dobré abysme toto viděli i my uživatelé v budoucím rozšířeném terminálu. Je interval inspirování informací od julese by měl podle mě být v rámci několika minut například 2 minuty jelikož julesovi trvají úkoly celkem dlouho.
+
+
+Sophia by měla být plně autonomní a to je potřeba ověřit testy a reálným provozem!

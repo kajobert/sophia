@@ -130,34 +130,86 @@ class WebUIInterface(BasePlugin):
             return stats
 
         @self.app.get("/api/tasks")
-        async def api_tasks(limit: int = 20):
-            """Return the last `limit` tasks from the persistent SQLite queue for quick inspection."""
+        async def api_tasks(
+            limit: int = 20, 
+            offset: int = 0,
+            status: str | None = None,
+            order_by: str = "id",
+            order_dir: str = "desc"
+        ):
+            """Return tasks from the persistent SQLite queue with filtering and pagination.
+            
+            Args:
+                limit: Number of tasks to return (default 20)
+                offset: Number of tasks to skip for pagination (default 0)
+                status: Filter by status (pending/completed/failed/all)
+                order_by: Column to sort by (id/priority/created_at/status)
+                order_dir: Sort direction (asc/desc)
+            """
             db_path = Path(".data") / "tasks.sqlite"
             if not db_path.exists():
-                return {"error": "tasks DB not found", "tasks": []}
+                return {"error": "tasks DB not found", "tasks": [], "total": 0}
 
             try:
                 conn = sqlite3.connect(str(db_path))
                 cur = conn.cursor()
-                cur.execute(
-                    "SELECT id, status, priority, payload, created_at FROM tasks ORDER BY id DESC LIMIT ?",
-                    (int(limit),),
-                )
+                
+                # Build WHERE clause
+                where_clause = ""
+                params = []
+                if status and status != "all":
+                    where_clause = "WHERE status = ?"
+                    params.append(status)
+                
+                # Validate and sanitize order_by
+                valid_columns = {"id", "priority", "created_at", "status"}
+                if order_by not in valid_columns:
+                    order_by = "id"
+                
+                # Validate order direction
+                order_dir = "DESC" if order_dir.lower() == "desc" else "ASC"
+                
+                # Get total count
+                count_query = f"SELECT COUNT(*) FROM tasks {where_clause}"
+                cur.execute(count_query, params)
+                total = cur.fetchone()[0]
+                
+                # Get tasks with pagination
+                query = f"""
+                    SELECT id, status, priority, payload, created_at 
+                    FROM tasks 
+                    {where_clause}
+                    ORDER BY {order_by} {order_dir}
+                    LIMIT ? OFFSET ?
+                """
+                params.extend([int(limit), int(offset)])
+                cur.execute(query, params)
+                
                 rows = cur.fetchall()
                 tasks = []
                 for r in rows:
                     tid, status, pr, payload, created_at = r
+                    # Parse payload to get instruction preview
+                    try:
+                        payload_json = json.loads(payload) if payload else {}
+                        instruction = payload_json.get("instruction", "N/A")
+                        # Truncate long instructions
+                        instruction_preview = instruction[:100] + "..." if len(instruction) > 100 else instruction
+                    except:
+                        instruction_preview = "N/A"
+                    
                     tasks.append({
                         "id": tid,
                         "status": status,
                         "priority": pr,
-                        "payload": payload,
+                        "instruction": instruction_preview,
+                        "full_payload": payload,
                         "created_at": created_at,
                     })
                 conn.close()
-                return {"tasks": tasks}
+                return {"tasks": tasks, "total": total, "limit": limit, "offset": offset}
             except Exception as e:
-                return {"error": str(e), "tasks": []}
+                return {"error": str(e), "tasks": [], "total": 0}
 
         @self.app.post("/api/enqueue")
         async def api_enqueue(request: Request):
@@ -420,47 +472,74 @@ class WebUIInterface(BasePlugin):
                 }
 
         @self.app.get("/api/hypotheses")
-        async def api_hypotheses(limit: int = 20, status: str = None):
-            """Return list of hypotheses from database."""
+        async def api_hypotheses(
+            limit: int = 20,
+            offset: int = 0,
+            status: str | None = None,
+            order_by: str = "id",
+            order_dir: str = "desc"
+        ):
+            """Return list of hypotheses from database with filtering and pagination.
+            
+            Args:
+                limit: Number of hypotheses to return (default 20)
+                offset: Number of hypotheses to skip for pagination (default 0)
+                status: Filter by status (pending/tested/approved/deployed_validated/rejected/all)
+                order_by: Column to sort by (id/priority/created_at/status)
+                order_dir: Sort direction (asc/desc)
+            """
             try:
                 from pathlib import Path
                 import sqlite3
                 
                 db_path = Path(".data/memory.db")
                 if not db_path.exists():
-                    return {"error": "Database not found", "hypotheses": []}
+                    return {"error": "Database not found", "hypotheses": [], "total": 0}
                 
                 conn = sqlite3.connect(str(db_path))
                 cur = conn.cursor()
                 
-                # Build query
+                # Build WHERE clause
+                where_clause = ""
+                params = []
                 if status and status != "all":
-                    query = """
-                        SELECT id, hypothesis_text, category, status, priority, 
-                               created_at, tested_at, approved_at, deployed_at
-                        FROM hypotheses
-                        WHERE status = ?
-                        ORDER BY id DESC
-                        LIMIT ?
-                    """
-                    cur.execute(query, (status, int(limit)))
-                else:
-                    query = """
-                        SELECT id, hypothesis_text, category, status, priority,
-                               created_at, tested_at, approved_at, deployed_at
-                        FROM hypotheses
-                        ORDER BY id DESC
-                        LIMIT ?
-                    """
-                    cur.execute(query, (int(limit),))
+                    where_clause = "WHERE status = ?"
+                    params.append(status)
+                
+                # Validate and sanitize order_by
+                valid_columns = {"id", "priority", "created_at", "status", "category"}
+                if order_by not in valid_columns:
+                    order_by = "id"
+                
+                # Validate order direction
+                order_dir = "DESC" if order_dir.lower() == "desc" else "ASC"
+                
+                # Get total count
+                count_query = f"SELECT COUNT(*) FROM hypotheses {where_clause}"
+                cur.execute(count_query, params)
+                total = cur.fetchone()[0]
+                
+                # Build query with pagination
+                query = f"""
+                    SELECT id, hypothesis_text, category, status, priority, 
+                           created_at, tested_at, approved_at, deployed_at
+                    FROM hypotheses
+                    {where_clause}
+                    ORDER BY {order_by} {order_dir}
+                    LIMIT ? OFFSET ?
+                """
+                params.extend([int(limit), int(offset)])
+                cur.execute(query, params)
                 
                 rows = cur.fetchall()
                 hypotheses = []
                 
                 for row in rows:
+                    full_text = row[1] if row[1] else "N/A"
                     hypotheses.append({
                         "id": row[0],
-                        "description": row[1][:100] if row[1] else "N/A",  # Truncate
+                        "description": full_text[:100] + "..." if len(full_text) > 100 else full_text,
+                        "full_text": full_text,  # Full hypothesis text
                         "category": row[2] or "unknown",
                         "status": row[3] or "pending",
                         "priority": row[4] or 100,
@@ -472,10 +551,109 @@ class WebUIInterface(BasePlugin):
                 
                 conn.close()
                 
-                return {"hypotheses": hypotheses}
+                return {
+                    "hypotheses": hypotheses,
+                    "total": total,
+                    "limit": limit,
+                    "offset": offset
+                }
             except Exception as e:
                 logger.error(f"Error fetching hypotheses: {e}")
-                return {"error": f"Failed to fetch hypotheses: {str(e)}", "hypotheses": []}
+                return {"error": f"Failed to fetch hypotheses: {str(e)}", "hypotheses": [], "total": 0}
+
+        @self.app.get("/api/benchmarks")
+        async def api_benchmarks(
+            limit: int = 100,
+            task_type: str | None = None,
+            model_name: str | None = None,
+            order_by: str = "timestamp",
+            order_dir: str = "desc"
+        ):
+            """Return model benchmark results from database.
+            
+            Args:
+                limit: Number of results to return (default 100)
+                task_type: Filter by task type (planning/reasoning/jules_validation/json_output/code_generation)
+                model_name: Filter by model name
+                order_by: Column to sort by (timestamp/quality_score/latency_ms/cost_usd)
+                order_dir: Sort direction (asc/desc)
+            """
+            try:
+                from pathlib import Path
+                import sqlite3
+                
+                db_path = Path(".data/model_benchmarks.db")
+                if not db_path.exists():
+                    return {"error": "Benchmarks database not found", "benchmarks": [], "total": 0}
+                
+                conn = sqlite3.connect(str(db_path))
+                cur = conn.cursor()
+                
+                # Build WHERE clause
+                where_clause = ""
+                params = []
+                conditions = []
+                
+                if task_type:
+                    conditions.append("task_type = ?")
+                    params.append(task_type)
+                
+                if model_name:
+                    conditions.append("model_name = ?")
+                    params.append(model_name)
+                
+                if conditions:
+                    where_clause = "WHERE " + " AND ".join(conditions)
+                
+                # Validate and sanitize order_by
+                valid_columns = {"timestamp", "quality_score", "latency_ms", "cost_usd", "task_type", "model_name"}
+                if order_by not in valid_columns:
+                    order_by = "timestamp"
+                
+                # Validate order direction
+                order_dir = "DESC" if order_dir.lower() == "desc" else "ASC"
+                
+                # Get total count
+                count_query = f"SELECT COUNT(*) FROM model_benchmarks {where_clause}"
+                cur.execute(count_query, params)
+                total = cur.fetchone()[0]
+                
+                # Build query with pagination
+                query = f"""
+                    SELECT model_name, task_type, quality_score, latency_ms, 
+                           cost_usd, error_message, timestamp
+                    FROM model_benchmarks
+                    {where_clause}
+                    ORDER BY {order_by} {order_dir}
+                    LIMIT ?
+                """
+                params.append(int(limit))
+                cur.execute(query, params)
+                
+                rows = cur.fetchall()
+                benchmarks = []
+                
+                for row in rows:
+                    benchmarks.append({
+                        "model_name": row[0],
+                        "task_type": row[1],
+                        "quality_score": row[2],
+                        "latency_ms": row[3],
+                        "cost_usd": row[4],
+                        "error_message": row[5],
+                        "timestamp": row[6]
+                    })
+                
+                conn.close()
+                
+                return {
+                    "benchmarks": benchmarks,
+                    "total": total,
+                    "limit": limit
+                }
+            except Exception as e:
+                logger.error(f"Error fetching benchmarks: {e}")
+                return {"error": f"Failed to fetch benchmarks: {str(e)}", "benchmarks": [], "total": 0}
 
         @self.app.get("/api/logs")
         async def api_logs(level: str = "ALL", lines: int = 200):

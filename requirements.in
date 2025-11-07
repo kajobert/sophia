@@ -33,3 +33,7 @@ python-json-logger
 gitdb
 google-api-core
 python-dotenv
+beautifulsoup4
+lxml
+playwright
+pytest-playwright

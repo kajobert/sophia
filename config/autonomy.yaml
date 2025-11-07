@@ -329,6 +329,36 @@ self_improvement:
       backup_extension: ".backup"
       restart_plugins_after_deploy: false  # Manual restart for safety
 
+  # Continuous Model Benchmarking (Phase 3.8 - NEW!)
+  model_benchmarking:
+    enabled: true
+    heartbeat_interval: 24  # Run benchmark every N heartbeats (24 = ~1 day if heartbeat=1h)
+    
+    # Models to test (add/remove as needed)
+    models_to_test:
+      local:
+        - "qwen2.5:14b"     # Best local model for reasoning
+        - "llama3.1:8b"     # Fast local model for simple tasks
+      cloud:
+        - "openrouter/deepseek/deepseek-chat"  # Cheap cloud baseline ($0.14/1M)
+        # - "openrouter/anthropic/claude-3-haiku"  # Premium cloud (expensive!)
+    
+    # Task types benchmarked
+    task_types:
+      - planning              # Multi-step task planning
+      - reasoning             # Logical deduction
+      - jules_validation      # Semantic plan validation
+      - json_output           # Structured data generation
+      - code_generation       # Writing code
+    
+    # Settings
+    timeout_seconds: 60
+    store_full_responses: false  # Save disk space (only store 100 char samples)
+    
+    # Database
+    database_path: ".data/model_benchmarks.db"
+    retention_days: 30  # Keep benchmark history for 30 days
+
   # Adaptive Model Escalation (Phase 3.6 - NEW!)
   model_escalation:
     enabled: true

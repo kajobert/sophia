@@ -12,9 +12,12 @@ Status: pending, running, done, failed
 import sqlite3
 import json
 import time
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 class SimplePersistentQueue:
@@ -25,7 +28,8 @@ class SimplePersistentQueue:
 
     def _connect(self) -> sqlite3.Connection:
         if self._conn is None:
-            self._conn = sqlite3.connect(str(self.db_path), timeout=30, check_same_thread=False)
+            # Increased timeout from 30s to 60s for WSL/Windows mount disk I/O
+            self._conn = sqlite3.connect(str(self.db_path), timeout=60, check_same_thread=False)
             self._conn.row_factory = sqlite3.Row
             self._initialize()
         return self._conn
@@ -46,15 +50,38 @@ class SimplePersistentQueue:
         self._conn.commit()
 
     def enqueue(self, payload: Dict[str, Any], priority: int = 100) -> int:
-        conn = self._connect()
-        c = conn.cursor()
-        now = datetime.utcnow().isoformat()
-        c.execute(
-            "INSERT INTO tasks (created_at, priority, status, payload) VALUES (?, ?, 'pending', ?)",
-            (now, int(priority), json.dumps(payload)),
-        )
-        conn.commit()
-        return c.lastrowid
+        """Enqueue a task with retry logic for disk I/O errors on WSL/Windows."""
+        max_retries = 3
+        retry_delay = 0.5  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                conn = self._connect()
+                c = conn.cursor()
+                now = datetime.utcnow().isoformat()
+                c.execute(
+                    "INSERT INTO tasks (created_at, priority, status, payload) VALUES (?, ?, 'pending', ?)",
+                    (now, int(priority), json.dumps(payload)),
+                )
+                conn.commit()
+                return c.lastrowid
+            except sqlite3.OperationalError as e:
+                if "disk I/O error" in str(e) and attempt < max_retries - 1:
+                    logger.warning(
+                        f"⚠️ Disk I/O error on enqueue (attempt {attempt + 1}/{max_retries}), "
+                        f"retrying in {retry_delay}s..."
+                    )
+                    time.sleep(retry_delay)
+                    # Close and reopen connection on retry
+                    if self._conn:
+                        try:
+                            self._conn.close()
+                        except Exception:
+                            pass
+                        self._conn = None
+                else:
+                    logger.error(f"❌ Failed to enqueue task after {max_retries} attempts: {e}")
+                    raise
 
     def dequeue_and_lock(self) -> Optional[Dict[str, Any]]:
         """Atomically find one pending task, mark running, and return it."""

@@ -13,10 +13,6 @@ import os
 import sys
 from pathlib import Path
 
-# CRITICAL: Set environment variables BEFORE importing Kernel
-# This ensures the worker runs in headless mode without interactive plugins
-os.environ['SOPHIA_DISABLE_INTERACTIVE_PLUGINS'] = '1'
-
 # Ensure project root is on sys.path when run directly from scripts/
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -41,11 +37,11 @@ async def main():
         logger.info("Seeding self-test task into queue")
         queue.enqueue({"instruction": "Say hello and run a small self-test."}, priority=50)
 
-    # CRITICAL: Worker MUST run in offline mode (local LLM only) for MVP
-    # This prevents accidental API calls to cloud services during development
-    logger.info("🔒 Worker running in OFFLINE MODE (local LLM only)")
+    # Enable event-driven architecture for full plugin functionality
+    # This allows cognitive_notes_reader, benchmark_runner, and other heartbeat plugins to run
+    logger.info("🎯 Worker running with EVENT-DRIVEN architecture and OFFLINE mode")
     
-    kernel = Kernel(use_event_driven=False, offline_mode=True)
+    kernel = Kernel(use_event_driven=True, offline_mode=True)
     worker = KernelWorker(kernel=kernel, queue=queue)
 
     worker_task = asyncio.create_task(worker.run())

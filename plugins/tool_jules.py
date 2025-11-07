@@ -68,6 +68,10 @@ class CreateSessionRequest(BaseModel):
     branch: str = Field(default="main")
     title: Optional[str] = None
     auto_pr: bool = Field(default=False)
+    require_plan_approval: bool = Field(
+        default=True, 
+        description="If True, Jules will wait for explicit plan approval before executing"
+    )
 
 
 # Exception classes
@@ -347,11 +351,15 @@ class JulesAPITool(BasePlugin):
         branch: str = "main",
         title: str = "",
         auto_pr: bool = False,
+        require_plan_approval: bool = True,
     ) -> JulesSession:
         """
         Creates a new Jules coding session with Pydantic validation.
 
         ⚠️ IMPORTANT: Daily limit of 100 sessions! Use list_sessions() to check usage first.
+        
+        🔒 SAFETY: By default, require_plan_approval=True to prevent automatic execution.
+        Sophia MUST explicitly call approve_plan() after reviewing Jules's plan.
 
         Args:
             context: The shared context for the session
@@ -360,6 +368,7 @@ class JulesAPITool(BasePlugin):
             branch: Branch name (default: "main")
             title: Session title (optional)
             auto_pr: Whether to automatically create a PR (default: False)
+            require_plan_approval: If True, Jules waits for approve_plan() (default: True)
 
         Returns:
             JulesSession with validated session data
@@ -373,19 +382,32 @@ class JulesAPITool(BasePlugin):
             >>> if len(sessions.sessions) >= 95:
             ...     context.logger.warning("Approaching daily limit!")
             >>>
+            >>> # Create session with plan approval required
             >>> session = jules_tool.create_session(
             ...     context=context,
             ...     prompt="Add dark mode support",
             ...     source="sources/github/myorg/myapp",
             ...     title="Dark Mode Implementation",
-            ...     auto_pr=True
+            ...     require_plan_approval=True  # Sophia must approve plan first
             ... )
             >>> session_id = session.name.split("/")[1]
+            >>> 
+            >>> # Get plan from activities
+            >>> activities = jules_tool.list_activities(context, session_id)
+            >>> plan = activities[0].get("planGenerated", {}).get("plan", {})
+            >>> 
+            >>> # Review plan, then approve
+            >>> jules_tool.approve_plan(context, session_id)
         """
         # Validate input using Pydantic
         try:
             request = CreateSessionRequest(
-                prompt=prompt, source=source, branch=branch, title=title, auto_pr=auto_pr
+                prompt=prompt, 
+                source=source, 
+                branch=branch, 
+                title=title, 
+                auto_pr=auto_pr,
+                require_plan_approval=require_plan_approval
             )
         except Exception as e:
             raise JulesValidationError(f"Invalid session parameters: {e}")
@@ -402,6 +424,7 @@ class JulesAPITool(BasePlugin):
                 "source": request.source,
                 "githubRepoContext": {"startingBranch": request.branch},
             },
+            "requirePlanApproval": request.require_plan_approval,
         }
 
         if request.title:
@@ -512,3 +535,140 @@ class JulesAPITool(BasePlugin):
         return self._make_request(
             context, "GET", f"sessions/{session_id}/activities/{activity_id}"
         )
+
+    def list_activities(self, context: SharedContext, session_id: str) -> List[Dict[str, Any]]:
+        """
+        Lists all activities for a session.
+        
+        Args:
+            context: The shared context for the session
+            session_id: The ID of the session
+            
+        Returns:
+            List of activity dictionaries
+            
+        Example:
+            >>> activities = jules_tool.list_activities(context, session_id)
+            >>> for activity in activities:
+            ...     print(activity.get("type"), activity.get("state"))
+        """
+        if session_id.startswith("sessions/"):
+            endpoint = f"{session_id}/activities"
+        else:
+            endpoint = f"sessions/{session_id}/activities"
+        
+        response = self._make_request(context, "GET", endpoint)
+        
+        # API returns {"activities": [...]}
+        return response.get("activities", [])
+
+
+    def get_plan_details(self, context: SharedContext, session_id: str) -> Dict[str, Any]:
+        """
+        Gets the generated plan from session activities.
+        
+        CRITICAL: Use this BEFORE approve_plan() to see what Jules plans to do!
+        
+        Args:
+            context: The shared context for the session
+            session_id: The ID of the session
+            
+        Returns:
+            Dictionary with plan details:
+            {
+                "has_plan": bool,
+                "plan": {
+                    "steps": [...],  # List of planned actions
+                    "files": [...],  # Files to be modified
+                    "summary": str   # Human-readable summary
+                },
+                "activity_id": str  # ID of plan activity (for reference)
+            }
+            
+        Example:
+            >>> plan = jules_tool.get_plan_details(context, session_id)
+            >>> if plan["has_plan"]:
+            ...     print(plan["plan"]["summary"])
+            ...     for step in plan["plan"]["steps"]:
+            ...         print(f"  - {step}")
+            ...     # Review, then approve
+            ...     jules_tool.approve_plan(context, session_id)
+        """
+        # Get all activities for this session
+        activities = self.list_activities(context, session_id)
+        
+        # Find PLAN_GENERATED activity
+        for activity in activities:
+            activity_type = activity.get("type", "")
+            if activity_type == "PLAN_GENERATED" or "planGenerated" in activity:
+                # Extract plan details
+                plan_data = activity.get("planGenerated", {})
+                plan = plan_data.get("plan", {})
+                
+                context.logger.info(
+                    f"📋 Found Jules plan for session {session_id}",
+                    extra={"plugin_name": self.name}
+                )
+                
+                return {
+                    "has_plan": True,
+                    "plan": plan,
+                    "activity_id": activity.get("name", ""),
+                    "activity": activity  # Full activity for debugging
+                }
+        
+        # No plan found
+        context.logger.warning(
+            f"⚠️ No plan found for session {session_id}",
+            extra={"plugin_name": self.name}
+        )
+        
+        return {
+            "has_plan": False,
+            "plan": {},
+            "activity_id": None,
+            "error": "No PLAN_GENERATED activity found"
+        }
+
+    def approve_plan(self, context: SharedContext, session_id: str) -> Dict[str, Any]:
+        """
+        Approves the generated plan for a session.
+        
+        CRITICAL: Only call this AFTER reviewing plan with get_plan_details()!
+        Once approved, Jules will start executing the plan.
+        
+        Args:
+            context: The shared context for the session
+            session_id: The ID of the session
+            
+        Returns:
+            Dictionary with approval status
+            
+        Example:
+            >>> # First, review the plan
+            >>> plan = jules_tool.get_plan_details(context, session_id)
+            >>> print("Jules plans to:")
+            >>> print(plan["plan"]["summary"])
+            >>> 
+            >>> # If plan looks good, approve it
+            >>> result = jules_tool.approve_plan(context, session_id)
+            >>> print(result)  # {"approved": true}
+        """
+        if session_id.startswith("sessions/"):
+            endpoint = f"{session_id}:approvePlan"
+        else:
+            endpoint = f"sessions/{session_id}:approvePlan"
+        
+        context.logger.info(
+            f"✅ Approving plan for session {session_id}",
+            extra={"plugin_name": self.name}
+        )
+        
+        response = self._make_request(context, "POST", endpoint)
+        
+        context.logger.info(
+            f"✅ Plan approved! Jules will now execute.",
+            extra={"plugin_name": self.name}
+        )
+        
+        return response

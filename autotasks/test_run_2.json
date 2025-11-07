@@ -1,0 +1,26 @@
+[
+  {
+    "id": "sophia_self_knowledge",
+    "instruction": "Kdo jsi? Popiš své jméno, účel, a hlavní schopnosti které máš."
+  },
+  {
+    "id": "tool_awareness",
+    "instruction": "Jaké nástroje (tools) máš k dispozici? Vypiš jejich názvy a k čemu slouží."
+  },
+  {
+    "id": "read_logs_with_tail",
+    "instruction": "Přečti si posledních 50 řádků z logs/sophia.log a najdi všechny ERROR záznamy."
+  },
+  {
+    "id": "read_root_file",
+    "instruction": "Přečti soubor roberts-notes.txt a řekni mi první 3 úkoly."
+  },
+  {
+    "id": "multi_step_analysis",
+    "instruction": "Analyzuj poslední chyby v logs/sophia.log (posledních 30 řádků) a vytvoř krátkou hypotézu o jejich příčinách."
+  },
+  {
+    "id": "code_reading",
+    "instruction": "Přečti soubor plugins/tool_llm.py a řekni mi co dělá metoda execute()."
+  }
+]

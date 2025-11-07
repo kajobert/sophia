@@ -1,29 +1,51 @@
-# Robert's Task Notes
+# Robert's Notes - Ideas for Sophia
 
-## Instructions for SOPHIA
-This file is monitored by the cognitive_notes_reader plugin.
-Add tasks here and SOPHIA will autonomously create them.
+## 🎯 URGENT: Dashboard Screenshot & Testing - Priority 95
 
-Format:
-- Priority: 1-100 (higher = more urgent)
-- Category: development, research, optimization, documentation, testing, bugfix
-- Instruction: Clear, actionable task description
+Sophia, potřebuji aby ses podívala na WebUI dashboard a udělala kompletní test:
+
+**Task 1: Screenshots pomocí Playwright**
+1. Install playwright if needed: `pip install playwright && playwright install chromium`
+2. Create Python script `tools/dashboard_test.py` that:
+   - Opens http://127.0.0.1:8000
+   - Takes screenshot of main page (chat interface)
+   - Checks if there are navigation links to Task Queue or Hypotheses
+   - Takes screenshots of each view found
+   - Saves all to `dashboard_screenshots/` with timestamp
+3. Run the script and verify screenshots are saved
+
+**Task 2: Analysis Report**
+Create `dashboard_screenshots/REPORT.md` with:
+- List of all screenshots with descriptions
+- UI elements found (buttons, forms, navigation)
+- Missing features or broken functionality
+- Recommendations for improvements
+
+**Expected Output:**
+```
+dashboard_screenshots/
+├── main_page_20251107_HHMMSS.png
+├── task_queue_20251107_HHMMSS.png (if exists)
+├── hypotheses_20251107_HHMMSS.png (if exists)
+└── REPORT.md
+```
+
+**Priority:** 95 (very important)
+**Category:** testing
+**Auto-apply:** Yes (run locally, don't send to Jules)
 
 ---
 
-## Current Tasks
+## Notes on Jules Integration
 
-**Priority: 85 - Development**
-Test Phase 1 implementation by verifying the proactive heartbeat emits every 60 seconds and this file is being monitored.
+Jules integration is DISABLED until proper prompt sanitization is implemented.
+See docs/JULES_INTEGRATION.md for details.
 
-**Priority: 70 - Testing**
-Create unit tests for the cognitive_notes_reader plugin to ensure LLM extraction works correctly.
+Current issue: Jules receives prompts with .env references and internal context
+that he can't access (works with clean GitHub repo only).
 
-**Priority: 50 - Documentation**
-Document the new event-driven architecture in docs/ARCHITECTURE.md with diagrams showing event flow.
-
----
-
-## Completed Tasks
-(SOPHIA will move completed tasks here)
+Solution implemented:
+- cognitive_jules_autonomy._sanitize_prompt_for_jules() cleans prompts
+- Removes .env, secrets, Sophia-specific jargon
+- Adds instructions about clean repo context
 
