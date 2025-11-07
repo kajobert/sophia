@@ -1,0 +1,154 @@
+{
+  "project_name": "Sophia",
+  "vision": "To create an Artificial Mindful Intelligence (AMI) capable of learning, self-improvement, and potentially consciousness, inspired by human cognitive architecture.",
+  "architecture_overview": {
+    "type": "Event-Driven Plugin-Based Architecture",
+    "summary": "Sophia's core is a non-blocking, event-driven kernel that orchestrates a collection of dynamically loaded plugins. Communication is handled by an event bus, and tasks are executed concurrently by a worker pool. This design promotes modularity, scalability, and proactivity.",
+    "key_components": ["Kernel", "PluginManager", "EventBus", "TaskQueue"]
+  },
+  "components": {
+    "core": {
+      "type": "Core Infrastructure",
+      "summary": "The foundational components that manage the application's lifecycle, communication, and execution.",
+      "files": {
+        "kernel.py": {
+          "summary": "The heart of the application. Manages the 'consciousness_loop', initializes all plugins, and handles the main application state. Supports both legacy blocking and modern event-driven modes.",
+          "interactions": {
+            "uses": ["PluginManager", "EventBus", "TaskQueue", "EventDrivenLoop"],
+            "manages": ["All Plugins"]
+          }
+        },
+        "plugin_manager.py": {
+          "summary": "Dynamically discovers, loads, and registers all plugins from the 'plugins/' directory. Categorizes plugins by type for easy access.",
+          "interactions": {
+            "used_by": ["Kernel"],
+            "loads": ["All Plugins"]
+          }
+        },
+        "event_bus.py": {
+          "summary": "A priority-based, asynchronous publish-subscribe system. It allows decoupled communication between all components of the application.",
+          "interactions": {
+            "used_by": ["Kernel", "TaskQueue", "EventDrivenLoop", "All Plugins that subscribe to events"]
+          }
+        },
+        "task_queue.py": {
+          "summary": "A priority-based task queue with a worker pool for concurrent execution of asynchronous tasks. Manages task dependencies, retries, and timeouts.",
+          "interactions": {
+            "uses": ["EventBus (to publish task status)"],
+            "used_by": ["EventDrivenLoop"]
+          }
+        },
+        "event_loop.py": {
+          "summary": "The implementation of the main 'consciousness_loop' for the event-driven mode. Subscribes to key events like USER_INPUT and orchestrates the processing pipeline by calling kernel methods and managing autonomous tasks.",
+          "interactions": {
+            "uses": ["EventBus", "TaskQueue", "Kernel"],
+            "handles_events_from": ["interface_webui", "interface_terminal"]
+          }
+        }
+      }
+    },
+    "plugins": {
+      "type": "Modular Capabilities",
+      "summary": "Self-contained units of functionality that adhere to the BasePlugin contract. They are categorized by type.",
+      "base_contract": "plugins/base_plugin.py",
+      "categories": {
+        "MEMORY": {
+          "summary": "Plugins responsible for short-term and long-term data persistence.",
+          "files": {
+            "memory_sqlite.py": {
+              "summary": "Provides structured, relational memory. Manages three key tables: 'conversation_history' (short-term dialogue), 'operation_tracking' (metadata for self-reflection), and 'hypotheses' (database for the self-improvement loop).",
+              "interactions": {
+                "used_by": ["cognitive_memory_consolidator", "cognitive_task_router", "interface_webui (for dashboard)"]
+              }
+            },
+            "memory_chroma.py": {
+              "summary": "Provides long-term, semantic memory using the ChromaDB vector database. Stores knowledge as text embeddings and allows for searching by meaning, not just keywords.",
+              "interactions": {
+                "used_by": ["cognitive_memory_consolidator"]
+              }
+            }
+          }
+        },
+        "COGNITIVE": {
+          "summary": "The 'brain' of Sophia. These plugins handle high-level reasoning, planning, and learning.",
+          "files": {
+            "cognitive_task_router.py": {
+              "summary": "Acts as a strategic dispatcher and financial controller. Classifies user tasks, selects the most cost-effective LLM, and enforces monthly/daily budget limits by automatically switching to offline mode if necessary.",
+              "interactions": {
+                "uses": ["tool_llm (for classification)", "memory_sqlite (for budget tracking)"],
+                "called_by": ["Kernel"],
+                "configures": ["cognitive_planner (by setting model in context)"]
+              }
+            },
+            "cognitive_planner.py": {
+              "summary": "Generates a step-by-step plan to fulfill a user request. It dynamically creates a prompt with available tools, uses an LLM to generate the plan as a JSON object, and includes robust logic for parsing and repairing the LLM's output.",
+              "interactions": {
+                "uses": ["tool_llm", "tool_local_llm"],
+                "called_by": ["Kernel"]
+              }
+            },
+            "cognitive_memory_consolidator.py": {
+              "summary": "Implements the 'dreaming' process. Triggered during inactivity, it analyzes short-term memories (operations and conversations) from SQLite and consolidates important information into the long-term semantic memory (ChromaDB).",
+              "interactions": {
+                "uses": ["memory_sqlite (read)", "memory_chroma (write)"],
+                "triggered_by": ["DREAM_TRIGGER event from core_sleep_scheduler"]
+              }
+            }
+          }
+        },
+        "INTERFACE": {
+          "summary": "Plugins that provide interfaces for user interaction.",
+          "files": {
+            "interface_terminal.py": {
+              "summary": "Provides a command-line interface. Implements both blocking (legacy) and non-blocking (event-driven) input handling. In non-blocking mode, it publishes a USER_INPUT event to the EventBus.",
+              "interactions": {
+                "publishes_to": ["EventBus"]
+              }
+            },
+            "interface_webui.py": {
+              "summary": "Provides a rich web interface and dashboard using FastAPI and WebSockets. Handles user chat and exposes a comprehensive API to monitor and control Sophia's internal state (tasks, budget, self-improvement, etc.).",
+              "interactions": {
+                "publishes_to": ["EventBus"],
+                "reads_from": ["memory_sqlite (for dashboard stats)"],
+                "interacts_with": ["cognitive_task_router (for budget info)"]
+              }
+            }
+          }
+        },
+        "TOOL": {
+          "summary": "Plugins that provide specific, concrete skills and capabilities that can be used in a plan.",
+          "files": {
+            "tool_llm.py": {
+              "summary": "Provides access to cloud-based LLMs through the 'litellm' abstraction layer. Handles dynamic model selection, function calling, and cost/token tracking.",
+              "interactions": {
+                "used_by": ["All Cognitive Plugins"]
+              }
+            },
+            "tool_local_llm.py": {
+              "summary": "Provides access to locally-running LLMs, primarily via Ollama. Supports function calling and serves as a cost-free/offline alternative to tool_llm.",
+              "interactions": {
+                "used_by": ["All Cognitive Plugins (in offline mode)"]
+              }
+            },
+            "tool_file_system.py": {
+              "summary": "Provides tools for reading, writing, and listing files on the local filesystem.",
+              "interactions": {}
+            },
+            "tool_git.py": {
+              "summary": "Provides tools for interacting with Git repositories (e.g., clone, status, diff).",
+              "interactions": {}
+            },
+            "tool_web_search.py": {
+              "summary": "Provides tools for searching the web, likely using an API like Tavily.",
+              "interactions": {}
+            },
+            "tool_code_workspace.py": {
+                "summary": "Provides tools for managing and editing code within a designated workspace.",
+                "interactions": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sophia Codebase Map</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #eee; background-color: #121212; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: #1e1e1e; border-radius: 8px; padding: 20px; }
+        h1, h2 { color: #bb86fc; border-bottom: 2px solid #373737; padding-bottom: 10px; }
+        .component { margin-bottom: 20px; padding: 15px; background-color: #2a2a2a; border-radius: 5px; }
+        .mermaid { text-align: center; background-color: #252526; padding: 20px; border-radius: 5px; margin-top: 20px; }
+        pre { background-color: #252526; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        code { font-family: "Fira Code", "Courier New", monospace; }
+        .file-link { color: #03dac6; text-decoration: none; font-weight: bold; }
+        .file-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container" id="map-container">
+        <h1>Sophia Codebase Map</h1>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+        async function renderMap() {
+            const response = await fetch('../codebase_map.json');
+            const data = await response.json();
+            const container = document.getElementById('map-container');
+
+            // Project Info
+            const projectInfo = document.createElement('div');
+            projectInfo.className = 'component';
+            projectInfo.innerHTML = `<h2>${data.project_name}</h2><p><strong>Vision:</strong> ${data.vision}</p>`;
+            container.appendChild(projectInfo);
+
+            // Architecture Overview
+            const archOverview = document.createElement('div');
+            archOverview.className = 'component';
+            archOverview.innerHTML = `
+                <h2>Architecture Overview</h2>
+                <p><strong>Type:</strong> ${data.architecture_overview.type}</p>
+                <p>${data.architecture_overview.summary}</p>
+                <div class="mermaid" id="arch-diagram"></div>
+            `;
+            container.appendChild(archOverview);
+
+            const archGraph = \`
+                graph TD
+                    A[Kernel] --> B(PluginManager)
+                    A --> C{EventBus}
+                    A --> D[TaskQueue]
+                    A --> E(EventDrivenLoop)
+                    subgraph Plugins
+                        direction LR
+                        P1[Memory]
+                        P2[Cognitive]
+                        P3[Interface]
+                        P4[Tool]
+                    end
+                    B --> Plugins
+                    C <--> Plugins
+                    E --> C
+            \`;
+
+            const { svg: archSvg } = await mermaid.render('arch-diagram-svg', archGraph);
+            document.getElementById('arch-diagram').innerHTML = archSvg;
+
+            // Components
+            for (const [compName, compData] of Object.entries(data.components)) {
+                const compEl = document.createElement('div');
+                compEl.className = 'component';
+                compEl.innerHTML = \`<h2>Component: ${compName}</h2><p>${compData.summary}</p>\`;
+
+                for (const [fileName, fileData] of Object.entries(compData.files)) {
+                    const fileEl = document.createElement('div');
+                    fileEl.innerHTML = \`
+                        <h3><a class="file-link" href="#">${fileName}</a></h3>
+                        <p>${fileData.summary}</p>
+                    \`;
+                    compEl.appendChild(fileEl);
+                }
+                if (compData.categories) {
+                    for (const [catName, catData] of Object.entries(compData.categories)) {
+                         const catEl = document.createElement('div');
+                         catEl.innerHTML = \`<h3>Category: ${catName}</h3><p>${catData.summary}</p>\`;
+                         for (const [fileName, fileData] of Object.entries(catData.files)) {
+                            const fileEl = document.createElement('div');
+                            fileEl.innerHTML = \`
+                                <h4><a class="file-link" href="#">${fileName}</a></h4>
+                                <p>${fileData.summary}</p>
+                            \`;
+                            catEl.appendChild(fileEl);
+                        }
+                         compEl.appendChild(catEl);
+                    }
+                }
+                container.appendChild(compEl);
+            }
+        }
+
+        renderMap();
+    </script>
+</body>
+</html>
