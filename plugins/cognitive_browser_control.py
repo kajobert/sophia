@@ -341,13 +341,19 @@ class BrowserControlPlugin(BasePlugin):
             "errors": []
         }
         
+        # Initialize browser ONCE at start
+        await self._initialize_browser()
+        if not self.browser:
+            self.browser = await self.pw.chromium.launch(headless=True)
+            self.context_browser = await self.browser.new_context(viewport={'width': 1920, 'height': 1080})
+            self.page = await self.context_browser.new_page()
+        
         try:
-            # Initialize browser
-            await self._initialize_browser()
-            
             # Test 1: Navigate to Dashboard
             logger.info("🧪 Test 1: Navigating to Dashboard...")
-            nav_result = await self.browser_navigate(url, headless=True)
+            logger.info(f"🌐 Navigating to: {url}")
+            await self.page.goto(url, wait_until="networkidle")
+            nav_result = {"success": True, "url": url}
             test_results["total_tests"] += 1
             
             if nav_result["success"]:
@@ -474,6 +480,15 @@ class BrowserControlPlugin(BasePlugin):
             test_results["success"] = False
             test_results["errors"].append(str(e))
         finally:
-            await self.cleanup()
+            # Cleanup browser after test
+            if self.page:
+                await self.page.close()
+                self.page = None
+            if self.context_browser:
+                await self.context_browser.close()
+                self.context_browser = None
+            if self.browser:
+                await self.browser.close()
+                self.browser = None
         
         return test_results

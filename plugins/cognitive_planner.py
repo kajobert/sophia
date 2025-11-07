@@ -10,13 +10,16 @@ logger = logging.getLogger(__name__)
 
 def _extract_json_from_text(text: str):
     """
-    Try to extract a JSON object or array from free-form text.
+    ENHANCED: Aggressively extract JSON from text with multiple fallback strategies.
+    
     Returns a parsed Python object on success, or None on failure.
 
     Strategy:
     1. Try direct json.loads(text)
-    2. Search for balanced JSON array `[...]` or object `{...}` blocks and attempt to parse them.
-    3. As a last resort, attempt a naive replacement of single quotes to doubles (best-effort).
+    2. Strip markdown code blocks (```json, ```)
+    3. Search for balanced JSON array `[...]` or object `{...}` blocks
+    4. Auto-fix common LLM errors (missing closing brackets, trailing commas)
+    5. Last resort: single quote replacement
     """
     if not text:
         return None
@@ -26,8 +29,53 @@ def _extract_json_from_text(text: str):
         return json.loads(text)
     except Exception:
         pass
+    
+    # 2) Strip markdown code blocks
+    text_clean = text.strip()
+    if text_clean.startswith("```"):
+        # Remove opening ```json or ```
+        text_clean = re.sub(r'^```(?:json)?\s*', '', text_clean)
+        # Remove closing ```
+        text_clean = re.sub(r'```\s*$', '', text_clean)
+        text_clean = text_clean.strip()
+        try:
+            return json.loads(text_clean)
+        except Exception:
+            pass
+    
+    # 3) Auto-fix common LLM errors
+    text_fixed = text_clean
+    
+    # Fix missing closing bracket for arrays
+    if text_fixed.count('[') > text_fixed.count(']'):
+        open_count = text_fixed.count('[') - text_fixed.count(']')
+        # Add missing closing brackets
+        text_fixed = text_fixed.rstrip() + (']' * open_count)
+        logger.info(f"✅ Auto-fixed {open_count} missing ]")
+        try:
+            return json.loads(text_fixed)
+        except Exception:
+            pass
+    
+    # Fix missing closing brace for objects
+    if text_fixed.count('{') > text_fixed.count('}'):
+        open_count = text_fixed.count('{') - text_fixed.count('}')
+        text_fixed = text_fixed.rstrip() + ('}' * open_count)
+        logger.info(f"✅ Auto-fixed {open_count} missing }}")
+        try:
+            return json.loads(text_fixed)
+        except Exception:
+            pass
+    
+    # Remove trailing commas before ] or }
+    text_fixed = re.sub(r',\s*]', ']', text_fixed)
+    text_fixed = re.sub(r',\s*}', '}', text_fixed)
+    try:
+        return json.loads(text_fixed)
+    except Exception:
+        pass
 
-    # 2) collect balanced blocks for arrays or objects and attempt to parse them all
+    # 4) collect balanced blocks for arrays or objects and attempt to parse them all
     candidates = []
     for start_char, end_char in ("[", "]"), ("{", "}"):
         idx = text.find(start_char)

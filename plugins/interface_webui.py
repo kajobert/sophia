@@ -56,11 +56,17 @@ class WebUIInterface(BasePlugin):
             try:
                 while True:
                     data = await websocket.receive_text()
+                    # Parse JSON from Dashboard
+                    try:
+                        msg_data = json.loads(data)
+                        user_message = msg_data.get("message", data)
+                    except json.JSONDecodeError:
+                        user_message = data
 
                     async def response_callback(message: str):
                         await self.send_response(session_id, message)
 
-                    await self.input_queue.put((data, response_callback))
+                    await self.input_queue.put((user_message, response_callback))
             except WebSocketDisconnect:
                 del self.connections[session_id]
                 logger.info(f"WebUI client {session_id} disconnected.")
@@ -660,4 +666,6 @@ class WebUIInterface(BasePlugin):
     async def send_response(self, session_id: str, message: str):
         """Sends a message back to a specific web client."""
         if session_id in self.connections:
-            await self.connections[session_id].send_text(message)
+            # Send as JSON for Dashboard compatibility
+            response = json.dumps({"type": "response", "message": message})
+            await self.connections[session_id].send_text(response)

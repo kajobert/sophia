@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import logging
+import traceback
 from pathlib import Path
 from typing import Dict, List, Type
 
@@ -83,6 +84,7 @@ class PluginManager:
             )
         except Exception as e:
             logger.error(f"Error initializing plugin '{plugin_class.__name__}': {e}")
+            logger.error(f"Full traceback:\n{traceback.format_exc()}")
 
     def get_plugins_by_type(self, plugin_type: PluginType) -> List[BasePlugin]:
         """

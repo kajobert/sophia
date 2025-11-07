@@ -28,7 +28,7 @@ from rich import box
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from plugins.base_plugin import BasePlugin
+from plugins.base_plugin import BasePlugin, PluginType
 
 
 class InterfaceTerminalMatrix(BasePlugin):
@@ -56,8 +56,8 @@ class InterfaceTerminalMatrix(BasePlugin):
         return "interface_terminal_matrix"
 
     @property
-    def plugin_type(self) -> str:
-        return "interface"
+    def plugin_type(self) -> PluginType:
+        return PluginType.INTERFACE
 
     @property
     def version(self) -> str:

@@ -39,6 +39,16 @@ class LocalModelConfig(BaseModel):
     timeout: int = Field(120, description="Request timeout in seconds")
     max_tokens: int = Field(2048, description="Maximum output tokens")
     temperature: float = Field(0.7, description="Sampling temperature")
+    
+    # Advanced Ollama parameters for maximum quality
+    num_ctx: Optional[int] = Field(None, description="Context window size (Ollama num_ctx)")
+    num_predict: Optional[int] = Field(None, description="Max tokens to predict (Ollama num_predict)")
+    num_gpu: Optional[int] = Field(None, description="GPU layers to offload (0 = CPU only)")
+    num_thread: Optional[int] = Field(None, description="CPU threads to use")
+    repeat_penalty: Optional[float] = Field(None, description="Penalty for repetition")
+    top_k: Optional[int] = Field(None, description="Top-K sampling")
+    top_p: Optional[float] = Field(None, description="Nucleus sampling threshold")
+    escalation_model: Optional[str] = Field(None, description="Model for Tier 2 escalation")
 
 
 class LocalLLMTool(BasePlugin):
@@ -302,15 +312,38 @@ class LocalLLMTool(BasePlugin):
         """
         url = f"{self.config.base_url}/api/chat"
 
+        # Allow model override via environment variable (for model escalation)
+        import os
+        model_to_use = os.getenv("LOCAL_LLM_MODEL_OVERRIDE") or self.config.model
+        
+        # Build base options with temperature and token limits
+        options = {
+            "temperature": temperature or self.config.temperature,
+            "num_predict": max_tokens or self.config.max_tokens,
+        }
+        
+        # Add advanced Ollama parameters if configured (for maximum quality)
+        if self.config.num_ctx is not None:
+            options["num_ctx"] = self.config.num_ctx
+        if self.config.num_predict is not None and max_tokens is None:
+            options["num_predict"] = self.config.num_predict
+        if self.config.num_gpu is not None:
+            options["num_gpu"] = self.config.num_gpu
+        if self.config.num_thread is not None:
+            options["num_thread"] = self.config.num_thread
+        if self.config.repeat_penalty is not None:
+            options["repeat_penalty"] = self.config.repeat_penalty
+        if self.config.top_k is not None:
+            options["top_k"] = self.config.top_k
+        if self.config.top_p is not None:
+            options["top_p"] = self.config.top_p
+        
         # Build request
         request = {
-            "model": self.config.model,
+            "model": model_to_use,
             "messages": messages,
             "stream": False,
-            "options": {
-                "temperature": temperature or self.config.temperature,
-                "num_predict": max_tokens or self.config.max_tokens,
-            },
+            "options": options,
         }
         
         # Add JSON format requirement if prompt asks for JSON
@@ -331,7 +364,7 @@ class LocalLLMTool(BasePlugin):
         for attempt in range(1, max_attempts + 1):
             try:
                 logger.info(
-                    f"🤖 Calling Ollama /api/chat: model={self.config.model}, "
+                    f"🤖 Calling Ollama /api/chat: model={model_to_use}, "
                     f"messages={len(messages)}"
                     + (f", tools={len(tools)}" if tools else "")
                 )
