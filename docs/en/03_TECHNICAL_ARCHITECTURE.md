@@ -8,7 +8,7 @@
 
 This document outlines the technical design of the Sophia AGI system, focusing on the Core-Plugin model.
 
-> ⚙️ **Current Status:** 27 active plugins (2 interfaces, 15 tools, 7 cognitive, 2 memory, 1 core), event-driven refactor planned for Sophia 2.0
+> ⚙️ **Current Status:** 43 active plugins (2 interfaces, 15+ tools, 7+ cognitive, 2 memory, 1+ core), event-driven architecture implemented (AMI 1.0 complete)
 
 ## 1. Core Philosophy: Stability and Extensibility
 
@@ -107,12 +107,12 @@ Cognitive plugins are responsible for the "thinking" processes of the agent. The
 - [`core/context.py`](../../core/context.py) - SharedContext data structure
 - [`plugins/base_plugin.py`](../../plugins/base_plugin.py) - Plugin contract
 
-**Current Plugin Inventory (27 total):**
+**Current Plugin Inventory (43 total - AMI 1.0):**
 - **Interfaces (2):** Terminal, Web UI
-- **Tools (15):** LLM, File System, Bash, Git, GitHub, Jules (API+CLI), Web Search, Tavily, Langfuse, etc.
-- **Cognitive (7):** Planner, Task Router, Historian, Doc Reader, Code Reader, Dependency Analyzer, Jules Autonomy
+- **Tools (15+):** LLM, Local LLM, File System, Bash, Git, GitHub, Jules (API+CLI), Web Search, Tavily, Langfuse, Model Manager, Model Evaluator, Performance Monitor, Benchmark Scraper, Weather, etc.
+- **Cognitive (7+):** Planner, Task Router, Historian, Doc Reader, Code Reader, Dependency Analyzer, Jules Autonomy, Memory Consolidator, Reflection, Self-Tuning, Model Escalation, Model Benchmarking, Browser Control, Dashboard Testing, Notes Reader, etc.
 - **Memory (2):** SQLite, ChromaDB
-- **Core (1):** Logging Manager
+- **Core (1+):** Logging Manager, Process Manager, Proactive Agent, Self-Diagnostic, Sleep Scheduler
 
 ---
 
@@ -120,4 +120,4 @@ Cognitive plugins are responsible for the "thinking" processes of the agent. The
 
 ---
 
-*Last Updated: November 3, 2025 | Status: ✅ Current | Sophia 2.0 Active*
+*Last Updated: November 7, 2025 | Status: ✅ Current | AMI 1.0 Complete (43 plugins)*

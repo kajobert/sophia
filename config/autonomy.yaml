@@ -495,6 +495,52 @@ resources:
 # =============================================================================
 
 future:
+  # Diffusion LLM for Intuition (Phase 4 - Planned)
+  diffusion_llm_intuition:
+    enabled: false  # Not yet implemented
+    purpose: "Ultra-fast quality assessment layer serving as 'intuition' in cognitive architecture"
+    
+    # Pre-LLM assessment
+    pre_llm_assessment:
+      enabled: true
+      function: "Rapidly evaluate input query and predict expected quality/complexity"
+      position: "Between CognitiveTaskRouter and CognitivePlanner"
+      trigger: "Before main LLM call"
+      timeout_ms: 100  # Ultra-fast response target
+    
+    # Post-LLM validation
+    post_llm_validation:
+      enabled: true
+      function: "Instantly compare LLM response against expected quality metrics"
+      position: "After main LLM response"
+      trigger: "After receiving LLM output"
+      timeout_ms: 100  # Ultra-fast validation target
+    
+    # Integration points
+    integration:
+      cognitive_task_router: true  # Pre-routing quality check
+      cognitive_planner: true       # Pre-planning complexity assessment
+      cognitive_model_escalation: true  # Quality-based escalation trigger
+      re_planning_trigger: true     # Trigger re-planning if quality fails
+    
+    # Technical requirements
+    technical:
+      model_type: "diffusion_based_language_model"
+      target_latency_ms: 50-100     # Milliseconds, not seconds
+      cost_per_call: 0.0001         # Ultra-cheap compared to full LLM
+      quality_metrics:
+        - "response_relevance"
+        - "completeness"
+        - "coherence"
+        - "expected_complexity"
+    
+    # Benefits
+    benefits:
+      - "Ultra-fast response times (milliseconds vs seconds)"
+      - "Cost efficiency (lightweight model)"
+      - "Quality gate before expensive LLM calls"
+      - "Mimics human 'gut feeling' about response quality"
+  
   # Advanced Tooling (Phase 7)
   tools:
     priority_1: "browser_automation"  # Playwright

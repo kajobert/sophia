@@ -49,6 +49,9 @@ graph TD
 
         subgraph "INTUITION"
             G((Connections Between Layers))
+            H["Diffusion LLM - Quality Assessment\n(Ultra-Fast Intuition Layer) 🔮"]
+            H -- "Pre-LLM quality check" --> A
+            A -- "Post-LLM validation" --> H
         end
     end
 
@@ -76,6 +79,12 @@ Processes information that has passed through the Instincts filter. Its task is 
 The highest cognitive layer responsible for strategic thinking, creativity, planning, self-reflection, and final decision-making.
 - **Function:** Analysis of complex problems, creation of detailed plans, strategic decision-making, code generation, and final responses to the user.
 - **Technical Analogy:** A high-performance cloud LLM that operates on the context prepared by the lower layers.
+
+### 2.4. Intuition Layer (Diffusion LLM) 🔮 *Planned*
+A lightweight, ultra-fast quality assessment layer that provides rapid feedback on response quality.
+- **Function:** Pre-LLM quality prediction and post-LLM quality validation. Acts as a "gut feeling" mechanism for instant quality assessment.
+- **Technical Analogy:** A diffusion-based language model that can evaluate quality in milliseconds, positioned between task routing and main planning phases.
+- **Status:** Planned for Phase 4 (Future Vision)
 
 ---
 
@@ -109,4 +118,4 @@ The highest cognitive layer responsible for strategic thinking, creativity, plan
 
 ---
 
-*Last Updated: November 3, 2025 | Status: ✅ Current | Implemented in Sophia 2.0*
+*Last Updated: November 7, 2025 | Status: ✅ Current | AMI 1.0 Complete | Diffusion LLM planned for Phase 4*

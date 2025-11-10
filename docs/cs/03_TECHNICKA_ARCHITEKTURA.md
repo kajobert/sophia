@@ -2,6 +2,8 @@
 
 Tento dokument popisuje technický návrh systému AGI Sophia se zaměřením na model Core-Plugin.
 
+> ⚙️ **Aktuální stav:** 43 aktivních pluginů (2 rozhraní, 15+ nástrojů, 7+ kognitivních, 2 paměťové, 1+ jádro), event-driven architektura implementována (AMI 1.0 dokončeno)
+
 ## 1. Základní filozofie: Stabilita a rozšiřitelnost
 
 *   **Jádro je posvátné:** Jádro (`core`) aplikace je minimální, stabilní a chráněné. Poskytuje základní strukturu a orchestraci, ale neobsahuje žádnou doménově specifickou logiku.

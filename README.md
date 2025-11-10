@@ -233,7 +233,7 @@ See: [Technical Architecture](docs/en/03_TECHNICAL_ARCHITECTURE.md) | [Cognitive
 | **Phase 3.6** | Adaptive Model Escalation | ✅ Complete | 100% |
 | **Phase 3.7** | **Autonomous Self-Upgrade** | ✅ **Complete** | **100%** |
 | **Integration** | Testing + Docs + Dashboard | ✅ Complete | 100% |
-| **Phase 4** | Advanced Features | 🟡 Future | 0% |
+| **Phase 4** | Advanced Features + Diffusion LLM | 🟡 Future | 0% |
 
 **🎯 AMI 1.0 Status: 100% ✅ COMPLETE!** (29/29 components)  
 **Achievement:** Full autonomous upgrade cycle validated in production!
@@ -269,6 +269,7 @@ See: [AMI TODO Roadmap](AMI_TODO_ROADMAP.md) | [AMI 1.0 Validation](AMI_1.0_FIXE
   - ✅ **Automatic rollback on failure** ⭐ NEW
   - ✅ GitHub PR creation
   - ✅ Budget-aware LLM escalation (90% cost savings)
+  - 🔮 Diffusion LLM for Intuition (Planned) - Ultra-fast quality assessment layer
 - ✅ **Process Management** - Phoenix Protocol (Guardian watchdog)
 - ✅ **State Persistence** - Crash recovery & upgrade state persistence
 
@@ -430,4 +431,4 @@ This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) fo
 
 ---
 
-**Last Updated:** November 3, 2025 | **Version:** 2.0-alpha | **Status:** Active Development
+**Last Updated:** November 7, 2025 | **Version:** 2.0-alpha (AMI 1.0) | **Status:** Production Ready

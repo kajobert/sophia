@@ -176,6 +176,29 @@ This is a step-by-step plan for implementing the Dynamic Cognitive Engine.
 
 **Current Capability:** Sophia can delegate tasks to Jules and monitor execution, but continuous autonomous operation requires event-driven loop refactor (see Sophia 2.0 roadmap).
 
+### 🔮 Future Vision: Diffusion LLM for Intuition
+
+**Planned Enhancement (Phase 4):**
+
+A lightweight diffusion-based language model will be integrated as an "intuition" layer in Sophia's cognitive architecture. This model will serve two critical functions:
+
+1. **Pre-LLM Quality Assessment:** Before calling the main LLM, the diffusion model will rapidly evaluate the input query and predict the expected quality/complexity of the response. This allows for intelligent routing and resource allocation.
+
+2. **Post-LLM Quality Validation:** After receiving the main LLM response, the diffusion model will instantly compare it against expected quality metrics, providing immediate feedback on response quality. This enables rapid iteration and quality control.
+
+**Technical Benefits:**
+- **Ultra-fast response times** - Diffusion models can evaluate quality in milliseconds vs. seconds for full LLM inference
+- **Cost efficiency** - Lightweight model reduces computational overhead
+- **Quality gate** - Acts as a filter before expensive LLM calls
+- **Intuition layer** - Mimics human "gut feeling" about response quality
+
+**Integration Points:**
+- Positioned between `CognitiveTaskRouter` and main `CognitivePlanner`
+- Integrated into `CognitiveModelEscalation` workflow
+- Can trigger re-planning if quality assessment fails
+
+**Status:** Planned for Phase 4 (Future Vision)
+
 ---
 
 ## Implementation Status

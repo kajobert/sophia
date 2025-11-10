@@ -106,6 +106,7 @@
 - [x] Production Validation - ✅ COMPLETE (2025-11-06) �
 - [ ] Sleep scheduler (low activity detection) - Phase 4 (Future)
 - [ ] Graph RAG (advanced code analysis) - Phase 4 (Future)
+- [ ] Diffusion LLM for Intuition - Phase 4 (Future Vision)
 
 ---
 
@@ -1288,6 +1289,7 @@ await _check_pending_upgrade(kernel)  # NEW - Phase 3.7
 - 🔲 Sleep scheduler (trigger consolidation on low activity)
 - 🔲 Graph RAG (Neo4j code analysis)
 - 🔲 ACI Holistic Benchmark (DNA-based quality scoring)
+- 🔲 **Diffusion LLM for Intuition** - Fast model for rapid quality assessment before and after main LLM calls, serving as "intuition" layer in cognitive architecture
 
 ---
 
