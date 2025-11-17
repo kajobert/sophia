@@ -1,3 +1,17 @@
+#/bin/bash
+echo "🛑 Zastavuji SOPHII..."
+if pgrep -f "python.*run.py" > /dev/null; then
+    pkill -f "python.*run.py"
+    sleep 2
+    if ! pgrep -f "python.*run.py" > /dev/null; then
+        echo "✅ SOPHIA zastavena"
+    else
+        pkill -9 -f "python.*run.py"
+        echo "✅ SOPHIA zastavena (SIGKILL)"
+    fi
+else
+    echo "ℹ️  SOPHIA neběží"
+fi
 #!/bin/bash
 # SOPHIA Start Command
 SOPHIA_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,8 +29,18 @@ PID=$!
 echo "✅ SOPHIA spuštěna (PID: $PID)"
 echo "📊 Dashboard: http://127.0.0.1:8000/dashboard"
 echo "Počkej 30s na inicializaci..."
+# Indikátor průběhu (status bar)
+for i in $(seq 1 30); do
+    bar=""
+    j=1
+    while [ $j -le $i ]; do bar="$bar#"; j=$((j+1)); done
+    j=$((i+1))
+    while [ $j -le 30 ]; do bar="$bar-"; j=$((j+1)); done
+    printf "\r[%s] %2ds" "$bar" $((30-i))
+    sleep 1
+done
+printf "\n"
 
-sleep 30
 if curl -s http://127.0.0.1:8000/api/stats > /dev/null 2>&1; then
     echo "✅ SOPHIA běží a odpovídá!"
 else

@@ -115,5 +115,40 @@ Aplikace také poskytuje webové chatovací rozhraní.
 
 Nyní můžete chatovat se Sophií prostřednictvím webového rozhraní.
 
+### 3.3. Telemetrický dashboard v terminálu
+
+Pro rychlý přehled o spotřebě tokenů, rozpočtu a stavech úloh můžete spustit Rich dashboard `sophia_cli_dashboard.py`, který čte stejná telemetrická data jako webové UI.
+
+```bash
+python sophia_cli_dashboard.py --server http://localhost:8000 --refresh 2.0
+# Odlehčený režim pro levné VPS
+python sophia_cli_dashboard.py --server https://vase-vm.cz --no-system
+```
+
+Skript `install_sophia_cli.sh` vytvoří alias `sophia`, takže po aktivaci virtuálního prostředí stačí zadat `sophia` a otevře se dashboard.
+
 ## 4. Zastavení aplikace
 Aplikaci zastavíte stisknutím `Ctrl+C` v terminálu, ve kterém je spuštěna.
+
+## 5. Nízkonákladové nasazení (≈ $10/měsíc)
+
+Sophii lze provozovat na malém VPS (2 vCPU / 2 GB RAM / 40 GB SSD) od poskytovatelů jako Hetzner CX22 nebo DigitalOcean Basic Droplet (~$10). Doporučený postup:
+
+1. **Vytvořte server** s Ubuntu 22.04, přidejte SSH klíče a otevřete pouze potřebné porty (`22`, `80`, `443`, `8000`).
+2. **Nainstalujte závislosti:**
+  ```bash
+  sudo apt update && sudo apt install -y python3.12 python3.12-venv git build-essential curl
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+3. **Klonujte repozitář a připravte prostředí:**
+  ```bash
+  git clone https://github.com/ShotyCZ/sophia.git
+  cd sophia
+  uv venv && source .venv/bin/activate
+  uv pip sync requirements.in
+  cp .env.example .env  # doplňte API klíče
+  ```
+4. **Spusťte aplikaci:** `python run.py` (kombinované UI) nebo `python run.py --no-webui` pro čistě terminálový režim. Telemetrický dashboard držte běžet v `tmux`/`screen`: `python sophia_cli_dashboard.py --server http://localhost:8000 --no-system`.
+5. **Hlídání rozpočtu:** využijte panel „Budget“ v dashboardu, nastavte limity v `.env` a držte se měsíčního stropu $10.
+
+Tato konfigurace se vejde do 2 GB RAM (s vypnutým psutil panelem) a poskytuje dostatek výkonu pro menší týmy nebo osobní experimenty.

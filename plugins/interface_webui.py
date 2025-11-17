@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.responses import FileResponse
 from uvicorn import Config, Server
-from typing import Dict
+from typing import Dict, Optional
 from plugins.base_plugin import BasePlugin, PluginType
 from core.context import SharedContext
 import sqlite3
@@ -39,6 +39,7 @@ class WebUIInterface(BasePlugin):
         self.all_plugins = config.get("all_plugins", {})
         self.plugin_manager = config.get("plugin_manager")
         self.event_bus = config.get("event_bus")  # Store event bus for publishing events
+        self.telemetry = config.get("telemetry")
         self.host = config.get("host", "127.0.0.1")
         self.port = config.get("port", 8000)
         self.connections: Dict[str, WebSocket] = {}
@@ -94,13 +95,13 @@ class WebUIInterface(BasePlugin):
         @self.app.get("/api/stats")
         async def api_stats():
             """Return system statistics for dashboard."""
-            stats = {
+            stats: Dict[str, object] = {
                 "plugin_count": 0,
                 "pending_count": 0,
                 "done_count": 0,
                 "failed_count": 0,
             }
-            
+
             try:
                 # Count active plugins
                 if self.plugin_manager and hasattr(self.plugin_manager, "plugins"):
@@ -126,8 +127,24 @@ class WebUIInterface(BasePlugin):
                     conn.close()
             except Exception as e:
                 logger.error(f"Error fetching stats: {e}")
-            
+
+            telemetry_payload = self._get_telemetry_payload()
+            if telemetry_payload:
+                stats["telemetry"] = telemetry_payload
+                stats.setdefault("total_calls", telemetry_payload.get("total_calls", 0))
+                stats.setdefault("total_errors", telemetry_payload.get("total_failures", 0))
+                stats.setdefault("online_calls", telemetry_payload.get("online_calls", 0))
+                stats.setdefault("offline_calls", telemetry_payload.get("offline_calls", 0))
+                stats.setdefault("hybrid_calls", telemetry_payload.get("hybrid_calls", 0))
+
             return stats
+
+        @self.app.get("/api/telemetry")
+        async def api_telemetry():
+            payload = self._get_telemetry_payload()
+            if not payload:
+                raise HTTPException(status_code=503, detail="Telemetry unavailable")
+            return payload
 
         @self.app.get("/api/tasks")
         async def api_tasks(
@@ -901,6 +918,18 @@ class WebUIInterface(BasePlugin):
             except Exception as e:
                 logger.error(f"Browser test error: {e}")
                 return {"success": False, "error": str(e)}
+
+    def _get_telemetry_payload(self) -> Optional[dict]:
+        telemetry = getattr(self, "telemetry", None)
+        if telemetry is None:
+            return None
+
+        try:
+            snapshot = telemetry.get_snapshot()
+            return snapshot.to_dict()
+        except Exception as exc:
+            logger.debug("Telemetry snapshot unavailable: %s", exc)
+            return None
 
     async def start_server(self):
         """Starts the Uvicorn server in a background task."""

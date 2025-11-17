@@ -1,14 +1,36 @@
-#!/bin/bash
+
+
+#!/bin/sh
 echo "🛑 Zastavuji SOPHII..."
-if pgrep -f "python.*run.py" > /dev/null; then
-    pkill -f "python.*run.py"
-    sleep 2
-    if ! pgrep -f "python.*run.py" > /dev/null; then
-        echo "✅ SOPHIA zastavena"
-    else
-        pkill -9 -f "python.*run.py"
-        echo "✅ SOPHIA zastavena (SIGKILL)"
-    fi
+
+# Vzory procesů, které chceme ukončit
+PATTERNS="python.*run.py python.*autonomous_main.py python.*autonomous_worker_with_dashboard.py"
+
+STOPPED_ANY=0
+for PATTERN in $PATTERNS; do
+    for PID in $(pgrep -f "$PATTERN"); do
+        OWNER=$(ps -o user= -p $PID 2>/dev/null | awk 'NR==2{print $1}')
+        if [ "$OWNER" = "root" ] && [ "$(id -u)" -ne 0 ]; then
+            echo "⚠️  Proces $PID běží jako root. Spusťte tento skript s 'sudo' pro úplné ukončení."
+        else
+            kill $PID 2>/dev/null
+            sleep 1
+            if kill -0 $PID 2>/dev/null; then
+                echo "⏳ Proces $PID stále běží, posílám SIGKILL..."
+                kill -9 $PID 2>/dev/null
+            fi
+            if ! kill -0 $PID 2>/dev/null; then
+                echo "✅ Proces $PID ukončen."
+                STOPPED_ANY=1
+            else
+                echo "❌ Nepodařilo se ukončit proces $PID."
+            fi
+        fi
+    done
+done
+
+if [ $STOPPED_ANY -eq 1 ]; then
+    echo "✅ SOPHIA procesy ukončeny."
 else
-    echo "ℹ️  SOPHIA neběží"
+    echo "ℹ️  SOPHIA procesy nebyly nalezeny nebo již neběží."
 fi

@@ -124,8 +124,43 @@ The application also provides a web-based chat interface.
 
 You can now chat with Sophia through the web interface.
 
+### 3.3. Terminal telemetry dashboard
+
+Need live cost and task visibility without opening the browser? Launch the Rich dashboard located in `sophia_cli_dashboard.py`. It consumes the same `/api/telemetry` feed as the Web UI and renders provider stats, budget pacing, task queues, and optional psutil host metrics.
+
+```bash
+python sophia_cli_dashboard.py --server http://localhost:8000 --refresh 2
+# Lightweight mode for $10 VPS boxes
+python sophia_cli_dashboard.py --server https://your-vm.example.com --no-system
+```
+
+Run `bash install_sophia_cli.sh` to add a permanent `sophia` alias inside your virtual environment so `sophia` instantly opens the dashboard after activation.
+
 ## 4. Stopping the Application
 To stop the application, simply press `Ctrl+C` in the terminal where it is running.
+
+## 5. Budget-friendly deployment (~$10/month)
+
+Sophia runs comfortably on entry-level VPS plans such as Hetzner CX22 or DigitalOcean’s $10/mo Basic Droplet (2 vCPU / 2 GB RAM / 40 GB SSD). Suggested workflow:
+
+1. **Provision the VM** with Ubuntu 22.04 LTS, upload your SSH key, and lock down the firewall (`ufw allow 22 80 443 8000`).
+2. **Install dependencies:**
+  ```bash
+  sudo apt update && sudo apt install -y python3.12 python3.12-venv git build-essential curl
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+3. **Clone Sophia & install requirements:**
+  ```bash
+  git clone https://github.com/ShotyCZ/sophia.git
+  cd sophia
+  uv venv && source .venv/bin/activate
+  uv pip sync requirements.in
+  cp .env.example .env  # add API keys + telemetry secrets
+  ```
+4. **Choose runtime mode:** keep the default combined UI via `python run.py`, or run `python run.py --no-webui` for terminal-only automation. Use tmux/systemd to keep `python sophia_cli_dashboard.py --server http://localhost:8000 --no-system` online for remote monitoring.
+5. **Stay under budget:** configure OpenRouter/Tavily limits in `.env`, rely on the dashboard’s Budget panel, and restart nightly with `sophia-guardian.service` to keep usage predictable.
+
+With psutil disabled, the dashboard idles under 450 MB RAM, leaving ample capacity for LLM calls while staying inside the $10/month price envelope.
 
 ---
 

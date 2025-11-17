@@ -33,7 +33,7 @@ if str(ROOT) not in sys.path:
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 from uvicorn import Config, Server
-from typing import Dict
+from typing import Dict, List, Optional
 
 # ============================================
 # MINIMAL SOPHIA KERNEL (OpenRouter only)
@@ -158,6 +158,26 @@ class HybridDashboardServer:
         self.llm = SimpleOpenRouterLLM(api_key)
         self.task_queue = MinimalTaskQueue(Path(".data/tasks.sqlite"))
         self.connections: Dict[str, WebSocket] = {}
+        self._start_time = datetime.utcnow()
+        self._provider_stats = {
+            "openrouter": {
+                "name": "openrouter",
+                "mode": "online",
+                "calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": 0.0,
+            }
+        }
+        self._total_calls = 0
+        self._total_failures = 0
+        self._total_prompt = 0
+        self._total_completion = 0
+        self._total_cost = 0.0
+        self._last_call_at: Optional[datetime] = None
+        self._mode_counts = {"online": 0, "offline": 0, "hybrid": 0}
+        self._mode_tokens = {"online": 0, "offline": 0, "hybrid": 0}
+        self._recent_events: List[Dict[str, str]] = []
         
         self._setup_routes()
         
@@ -208,6 +228,7 @@ class HybridDashboardServer:
                     
                     # Get LLM response
                     llm_response = await self.llm.chat(user_message)
+                    self._handle_llm_result(user_message, llm_response)
                     
                     # Send response
                     await websocket.send_text(json.dumps({
@@ -228,12 +249,24 @@ class HybridDashboardServer:
         async def get_stats():
             tasks_data = self.task_queue.get_tasks(limit=1000)
             tasks = tasks_data["tasks"]
-            
+
+            telemetry_payload = self._build_telemetry_snapshot()
+
             return {
                 "plugin_count": 1,  # Only LLM plugin
                 "pending_count": len([t for t in tasks if t["status"] == "pending"]),
                 "done_count": len([t for t in tasks if t["status"] in ["completed", "done"]]),
                 "failed_count": len([t for t in tasks if t["status"] == "failed"]),
+                "total_calls": telemetry_payload.get("total_calls", 0),
+                "total_tokens_sent": telemetry_payload.get("total_tokens_prompt", 0),
+                "total_tokens_received": telemetry_payload.get("total_tokens_completion", 0),
+                "total_errors": telemetry_payload.get("total_failures", 0),
+                "local_calls": telemetry_payload.get("offline_calls", 0),
+                "local_tokens": telemetry_payload.get("offline_tokens", 0),
+                "online_calls": telemetry_payload.get("online_calls", 0),
+                "online_tokens": telemetry_payload.get("online_tokens", 0),
+                "current_action": telemetry_payload.get("phase_detail", "Idle"),
+                "telemetry": telemetry_payload,
             }
         
         @self.app.get("/api/hypotheses")
@@ -283,6 +316,111 @@ class HybridDashboardServer:
                 "success": False,
                 "message": f"Hybrid mode: Tool plugins not available ({tool_name})"
             }
+
+        @self.app.get("/api/telemetry")
+        async def api_telemetry():
+            return self._build_telemetry_snapshot()
+
+    def _estimate_tokens(self, text: str) -> int:
+        return max(len(text.split()) * 3, 1)
+
+    def _push_event(self, level: str, message: str, source: str) -> None:
+        entry = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "level": level,
+            "message": message,
+            "source": source,
+        }
+        self._recent_events.append(entry)
+        self._recent_events = self._recent_events[-25:]
+
+    def _record_llm_usage(self, provider: str, prompt_tokens: int, completion_tokens: int) -> None:
+        stats = self._provider_stats.setdefault(
+            provider,
+            {
+                "name": provider,
+                "mode": "online",
+                "calls": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "cost_usd": 0.0,
+            },
+        )
+        stats["calls"] += 1
+        stats["prompt_tokens"] += prompt_tokens
+        stats["completion_tokens"] += completion_tokens
+
+        token_cost = (prompt_tokens + completion_tokens) * 0.14 / 1_000_000
+        stats["cost_usd"] += token_cost
+
+        self._total_calls += 1
+        self._total_prompt += prompt_tokens
+        self._total_completion += completion_tokens
+        self._total_cost += token_cost
+        self._last_call_at = datetime.utcnow()
+        self._mode_counts["online"] += 1
+        self._mode_tokens["online"] += prompt_tokens + completion_tokens
+
+    def _handle_llm_result(self, prompt: str, completion: str) -> None:
+        prompt_tokens = self._estimate_tokens(prompt)
+        completion_tokens = self._estimate_tokens(completion)
+
+        if completion.startswith("❌"):
+            self._total_failures += 1
+            self._push_event("error", completion[:120], "openrouter_llm")
+            return
+
+        self._record_llm_usage("openrouter", prompt_tokens, completion_tokens)
+        self._push_event("info", "LLM call completed", "openrouter_llm")
+
+    def _build_telemetry_snapshot(self) -> Dict[str, object]:
+        now = datetime.utcnow()
+        tasks_data = self.task_queue.get_tasks(limit=50)
+        telemetry_tasks = [
+            {
+                "task_id": str(task.get("id")),
+                "name": task.get("description", "task"),
+                "status": task.get("status", "pending"),
+                "source": "task_queue",
+                "priority": task.get("priority"),
+                "worker_id": None,
+                "duration": None,
+                "started_at": task.get("created_at"),
+                "updated_at": task.get("updated_at"),
+            }
+            for task in tasks_data.get("tasks", [])[:10]
+        ]
+
+        provider_stats = [
+            {
+                **stats,
+                "total_tokens": stats["prompt_tokens"] + stats["completion_tokens"],
+            }
+            for stats in self._provider_stats.values()
+        ]
+
+        return {
+            "generated_at": now.isoformat(),
+            "uptime_seconds": (now - self._start_time).total_seconds(),
+            "phase": "EXECUTING" if self._total_calls else "LISTENING",
+            "phase_detail": "Processing chat messages" if self._total_calls else "Awaiting input",
+            "runtime_mode": "hybrid",
+            "total_calls": self._total_calls,
+            "total_failures": self._total_failures,
+            "total_tokens_prompt": self._total_prompt,
+            "total_tokens_completion": self._total_completion,
+            "total_cost_usd": round(self._total_cost, 6),
+            "last_call_at": self._last_call_at.isoformat() if self._last_call_at else None,
+            "online_calls": self._mode_counts["online"],
+            "offline_calls": self._mode_counts["offline"],
+            "hybrid_calls": self._mode_counts["hybrid"],
+            "online_tokens": self._mode_tokens["online"],
+            "offline_tokens": self._mode_tokens["offline"],
+            "hybrid_tokens": self._mode_tokens["hybrid"],
+            "provider_stats": provider_stats,
+            "tasks": telemetry_tasks,
+            "recent_events": list(self._recent_events),
+        }
     
     async def run(self, host: str = "127.0.0.1", port: int = 8000):
         """Start the server."""

@@ -1,9 +1,26 @@
-#!/bin/bash
-echo "🤖 SOPHIA CLI Commands"
-echo "======================"
-echo ""
-echo "sophia-start     - Spustit"
-echo "sophia-stop      - Zastavit"  
-echo "sophia-status    - Status check"
-echo ""
-echo "📊 http://127.0.0.1:8000/dashboard"
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+DASHBOARD_SCRIPT="$ROOT_DIR/sophia_cli_dashboard.py"
+
+if [[ ! -f "$DASHBOARD_SCRIPT" ]]; then
+	echo "❌ Cannot find sophia_cli_dashboard.py next to this launcher." >&2
+	exit 1
+fi
+
+# Prefer the project's virtual environment if present
+if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+	PYTHON_BIN="$ROOT_DIR/.venv/bin/python"
+elif [[ -x "$ROOT_DIR/.venv/Scripts/python.exe" ]]; then
+	PYTHON_BIN="$ROOT_DIR/.venv/Scripts/python.exe"
+elif command -v python3 >/dev/null 2>&1; then
+	PYTHON_BIN="python3"
+else
+	PYTHON_BIN="python"
+fi
+
+echo "🚀 Launching Sophia CLI dashboard via $PYTHON_BIN"
+exec "$PYTHON_BIN" "$DASHBOARD_SCRIPT" "$@"
+
+

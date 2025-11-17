@@ -18,6 +18,7 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Optional
 import random
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,6 +101,117 @@ def generate_mock_benchmarks(count=50):
         })
     
     return benchmarks
+
+
+def generate_mock_telemetry():
+    """Generate a telemetry snapshot similar to the real kernel output."""
+    now = datetime.utcnow()
+    uptime = random.randint(60, 86_400)
+    provider_templates = [
+        ("openrouter", "online"),
+        ("ollama", "offline"),
+        ("aider", "hybrid"),
+    ]
+
+    provider_stats = []
+    total_calls = 0
+    total_prompt = 0
+    total_completion = 0
+    total_cost = 0.0
+    mode_counts = {"online": 0, "offline": 0, "hybrid": 0}
+    mode_tokens = {"online": 0, "offline": 0, "hybrid": 0}
+
+    for name, mode in provider_templates:
+        calls = random.randint(10, 200)
+        prompt_tokens = random.randint(2_000, 15_000)
+        completion_tokens = random.randint(1_000, 10_000)
+        cost = round(random.uniform(0.05, 3.5), 4)
+        provider_stats.append(
+            {
+                "name": name,
+                "mode": mode,
+                "calls": calls,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "cost_usd": cost,
+                "total_tokens": prompt_tokens + completion_tokens,
+            }
+        )
+        total_calls += calls
+        total_prompt += prompt_tokens
+        total_completion += completion_tokens
+        total_cost += cost
+        mode_counts[mode] += calls
+        mode_tokens[mode] += prompt_tokens + completion_tokens
+
+    tasks = [
+        {
+            "task_id": f"T-{i+1}",
+            "name": random.choice([
+                "Plan next action",
+                "Summarize document",
+                "Sync Jules task",
+                "Memory consolidation",
+            ]),
+            "status": random.choice(
+                ["pending", "running", "completed", "failed", "cancelled"]
+            ),
+            "source": "task_queue",
+            "priority": random.choice(["low", "normal", "high"]),
+            "worker_id": random.randint(1, 4),
+            "duration": round(random.uniform(0.5, 8.0), 2),
+            "updated_at": now.isoformat(),
+            "started_at": (now - timedelta(minutes=random.randint(1, 30))).isoformat(),
+        }
+        for i in range(random.randint(3, 8))
+    ]
+
+    recent_events = [
+        {
+            "timestamp": (now - timedelta(seconds=idx * 15)).isoformat(),
+            "level": random.choice(["info", "warning", "error"]),
+            "message": random.choice(
+                [
+                    "LLM call succeeded",
+                    "Queued Jules validation",
+                    "Local model warming up",
+                    "Budget check passed",
+                ]
+            ),
+            "source": random.choice(["kernel", "tool_llm", "task_queue"]),
+        }
+        for idx in range(10)
+    ]
+
+    return {
+        "generated_at": now.isoformat(),
+        "uptime_seconds": uptime,
+        "phase": random.choice(["LISTENING", "PLANNING", "EXECUTING", "RESPONDING"]),
+        "phase_detail": random.choice(
+            [
+                "Waiting for user input",
+                "Routing tasks",
+                "Calling OpenRouter",
+                "Processing Jules task",
+            ]
+        ),
+        "runtime_mode": random.choice(["legacy", "event-driven"]),
+        "total_calls": total_calls,
+        "total_failures": random.randint(0, 5),
+        "total_tokens_prompt": total_prompt,
+        "total_tokens_completion": total_completion,
+        "total_cost_usd": round(total_cost, 4),
+        "last_call_at": now.isoformat(),
+        "online_calls": mode_counts["online"],
+        "offline_calls": mode_counts["offline"],
+        "hybrid_calls": mode_counts["hybrid"],
+        "online_tokens": mode_tokens["online"],
+        "offline_tokens": mode_tokens["offline"],
+        "hybrid_tokens": mode_tokens["hybrid"],
+        "provider_stats": provider_stats,
+        "tasks": tasks,
+        "recent_events": recent_events,
+    }
 
 
 def generate_mock_logs(count=100):
@@ -205,8 +317,8 @@ async def get_hypotheses(limit: int = 20, offset: int = 0):
 @app.get("/api/benchmarks")
 async def get_benchmarks(
     limit: int = 100,
-    task_type: str = None,
-    model_name: str = None,
+    task_type: Optional[str] = None,
+    model_name: Optional[str] = None,
 ):
     """Get mock benchmarks."""
     benchmarks = MOCK_BENCHMARKS
@@ -225,7 +337,7 @@ async def get_benchmarks(
 
 
 @app.get("/api/logs")
-async def get_logs(limit: int = 100, level: str = None):
+async def get_logs(limit: int = 100, level: Optional[str] = None):
     """Get mock logs."""
     logs = MOCK_LOGS
     
@@ -239,10 +351,35 @@ async def get_logs(limit: int = 100, level: str = None):
     }
 
 
+
 @app.get("/api/stats")
 async def get_stats():
-    """Get mock statistics."""
-    return {
+    """Get mock statistics for CLI dashboard compatibility."""
+    telemetry_payload = generate_mock_telemetry()
+
+    joules_statuses = ["pending", "running", "done", "error"]
+    tasks_joules = [
+        {"id": f"J-{i+1}", "status": random.choice(joules_statuses)}
+        for i in range(random.randint(2, 6))
+    ]
+
+    current_action = telemetry_payload.get("phase_detail", "Idle")
+
+    stats = {
+        "total_calls": telemetry_payload.get("total_calls", 0),
+        "total_tokens_sent": telemetry_payload.get("total_tokens_prompt", 0),
+        "total_tokens_received": telemetry_payload.get("total_tokens_completion", 0),
+        "total_errors": telemetry_payload.get("total_failures", 0),
+        "local_calls": telemetry_payload.get("offline_calls", 0),
+        "local_tokens": telemetry_payload.get("offline_tokens", 0),
+        "online_calls": telemetry_payload.get("online_calls", 0),
+        "online_tokens": telemetry_payload.get("online_tokens", 0),
+        "budget_api": round(random.uniform(0, 5), 2),
+        "budget_joules": round(random.uniform(0, 2), 2),
+        "budget_consolidation": round(random.uniform(0, 1), 2),
+        "budget_other": round(random.uniform(0, 0.5), 2),
+        "tasks_joules": tasks_joules,
+        "current_action": current_action,
         "total_tasks": len(MOCK_TASKS),
         "active_tasks": len([t for t in MOCK_TASKS if t["status"] == "in_progress"]),
         "completed_tasks": len([t for t in MOCK_TASKS if t["status"] == "completed"]),
@@ -250,8 +387,20 @@ async def get_stats():
         "total_hypotheses": len(MOCK_HYPOTHESES),
         "validated_hypotheses": len([h for h in MOCK_HYPOTHESES if h["status"] == "validated"]),
         "total_benchmarks": len(MOCK_BENCHMARKS),
-        "avg_quality_score": round(sum(b["quality_score"] for b in MOCK_BENCHMARKS) / len(MOCK_BENCHMARKS), 3),
+        "avg_quality_score": round(
+            sum(b["quality_score"] for b in MOCK_BENCHMARKS) / len(MOCK_BENCHMARKS),
+            3,
+        ),
+        "telemetry": telemetry_payload,
     }
+
+    return stats
+
+
+@app.get("/api/telemetry")
+async def get_telemetry():
+    """Return telemetry payload only."""
+    return generate_mock_telemetry()
 
 
 @app.post("/api/tools/{tool_name}")
@@ -286,6 +435,7 @@ async def main():
     logger.info("   - /api/benchmarks")
     logger.info("   - /api/logs")
     logger.info("   - /api/stats")
+    logger.info("   - /api/telemetry")
     logger.info("")
     logger.info("⚠️  MOCK MODE: All data is randomly generated")
     logger.info("   - No database required")

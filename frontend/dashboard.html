@@ -264,7 +264,7 @@
               <th>Created At</th>
             </tr>
           </thead>
-          <tbody id="hypothesesTableBody">
+          <tbody id="hypothesesOverviewBody">
             <tr><td colspan="5" style="text-align: center; color: #64748b;">Loading hypotheses...</td></tr>
           </tbody>
         </table>
@@ -311,7 +311,7 @@
               <th>Created</th>
             </tr>
           </thead>
-          <tbody id="hypothesesTableBody">
+          <tbody id="hypothesesDetailBody">
             <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading...</td></tr>
           </tbody>
         </table>
@@ -552,6 +552,377 @@
     let chatSessionId = 'dashboard-' + Date.now();
     let autoScroll = true;
     let logRefreshInterval = null;
+  let benchmarksLoaded = false;
+  let benchmarksLoading = false;
+    const benchmarkCharts = {
+      qualityByTask: null,
+      costVsQuality: null,
+      history: null,
+    };
+
+    const HYPOTHESIS_STATUS_MAP = {
+      deployed_validated: { badge: '✅ validated', color: '#34d399' },
+      deployed_awaiting_validation: { badge: '🔄 validating', color: '#fbbf24' },
+      deployed_rollback: { badge: '⚠️ rollback', color: '#f87171' },
+      approved: { badge: '👍 approved', color: '#60a5fa' },
+      testing: { badge: '🧪 testing', color: '#a78bfa' },
+      validated: { badge: '✅ validated', color: '#34d399' },
+      proposed: { badge: '💡 proposed', color: '#fbbf24' },
+      rejected: { badge: '🚫 rejected', color: '#f87171' },
+      pending: { badge: '⏳ pending', color: '#94a3b8' },
+      in_progress: { badge: '⚙️ in progress', color: '#60a5fa' },
+    };
+
+    function sanitizeText(value) {
+      if (value === null || value === undefined) {
+        return 'N/A';
+      }
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatTimestamp(value) {
+      if (!value || value === 'N/A') {
+        return '--';
+      }
+      try {
+        return new Date(value).toLocaleString();
+      } catch (error) {
+        return value;
+      }
+    }
+
+    function getHypothesisStatusInfo(status) {
+      if (!status) {
+        return { badge: '⏳ pending', color: '#94a3b8' };
+      }
+      return HYPOTHESIS_STATUS_MAP[status] || { badge: `⏳ ${status}`, color: '#94a3b8' };
+    }
+
+    function getHypothesisCategoryColor(category) {
+      switch (category) {
+        case 'bug_fix':
+        case 'reliability':
+          return '#f87171';
+        case 'optimization':
+        case 'performance':
+          return '#fbbf24';
+        case 'feature':
+        case 'accuracy':
+          return '#60a5fa';
+        case 'cost_optimization':
+          return '#34d399';
+        default:
+          return '#94a3b8';
+      }
+    }
+
+    function buildHypothesisDetailRow(hypothesis) {
+      const description = sanitizeText(hypothesis.description || hypothesis.hypothesis || hypothesis.full_text || 'N/A');
+      const rawCategory = hypothesis.category || 'unknown';
+      const category = sanitizeText(rawCategory);
+      const categoryColor = getHypothesisCategoryColor(String(rawCategory).toLowerCase());
+      const statusInfo = getHypothesisStatusInfo(hypothesis.status);
+      const priority = sanitizeText(hypothesis.priority ?? '--');
+      const created = formatTimestamp(hypothesis.created_at);
+      return `
+        <tr>
+          <td class="task-id">#${sanitizeText(hypothesis.id || '--')}</td>
+          <td class="task-payload" title="${description}">${description}</td>
+          <td><code style="color: ${categoryColor};">${category}</code></td>
+          <td><span style="color: ${statusInfo.color};">${statusInfo.badge}</span></td>
+          <td>${priority}</td>
+          <td style="color: #64748b; font-size: 12px;">${created}</td>
+        </tr>
+      `;
+    }
+
+    function buildHypothesisOverviewRow(hypothesis) {
+      const description = sanitizeText(hypothesis.description || hypothesis.hypothesis || hypothesis.full_text || 'N/A');
+      const rawCategory = hypothesis.category || 'unknown';
+      const category = sanitizeText(rawCategory);
+      const categoryColor = getHypothesisCategoryColor(String(rawCategory).toLowerCase());
+      const statusInfo = getHypothesisStatusInfo(hypothesis.status);
+      const created = formatTimestamp(hypothesis.created_at);
+      return `
+        <tr>
+          <td class="task-id">#${sanitizeText(hypothesis.id || '--')}</td>
+          <td><code style="color: ${categoryColor};">${category}</code></td>
+          <td><span style="color: ${statusInfo.color};">${statusInfo.badge}</span></td>
+          <td class="task-payload" title="${description}">${description}</td>
+          <td style="color: #64748b; font-size: 12px;">${created}</td>
+        </tr>
+      `;
+    }
+
+    function renderHypothesisTables(hypotheses) {
+  const detailBody = document.getElementById('hypothesesDetailBody');
+      const overviewBody = document.getElementById('hypothesesOverviewBody');
+      const timestampLabel = document.getElementById('hypothesesLastUpdate');
+
+      const emptyRowDetail = '<tr><td colspan="6" style="text-align: center; color: #64748b;">No hypotheses</td></tr>';
+      const emptyRowOverview = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No hypotheses</td></tr>';
+
+      if (!hypotheses || hypotheses.length === 0) {
+        if (detailBody) {
+          detailBody.innerHTML = emptyRowDetail;
+        }
+        if (overviewBody) {
+          overviewBody.innerHTML = emptyRowOverview;
+        }
+      } else {
+        if (detailBody) {
+          detailBody.innerHTML = hypotheses.map(buildHypothesisDetailRow).join('');
+        }
+        if (overviewBody) {
+          const summaryRows = hypotheses.slice(0, 5).map(buildHypothesisOverviewRow).join('');
+          overviewBody.innerHTML = summaryRows;
+        }
+      }
+
+      if (timestampLabel) {
+        timestampLabel.textContent = new Date().toLocaleTimeString();
+      }
+    }
+
+    function renderHypothesisError(message) {
+  const detailBody = document.getElementById('hypothesesDetailBody');
+      const overviewBody = document.getElementById('hypothesesOverviewBody');
+      const safeMessage = sanitizeText(message || 'Error loading hypotheses');
+      if (detailBody) {
+        detailBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #f87171;">Error: ${safeMessage}</td></tr>`;
+      }
+      if (overviewBody) {
+        overviewBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${safeMessage}</td></tr>`;
+      }
+      const timestampLabel = document.getElementById('hypothesesLastUpdate');
+      if (timestampLabel) {
+        timestampLabel.textContent = new Date().toLocaleTimeString();
+      }
+    }
+
+    function renderBenchmarkTable(benchmarks) {
+      const body = document.getElementById('benchmarksTableBody');
+      if (!body) {
+        return;
+      }
+
+      if (!benchmarks || benchmarks.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b;">No benchmark data</td></tr>';
+        return;
+      }
+
+      body.innerHTML = benchmarks.map(entry => {
+        const model = sanitizeText(entry.model_name || 'unknown');
+        const task = sanitizeText(entry.task_type || 'general');
+        const quality = typeof entry.quality_score === 'number'
+          ? entry.quality_score.toFixed(3)
+          : sanitizeText(entry.quality_score || '--');
+        const latencyValue = Number(entry.latency_ms);
+        const latency = Number.isFinite(latencyValue) ? `${latencyValue.toLocaleString()} ms` : '--';
+        const costValue = Number(entry.cost_usd);
+        const cost = Number.isFinite(costValue) ? `$${costValue.toFixed(5)}` : '--';
+        const timestamp = formatTimestamp(entry.timestamp);
+        return `
+          <tr>
+            <td>${model}</td>
+            <td>${task}</td>
+            <td>${quality}</td>
+            <td>${latency}</td>
+            <td>${cost}</td>
+            <td style="color: #64748b; font-size: 12px;">${timestamp}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function createOrUpdateChart(existingChart, canvas, config) {
+      if (!canvas || typeof Chart === 'undefined') {
+        return existingChart;
+      }
+      const ctx = canvas.getContext('2d');
+      if (existingChart) {
+        existingChart.data = config.data;
+        existingChart.options = config.options;
+        existingChart.update();
+        return existingChart;
+      }
+      return new Chart(ctx, config);
+    }
+
+    function updateBenchmarkCharts(benchmarks) {
+      if (typeof Chart === 'undefined') {
+        return;
+      }
+
+      const qualityCanvas = document.getElementById('qualityByTaskChart');
+      const costCanvas = document.getElementById('costVsQualityChart');
+      const historyCanvas = document.getElementById('benchmarkHistoryChart');
+
+      const qualityByTask = benchmarks.reduce((acc, item) => {
+        const key = item.task_type || 'general';
+        const score = Number(item.quality_score) || 0;
+        if (!acc[key]) {
+          acc[key] = { total: 0, count: 0 };
+        }
+        acc[key].total += score;
+        acc[key].count += 1;
+        return acc;
+      }, {});
+
+      const qualityLabels = Object.keys(qualityByTask);
+      const qualityValues = qualityLabels.map(label => {
+        const bucket = qualityByTask[label];
+        return bucket.count > 0 ? bucket.total / bucket.count : 0;
+      });
+
+      benchmarkCharts.qualityByTask = createOrUpdateChart(benchmarkCharts.qualityByTask, qualityCanvas, {
+        type: 'bar',
+        data: {
+          labels: qualityLabels,
+          datasets: [{
+            label: 'Avg quality score',
+            data: qualityValues,
+            backgroundColor: '#60a5fa',
+          }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 1,
+            },
+          },
+        },
+      });
+
+      const scatterPoints = benchmarks.map(entry => ({
+        x: Number(entry.cost_usd) || 0,
+        y: Number(entry.quality_score) || 0,
+        r: Math.min(Math.max((Number(entry.latency_ms) || 0) / 400, 4), 14),
+        model: entry.model_name || 'unknown',
+        task: entry.task_type || 'general',
+        latency: Number(entry.latency_ms) || 0,
+      }));
+
+      benchmarkCharts.costVsQuality = createOrUpdateChart(benchmarkCharts.costVsQuality, costCanvas, {
+        type: 'bubble',
+        data: {
+          datasets: [{
+            label: 'Models',
+            data: scatterPoints,
+            backgroundColor: '#34d39999',
+            borderColor: '#34d399',
+          }],
+        },
+        options: {
+          responsive: true,
+          parsing: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const { raw } = context;
+                  return `${raw.model} (${raw.task})\nQuality: ${raw.y.toFixed(3)} | Cost: $${raw.x.toFixed(5)} | Latency: ${Math.round(raw.latency)} ms`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Cost ($)' },
+            },
+            y: {
+              title: { display: true, text: 'Quality score' },
+              min: 0,
+              max: 1,
+            },
+          },
+        },
+      });
+
+      const historyData = [...benchmarks]
+        .filter(item => item.timestamp)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+        .slice(-20);
+
+      benchmarkCharts.history = createOrUpdateChart(benchmarkCharts.history, historyCanvas, {
+        type: 'line',
+        data: {
+          labels: historyData.map(item => formatTimestamp(item.timestamp)),
+          datasets: [{
+            label: 'Quality over time',
+            data: historyData.map(item => Number(item.quality_score) || 0),
+            borderColor: '#fbbf24',
+            backgroundColor: '#fbbf2477',
+            tension: 0.3,
+            fill: true,
+          }],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              min: 0,
+              max: 1,
+            },
+          },
+        },
+      });
+    }
+
+    async function fetchBenchmarks(force = false) {
+      if (benchmarksLoading) {
+        return;
+      }
+      if (benchmarksLoaded && !force) {
+        return;
+      }
+
+      const tableBody = document.getElementById('benchmarksTableBody');
+      if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b;">Loading benchmarks...</td></tr>';
+      }
+
+      benchmarksLoading = true;
+      if (force) {
+        benchmarksLoaded = false;
+      }
+
+      try {
+        const response = await fetch('/api/benchmarks?limit=100');
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          const message = data.error || `Request failed (${response.status})`;
+          if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #f87171;">Error: ${sanitizeText(message)}</td></tr>`;
+          }
+          return;
+        }
+
+  const benchmarks = data.benchmarks || [];
+  renderBenchmarkTable(benchmarks);
+  updateBenchmarkCharts(benchmarks);
+        const lastUpdate = document.getElementById('benchmarksLastUpdate');
+        if (lastUpdate) {
+          lastUpdate.textContent = new Date().toLocaleTimeString();
+        }
+        benchmarksLoaded = true;
+      } catch (error) {
+        console.error('Benchmarks fetch error:', error);
+          if (tableBody) {
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #f87171;">Error: ${sanitizeText(error.message)}</td></tr>`;
+          }
+      } finally {
+        benchmarksLoading = false;
+      }
+    }
 
     async function refreshDashboard() {
       try {
@@ -682,136 +1053,86 @@
         // Fetch tasks
         const tasksRes = await fetch('/api/tasks?limit=20');
         const tasksData = await tasksRes.json();
-        
-        if (tasksData.error) {
-          document.getElementById('taskTableBody').innerHTML = 
-            `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${tasksData.error}</td></tr>`;
-          return;
-        }
-
-        const tasks = tasksData.tasks || [];
-        
-        // Calculate statistics
-        const stats = tasks.reduce((acc, t) => {
-          acc[t.status] = (acc[t.status] || 0) + 1;
-          return acc;
-        }, {});
-
-        document.getElementById('pendingCount').textContent = stats.pending || 0;
-        document.getElementById('doneCount').textContent = stats.done || 0;
-        document.getElementById('failedCount').textContent = stats.failed || 0;
-
-        // Render task table
         const tbody = document.getElementById('taskTableBody');
-        if (tasks.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No tasks in queue</td></tr>';
-        } else {
-          tbody.innerHTML = tasks.map(task => {
-            let instruction = 'N/A';
-            try {
-              const payload = JSON.parse(task.payload);
-              instruction = payload.instruction || 'N/A';
-            } catch (e) {
-              instruction = task.payload.substring(0, 50);
-            }
-            
-            return `
-              <tr>
-                <td class="task-id">#${task.id}</td>
-                <td><code class="status-${task.status}">${task.status}</code></td>
-                <td>${task.priority}</td>
-                <td class="task-payload" title="${instruction}">${instruction}</td>
-                <td style="color: #64748b; font-size: 12px;">${task.created_at || '--'}</td>
-              </tr>
-            `;
-          }).join('');
-        }
 
-        // Fetch hypotheses
-        try {
-          const hypothesesRes = await fetch('/api/hypotheses?limit=20');
-          const hypothesesData = await hypothesesRes.json();
-          
-          if (hypothesesData.error) {
-            document.getElementById('hypothesesTableBody').innerHTML = 
-              `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${hypothesesData.error}</td></tr>`;
-          } else {
-            const hypotheses = hypothesesData.hypotheses || [];
-            
-            const hypothesesBody = document.getElementById('hypothesesTableBody');
-            if (hypotheses.length === 0) {
-              hypothesesBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No hypotheses</td></tr>';
+        let tasks = [];
+        if (tasksData.error) {
+          if (tbody) {
+            tbody.innerHTML = 
+              `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error: ${tasksData.error}</td></tr>`;
+          }
+        } else {
+          tasks = tasksData.tasks || [];
+
+          // Calculate statistics
+          const stats = tasks.reduce((acc, t) => {
+            acc[t.status] = (acc[t.status] || 0) + 1;
+            return acc;
+          }, {});
+
+          document.getElementById('pendingCount').textContent = stats.pending || 0;
+          document.getElementById('doneCount').textContent = stats.done || 0;
+          document.getElementById('failedCount').textContent = stats.failed || 0;
+
+          if (tbody) {
+            if (tasks.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b;">No tasks in queue</td></tr>';
             } else {
-              hypothesesBody.innerHTML = hypotheses.map(hyp => {
-                // Status badge with emoji
-                let statusBadge = '';
-                let statusColor = '';
-                switch (hyp.status) {
-                  case 'deployed_validated':
-                    statusBadge = '✅ validated';
-                    statusColor = 'color: #34d399;';
-                    break;
-                  case 'deployed_rollback':
-                    statusBadge = '⚠️ rollback';
-                    statusColor = 'color: #f87171;';
-                    break;
-                  case 'deployed_awaiting_validation':
-                    statusBadge = '🔄 validating';
-                    statusColor = 'color: #fbbf24;';
-                    break;
-                  case 'approved':
-                    statusBadge = '👍 approved';
-                    statusColor = 'color: #60a5fa;';
-                    break;
-                  case 'testing':
-                    statusBadge = '🧪 testing';
-                    statusColor = 'color: #a78bfa;';
-                    break;
-                  default:
-                    statusBadge = '⏳ pending';
-                    statusColor = 'color: #94a3b8;';
+              tbody.innerHTML = tasks.map(task => {
+                let instruction = 'N/A';
+                try {
+                  if (typeof task.payload === 'string' && task.payload.trim()) {
+                    const payload = JSON.parse(task.payload);
+                    if (payload && typeof payload === 'object') {
+                      instruction = payload.instruction || 'N/A';
+                    } else {
+                      instruction = task.payload.substring(0, 50);
+                    }
+                  } else if (typeof task.instruction === 'string') {
+                    instruction = task.instruction;
+                  }
+                } catch (e) {
+                  instruction = typeof task.payload === 'string'
+                    ? task.payload.substring(0, 50)
+                    : 'N/A';
                 }
-                
-                // Category badge
-                let categoryBadge = hyp.category || 'unknown';
-                let categoryColor = '';
-                switch (hyp.category) {
-                  case 'bug_fix':
-                    categoryColor = 'color: #f87171;';
-                    break;
-                  case 'optimization':
-                    categoryColor = 'color: #fbbf24;';
-                    break;
-                  case 'feature':
-                    categoryColor = 'color: #60a5fa;';
-                    break;
-                  default:
-                    categoryColor = 'color: #94a3b8;';
-                }
-                
+
                 return `
                   <tr>
-                    <td class="task-id">#${hyp.id}</td>
-                    <td><code style="${categoryColor}">${categoryBadge}</code></td>
-                    <td><span style="${statusColor}">${statusBadge}</span></td>
-                    <td class="task-payload" title="${hyp.description}">${hyp.description}</td>
-                    <td style="color: #64748b; font-size: 12px;">${hyp.created_at !== 'N/A' ? new Date(hyp.created_at).toLocaleString() : '--'}</td>
+                    <td class="task-id">#${task.id}</td>
+                    <td><code class="status-${task.status}">${task.status}</code></td>
+                    <td>${task.priority}</td>
+                    <td class="task-payload" title="${instruction}">${instruction}</td>
+                    <td style="color: #64748b; font-size: 12px;">${task.created_at || '--'}</td>
                   </tr>
                 `;
               }).join('');
             }
           }
-        } catch (hypothesesError) {
-          console.error('Hypotheses fetch error:', hypothesesError);
-          document.getElementById('hypothesesTableBody').innerHTML = 
-            `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error loading hypotheses</td></tr>`;
         }
 
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        // Fetch hypotheses
+        renderHypothesisTables([]);
+        try {
+          const hypothesesRes = await fetch('/api/hypotheses?limit=20');
+          const hypothesesData = await hypothesesRes.json();
+
+          if (hypothesesData.error) {
+            renderHypothesisError(hypothesesData.error);
+          } else {
+            renderHypothesisTables(hypothesesData.hypotheses || []);
+          }
+        } catch (hypothesesError) {
+          console.error('Hypotheses fetch error:', hypothesesError);
+          renderHypothesisError(hypothesesError.message);
+        }
+
       } catch (e) {
         console.error('Dashboard refresh error:', e);
         document.getElementById('taskTableBody').innerHTML = 
           `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error loading dashboard: ${e.message}</td></tr>`;
+      } finally {
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
       }
     }
 
@@ -881,10 +1202,15 @@
       // Start/stop specific tab features
       if (tabName === 'chat') {
         initChat();
+        stopLogRefresh();
       } else if (tabName === 'logs') {
         startLogRefresh();
       } else {
         stopLogRefresh();
+      }
+
+      if (tabName === 'benchmarks') {
+        setTimeout(() => fetchBenchmarks(true), 0);
       }
     }
 
@@ -1110,6 +1436,7 @@
       appendToolOutput('🔄 Refreshing all data...', 'info');
       refreshDashboard();
       fetchLogs();
+      fetchBenchmarks(true);
       appendToolOutput('✅ Data refreshed', 'success');
     }
 

@@ -7,7 +7,7 @@ import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, cast
 
 import yaml
 from pydantic import ValidationError
@@ -15,6 +15,7 @@ from pydantic import ValidationError
 from core.context import SharedContext
 from core.logging_config import SessionIdFilter, setup_logging
 from core.plugin_manager import PluginManager
+from core.telemetry import TelemetryHub
 from plugins.base_plugin import PluginType
 
 # Get the root logger
@@ -40,6 +41,7 @@ class Kernel:
         self.json_repair_prompt_template = ""
         self.all_plugins_map = {}
         self.memory = None  # Will be set during initialization
+        self.telemetry = TelemetryHub()
 
         # NEW: Event-driven components (Phase 1)
         self.use_event_driven = use_event_driven
@@ -52,6 +54,8 @@ class Kernel:
     async def initialize(self):
         """Loads prompts, discovers, and sets up all plugins."""
         
+        self.telemetry.update_phase("INITIALIZING", "Loading kernel dependencies")
+
         # AMI 1.0: Check for recovery mode
         if "--recovery-from-crash" in sys.argv:
             await self._handle_recovery_mode()
@@ -96,6 +100,8 @@ class Kernel:
                     data={"use_event_driven": True, "max_workers": 5},
                 )
             )
+
+            self.telemetry.attach_event_bus(self.event_bus)
 
         # --- PLUGIN SETUP PHASE ---
         logger.info("Initializing plugin setup...", extra={"plugin_name": "Kernel"})
@@ -166,6 +172,7 @@ class Kernel:
                 "event_bus": self.event_bus if self.use_event_driven else None,  # AMI 1.0: Event subscription
                 "logger": plugin_logger,  # Inject logger per Development Guidelines
                 "offline_mode": self.offline_mode,  # Pass offline mode flag
+                "telemetry": self.telemetry,
             }
             try:
                 plugin.setup(full_plugin_config)
@@ -193,12 +200,22 @@ class Kernel:
 
             if sleep_scheduler and consolidator:
                 # Wire dependencies
-                sleep_scheduler.set_event_bus(self.event_bus)
-                sleep_scheduler.set_consolidator(consolidator)
-                consolidator.event_bus = self.event_bus
+                set_event_bus = getattr(sleep_scheduler, "set_event_bus", None)
+                if callable(set_event_bus):
+                    set_event_bus(self.event_bus)
+
+                set_consolidator = getattr(sleep_scheduler, "set_consolidator", None)
+                if callable(set_consolidator):
+                    set_consolidator(consolidator)
+
+                setattr(consolidator, "event_bus", self.event_bus)
 
                 # Start sleep scheduler
-                await sleep_scheduler.start()
+                start_fn = getattr(sleep_scheduler, "start", None)
+                if callable(start_fn):
+                    start_result = start_fn()
+                    if inspect.isawaitable(start_result):
+                        await start_result
 
                 logger.info(
                     "Phase 3 Memory Consolidation enabled - sleep scheduler active",
@@ -304,6 +321,11 @@ class Kernel:
         session_logger = logging.getLogger(f"session-{session_id[:8]}")
         session_logger.addFilter(SessionIdFilter(session_id))
 
+        # Telemetry boot markers
+        runtime_mode = "event-driven" if self.use_event_driven else "classic"
+        self.telemetry.set_runtime_mode(runtime_mode)
+        self.telemetry.push_event("info", "Kernel online", "kernel")
+
         context = SharedContext(
             session_id=session_id,
             current_state="INITIALIZING",
@@ -318,9 +340,16 @@ class Kernel:
 
         # Publish SYSTEM_READY event if event-driven
         if self.use_event_driven:
+            if not self.event_bus or not self.task_queue:
+                raise RuntimeError(
+                    "Event-driven components requested but not initialized."
+                )
+
             from core.events import Event, EventType, EventPriority
 
-            self.event_bus.publish(
+            event_bus = self.event_bus
+
+            event_bus.publish(
                 Event(
                     event_type=EventType.SYSTEM_READY,
                     source="kernel",
@@ -332,7 +361,7 @@ class Kernel:
             # AMI 1.0: Publish SYSTEM_RECOVERY event if in recovery mode
             if hasattr(self, '_recovery_crash_log'):
                 logger.warning("🔄 Publishing SYSTEM_RECOVERY event", extra={"plugin_name": "Kernel"})
-                self.event_bus.publish(
+                event_bus.publish(
                     Event(
                         event_type=EventType.SYSTEM_RECOVERY,
                         source="kernel",
@@ -351,7 +380,7 @@ class Kernel:
                     "🔄 Publishing UPGRADE_VALIDATION_REQUIRED event", 
                     extra={"plugin_name": "Kernel"}
                 )
-                self.event_bus.publish(
+                event_bus.publish(
                     Event(
                         event_type=EventType.UPGRADE_VALIDATION_REQUIRED,
                         source="kernel",
@@ -366,7 +395,7 @@ class Kernel:
             event_loop = EventDrivenLoop(
                 plugin_manager=self.plugin_manager,
                 all_plugins_map=self.all_plugins_map,
-                event_bus=self.event_bus,
+                event_bus=event_bus,
                 task_queue=self.task_queue,
                 kernel=self,  # AMI 1.0: Pass kernel reference for WebUI integration
             )
@@ -461,6 +490,11 @@ class Kernel:
 
                     # NEW: Publish USER_INPUT event if event-driven
                     if self.use_event_driven:
+                        if not self.event_bus:
+                            raise RuntimeError(
+                                "Event bus requested before initialization."
+                            )
+
                         from core.events import Event, EventType, EventPriority
 
                         self.event_bus.publish(
@@ -552,8 +586,15 @@ class Kernel:
                         all_plugins_map = {p.name: p for p in all_plugins_list}
 
                         for plugin in all_plugins_map.values():
-                            if hasattr(plugin, "get_tool_definitions"):
-                                for tool_def in plugin.get_tool_definitions():
+                            get_tool_definitions = getattr(
+                                plugin, "get_tool_definitions", None
+                            )
+                            if callable(get_tool_definitions):
+                                tool_defs = cast(
+                                    list[Dict[str, Any]],
+                                    get_tool_definitions() or [],
+                                )
+                                for tool_def in tool_defs:
                                     function = tool_def.get("function", {})
                                     func_name = function.get("name")
                                     params_schema = function.get("parameters")
@@ -673,12 +714,12 @@ class Kernel:
                                             extra={"plugin_name": "Kernel"},
                                         )
 
+                            validation_model = tool_schemas.get(method_name)
                             validated_args = None
                             max_attempts = 3
 
                             for attempt in range(max_attempts):
                                 try:
-                                    validation_model = tool_schemas.get(method_name)
                                     if not validation_model:
                                         msg = (
                                             f"No validation schema found for method "
@@ -741,8 +782,9 @@ class Kernel:
                                     # Convert step_outputs to JSON-serializable format
                                     serializable_outputs = []
                                     for output in step_outputs:
-                                        if hasattr(output, "model_dump"):
-                                            serializable_outputs.append(output.model_dump())
+                                        model_dump_fn = getattr(output, "model_dump", None)
+                                        if callable(model_dump_fn):
+                                            serializable_outputs.append(model_dump_fn())
                                         elif isinstance(
                                             output, (str, int, float, bool, type(None))
                                         ):
@@ -760,11 +802,12 @@ class Kernel:
                                     }
 
                                     # Get function schema for repair
-                                    function_schema = (
-                                        validation_model.model_json_schema()
-                                        if hasattr(validation_model, "model_json_schema")
-                                        else {}
-                                    )
+                                    function_schema: Dict[str, Any] = {}
+                                    if (
+                                        validation_model is not None
+                                        and hasattr(validation_model, "model_json_schema")
+                                    ):
+                                        function_schema = validation_model.model_json_schema()
 
                                     repair_prompt = self.json_repair_prompt_template.format(
                                         user_input=context.user_input or "",
@@ -963,8 +1006,11 @@ class Kernel:
                         print(f">>> Sophia: {execution_summary}")
                         # After printing to the console, re-display the user prompt.
                         terminal = self.all_plugins_map.get("interface_terminal")
-                        if terminal and hasattr(terminal, "prompt"):
-                            terminal.prompt()
+                        prompt_fn = (
+                            getattr(terminal, "prompt", None) if terminal else None
+                        )
+                        if callable(prompt_fn):
+                            prompt_fn()
 
                     # 5. MEMORIZING PHASE
                     context.current_state = "MEMORIZING"
@@ -993,6 +1039,11 @@ class Kernel:
                 )
                 # Publish SYSTEM_ERROR event if event-driven
                 if self.use_event_driven:
+                    if not self.event_bus:
+                        raise RuntimeError(
+                            "Event bus requested before initialization."
+                        )
+
                     from core.events import Event, EventType, EventPriority
 
                     self.event_bus.publish(
@@ -1046,217 +1097,185 @@ class Kernel:
             context.logger.info("Event bus stopped gracefully", extra={"plugin_name": "Kernel"})
 
     async def process_single_input(self, context: SharedContext) -> str:
-        """
-        Process single input without interface plugins.
-        Used for CLI/scripted interactions (--once mode).
+        """Handle a single user input (non-interactive mode)."""
 
-        Args:
-            context: Context with user_input already set
-
-        Returns:
-            Response string
-        """
         logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE START ==========")
         logger.info(f"🎯 [Kernel] Input: {context.user_input}")
         logger.info(f"🎯 [Kernel] Session: {context.session_id}")
 
-        # Skip LISTENING phase (already have input)
-        # Go straight to: PLANNING → EXECUTING → RESPONDING
-
         # 1. PLANNING PHASE
         logger.info("🎯 [Kernel] Phase 1: PLANNING")
+        self.telemetry.update_phase("PLANNING", context.user_input or "")
         context.current_state = "PLANNING"
-        context.history.append({"role": "user", "content": context.user_input})
+        context.history.append({"role": "user", "content": context.user_input or ""})
 
-        # --- Cognitive Task Routing ---
         logger.info("🎯 [Kernel] Checking for task router...")
         router = self.all_plugins_map.get("cognitive_task_router")
-        # Skip router in offline mode for faster response (router also calls LLM)
         if router and not context.offline_mode:
             try:
-                logger.info("🎯 [Kernel] Executing task router...")
                 context = await router.execute(context=context)
                 logger.info("🎯 [Kernel] Task router completed")
-            except Exception as e:
-                logger.error(f"❌ [Kernel] Task router error: {e}")
+            except Exception as exc:
+                logger.error(f"❌ [Kernel] Task router error: {exc}")
         elif context.offline_mode:
             logger.info("🔒 [Kernel] Task router skipped in offline mode")
 
-        # --- Planning ---
         logger.info("🎯 [Kernel] Checking for planner...")
         planner = self.all_plugins_map.get("cognitive_planner")
-        plan = []
+        plan: list[Any] = []
         if planner:
-            logger.info("🎯 [Kernel] Executing planner...")
             context = await planner.execute(context)
-            plan = context.payload.get("plan", [])
-            logger.info(
-                f"🎯 [Kernel] Planner returned {len(plan) if isinstance(plan, list) else 0} steps"
-            )
-            if not isinstance(plan, list):
-                logger.error(f"Planner returned invalid plan: {plan}. Defaulting to empty.")
-                plan = []
+            plan_data = context.payload.get("plan", [])
+            plan = plan_data if isinstance(plan_data, list) else []
+            logger.info("🎯 [Kernel] Planner returned %d steps", len(plan))
+            if plan_data and not isinstance(plan_data, list):
+                logger.error("Planner returned invalid plan: %s", plan_data)
         else:
             logger.warning("🎯 [Kernel] No planner found")
 
-        # --- Plan Quality Check & Auto-Escalation ---
         if plan and self._is_poor_quality_plan(plan, context):
             logger.warning("⚠️ [Kernel] Plan quality is poor - escalating to better model")
-            
-            # Simple 3-tier escalation without complex plugin
-            # Tier 1: llama3.1:8b (already tried - failed)
-            # Tier 2: escalation_model from config (qwen2.5:14b or better)
-            # Tier 3: cloud (if API key available)
-            
             import os
-            
-            # Get escalation model from config
-            escalation_model = "qwen2.5:14b"  # Default fallback
+
+            escalation_model = "qwen2.5:14b"
             try:
-                with open("config/settings.yaml", "r") as f:
-                    settings = yaml.safe_load(f)
-                    escalation_model = settings.get("plugins", {}).get("tool_local_llm", {}).get("local_llm", {}).get("escalation_model", "qwen2.5:14b")
-            except Exception as e:
-                logger.warning(f"⚠️ [Kernel] Could not read escalation_model from config: {e}")
-            
-            # Try Tier 2: Better model for reasoning
-            logger.info(f"🔄 [Kernel] Tier 2: Re-planning with {escalation_model}...")
+                with open("config/settings.yaml", "r", encoding="utf-8") as cfg:
+                    settings = yaml.safe_load(cfg) or {}
+                    escalation_model = (
+                        settings.get("plugins", {})
+                        .get("tool_local_llm", {})
+                        .get("local_llm", {})
+                        .get("escalation_model", escalation_model)
+                    )
+            except Exception as exc:
+                logger.warning("⚠️ [Kernel] Could not read escalation model: %s", exc)
+
+            logger.info("🔄 [Kernel] Tier 2: Re-planning with %s", escalation_model)
             os.environ["LOCAL_LLM_MODEL_OVERRIDE"] = escalation_model
-            
             try:
                 if planner:
                     context.payload["escalated_planning"] = True
                     context = await planner.execute(context)
-                    plan = context.payload.get("plan", [])
-                    logger.info(f"✅ [Kernel] Tier 2 completed: {len(plan) if isinstance(plan, list) else 0} steps")
-                    
-                    # Check if new plan is better
+                    plan_data = context.payload.get("plan", [])
+                    plan = plan_data if isinstance(plan_data, list) else []
                     if plan and not self._is_poor_quality_plan(plan, context):
-                        logger.info("✅ [Kernel] Tier 2 produced better plan!")
+                        logger.info("✅ [Kernel] Tier 2 produced better plan")
                     else:
-                        logger.warning("⚠️  [Kernel] Tier 2 plan still poor quality")
-            except Exception as e:
-                logger.error(f"❌ [Kernel] Tier 2 failed: {e}")
+                        logger.warning("⚠️ [Kernel] Tier 2 plan still poor quality")
+            except Exception as exc:
+                logger.error("❌ [Kernel] Tier 2 failed: %s", exc)
             finally:
-                # Clear model override
-                if "LOCAL_LLM_MODEL_OVERRIDE" in os.environ:
-                    del os.environ["LOCAL_LLM_MODEL_OVERRIDE"]
+                os.environ.pop("LOCAL_LLM_MODEL_OVERRIDE", None)
 
         # 2. EXECUTING PHASE
         logger.info("🎯 [Kernel] Phase 2: EXECUTING")
+        self.telemetry.update_phase("EXECUTING", f"steps={len(plan)}")
         context.current_state = "EXECUTING"
-        execution_result = {"success": False, "output": ""}
+        execution_result: Dict[str, Any] = {"success": False, "output": ""}
 
         if plan:
-            logger.info(f"🎯 [Kernel] Executing plan with {len(plan)} steps")
-            
-            # Execute each step in the plan
-            step_results = []
-            for i, step in enumerate(plan, 1):
+            logger.info("🎯 [Kernel] Executing plan with %d steps", len(plan))
+            step_results: list[Dict[str, Any]] = []
+            for idx, step in enumerate(plan, start=1):
                 tool_name = step.get("tool_name")
                 method_name = step.get("method_name")
-                arguments = step.get("arguments", {})
-                
-                # Substitute placeholders like ${step_1.results} with actual results
+                arguments = step.get("arguments", {}) or {}
+
                 import re
-                for key, value in arguments.items():
+
+                for key, value in list(arguments.items()):
                     if isinstance(value, str):
-                        # Find all ${step_X.field} patterns (any field name)
-                        placeholders = re.findall(r'\$\{step_(\d+)\.(\w+)\}', value)
+                        placeholders = re.findall(r"\$\{step_(\d+)\.(\w+)\}", value)
                         for step_num, attr in placeholders:
-                            step_idx = int(step_num) - 1
-                            if 0 <= step_idx < len(step_results):
-                                prev_result = step_results[step_idx]
-                                if prev_result.get("success"):
-                                    # Try to get the field from output
-                                    output = prev_result.get("output", "")
-                                    
-                                    # If output is a dict/object, try to get the specific field
+                            ref_index = int(step_num) - 1
+                            if 0 <= ref_index < len(step_results):
+                                prior = step_results[ref_index]
+                                if prior.get("success"):
+                                    output = prior.get("output", "")
                                     if isinstance(output, dict) and attr in output:
                                         replacement = str(output[attr])
                                     elif hasattr(output, attr):
                                         replacement = str(getattr(output, attr))
                                     else:
-                                        # Fallback: use entire output (for common fields like 'output', 'results', 'content')
                                         replacement = str(output)
-                                    
-                                    value = value.replace(f"${{step_{step_num}.{attr}}}", replacement)
+                                    value = value.replace(
+                                        f"${{step_{step_num}.{attr}}}", replacement
+                                    )
                         arguments[key] = value
-                
-                logger.info(f"🎯 [Kernel] Step {i}/{len(plan)}: {tool_name}.{method_name}")
-                
-                # Get the tool plugin
+
+                logger.info(
+                    "🎯 [Kernel] Step %s/%s: %s.%s",
+                    idx,
+                    len(plan),
+                    tool_name,
+                    method_name,
+                )
+
                 tool = self.all_plugins_map.get(tool_name)
                 if not tool:
                     error_msg = f"Tool '{tool_name}' not found"
-                    logger.error(f"❌ [Kernel] {error_msg}")
+                    logger.error("❌ [Kernel] %s", error_msg)
                     step_results.append({"success": False, "error": error_msg})
                     continue
-                
+
                 try:
-                    # Check if tool has the method
                     if hasattr(tool, method_name):
-                        # Call the specific method
                         method = getattr(tool, method_name)
-                        
-                        # Check if method accepts 'context' parameter and if it's async
                         sig = inspect.signature(method)
-                        accepts_context = 'context' in sig.parameters
+                        accepts_context = "context" in sig.parameters
                         is_async = inspect.iscoroutinefunction(method)
-                        
-                        # Check if 'context' is already in arguments
-                        context_in_args = 'context' in arguments
-                        
-                        # If context is in arguments as a string, convert to SharedContext
-                        if context_in_args and isinstance(arguments['context'], str):
-                            arguments['context'] = SharedContext(
-                                user_input=arguments['context'],
+                        context_in_args = "context" in arguments
+
+                        if context_in_args and isinstance(arguments["context"], str):
+                            arguments["context"] = SharedContext(
+                                user_input=arguments["context"],
                                 session_id=context.session_id,
                                 current_state=context.current_state,
-                                logger=logger
+                                logger=logger,
                             )
-                        
-                        # Call method based on its signature
+
                         if is_async:
                             if accepts_context and not context_in_args:
                                 result = await method(context=context, **arguments)
                             else:
                                 result = await method(**arguments)
                         else:
-                            # Sync method
                             if accepts_context and not context_in_args:
                                 result = method(context=context, **arguments)
                             else:
                                 result = method(**arguments)
-                        
+
                         step_results.append({"success": True, "output": result})
-                        logger.info(f"✅ [Kernel] Step {i} completed")
+                        logger.info("✅ [Kernel] Step %s completed", idx)
                     else:
-                        # Fallback: call execute() method
                         result_context = await tool.execute(context)
-                        result = result_context.payload.get("llm_response", str(result_context.payload))
+                        result = result_context.payload.get(
+                            "llm_response", str(result_context.payload)
+                        )
                         step_results.append({"success": True, "output": result})
-                        logger.info(f"✅ [Kernel] Step {i} completed (via execute)")
-                except Exception as e:
-                    error_msg = f"Error executing {tool_name}.{method_name}: {e}"
-                    logger.error(f"❌ [Kernel] {error_msg}")
+                        logger.info("✅ [Kernel] Step %s completed (via execute)", idx)
+                except Exception as exc:
+                    error_msg = f"Error executing {tool_name}.{method_name}: {exc}"
+                    logger.error("❌ [Kernel] %s", error_msg)
                     step_results.append({"success": False, "error": error_msg})
-            
-            # Aggregate results
-            successful_steps = [r for r in step_results if r.get("success")]
-            if successful_steps:
-                # Use last successful step output as final response
+
+            successes = [r for r in step_results if r.get("success")]
+            if successes:
                 execution_result = {
                     "success": True,
-                    "output": successful_steps[-1].get("output", "Task completed"),
-                    "steps": step_results
+                    "output": successes[-1].get("output", "Task completed"),
+                    "steps": step_results,
                 }
-                logger.info(f"🎯 [Kernel] Execution completed: {len(successful_steps)}/{len(plan)} steps successful")
+                logger.info(
+                    "🎯 [Kernel] Execution completed: %s/%s steps successful",
+                    len(successes),
+                    len(plan),
+                )
             else:
                 execution_result = {
                     "success": False,
                     "error": "All steps failed",
-                    "steps": step_results
+                    "steps": step_results,
                 }
                 logger.error("❌ [Kernel] All execution steps failed")
         else:
@@ -1265,11 +1284,12 @@ class Kernel:
 
         # 3. RESPONDING
         logger.info("🎯 [Kernel] Phase 3: RESPONDING")
+        self.telemetry.update_phase("RESPONDING", "Delivering answer")
         context.current_state = "RESPONDING"
         response = self._generate_response(context, execution_result)
 
         logger.info("🎯 [Kernel] ========== SINGLE INPUT MODE END ==========")
-        logger.info(f"🎯 [Kernel] Response ready: {response[:100]}...")
+        logger.info("🎯 [Kernel] Response ready: %s...", response[:100])
         return response
 
     def _generate_response(self, context: SharedContext, execution_result: dict) -> str:

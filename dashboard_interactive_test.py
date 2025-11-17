@@ -62,8 +62,8 @@ def test_dashboard_interactive(headless=False, slow_mo=1000):
             print(f"   📸 Screenshot: 01_overview_loaded.png")
             
             # Check hypotheses table
-            hypotheses_rows = page.locator("#hypothesesTable tbody tr").count()
-            print(f"   ✅ Hypotheses table: {hypotheses_rows} rows")
+            hypotheses_rows = page.locator("#hypothesesOverviewBody tr").count()
+            print(f"   ✅ Hypotheses table (overview) rows: {hypotheses_rows}")
             
             page.screenshot(path=screenshots_dir / "02_hypotheses_table.png")
             print(f"   📸 Screenshot: 02_hypotheses_table.png")
@@ -88,7 +88,7 @@ def test_dashboard_interactive(headless=False, slow_mo=1000):
             print(f"   📸 Screenshot: 04_message_typed.png")
             
             # Click send button
-            page.click("#sendButton")
+            page.click("#chatSend")
             print("   ✅ Message sent via WebSocket")
             
             # Wait for response (up to 30 seconds)
@@ -117,13 +117,13 @@ def test_dashboard_interactive(headless=False, slow_mo=1000):
             time.sleep(2)
             
             # Check logs loaded
-            log_lines = page.locator("#logContent .log-line").count()
+            log_lines = page.locator("#logsContainer .log-line").count()
             print(f"   ✅ Log lines displayed: {log_lines}")
             
             # Test log filtering
             page.select_option("#logLevel", "ERROR")
             time.sleep(1)
-            error_lines = page.locator("#logContent .log-line").count()
+            error_lines = page.locator("#logsContainer .log-line").count()
             print(f"   ✅ ERROR filter: {error_lines} lines")
             
             page.screenshot(path=screenshots_dir / "06_logs_tab.png", full_page=True)
@@ -204,7 +204,7 @@ def test_chat_websocket_only():
             
             # Send message
             page.fill("#chatInput", "Test WebSocket connection")
-            page.click("#sendButton")
+            page.click("#chatSend")
             
             print("\n📨 WebSocket Messages:")
             time.sleep(5)

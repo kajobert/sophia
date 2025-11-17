@@ -141,6 +141,43 @@ python run.py --ui cyberpunk   # Cyberpunk aesthetic
 
 **Pro Tip:** `--once` mode is perfect for testing, scripting, or CI/CD integration. Response time includes 4s startup + 4s LLM processing.
 
+### 📟 Telemetry CLI Dashboard
+
+The Rich-powered dashboard in `sophia_cli_dashboard.py` mirrors the Web UI telemetry feed directly in your terminal. It shows live provider spend, budget projections, task queues, recent events, and optional psutil host metrics.
+
+```bash
+# Live metrics pointed at a remote Web UI instance
+python sophia_cli_dashboard.py --server https://your-vm.example.com --refresh 1.5
+
+# Minimal mode for low-resource boxes (skip psutil host stats)
+python sophia_cli_dashboard.py --server http://localhost:8000 --no-system
+```
+
+Need a persistent alias? Run `bash install_sophia_cli.sh` to add the `sophia` command that launches the dashboard after activating your virtual environment.
+
+### 💸 $10/month Budget VM Blueprint
+
+You can host Sophia (Web UI + CLI dashboard) on a single $10/month VPS such as **Hetzner CX22** or **DigitalOcean Basic Droplet (2 vCPU / 2 GB RAM / 40 GB SSD)**. This configuration comfortably handles telemetry polling plus moderate LLM traffic routed through OpenRouter or local providers.
+
+1. **Provision the VM** with Ubuntu 22.04 LTS, enable SSH keys, and lock down the firewall (`ufw allow 22 80 443 8000`).
+2. **System packages:**
+  ```bash
+  sudo apt update && sudo apt install -y python3.12 python3.12-venv build-essential git curl
+  curl -LsSf https://astral.sh/uv/install.sh | sh  # optional but fastest for deps
+  ```
+3. **Clone & install Sophia:**
+  ```bash
+  git clone https://github.com/ShotyCZ/sophia.git
+  cd sophia
+  uv venv && source .venv/bin/activate
+  uv pip sync requirements.in
+  cp .env.example .env  # add API keys + telemetry secrets
+  ```
+4. **Expose the dashboard:** run `python run.py --no-webui` for terminal-only or keep the default combined mode. For headless monitoring, start `python sophia_cli_dashboard.py --server http://localhost:8000 --no-system` inside a tmux session or systemd service.
+5. **Optimize spend:** keep OpenRouter-style budget caps in `.env`, schedule nightly restarts via `sophia-guardian.service`, and rely on the budget panel to stay below the $10 monthly cloud target.
+
+> Tip: This setup averages ~6–7 W of power draw and idles under 450 MB RAM with psutil disabled, leaving plenty of headroom for LLM calls while staying comfortably within the $10/mo plan.
+
 ### 🏠 Local LLM Support (Optional)
 
 Run Sophia **completely offline** with local AI models:

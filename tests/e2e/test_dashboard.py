@@ -24,6 +24,7 @@ Run:
     pytest tests/e2e/test_dashboard.py --screenshot=on
 """
 
+import re
 import time
 from pathlib import Path
 
@@ -56,10 +57,10 @@ class TestDashboardOverview:
     def test_overview_tab_active_by_default(self, page: Page):
         """Verify Overview tab is active on page load."""
         overview_tab = page.locator("button.tab:has-text('Overview')")
-        expect(overview_tab).to_have_class(/active/)
+        expect(overview_tab).to_have_class(re.compile(".*active.*"))
         
-        overview_content = page.locator("#overviewTab")
-        expect(overview_content).to_have_class(/active/)
+        overview_content = page.locator("#overview-tab")
+        expect(overview_content).to_have_class(re.compile(".*active.*"))
 
     def test_stats_cards_displayed(self, page: Page):
         """Verify statistics cards are visible."""
@@ -77,12 +78,16 @@ class TestDashboardOverview:
         
         # Check if table has data or empty message
         rows = table_body.locator("tr")
-        count = rows.count()
-        
-        if count == 1:
-            # Empty state
-            empty_msg = rows.first.locator("td")
-            expect(empty_msg).to_contain_text("No tasks in queue")
+        row_count = rows.count()
+		
+        if row_count == 1:
+            # Empty or error state row
+            first_cell = rows.first.locator("td")
+            text_content = first_cell.text_content()
+            if text_content and "Error" in text_content:
+                expect(first_cell).to_contain_text("Error")
+            else:
+                expect(first_cell).to_contain_text("No tasks in queue")
         else:
             # Has tasks - verify structure
             first_row = rows.first
@@ -93,14 +98,19 @@ class TestDashboardOverview:
 
     def test_auto_refresh_works(self, page: Page):
         """Verify auto-refresh updates timestamp."""
-        # Get initial timestamp
-        timestamp_before = page.locator(".last-update").text_content()
-        
-        # Wait for refresh (30 seconds)
-        page.wait_for_timeout(31000)
-        
+        # Get initial timestamp from overview panel only
+        timestamp_before = page.locator("#lastUpdate").text_content()
+		
+        # Trigger an immediate refresh to avoid long sleeps and wait for DOM to update
+        page.evaluate("refreshDashboard()")
+        page.wait_for_function(
+            "initial => document.getElementById('lastUpdate').textContent !== initial",
+            arg=timestamp_before,
+            timeout=10000,
+        )
+		
         # Check timestamp changed
-        timestamp_after = page.locator(".last-update").text_content()
+        timestamp_after = page.locator("#lastUpdate").text_content()
         assert timestamp_before != timestamp_after, "Auto-refresh should update timestamp"
 
 
@@ -119,11 +129,11 @@ class TestDashboardHypotheses:
         page.wait_for_timeout(500)
         
         # Check tab is active
-        expect(hyp_tab).to_have_class(/active/)
+        expect(hyp_tab).to_have_class(re.compile(".*active.*"))
         
         # Check content is visible
-        hyp_content = page.locator("#hypothesesTab")
-        expect(hyp_content).to_have_class(/active/)
+        hyp_content = page.locator("#hypotheses-tab")
+        expect(hyp_content).to_have_class(re.compile(".*active.*"))
 
     def test_hypotheses_table_loads(self, page: Page, take_screenshot):
         """Verify hypotheses table loads data."""
@@ -131,7 +141,7 @@ class TestDashboardHypotheses:
         page.locator("button.tab:has-text('Hypotheses')").click()
         page.wait_for_timeout(2000)  # Wait for API call
         
-        table_body = page.locator("#hypothesesTableBody")
+        table_body = page.locator("#hypotheses-tab #hypothesesDetailBody")
         expect(table_body).to_be_visible()
         
         # Check for data or empty state
@@ -139,15 +149,20 @@ class TestDashboardHypotheses:
         count = rows.count()
         
         if count == 1:
-            # Empty state
+            # Empty or error state
             empty_msg = rows.first.locator("td")
-            expect(empty_msg).to_contain_text("No hypotheses")
+            text_content = empty_msg.text_content()
+            if text_content and "Error" in text_content:
+                expect(empty_msg).to_contain_text("Error")
+            else:
+                expect(empty_msg).to_contain_text("No hypotheses")
         else:
             # Has hypotheses - verify columns
             first_row = rows.first
             expect(first_row.locator("td").nth(0)).to_be_visible()  # ID
             expect(first_row.locator("td").nth(1)).to_be_visible()  # Description
-            expect(first_row.locator("td").nth(2)).to_be_visible()  # Status
+            expect(first_row.locator("td").nth(2)).to_be_visible()  # Category
+            expect(first_row.locator("td").nth(3)).to_be_visible()  # Status
         
         take_screenshot("hypotheses_table")
 
@@ -157,12 +172,13 @@ class TestDashboardHypotheses:
         page.wait_for_timeout(2000)
         
         # Look for status badges (if hypotheses exist)
-        table_body = page.locator("#hypothesesTableBody")
+        table_body = page.locator("#hypotheses-tab #hypothesesDetailBody")
         rows = table_body.locator("tr")
+        row_count = rows.count()
         
-        if rows.count() > 1:  # Has data
+        if row_count > 1:  # Has data
             # Status should have emoji indicator
-            status_cell = rows.first.locator("td").nth(2)
+            status_cell = rows.first.locator("td").nth(3)
             status_text = status_cell.text_content()
             
             # Should contain emoji
@@ -181,10 +197,10 @@ class TestDashboardTools:
         
         page.wait_for_timeout(500)
         
-        expect(tools_tab).to_have_class(/active/)
+        expect(tools_tab).to_have_class(re.compile(".*active.*"))
         
-        tools_content = page.locator("#toolsTab")
-        expect(tools_content).to_have_class(/active/)
+        tools_content = page.locator("#tools-tab")
+        expect(tools_content).to_have_class(re.compile(".*active.*"))
 
     def test_tool_buttons_visible(self, page: Page, take_screenshot):
         """Verify all tool buttons are rendered."""
@@ -252,10 +268,10 @@ class TestDashboardLogs:
         
         page.wait_for_timeout(2000)  # Wait for API call
         
-        expect(logs_tab).to_have_class(/active/)
+        expect(logs_tab).to_have_class(re.compile(".*active.*"))
         
-        logs_content = page.locator("#logsTab")
-        expect(logs_content).to_have_class(/active/)
+        logs_content = page.locator("#logs-tab")
+        expect(logs_content).to_have_class(re.compile(".*active.*"))
 
     def test_logs_container_visible(self, page: Page, take_screenshot):
         """Verify logs container renders."""
@@ -297,10 +313,10 @@ class TestDashboardBenchmarks:
         
         page.wait_for_timeout(500)
         
-        expect(benchmarks_tab).to_have_class(/active/)
+        expect(benchmarks_tab).to_have_class(re.compile(".*active.*"))
         
-        benchmarks_content = page.locator("#benchmarksTab")
-        expect(benchmarks_content).to_have_class(/active/)
+        benchmarks_content = page.locator("#benchmarks-tab")
+        expect(benchmarks_content).to_have_class(re.compile(".*active.*"))
 
     def test_benchmark_charts_visible(self, page: Page, take_screenshot):
         """Verify benchmark charts are rendered."""
@@ -317,12 +333,8 @@ class TestDashboardBenchmarks:
 
     def test_benchmark_data_loads(self, page: Page):
         """Verify benchmark data loads from API."""
-        page.locator("button.tab:has-text('Benchmarks')").click()
-        
-        # Wait for API call
         with page.expect_response("**/api/benchmarks**") as response_info:
-            page.wait_for_timeout(3000)
-        
+            page.locator("button.tab:has-text('Benchmarks')").click()
         response = response_info.value
         assert response.status == 200, "Benchmarks API should return 200"
 

@@ -10,7 +10,9 @@ Shared fixtures for dashboard testing:
 
 import asyncio
 import os
+import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Generator
@@ -39,6 +41,18 @@ def dashboard_server():
         yield None
         return
     
+    # Determine python executable (prefer current interpreter / env override)
+    python_cmd = (
+        os.environ.get("PYTHON_EXECUTABLE")
+        or os.environ.get("PYTHON")
+        or sys.executable
+        or shutil.which("python3")
+        or shutil.which("python")
+    )
+
+    if not python_cmd:
+        raise FileNotFoundError("Unable to locate Python interpreter for dashboard server")
+
     # Start server
     project_root = Path(__file__).parent.parent.parent
     server_script = project_root / "scripts" / "dashboard_server.py"
@@ -50,7 +64,7 @@ def dashboard_server():
         env["SOPHIA_INTERFACE"] = "webui"
         
         process = subprocess.Popen(
-            ["python", str(server_script)],
+            [python_cmd, str(server_script)],
             cwd=str(project_root),
             env=env,
             stdout=subprocess.PIPE,
@@ -58,7 +72,7 @@ def dashboard_server():
         )
     else:
         process = subprocess.Popen(
-            ["python", str(server_script)],
+            [python_cmd, str(server_script)],
             cwd=str(project_root),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

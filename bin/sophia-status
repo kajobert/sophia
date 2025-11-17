@@ -1,14 +1,58 @@
-#!/bin/bash
-echo "🔍 SOPHIA Status"
+
+
+#!/bin/sh
+echo "🔍 SOPHIA Stav"
 echo "================"
-if pgrep -f "python.*run.py" > /dev/null; then
-    PID=$(pgrep -f "python.*run.py")
-    echo "✅ Běží (PID: $PID)"
-    echo "💾 Paměť: $(ps -p $PID -o rss= | awk '{print $1/1024 " MB"}')"
-    if curl -s http://127.0.0.1:8000/api/stats > /dev/null 2>&1; then
-        echo "✅ API odpovídá"
-        curl -s http://127.0.0.1:8000/api/stats | python3 -m json.tool
+# Vzory procesů, které chceme sledovat
+PATTERNS="python.*run.py python.*autonomous_main.py python.*autonomous_worker_with_dashboard.py"
+
+ALL_PIDS=""
+ROOT_PIDS=""
+USER_PIDS=""
+USER_PIDS_COUNT=0
+ROOT_PIDS_COUNT=0
+ALL_PIDS_COUNT=0
+
+for PATTERN in $PATTERNS; do
+    for PID in $(pgrep -f "$PATTERN"); do
+        OWNER=$(ps -o user= -p $PID 2>/dev/null | awk 'NR==2{print $1}')
+        ALL_PIDS="$ALL_PIDS $PID"
+        ALL_PIDS_COUNT=$((ALL_PIDS_COUNT+1))
+        if [ "$OWNER" = "root" ]; then
+            ROOT_PIDS="$ROOT_PIDS $PID"
+            ROOT_PIDS_COUNT=$((ROOT_PIDS_COUNT+1))
+        else
+            USER_PIDS="$USER_PIDS $PID"
+            USER_PIDS_COUNT=$((USER_PIDS_COUNT+1))
+        fi
+    done
+done
+
+if [ "$ALL_PIDS_COUNT" -gt 0 ]; then
+    echo "✅ SOPHIA běží (celkem procesů: $ALL_PIDS_COUNT)"
+    if [ "$USER_PIDS_COUNT" -gt 0 ]; then
+        echo "👤 Uživatelské procesy:$USER_PIDS"
+        for PID in $USER_PIDS; do
+            [ -z "$PID" ] && continue
+            MEM=$(ps -p $PID -o rss= | awk 'NR>1{print $1/1024 " MB"}')
+            echo "   • PID $PID | Paměť: $MEM"
+        done
+    fi
+    if [ "$ROOT_PIDS_COUNT" -gt 0 ]; then
+        echo "⚠️  Root procesy:$ROOT_PIDS"
+        for PID in $ROOT_PIDS; do
+            [ -z "$PID" ] && continue
+            MEM=$(ps -p $PID -o rss= | awk 'NR>1{print $1/1024 " MB"}')
+            echo "   • PID $PID | Paměť: $MEM | Spusťte 'sudo bash bin/sophia-stop' pro ukončení!"
+        done
+    fi
+    # API check (jen pokud není root-only)
+    if [ "$USER_PIDS_COUNT" -gt 0 ]; then
+        if curl -s http://127.0.0.1:8000/api/stats > /dev/null 2>&1; then
+            echo "✅ API odpovídá"
+            curl -s http://127.0.0.1:8000/api/stats | python3 -m json.tool
+        fi
     fi
 else
-    echo "❌ SOPHIA neběží"
+    echo "❌ SOPHIA neběží (nenalezen žádný relevantní proces)"
 fi
